@@ -9,8 +9,10 @@ token = open('token', 'r').readline().strip()
 apiurl = 'https://api.telegram.org/bot' + token + '/'
 offset = 0
 
-scdldir = '/media/gpchelkin/Files/scdldir/'
-scdlbin = '/home/gpchelkin/.pyenv/shims/scdl -l '
+scdldir = './scdldir/'
+if not os.path.exists(scdldir):
+    os.makedirs(scdldir)
+scdlbin = 'scdl -l '
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
 
 
