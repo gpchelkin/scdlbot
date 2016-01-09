@@ -12,8 +12,10 @@ offset = 0
 
 homedir = os.path.expanduser('~')
 scdldir = os.path.join(homedir,'scdldir')
+scdlconfdir = os.path.join(homedir,'.config/scdl')
 if not os.path.exists(scdldir):
-    os.makedirs(scdldir,os.path.join(homedir,'.config'),os.path.join(homedir,'.config/scdl'))
+    os.makedirs(scdldir)
+    os.makedirs(scdlconfdir)
     shutil.copy('scdl.cfg',os.path.join(homedir,'.config/scdl'))
 #os.environ['HOME'] = os.getcwd()
 scdlbin = 'scdl -l '
