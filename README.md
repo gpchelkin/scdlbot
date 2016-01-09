@@ -1,9 +1,7 @@
-#[VivatPizzaBot](https://telegram.me/VivatPizzaBot)
+#[SCDL Bot](https://telegram.me/scdlbot)
 
-Виват Пицца 🍕 Успей купить!
+https://github.com/flyingrub/scdl
 
-https://vk.com/vivat_pizza
-
-https://dashboard.heroku.com/apps/vivatpizzabot/resources
+https://dashboard.heroku.com/apps/scdlbot/resources
 
 https://api.telegram.org/botTOKEN/getMe
