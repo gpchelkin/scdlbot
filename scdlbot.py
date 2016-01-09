@@ -53,7 +53,7 @@ while 1:
                                                                                disable_web_page_preview=True))
                     elif regex.compile('^/dl(@scdlbot)?(\s+.*)?$').match(gottext.strip()):
                         sendaudio(gottext.split()[1],chat_id)
-                    elif regex.compile('^https://soundcloud.com/([\w\d_-]+)/([\w\d_-]+)$').match(gottext.strip()):
+                    elif regex.compile('^https://(m.)?soundcloud.com/([\w\d_-]+)/([\w\d_-]+)$').match(gottext.strip()):
                         sendaudio(gottext,chat_id)
                 else:
                     print('got idkwhat')

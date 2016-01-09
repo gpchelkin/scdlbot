@@ -4,6 +4,9 @@ Utilizing [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub
 *Just send a link:*
 `https://soundcloud.com/richarddjames/umil-25-01`
 
+*Or mobile one:*
+`https://m.soundcloud.com/platform/kerrier-district-techno-disco`
+
 *Or use it like this:*
 `/dl https://soundcloud.com/richarddjames/umil-25-01`
 
