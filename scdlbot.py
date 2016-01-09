@@ -22,7 +22,7 @@ scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --h
 
 
 def sendaudio(scdlurl, chat_id):
-    rmsg = requests.post(apiurl + 'sendMessage', json=dict(chat_id=chat_id, parse_mode='Markdown', text='_Please wait, downloading and sending..._'))
+    rmsg = requests.post(apiurl + 'sendMessage', json=dict(chat_id=chat_id, parse_mode='Markdown', text='_Wait a bit, downloading and sending..._'))
     subprocess.call(scdlbin + scdlurl + scdlopts, shell=True)
     scdlfile = os.listdir(scdldir)[0]
     scdlfullpath = os.path.join(scdldir,scdlfile)
