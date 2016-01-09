@@ -17,7 +17,6 @@ if not os.path.exists(scdldir):
     os.makedirs(scdldir)
     os.makedirs(scdlconfdir)
     shutil.copy('scdl.cfg',os.path.join(homedir,'.config/scdl'))
-#os.environ['HOME'] = os.getcwd()
 scdlbin = 'scdl -l '
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
 
