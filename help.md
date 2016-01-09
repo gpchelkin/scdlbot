@@ -1,5 +1,4 @@
 *Downloads* tracks from *SoundCloud* links (_mp3 128 Kbps rips only_), sets tags and artwork and sends to you as playable and downloadable *Telegram MP3 Audio*.
-Utilizing [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
 
 *Just send a link:*
 `https://soundcloud.com/richarddjames/umil-25-01`
@@ -16,3 +15,5 @@ Utilizing [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub
 *Commands:*
 /dl - Download track from SC link
 /help - Show this help
+
+_Bot author_ @gpchelkin, _utilizing_ [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
