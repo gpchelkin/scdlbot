@@ -46,13 +46,15 @@ while 1:
                 gottext = message.get('text')
                 if gottext:
                     print('got text ' + gottext)  # TODO log time and all to file
-                    if regex.compile('^/start(@scdlbot)?(\s+.*)?$').match(gottext) or \
-                            regex.compile('^/help(@scdlbot)?(\s+.*)?$').match(gottext):
+                    if regex.compile('^/start(@scdlbot)?(\s+.*)?$').match(gottext.strip()) or \
+                            regex.compile('^/help(@scdlbot)?(\s+.*)?$').match(gottext.strip()):
                         text = open('help.md', 'r').read()
                         rmsg = requests.post(apiurl + 'sendMessage', json=dict(chat_id=chat_id, text=text, parse_mode='Markdown',
                                                                                disable_web_page_preview=True))
-                    elif regex.compile('^/dl(@scdlbot)?(\s+.*)?$').match(gottext):
+                    elif regex.compile('^/dl(@scdlbot)?(\s+.*)?$').match(gottext.strip()):
                         sendaudio(gottext.split()[1],chat_id)
+                    elif regex.compile('^https://soundcloud.com/([\w\d_-]+)/([\w\d_-]+)$').match(gottext.strip()):
+                        sendaudio(gottext,chat_id)
                 else:
                     print('got idkwhat')
                 msgfrom = message.get('from')
