@@ -1,0 +1,3 @@
+Downloads tracks from SoundCloud links (mp3 rips only), sets tags and artwork and sends them to you as downloadable Telegram MP3 Audio.
+
+Press /start

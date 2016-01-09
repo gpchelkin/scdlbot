@@ -1,0 +1,2 @@
+dl - Download track from SC link
+help - Show help

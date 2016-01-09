@@ -1,0 +1,4 @@
+regex
+requests
+scdl
+subprocess
