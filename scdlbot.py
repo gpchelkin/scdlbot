@@ -6,7 +6,7 @@ import shutil
 
 __author__ = 'gpchelkin'
 
-token = open('token', 'r').readline().strip()
+token = os.getenv('TG_BOT_TOKEN')
 apiurl = 'https://api.telegram.org/bot' + token + '/'
 offset = 0
 
