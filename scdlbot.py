@@ -30,7 +30,10 @@ def sendaudio(scdlurl, chat_id):
     scdlfile = os.listdir(scdldir)[0]
     print(os.listdir(scdldir))
     scdlfullpath = os.path.join(scdldir,scdlfile)
-    track = open(scdlfullpath, 'rb').read()
+    print(scdlfullpath)
+    trackopen = open(scdlfullpath, 'rb')
+    print(trackopen)
+    track = trackopen.read()
     print(track)
     raudio = requests.post(apiurl + 'sendAudio',
                            files=dict(audio=(scdlfile, track, 'audio/mpeg')),
