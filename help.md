@@ -16,4 +16,4 @@
 /dl - Download track from SC link
 /help - Show this help
 
-_Bot author_ @gpchelkin, _utilizing_ [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
+_Bot is written by_ @gpchelkin _utilizing_ [FlyinGrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
