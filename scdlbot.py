@@ -19,9 +19,6 @@ os.makedirs(scdlconfdir)
 shutil.copy('scdl.cfg',scdlconfdir)
 
 scdldir = os.path.join(homedir,'scdldir')
-if os.path.exists(scdldir):
-    shutil.rmtree(scdldir)
-
 scdlbin = 'scdl -l '
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
 
@@ -36,20 +33,18 @@ def sendaudio(scdlurl, chat_id):
     subprocess.call(scdlbin + scdlurl + scdlopts, shell=True)
     print("2")
     scdlfile = os.listdir(scdldir)[0]
-    print(os.listdir(scdldir))
+    print("3")
     scdlfullpath = os.path.join(scdldir,scdlfile)
-    print(scdlfullpath)
+    print("4")
     trackopen = open(scdlfullpath, 'rb')
-    print(trackopen)
+    print("5")
     track = trackopen.read()
-    print(track)
+    print("6")
     raudio = requests.post(apiurl + 'sendAudio',
                            files=dict(audio=(scdlfile, track, 'audio/mpeg')),
                            data=dict(chat_id=chat_id))
     print('audio ' + scdlfile + ' sent')
     print(raudio.json()['result'])
-    shutil.rmtree(scdldir)
-
 
 while 1:
     r = requests.post(apiurl + 'getUpdates', json=dict(offset=offset, timeout=60))
