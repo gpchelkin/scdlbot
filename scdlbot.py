@@ -11,20 +11,24 @@ apiurl = 'https://api.telegram.org/bot' + token + '/'
 offset = 0
 
 homedir = os.path.expanduser('~')
-scdldir = os.path.join(homedir,'scdldir')
+
 scdlconfdir = os.path.join(homedir,'.config/scdl')
 if os.path.exists(scdlconfdir):
     os.rmdir(scdlconfdir)
 os.makedirs(scdlconfdir)
+shutil.copy('scdl.cfg',scdlconfdir)
+
+scdldir = os.path.join(homedir,'scdldir')
 if os.path.exists(scdldir):
     os.rmdir(scdldir)
-shutil.copy('scdl.cfg',scdlconfdir)
+
 scdlbin = 'scdl -l '
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
 
 
 def sendaudio(scdlurl, chat_id):
     rmsg = requests.post(apiurl + 'sendMessage', json=dict(chat_id=chat_id, parse_mode='Markdown', text='_Wait a bit, downloading and sending..._'))
+    print(scdldir)
     os.makedirs(scdldir)
     print("1")
     subprocess.call(scdlbin + scdlurl + scdlopts, shell=True)
