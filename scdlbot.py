@@ -13,12 +13,11 @@ offset = 0
 homedir = os.path.expanduser('~')
 scdldir = os.path.join(homedir,'scdldir')
 scdlconfdir = os.path.join(homedir,'.config/scdl')
-if os.path.exists(scdldir):
-    os.rmdir(scdldir)
-os.makedirs(scdldir)
 if os.path.exists(scdlconfdir):
     os.rmdir(scdlconfdir)
 os.makedirs(scdlconfdir)
+if os.path.exists(scdldir):
+    os.rmdir(scdldir)
 shutil.copy('scdl.cfg',scdlconfdir)
 scdlbin = 'scdl -l '
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
@@ -26,6 +25,7 @@ scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --h
 
 def sendaudio(scdlurl, chat_id):
     rmsg = requests.post(apiurl + 'sendMessage', json=dict(chat_id=chat_id, parse_mode='Markdown', text='_Wait a bit, downloading and sending..._'))
+    os.makedirs(scdldir)
     subprocess.call(scdlbin + scdlurl + scdlopts, shell=True)
     scdlfile = os.listdir(scdldir)[0]
     print(os.listdir(scdldir))
@@ -40,7 +40,8 @@ def sendaudio(scdlurl, chat_id):
                            data=dict(chat_id=chat_id))
     print('audio ' + scdlfile + ' sent')
     print(raudio.json()['result'])
-    os.remove(scdlfullpath)
+    os.rmdir(scdldir)
+
 
 while 1:
     r = requests.post(apiurl + 'getUpdates', json=dict(offset=offset, timeout=60))
