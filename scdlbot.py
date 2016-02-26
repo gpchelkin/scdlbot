@@ -20,7 +20,7 @@ shutil.copy('scdl.cfg',scdlconfdir)
 
 scdldir = os.path.join(homedir,'scdldir')
 scdlbin = 'scdl -l '
-scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile --hide-progress --hidewarnings'
+scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile'
 
 
 def sendaudio(scdlurl, chat_id):
