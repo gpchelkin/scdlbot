@@ -1,4 +1,3 @@
-regex==2016.2.25
+regex==2016.3.2
 requests==2.9.1
-scdl==1.4.1
-six==1.10.0
+scdl==1.5.0.post3

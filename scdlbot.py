@@ -19,7 +19,8 @@ os.makedirs(scdlconfdir)
 shutil.copy('scdl.cfg',scdlconfdir)
 
 scdldir = os.path.join(homedir,'scdldir')
-scdlbin = 'scdl -l '
+scdlbin = os.getenv('SCDL_BIN_PATH','') + 'scdl -l '
+print(scdlbin)
 scdlopts = ' -c --path ' + scdldir + ' --onlymp3 --addtofile'
 
 
