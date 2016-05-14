@@ -3,6 +3,7 @@ import regex
 import subprocess
 import os
 import shutil
+from transliterate import translit, get_available_language_codes
 
 __author__ = 'gpchelkin'
 
@@ -41,8 +42,9 @@ def sendaudio(scdlurl, chat_id):
     print("5")
     track = trackopen.read()
     print("6")
+    scdlfile_translit = translit(scdlfile, 'ru', reversed = True)
     raudio = requests.post(apiurl + 'sendAudio',
-                           files=dict(audio=(scdlfile, track, 'audio/mpeg')),
+                           files=dict(audio=(scdlfile_translit, track, 'audio/mpeg')),
                            data=dict(chat_id=chat_id))
     print('audio ' + scdlfile + ' sent')
     print(raudio.json()['result'])
