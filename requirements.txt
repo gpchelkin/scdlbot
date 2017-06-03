@@ -1,4 +1,5 @@
-regex==2017.05.26
 requests==2.17.3
 scdl==1.6.4
 transliterate==1.9
+soundscrape
+bandcamp-downloader
