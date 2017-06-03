@@ -17,3 +17,7 @@
 /help - Show this help
 
 _Bot is written by_ @gpchelkin _utilizing_ [Flyingrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
+
+Advanced SoundCloud: @scloud_bot
+SoundCloud and YouTube: @GetMusicBot
+VK: @vkmusic_bot_news
