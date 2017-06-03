@@ -42,7 +42,3 @@ heroku ps:stop worker
 
 - https://devcenter.heroku.com/articles/dynos
 - https://devcenter.heroku.com/articles/config-vars
-
-https://soundcloud.com/n3rdynastya/hazyxn3rdy
-https://soundcloud.com/b2band/moj-rock-n-roll
-https://shitmat.bandcamp.com/album/killababylonkutz-2
