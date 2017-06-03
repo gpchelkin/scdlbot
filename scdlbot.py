@@ -18,6 +18,7 @@ SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
 DL_DIR = os.getenv('DL_DIR', os.path.join(os.path.expanduser('~'), 'dl_dir'))
+cwd = os.getcwd()
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -33,7 +34,7 @@ patterns = {
 
 
 def show_help(bot, update):
-    text_send = open('help.md', 'r').read()
+    text_send = open(os.path.join(cwd, 'help.md'), 'r').read()
     bot.send_message(chat_id=update.message.chat_id, text=text_send,
                      parse_mode='Markdown', disable_web_page_preview=True)
 
@@ -92,6 +93,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
             }
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url.to_text(full_quote=True)])
+            os.chdir(cwd)
     file_list = []
     for d, dirs, files in os.walk(DL_DIR):
         for f in files:
