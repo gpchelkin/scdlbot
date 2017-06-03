@@ -128,12 +128,13 @@ def download(bot, update, args=None):
     urls = find_all_links(text, default_scheme="http")
     str_urls = " ".join([url.to_text() for url in urls])  # TODO
     if any((pattern in str_urls for pattern in patterns.values())):
-        bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
-                         text='_Wait a bit..._')
+        if not update.inline_query:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
+                             text='_Wait a bit.._')
         sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=update.message.message_id)
         if not sent_audio:
             bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
-                             text='_Error, file is too large (max 50 MB)...._')
+                             text='_Sorry, wrong link or file is too large (max 50 MB)_')
         if update.inline_query:
             results = []
             for audio_msg in sent_audio:
@@ -149,6 +150,7 @@ def download(bot, update, args=None):
 # def inline_chosen_callback(bot, update, args=None):
 #     result_id = update.chosen_inline_result.result_id
 #     user = update.chosen_inline_result.from_user
+
 
 def main():
     os.chdir(true_cwd)
