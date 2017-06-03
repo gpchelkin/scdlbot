@@ -4,4 +4,4 @@ transliterate==1.9
 #soundscrape==0.30.0
 bandcamp-downloader==0.0.8.post6
 plumbum==1.6.3
-python-telegram-bot==6.1b0
+python-telegram-bot==6.1b2
