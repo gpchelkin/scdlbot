@@ -1,23 +1,22 @@
-*Downloads* tracks from *SoundCloud* links (_mp3 128 Kbps rips only_), sets tags and artwork and sends to you as playable and downloadable *Telegram MP3 Audio*.
+*Download MP3 of tracks/sets/albums from various websites with tags and artwork.*
+*Privacy mode is disabled, so bot checks all messages in a chat for links.*
 
-*Just send a link:*
-`https://soundcloud.com/richarddjames/umil-25-01`
+_SoundCloud_ - tracks and playlists 128 kbps
+_Bandcamp_ - tracks and albums 128 kbps
+_YouTube_ - audio 192 kbps
+_Mixcloud_ - unstable and slow
+_More to come_
 
-*Or mobile one:*
-`https://m.soundcloud.com/platform/kerrier-district-techno-disco`
+*Just send a link(-s) in a message, even from mobile, like this:*
+`Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-*Or use it like this:*
-`/dl https://soundcloud.com/richarddjames/umil-25-01`
+*Inline mode also works (unstable and slow):*
+`@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
 
-*Or like this in group chats:*
-`/dl@scdlbot https://soundcloud.com/richarddjames/umil-25-01`
+*You could use a command /dl (or /dl@scdlbot for a group chat):*
+`/dl@scdlbot https://m.youtube.com/watch?v=Ug0y1ZhdHT0`
 
-*Commands:*
-/dl - Download track from SC link
-/help - Show this help
-
-_Bot is written by_ @gpchelkin _utilizing_ [Flyingrub's Soundcloud Music Downloader](https://github.com/flyingrub/scdl).
-
-Advanced SoundCloud: @scloud_bot
-SoundCloud and YouTube: @GetMusicBot
-VK: @vkmusic_bot_news
+_Created by_ @gpchelkin \[[pchelk.in](http://pchelk.in)]
+_With love for_ @Eklight \[[Электрокружок.рф](http://электрокружок.РФ)]
+_Similar bots:_ @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
+[Star on GitHub!](https://github.com/gpchelkin/scdlbot)

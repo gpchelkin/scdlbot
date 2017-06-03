@@ -1,0 +1,2 @@
+dl - Download track or set from a link
+help - Show the help message

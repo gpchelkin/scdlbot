@@ -1,134 +1,175 @@
+from __future__ import unicode_literals
+
 import configparser
+import logging
 import os
-import re
 import shutil
+from uuid import uuid4
 
-import requests
+import youtube_dl
+from boltons.urlutils import find_all_links
 from plumbum import local
-from transliterate import translit
+from telegram import MessageEntity, InlineQueryResultCachedAudio
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
 
-# import telegram
+# from transliterate import translit
 
-__author__ = 'gpchelkin'
+SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
+TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
+STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
+DL_DIR = os.getenv('DL_DIR', os.path.join(os.path.expanduser('~'), 'dl_dir'))
 
-auth_token = os.getenv('SC_AUTH_TOKEN')
-tg_bot_token = os.getenv('TG_BOT_TOKEN')
-api_url = 'https://api.telegram.org/bot' + tg_bot_token + '/'
-offset = 0
+scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
+bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
+bcdl_template = "%{artist} - %{track} - %{title} [%{album}]"
 
-config_scdl = configparser.ConfigParser()
-config_scdl['scdl'] = {
-    'auth_token': auth_token,  # https://flyingrub.github.io/scdl/
-    'path': '.',
+patterns = {
+    "soundcloud": "soundcloud.com",
+    "bandcamp": "bandcamp.com",
+    "youtube": "youtube.com",
+    "youtu.be": "youtu.be",
+    "mixcloud": "mixcloud.com"
 }
 
-home_dir = os.path.expanduser('~')
-scdl_cfgdir = os.path.join(home_dir, '.config/scdl')
-config_file = 'scdl.cfg'
 
-if os.path.exists(scdl_cfgdir):
-    shutil.rmtree(scdl_cfgdir)
-os.makedirs(scdl_cfgdir)
-with open(os.path.join(scdl_cfgdir, config_file), 'w') as f:
-    config_scdl.write(f)
-
-dl_dir = os.path.join(home_dir, 'scdl_dir')
-scdl_bin = os.getenv('BIN_PATH', '') + 'scdl'
-bcdl_bin = os.getenv('BIN_PATH', '') + 'bandcamp-dl'
-
-l_scdl = local[scdl_bin]
-l_bcdl = local[bcdl_bin]
-
-bcdl_template = "%{artist} %{album} %{track} - %{title}"
+def show_help(bot, update):
+    text_send = open('help.md', 'r').read()
+    bot.send_message(chat_id=update.message.chat_id, text=text_send,
+                     parse_mode='Markdown', disable_web_page_preview=True)
 
 
-# l_bcdl(
-#     "--base-dir=" + dl_dir,  # Base location of which all files are downloaded
-#     "--template=" + bcdl_template,  # Output filename template
-#     "--overwrite",  # Overwrite tracks that already exist
-#     "--embed-lyrics",  # Embed track lyrics (If available)
-#     "--group",  # Use album/track Label as iTunes grouping
-#     "--embed-art",  # Embed album art (If available)
-#     "--no-slugify",  # Disable slugification of track, album, and artist names
-#     bcdl_url  # Bandcamp album/track URL
-# )
+def initialize():
+    config = configparser.ConfigParser()
+    config['scdl'] = {
+        'auth_token': SC_AUTH_TOKEN,
+        'path': DL_DIR,
+    }
+    config_dir = os.path.join(os.path.expanduser('~'), '.config/scdl')
+    config_path = os.path.join(config_dir, 'scdl.cfg')
+    os.makedirs(config_dir, exist_ok=True)
+    with open(config_path, 'w') as f:
+        config.write(f)
 
 
-def send_audio(scdl_url, chat_id):
-    r_msg = requests.post(api_url + 'sendMessage',
-                          json=dict(chat_id=chat_id,
-                                    parse_mode='Markdown',
-                                    text='_Wait a bit, downloading and sending..._'))
-    if os.path.exists(dl_dir):
-        shutil.rmtree(dl_dir)
-    os.makedirs(dl_dir)
+def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
+    shutil.rmtree(DL_DIR, ignore_errors=True)
+    os.makedirs(DL_DIR)
+
+    for url in urls:
+        url_parts_len = len([part for part in url.path_parts if part])
+
+        if patterns["soundcloud"] in url.host:
+            if 2 <= url_parts_len <= 3:
+                scdl(
+                    "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
+                    "-c",  # Continue if a music already exist
+                    "--path", DL_DIR,  # Download the music to a custom path
+                    "--onlymp3",  # TODO Download only the mp3 file even if the track is Downloadable
+                    "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+                )
+        elif patterns["bandcamp"] in url.host:
+            if 2 <= url_parts_len <= 2:
+                bcdl(
+                    "--base-dir=" + DL_DIR,  # Base location of which all files are downloaded
+                    "--template=" + bcdl_template,  # Output filename template
+                    "--overwrite",  # Overwrite tracks that already exist
+                    "--group",  # Use album/track Label as iTunes grouping
+                    "--embed-art",  # Embed album art (If available)
+                    "--no-slugify",  # Disable slugification of track, album, and artist names
+                    url.to_text(full_quote=True)  # URL of album/track
+                )
+        elif (patterns["youtube"] in url.host and "watch" in url.path) or \
+                (patterns["youtu.be"] in url.host) or \
+                (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
+            os.chdir(DL_DIR)
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url.to_text(full_quote=True)])
+    file_list = []
+    for d, dirs, files in os.walk(DL_DIR):
+        for f in files:
+            path = os.path.join(d, f)
+            file_list.append(path)
+    file_list = sorted(file_list)
+    sent_audio = []
+    for file in file_list:
+        if ".mp3" in file:
+            # file_translit = translit(file, 'ru', reversed=True)
+            audio_msg = bot.send_audio(chat_id=chat_id, audio=open(file, 'rb'))
+            sent_audio.append(audio_msg)
+    shutil.rmtree(DL_DIR, ignore_errors=True)
+    return sent_audio
+
+
+def download(bot, update, args=None):
     print("1")
-    l_scdl(
-        "-l", scdl_url,  # URL can be track/playlist/user
-        "-c",  # Continue if a music already exist
-        "--path", dl_dir,  # Download the music to a custom path
-        "--onlymp3",  # TODO Download only the mp3 file even if the track is Downloadable
-        "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-    )
-    print("2")
-    scdl_file = os.listdir(dl_dir)[0]
-    print("3")
-    scdl_fullpath = os.path.join(dl_dir, scdl_file)
-    print("4")
-    track_open = open(scdl_fullpath, 'rb')
-    print("5")
-    track_read = track_open.read()
-    print("6")
-    scdlfile_translit = translit(scdl_file, 'ru', reversed=True)
-    r_audio = requests.post(api_url + 'sendAudio',
-                            files=dict(audio=(scdlfile_translit, track_read, 'audio/mpeg')),
-                            data=dict(chat_id=chat_id))
-    print('audio ' + scdl_file + ' sent')
-    print(r_audio.json()['result'])
+    if args:
+        text = " ".join(args)
+        chat_id = update.message.chat_id
+    elif update.inline_query:
+        text = update.inline_query.query
+        chat_id = STORE_CHAT_ID
+    else:
+        text = update.message.text
+        chat_id = update.message.chat_id
+    urls = find_all_links(text, default_scheme="http")
+    str_urls = " ".join([url.to_text() for url in urls])  # TODO
+    if any((pattern in str_urls for pattern in patterns.values())):
+        bot.send_message(chat_id=chat_id, parse_mode='Markdown', text='_Wait a bit..._')
+        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id)
+        if update.inline_query:
+            results = []
+            for audio_msg in sent_audio:
+                results.append(
+                    InlineQueryResultCachedAudio(
+                        id=str(uuid4()),
+                        audio_file_id=audio_msg.audio.file_id,
+                    )
+                )
+            bot.answer_inline_query(update.inline_query.id, results)
 
 
-while True:
-    r = requests.post(api_url + 'getUpdates', json=dict(offset=offset, timeout=60))
-    try:
-        updates = r.json()['result']
-        for i in range(len(updates)):
-            offset = updates[i]['update_id']
-            message = updates[i].get('message')
-            if message:
-                chat_id = message['chat']['id']
-                text_receive = message.get('text', '').strip()
-                if text_receive:
-                    print('got text ' + text_receive)  # TODO log time and all to file
-                    if re.match('^/start(@scdlbot)?(\s+.*)?$', text_receive) or \
-                            re.match('^/help(@scdlbot)?(\s+.*)?$', text_receive):
-                        text_send = open('help.md', 'r').read()
-                        r_msg = requests.post(api_url + 'sendMessage',
-                                              json=dict(chat_id=chat_id, text=text_send,
-                                                        parse_mode='Markdown',
-                                                        disable_web_page_preview=True))
-                    elif re.match('^/dl(@scdlbot)?(\s+.*)?$', text_receive):
-                        send_audio(text_receive.split()[1], chat_id)
-                    elif re.match('^http(s)?://(m.)?soundcloud.com/([\w\d_-]+)/([\w\d_-]+)$', text_receive):
-                        send_audio(text_receive, chat_id)
-                else:
-                    print('got dunno what')
-                msg_from = message.get('from')
-                print('  from',
-                      msg_from['first_name'],
-                      msg_from.get('last_name', ''),
-                      '@' + msg_from.get('username', ''))
+def main():
+    initialize()
 
-    except (KeyboardInterrupt, SystemExit):
-        raise
+    updater = Updater(token=TG_BOT_TOKEN)
+    dispatcher = updater.dispatcher
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+    start_handler = CommandHandler('start', show_help)
+    dispatcher.add_handler(start_handler)
+    help_handler = CommandHandler('help', show_help)
+    dispatcher.add_handler(help_handler)
+    dl_handler = CommandHandler(
+        'dl',
+        download,
+        pass_args=True)
+    dispatcher.add_handler(dl_handler)
+    link_handler = MessageHandler(
+        Filters.text & (Filters.entity(MessageEntity.URL) |
+                        Filters.entity(MessageEntity.TEXT_LINK)),
+        download)
+    dispatcher.add_handler(link_handler)
+    inline_download_handler = InlineQueryHandler(download)
+    dispatcher.add_handler(inline_download_handler)
 
-    except:
-        print('something went wrong')
-        # no key 'result' in dictionary -> very bad
-        # if r.status_code == requests.codes.ok:
-        # if r.json():
-        # if r.json()['ok']:
-        # if len(updates) != 0:
-        # if msgfrom
+    updater.start_polling()
 
-    finally:
-        offset += 1
+
+if __name__ == '__main__':
+    main()
+
+__author__ = "George Pchelkin"
+__copyright__ = "Copyright 2017, George Pchelkin"
+__credits__ = ["George Pchelkin"]
+__license__ = "GPL"
+__version__ = "0.0.1"
+__maintainer__ = "George Pchelkin"
+__email__ = "george@pchelk.in"
+__status__ = "Development"
