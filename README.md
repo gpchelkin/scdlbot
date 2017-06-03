@@ -32,7 +32,6 @@ heroku create --buildpack heroku/python
 heroku buildpacks:set heroku/python
 # Add ffmpeg buildpack for youtube-dl
 heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
-heroku buildpacks:add --index 1 https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git
 # Deploy your app to heroku
 git push heroku master
 # Set config vars

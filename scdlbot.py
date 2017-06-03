@@ -18,7 +18,7 @@ SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
 DL_DIR = os.getenv('DL_DIR', os.path.join(os.path.expanduser('~'), 'dl_dir'))
-cwd = os.getcwd()
+true_cwd = os.getcwd()
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -34,12 +34,14 @@ patterns = {
 
 
 def show_help(bot, update):
-    text_send = open(os.path.join(cwd, 'help.md'), 'r').read()
+    os.chdir(true_cwd)
+    text_send = open(os.path.join(true_cwd, 'help.md'), 'r').read()
     bot.send_message(chat_id=update.message.chat_id, text=text_send,
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
 def initialize():
+    os.chdir(true_cwd)
     config = configparser.ConfigParser()
     config['scdl'] = {
         'auth_token': SC_AUTH_TOKEN,
@@ -53,6 +55,7 @@ def initialize():
 
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
+    os.chdir(true_cwd)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
@@ -93,7 +96,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
             }
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url.to_text(full_quote=True)])
-            os.chdir(cwd)
+            os.chdir(true_cwd)
     file_list = []
     for d, dirs, files in os.walk(DL_DIR):
         for f in files:
@@ -103,15 +106,16 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
     sent_audio = []
     for file in file_list:
         if ".mp3" in file:
-            # file_translit = translit(file, 'ru', reversed=True)
-            audio_msg = bot.send_audio(chat_id=chat_id, audio=open(file, 'rb'))
-            sent_audio.append(audio_msg)
+            if os.path.getsize(file) <= 50000000:
+                # file_translit = translit(file, 'ru', reversed=True)
+                audio_msg = bot.send_audio(chat_id=chat_id, audio=open(file, 'rb'))
+                sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     return sent_audio
 
 
 def download(bot, update, args=None):
-    print("1")
+    os.chdir(true_cwd)
     if args:
         text = " ".join(args)
         chat_id = update.message.chat_id
@@ -139,6 +143,7 @@ def download(bot, update, args=None):
 
 
 def main():
+    os.chdir(true_cwd)
     initialize()
 
     updater = Updater(token=TG_BOT_TOKEN)
