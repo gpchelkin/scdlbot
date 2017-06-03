@@ -54,7 +54,7 @@ def initialize():
         config.write(f)
 
 
-def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
+def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     os.chdir(true_cwd)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
@@ -108,7 +108,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID):
         if ".mp3" in file:
             if os.path.getsize(file) <= 50000000:
                 # file_translit = translit(file, 'ru', reversed=True)
-                audio_msg = bot.send_audio(chat_id=chat_id, audio=open(file, 'rb'))
+                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id, audio=open(file, 'rb'))
                 sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     return sent_audio
@@ -128,8 +128,12 @@ def download(bot, update, args=None):
     urls = find_all_links(text, default_scheme="http")
     str_urls = " ".join([url.to_text() for url in urls])  # TODO
     if any((pattern in str_urls for pattern in patterns.values())):
-        bot.send_message(chat_id=chat_id, parse_mode='Markdown', text='_Wait a bit..._')
-        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id)
+        bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
+                         text='_Wait a bit..._')
+        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=update.message.message_id)
+        if not sent_audio:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
+                             text='_Error, file is too large (max 50 MB)...._')
         if update.inline_query:
             results = []
             for audio_msg in sent_audio:
@@ -141,6 +145,10 @@ def download(bot, update, args=None):
                 )
             bot.answer_inline_query(update.inline_query.id, results)
 
+
+# def inline_chosen_callback(bot, update, args=None):
+#     result_id = update.chosen_inline_result.result_id
+#     user = update.chosen_inline_result.from_user
 
 def main():
     os.chdir(true_cwd)
@@ -165,6 +173,8 @@ def main():
     dispatcher.add_handler(link_handler)
     inline_download_handler = InlineQueryHandler(download)
     dispatcher.add_handler(inline_download_handler)
+    # inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
+    # dispatcher.add_handler(inline_chosen_handler)
 
     updater.start_polling()
 
@@ -176,7 +186,7 @@ __author__ = "George Pchelkin"
 __copyright__ = "Copyright 2017, George Pchelkin"
 __credits__ = ["George Pchelkin"]
 __license__ = "GPL"
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __maintainer__ = "George Pchelkin"
 __email__ = "george@pchelk.in"
 __status__ = "Development"

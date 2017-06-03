@@ -24,22 +24,30 @@ Install [Heroku Toolbelt](https://toolbelt.heroku.com/), then:
 
 ```
 cd scdlbot
-# Login to Heroku
+# Login to Heroku:
 heroku login
-# Create app with python buildpack
+# Create app with python buildpack:
 heroku create --buildpack heroku/python
-# Set python buildpack for upcoming builds
+# Set python buildpack for upcoming builds:
 heroku buildpacks:set heroku/python
-# Add ffmpeg buildpack for youtube-dl
+# Add ffmpeg buildpack for youtube-dl:
 heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
-# Deploy your app to heroku
+# Deploy this app to Heroku:
 git push heroku master
-# Set config vars
+# Set config vars:
 heroku config:set SC_AUTH_TOKEN='<SC_AUTH_TOKEN>' TG_BOT_TOKEN='<TG_BOT_TOKEN>' STORE_CHAT_ID='<STORE_CHAT_ID>'
-# Start 1 worker dyno
+# Start 1 worker dyno:
 heroku ps:scale worker=1
-# Or stop worker dyno
+# Stop worker dyno:
 heroku ps:stop worker
+# Stop worker dyno:
+heroku ps:stop worker
+# Restart worker dyno:
+heroku ps:restart worker
+# Attach to logs:
+heroku logs -t -p worker
+# Test run
+heroku run "ffprobe -version"
 ```
 
 - https://devcenter.heroku.com/articles/dynos
