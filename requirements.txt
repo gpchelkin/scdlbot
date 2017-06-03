@@ -1,5 +1,5 @@
 requests==2.17.3
 scdl==1.6.4
 transliterate==1.9
-soundscrape
+soundscrape==0.30.0
 bandcamp-downloader
