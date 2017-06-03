@@ -18,5 +18,5 @@ _More to come_
 
 _Created by_ @gpchelkin \[[pchelk.in](http://pchelk.in)]
 _With love for_ @Eklight \[[Электрокружок.рф](http://электрокружок.РФ)]
-_Similar bots:_ @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
+_Other bots:_ @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
 [Star on GitHub!](https://github.com/gpchelkin/scdlbot)
