@@ -1,4 +1,4 @@
 regex==2017.05.26
-requests==2.11.1
+requests==2.17.3
 scdl==1.6.1
 transliterate==1.8.1
