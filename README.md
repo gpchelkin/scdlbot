@@ -1,8 +1,8 @@
 # [Music Downloader Telegram Bot](https://t.me/scdlbot)
+
 [![Updates](https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
 [![Python 3](https://pyup.io/repos/github/gpchelkin/scdlbot/python-3-shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
 [![Telegram Bot](https://img.shields.io/badge/telegram-bot-blue.svg)](https://t.me/scdlbot)
-
 
 ## Usage
 
@@ -11,6 +11,7 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer to the 
 ## Development
 
 ### Supported Sites and Required Libraries
+
 - [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 - [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
 - [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
@@ -19,6 +20,7 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer to the 
 - Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
 
 ### Environment Variables
+
 #### Required
 - `SC_AUTH_TOKEN` — [Obtain here](https://flyingrub.github.io/scdl/)
 - `TG_BOT_TOKEN` — [Obtain here](https://t.me/BotFather)
