@@ -59,12 +59,17 @@ def initialize():
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
-                     text='_Wait a bit.._')
+                     text='_Wait a bit_..')
 
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
+    def wait_append_dot():
+        bot.edit_message_text(chat_id=chat_id, message_id=wait_message.message_id, parse_mode='Markdown',
+                              text=wait_message.text+".")
+
     for url in urls:
+        wait_append_dot()
         url_parts_len = len([part for part in url.path_parts if part])
 
         if patterns["soundcloud"] in url.host:
@@ -73,7 +78,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
                     "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
                     "-c",  # Continue if a music already exist
                     "--path", DL_DIR,  # Download the music to a custom path
-                    "--onlymp3",  # TODO Download only the mp3 file even if the track is Downloadable
+                    "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                     "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
                 )
         elif patterns["bandcamp"] in url.host:
@@ -83,7 +88,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
                     "--template=" + bcdl_template,  # Output filename template
                     "--overwrite",  # Overwrite tracks that already exist
                     "--group",  # Use album/track Label as iTunes grouping
-                    "--embed-art",  # Embed album art (If available)
+                    "--embed-art",  # Embed album art (if available)
                     "--no-slugify",  # Disable slugification of track, album, and artist names
                     url.to_text(full_quote=True)  # URL of album/track
                 )
@@ -112,14 +117,15 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     for file in file_list:
         if ".mp3" in file:
             if os.path.getsize(file) < 45000000:
+                wait_append_dot()
                 # file_translit = translit(file, 'ru', reversed=True)
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id,
-                                           audio=open(file, 'rb'), caption="#scdlbot @scdlbot")
+                                           audio=open(file, 'rb'), caption="Downloaded with @scdlbot #scdlbot")  # TODO add site hashtag
                 sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     if not sent_audio:
         bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
-                         text='_Sorry, wrong link or file is too large (max 50 MB)_')
+                         text='_Sorry, something went wrong_')
     bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
     return sent_audio
 
@@ -135,7 +141,7 @@ def download(bot, update, args=None):
         text = update.message.text
         chat_id = update.message.chat_id
     urls = find_all_links(text, default_scheme="http")
-    str_urls = " ".join([url.to_text() for url in urls])  # TODO
+    str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
     if any((pattern in str_urls for pattern in patterns.values())):
         message_id = update.message.message_id if update.message else None
         sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=message_id)
