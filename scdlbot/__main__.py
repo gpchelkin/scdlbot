@@ -54,7 +54,7 @@ def initialize():
 
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
-    bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
+    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
                      text='_Wait a bit.._')
 
     shutil.rmtree(DL_DIR, ignore_errors=True)
@@ -116,6 +116,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     if not sent_audio:
         bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
                          text='_Sorry, wrong link or file is too large (max 50 MB)_')
+    bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
     return sent_audio
 
 
