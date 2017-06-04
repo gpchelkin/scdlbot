@@ -1,4 +1,4 @@
-*Download MP3 of tracks/sets/albums from various websites with tags and artwork. Note the 50 MB Telegram file limit.*
+*Download MP3 of tracks/sets/albums from various websites with tags and artwork. Files over 50 MB a split into parts due to bot-sent file size limit.*
 
 *SoundCloud* — tracks/playlists, 128 kbps
 *Bandcamp* — tracks/albums, 128 kbps
