@@ -64,12 +64,11 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
-    def wait_append_dot():
-        bot.edit_message_text(chat_id=chat_id, message_id=wait_message.message_id, parse_mode='Markdown',
-                              text=wait_message.text+".")
+    # def wait_append_dot():
+    #     bot.edit_message_text(chat_id=chat_id, message_id=wait_message.message_id, parse_mode='Markdown',
+    #                           text=wait_message.text+".")
 
     for url in urls:
-        wait_append_dot()
         url_parts_len = len([part for part in url.path_parts if part])
 
         if patterns["soundcloud"] in url.host:
@@ -117,7 +116,6 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
     for file in file_list:
         if ".mp3" in file:
             if os.path.getsize(file) < 45000000:
-                wait_append_dot()
                 # file_translit = translit(file, 'ru', reversed=True)
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id,
                                            audio=open(file, 'rb'), caption="Downloaded with @scdlbot #scdlbot")  # TODO add site hashtag
