@@ -54,6 +54,9 @@ def initialize():
 
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
+    bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
+                     text='_Wait a bit.._')
+
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
@@ -109,6 +112,9 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id, audio=open(file, 'rb'))
                 sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
+    if not sent_audio:
+        bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
+                         text='_Sorry, wrong link or file is too large (max 50 MB)_')
     return sent_audio
 
 
@@ -125,13 +131,8 @@ def download(bot, update, args=None):
     urls = find_all_links(text, default_scheme="http")
     str_urls = " ".join([url.to_text() for url in urls])  # TODO
     if any((pattern in str_urls for pattern in patterns.values())):
-        if not update.inline_query:
-            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
-                             text='_Wait a bit.._')
-        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=update.message.message_id)
-        if not sent_audio:
-            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id, parse_mode='Markdown',
-                             text='_Sorry, wrong link or file is too large (max 50 MB)_')
+        message_id = update.message.message_id if update.message else None
+        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=message_id)
         if update.inline_query:
             results = []
             for audio_msg in sent_audio:
