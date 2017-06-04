@@ -5,3 +5,4 @@ plumbum==1.6.3
 scdl==1.6.4
 bandcamp-downloader==0.0.8.post6
 youtube_dl==2017.5.29
+setuptools==36.0.1

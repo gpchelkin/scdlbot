@@ -10,11 +10,12 @@
 - `DL_DIR` - downloads dir (rewritten on every request!), default: `$HOME/dl_dir`
 - `BIN_PATH` - custom directory where `scdl` and `bandcamp-dl` are available
 
-### Used sites and libraries
+### Used sites and required libraries
 - [Telegram Bot API](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 - [SoundCloud](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
 - [Bandcamp](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
 - [YouTube](https://www.youtube.com/): [youtube-dl](https://rg3.github.io/youtube-dl)
+- [FFmpeg](https://ffmpeg.org) - [Windows](https://ffmpeg.zeranoe.com/builds/) - [Linux](https://johnvansickle.com/ffmpeg/)
 - Maybe would use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future
 
 
