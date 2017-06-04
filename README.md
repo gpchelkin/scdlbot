@@ -1,37 +1,47 @@
 # [Music Downloader Telegram Bot](https://t.me/scdlbot)
+[![Updates](https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
+[![Python 3](https://pyup.io/repos/github/gpchelkin/scdlbot/python-3-shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
+[![Telegram Bot](https://img.shields.io/badge/telegram-bot-blue.svg)](https://t.me/scdlbot)
 
-### Environment variables
+
+## Usage
+
+Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer to the [help message](scdlbot/messages/help.tg.md) directly from here.
+
+## Development
+
+### Supported Sites and Required Libraries
+- [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
+- [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
+- [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
+- [**YouTube**](https://www.youtube.com/), [**Mixcloud**](https://www.mixcloud.com/), etc.: [youtube-dl](https://rg3.github.io/youtube-dl)
+- [**FFmpeg**](https://ffmpeg.org) - [Windows builds](https://ffmpeg.zeranoe.com/builds/) - [Linux builds](https://johnvansickle.com/ffmpeg/)
+- Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
+
+### Environment Variables
 #### Required
-- `SC_AUTH_TOKEN` - Obtained from https://flyingrub.github.io/scdl/
-- `TG_BOT_TOKEN` - Obtained from https://t.me/BotFather
-- `STORE_CHAT_ID` - Chat ID for storing audios for inline mode
+- `SC_AUTH_TOKEN` — [Obtain here](https://flyingrub.github.io/scdl/)
+- `TG_BOT_TOKEN` — [Obtain here](https://t.me/BotFather)
+- `STORE_CHAT_ID` — Chat ID for storing audios for inline mode
 
 #### Optional
-- `DL_DIR` - downloads dir (rewritten on every request!), default: `$HOME/dl_dir`
-- `BIN_PATH` - custom directory where `scdl` and `bandcamp-dl` are available
-
-### Used sites and required libraries
-- [Telegram Bot API](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
-- [SoundCloud](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
-- [Bandcamp](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
-- [YouTube](https://www.youtube.com/): [youtube-dl](https://rg3.github.io/youtube-dl)
-- [FFmpeg](https://ffmpeg.org) - [Windows](https://ffmpeg.zeranoe.com/builds/) - [Linux](https://johnvansickle.com/ffmpeg/)
-- Maybe would use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future
-
+- `DL_DIR` — MP3 download directory (erased on every request!), default: `$HOME/dl_dir`
+- `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
 
 ### Deploying to [Heroku](https://heroku.com/)
 
-Install [Heroku Toolbelt](https://toolbelt.heroku.com/), then:
+Register on Heroku, install [Heroku Toolbelt](https://toolbelt.heroku.com/), then:
 
 ```
+git clone https://github.com/gpchelkin/scdlbot.git
 cd scdlbot
 # Login to Heroku:
 heroku login
-# Create app with python buildpack:
+# Create app with Python3 buildpack:
 heroku create --buildpack heroku/python
-# Set python buildpack for upcoming builds:
+# Set Python3 buildpack for upcoming builds:
 heroku buildpacks:set heroku/python
-# Add ffmpeg buildpack for youtube-dl:
+# Add FFmpeg buildpack for youtube-dl:
 heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
 # Deploy this app to Heroku:
 git push heroku master
@@ -51,5 +61,4 @@ heroku logs -t -p worker
 heroku run "ffprobe -version"
 ```
 
-- https://devcenter.heroku.com/articles/dynos
-- https://devcenter.heroku.com/articles/config-vars
+[More Heroku information](https://devcenter.heroku.com/articles/dynos).

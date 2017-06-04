@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 
 import configparser
@@ -5,6 +8,7 @@ import logging
 import os
 import shutil
 from uuid import uuid4
+
 import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
@@ -34,7 +38,7 @@ patterns = {
 
 
 def show_help(bot, update):
-    help_path = '/'.join(('messages', 'help.md'))
+    help_path = '/'.join(('messages', 'help.tg.md'))
     help_message = pkg_resources.resource_string(__name__, help_path)
     bot.send_message(chat_id=update.message.chat_id, text=help_message.decode("UTF-8"),
                      parse_mode='Markdown', disable_web_page_preview=True)
@@ -92,7 +96,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
-                    'preferredquality': '192',
+                    'preferredquality': '128',
                 }],
             }
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -182,12 +186,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-__author__ = "George Pchelkin"
-__copyright__ = "Copyright 2017, George Pchelkin"
-__credits__ = ["George Pchelkin"]
-__license__ = "GPL"
-__version__ = "0.1.0"
-__maintainer__ = "George Pchelkin"
-__email__ = "george@pchelk.in"
-__status__ = "Development"
