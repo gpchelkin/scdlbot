@@ -13,24 +13,24 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 
 ### Supported Sites and Requirements
 
-- [**Python 3.6**](https://www.python.org/) - [pyenv](https://github.com/pyenv/pyenv) recommended
+- [**Python 3.6**](https://www.python.org/): [pyenv](https://github.com/pyenv/pyenv) recommended
 - [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 - [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
 - [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
 - [**YouTube**](https://www.youtube.com/), [**Mixcloud**](https://www.mixcloud.com/), etc.: [youtube-dl](https://rg3.github.io/youtube-dl)
-- [**FFmpeg**](https://ffmpeg.org) - [Windows builds](https://ffmpeg.zeranoe.com/builds/) - [Linux builds](https://johnvansickle.com/ffmpeg/)
+- [**FFmpeg**](https://ffmpeg.org): [Windows builds](https://ffmpeg.zeranoe.com/builds/), [Linux builds](https://johnvansickle.com/ffmpeg/)
 - Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
 
 ### Environment Variables
 
 #### Required
-- `SC_AUTH_TOKEN` — SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 - `TG_BOT_TOKEN` — Telegram Bot API Token, [obtain here](https://t.me/BotFather)
 - `STORE_CHAT_ID` — Chat ID for storing audios for inline mode
+- `SC_AUTH_TOKEN` — SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
 #### Optional
-- `DL_DIR` — MP3 download directory (erased on every request!), default: `$HOME/dl_dir`
 - `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
+- `DL_DIR` — MP3 download directory (erased on every request!), default: `$HOME/dl_dir`
 
 ### Running Locally
 Install Python 3.6 and FFmpeg.

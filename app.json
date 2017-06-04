@@ -14,10 +14,6 @@
         }
     ],
     "env": {
-        "SC_AUTH_TOKEN": {
-            "description": "A secret key for verifying the integrity of signed cookies.",
-            "required": true
-        },
         "TG_BOT_TOKEN": {
             "description": "Telegram Bot API Token",
             "required": true
@@ -26,14 +22,17 @@
             "description": "Chat ID for storing audios for inline mode",
             "required": true
         },
-        "DL_DIR": {
-            "description": "MP3 download directory (erased on every request!), default: `$HOME/dl_dir`",
-            "value": "",
-            "required": false
+        "SC_AUTH_TOKEN": {
+            "description": "A secret key for verifying the integrity of signed cookies.",
+            "required": true
         },
         "BIN_PATH": {
             "description": "Custom directory with `scdl` and `bandcamp-dl` binaries are available",
-            "value": "",
+            "required": false
+        },
+        "DL_DIR": {
+            "description": "MP3 download directory (erased on every request!), default: ~ (user‘s home directory)",
+            "value": "~",
             "required": false
         }
     },

@@ -18,10 +18,10 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Inlin
 
 # from transliterate import translit
 
-SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
-DL_DIR = os.getenv('DL_DIR', os.path.join(os.path.expanduser('~'), 'dl_dir'))
+SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
+DL_DIR = os.path.join(os.path.expanduser(os.getenv('DL_DIR', '~')), 'scdlbot_downloads')
 true_cwd = os.getcwd()
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
@@ -90,7 +90,6 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
         elif (patterns["youtube"] in url.host and "watch" in url.path) or \
                 (patterns["youtu.be"] in url.host) or \
                 (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
-            os.chdir(DL_DIR)
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'postprocessors': [{
@@ -99,6 +98,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
                     'preferredquality': '128',
                 }],
             }
+            os.chdir(DL_DIR)
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url.to_text(full_quote=True)])
             os.chdir(true_cwd)
