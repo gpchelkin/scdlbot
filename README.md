@@ -6,7 +6,7 @@
 
 ## Usage
 
-Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer to the [help message](scdlbot/messages/help.tg.md) directly from here.
+Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directly to the [help message](scdlbot/messages/help.tg.md).
 
 ## Development
 
