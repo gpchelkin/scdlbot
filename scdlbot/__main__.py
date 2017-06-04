@@ -34,17 +34,13 @@ patterns = {
 
 
 def show_help(bot, update):
-    os.chdir(true_cwd)
-    resource_package = __name__
     help_path = '/'.join(('messages', 'help.md'))
-    help_message = pkg_resources.resource_string(resource_package, help_path)
-    # text_send = open(os.path.join(true_cwd, 'help.md'), 'r').read()
+    help_message = pkg_resources.resource_string(__name__, help_path)
     bot.send_message(chat_id=update.message.chat_id, text=help_message.decode("UTF-8"),
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
 def initialize():
-    os.chdir(true_cwd)
     config = configparser.ConfigParser()
     config['scdl'] = {
         'auth_token': SC_AUTH_TOKEN,
@@ -58,7 +54,6 @@ def initialize():
 
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
-    os.chdir(true_cwd)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
@@ -118,7 +113,6 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
 
 
 def download(bot, update, args=None):
-    os.chdir(true_cwd)
     if args:
         text = " ".join(args)
         chat_id = update.message.chat_id
@@ -156,7 +150,6 @@ def download(bot, update, args=None):
 
 
 def main():
-    os.chdir(true_cwd)
     initialize()
 
     updater = Updater(token=TG_BOT_TOKEN)
