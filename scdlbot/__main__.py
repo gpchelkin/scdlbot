@@ -37,9 +37,9 @@ def show_help(bot, update):
     os.chdir(true_cwd)
     resource_package = __name__
     help_path = '/'.join(('messages', 'help.md'))
-    help_message = pkg_resources.resource_stream(resource_package, help_path)
+    help_message = pkg_resources.resource_string(resource_package, help_path)
     # text_send = open(os.path.join(true_cwd, 'help.md'), 'r').read()
-    bot.send_message(chat_id=update.message.chat_id, text=open(help_message, 'r').read(),
+    bot.send_message(chat_id=update.message.chat_id, text=help_message.decode("UTF-8"),
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
