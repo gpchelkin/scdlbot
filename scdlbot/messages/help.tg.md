@@ -10,7 +10,7 @@ _More to come.._
 
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-Privacy mode is _enabled_, so if you want bot to check all messages in a chat for links, make him an _admin_
+[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _enabled_, so if you want bot to check all messages in a chat for links, make him an _admin_
 
 *Inline mode, but it is unstable and slow:*
 `@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
@@ -18,6 +18,6 @@ Privacy mode is _enabled_, so if you want bot to check all messages in a chat fo
 *You could use a command /dl or /dl@scdlbot with a link:*
 `/dl https://m.youtube.com/watch?v=Ug0y1ZhdHT0`
 
-*Created by* @gpchelkin \[[pchelk.in](http://pchelk.in)] — [Star on GitHub!](https://github.com/gpchelkin/scdlbot)
-With love for @Eklight \[[Электрокружок.РФ](http://электрокружок.рф)]
+*Created by* @gpchelkin / [pchelk.in](http://pchelk.in) — [Star on GitHub!](https://github.com/gpchelkin/scdlbot)
+With love for @Eklight / [Электрокружок.РФ](http://электрокружок.рф)
 Other music bots: @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
