@@ -1,14 +1,14 @@
-*Download MP3 of tracks/sets/albums from various websites with tags and artwork.*
-*Privacy mode is disabled, so bot checks all messages in a chat for links.*
+*Download MP3 of tracks/sets/albums from various websites with tags and artwork. 50MB Telegram limit.*
 
 _SoundCloud_ - tracks and playlists 128 kbps
 _Bandcamp_ - tracks and albums 128 kbps
-_YouTube_ - audio 192 kbps
+_YouTube_ - audio 192 kbps, don't send live videos
 _Mixcloud_ - unstable and slow
 _More to come_
 
 *Just send a link(-s) in a message, even from mobile, like this:*
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
+_Privacy mode is enabled, so if you want bot to check all messages in a chat for links, make him an admin_
 
 *Inline mode also works (unstable and slow):*
 `@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
