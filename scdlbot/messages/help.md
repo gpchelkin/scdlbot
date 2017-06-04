@@ -17,6 +17,6 @@ _More to come_
 `/dl@scdlbot https://m.youtube.com/watch?v=Ug0y1ZhdHT0`
 
 _Created by_ @gpchelkin \[[pchelk.in](http://pchelk.in)]
-_With love for_ @Eklight \[[Электрокружок.рф](http://электрокружок.РФ)]
-_Other bots:_ @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
+_With love for_ @Eklight \[[Электрокружок.РФ](http://электрокружок.рф)]
+_Other music bots:_ @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
 [Star on GitHub!](https://github.com/gpchelkin/scdlbot)
