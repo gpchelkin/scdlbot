@@ -109,7 +109,8 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None):
         if ".mp3" in file:
             if os.path.getsize(file) <= 50000000:
                 # file_translit = translit(file, 'ru', reversed=True)
-                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id, audio=open(file, 'rb'))
+                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id,
+                                           audio=open(file, 'rb'), caption="#music #scdlbot")
                 sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     if not sent_audio:
