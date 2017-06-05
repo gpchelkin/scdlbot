@@ -15,10 +15,12 @@ from boltons.urlutils import find_all_links
 from plumbum import local
 from telegram import MessageEntity, InlineQueryResultCachedAudio
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
+from telegram.contrib.botan import Botan
 
 # from transliterate import translit
 
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
+BOTAN_TOKEN = os.getenv('BOTAN_TOKEN', '')
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
 SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
 NO_CLUTTER_CHAT_IDS = list(map(int, os.getenv('NO_CLUTTER_CHAT_IDS', '').split(',')))
@@ -36,6 +38,8 @@ patterns = {
     "youtu.be": "youtu.be",
     "mixcloud": "mixcloud.com"
 }
+
+botan = Botan(BOTAN_TOKEN) if BOTAN_TOKEN else None
 
 
 def show_help(bot, update):
@@ -58,9 +62,9 @@ def initialize():
         config.write(f)
 
 
-def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None, caption=None):
-    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
-                     text='_Wait a bit_..')
+def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None, caption=None):
+    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
+                                    text='_Wait a bit_..')
 
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
@@ -118,34 +122,37 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, message_id=None, c
         if ".mp3" in file:
             if os.path.getsize(file) < 45000000:
                 # file_translit = translit(file, 'ru', reversed=True)
-                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=message_id,
+                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            audio=open(file, 'rb'), caption=caption)  # TODO add site hashtag
                 sent_audio.append(audio_msg)
     shutil.rmtree(DL_DIR, ignore_errors=True)
     if not sent_audio:
-        bot.send_message(chat_id=chat_id, reply_to_message_id=message_id, parse_mode='Markdown',
+        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
                          text='_Sorry, something went wrong_')
     bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
     return sent_audio
 
 
 def download(bot, update, args=None):
+    event_name = 'Download'
     if args:
         text = " ".join(args)
         chat_id = update.message.chat_id
+        botan.track(update.message, event_name=event_name) if botan else None
     elif update.inline_query:
         text = update.inline_query.query
         chat_id = STORE_CHAT_ID
     else:
         text = update.message.text
         chat_id = update.message.chat_id
+        botan.track(update.message, event_name=event_name) if botan else None
     urls = find_all_links(text, default_scheme="http")
     str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
     if any((pattern in str_urls for pattern in patterns.values())):
-        message_id = update.message.message_id if update.message and chat_id not in NO_CLUTTER_CHAT_IDS else None
+        reply_to_message_id = update.message.message_id if update.message and chat_id not in NO_CLUTTER_CHAT_IDS else None
         caption = "Downloaded with @scdlbot #scdlbot" if chat_id not in NO_CLUTTER_CHAT_IDS else None
 
-        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, message_id=message_id, caption=caption)
+        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id, caption=caption)
         if update.inline_query:
             results = []
             for audio_msg in sent_audio:

@@ -29,13 +29,17 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - `SC_AUTH_TOKEN` — SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
 #### Optional
+- `BOTAN_TOKEN` — [Botan.io](http://botan.io/) token
 - `NO_CLUTTER_CHAT_IDS` — Comma-separated chat IDs with no replying and caption hashtags
 - `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
 - `DL_DIR` — Parent directory for MP3 download directory, default: ~ (user's home directory)
 
 ### Running Locally
-Install Python 3.6 and FFmpeg.
+Install Python 3.6 and FFmpeg, then:
+
 ```
+git clone https://github.com/gpchelkin/scdlbot.git
+cd scdlbot
 python3 -m scdlbot
 ```
 
@@ -49,7 +53,7 @@ Press this button:
 
 #### Manually
 
-Register on Heroku, install [Heroku Toolbelt](https://toolbelt.heroku.com/), then:
+Register on Heroku, install [Heroku CLI](https://cli.heroku.com/), then:
 
 ```
 git clone https://github.com/gpchelkin/scdlbot.git

@@ -26,6 +26,10 @@
             "description": "A secret key for verifying the integrity of signed cookies",
             "required": true
         },
+        "BOTAN_TOKEN": {
+            "description": "Botan.io Token",
+            "required": false
+        },
         "NO_CLUTTER_CHAT_IDS": {
             "description": "Comma-separated chat IDs with no replying and caption hashtags",
             "required": false
