@@ -13,7 +13,7 @@ import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
 from plumbum import local
-from telegram import MessageEntity, InlineQueryResultCachedAudio
+from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
 from telegram.contrib.botan import Botan
 
@@ -65,7 +65,6 @@ def initialize():
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None, caption=None):
     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
                                     text='_Wait a bit_..')
-
     shutil.rmtree(DL_DIR, ignore_errors=True)
     os.makedirs(DL_DIR)
 
@@ -74,8 +73,9 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
     #                           text=wait_message.text+".")
 
     for url in urls:
-        url_parts_len = len([part for part in url.path_parts if part])
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
 
+        url_parts_len = len([part for part in url.path_parts if part])
         if patterns["soundcloud"] in url.host:
             if 2 <= url_parts_len <= 3:
                 scdl(
@@ -121,6 +121,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
     for file in file_list:
         if ".mp3" in file:
             if os.path.getsize(file) < 45000000:
+                bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
                 # file_translit = translit(file, 'ru', reversed=True)
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            audio=open(file, 'rb'), caption=caption)  # TODO add site hashtag
