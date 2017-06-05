@@ -23,15 +23,19 @@
             "required": true
         },
         "SC_AUTH_TOKEN": {
-            "description": "A secret key for verifying the integrity of signed cookies.",
+            "description": "A secret key for verifying the integrity of signed cookies",
             "required": true
         },
+        "NO_CLUTTER_CHAT_IDS": {
+            "description": "Comma-separated chat IDs with no replying and caption hashtags",
+            "required": false
+        },
         "BIN_PATH": {
-            "description": "Custom directory with `scdl` and `bandcamp-dl` binaries are available",
+            "description": "Custom directory with scdl and bandcamp-dl binaries are available",
             "required": false
         },
         "DL_DIR": {
-            "description": "MP3 download directory (erased on every request!), default: ~ (user‘s home directory)",
+            "description": "Parent directory for MP3 download directory, default: ~ (user's home directory)",
             "value": "~",
             "required": false
         }
