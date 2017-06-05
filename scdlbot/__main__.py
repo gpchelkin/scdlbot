@@ -21,7 +21,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Inlin
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
 SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
-NO_CLUTTER_CHAT_IDS = os.getenv('NO_CLUTTER_CHAT_IDS', '').split(',')
+NO_CLUTTER_CHAT_IDS = list(map(int, os.getenv('NO_CLUTTER_CHAT_IDS', '').split(',')))
 DL_DIR = os.path.join(os.path.expanduser(os.getenv('DL_DIR', '~')), 'scdlbot_downloads')
 true_cwd = os.getcwd()
 
