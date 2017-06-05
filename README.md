@@ -11,6 +11,15 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 
 ## Development
 
+### TODO
+- YouTube playlists support
+- Split audio by 50 MB size and send it
+- Disable privacy mode and check a subset of patterns
+- If bot is admin, delete command messages after fulfilling them
+- Deploy with Dokku
+- Do something cool with Botan
+- Secret stuff
+
 ### Supported Sites and Requirements
 
 - [**Python 3.6**](https://www.python.org/): [pyenv](https://github.com/pyenv/pyenv) recommended
