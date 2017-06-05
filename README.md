@@ -16,7 +16,7 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - Split audio by 50 MB size and send it
 - Disable privacy mode and check a subset of patterns
 - If bot is admin, delete command messages after fulfilling them
-- Deploy with Dokku
+- Add thread for send_chat_action
 - Do something cool with Botan
 - Secret stuff
 
@@ -52,7 +52,7 @@ cd scdlbot
 python3 -m scdlbot
 ```
 
-### Deploying to [Heroku](https://heroku.com/)
+### Deploying to [Heroku](https://heroku.com/) or [Dokku](https://github.com/dokku/dokku)
 
 #### Automatically
 
@@ -61,7 +61,6 @@ Press this button:
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 #### Manually
-
 Register on Heroku, install [Heroku CLI](https://cli.heroku.com/), then:
 
 ```
@@ -78,11 +77,9 @@ heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack
 # Deploy this app to Heroku:
 git push heroku master
 # Set config vars:
-heroku config:set SC_AUTH_TOKEN='<SC_AUTH_TOKEN>' TG_BOT_TOKEN='<TG_BOT_TOKEN>' STORE_CHAT_ID='<STORE_CHAT_ID>'
+heroku config:set TG_BOT_TOKEN='<TG_BOT_TOKEN>' STORE_CHAT_ID='<STORE_CHAT_ID>' SC_AUTH_TOKEN='<SC_AUTH_TOKEN>'
 # Start 1 worker dyno:
 heroku ps:scale worker=1
-# Stop worker dyno:
-heroku ps:stop worker
 # Stop worker dyno:
 heroku ps:stop worker
 # Restart worker dyno:
@@ -93,4 +90,4 @@ heroku logs -t -p worker
 heroku run "ffprobe -version"
 ```
 
-[More Heroku information](https://devcenter.heroku.com/articles/dynos).
+Or use [Dokku](https://github.com/dokku/dokku) on your own server. App is tested and fully ready for deployment.
