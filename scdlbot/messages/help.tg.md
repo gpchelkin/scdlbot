@@ -12,11 +12,13 @@ _More to come.._
 *Or just send text with links, even mobile, like this (forwarded messages work too):*
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _enabled_, so make bot an _admin_ you want bot to grab links from messages _without command_ in a group chat. 
+[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _enabled_, so make bot an _admin_ if you want it to grab links from messages _without command_ in a group chat. 
 
 *Inline mode might be slow:*
-`@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
+`@scdlbot https://youtube.com/watch?v=N9XKLqGqwLA`
 
-*Created by* @gpchelkin / [🐝👍.WS](http://xn--lo8h6c.ws/) / [🌟GitHub](https://github.com/gpchelkin/scdlbot)
+[🌟GitHub](https://github.com/gpchelkin/scdlbot)
+*Created by* @gpchelkin / [🐝👍.WS](http://xn--lo8h6c.ws/)
 *With* `<3` *for* @Eklight / [⚡⭕.РФ](http://Электрокружок.РФ)
-Not mine: @vkm\_bot @scloud\_bot @GetMusicBot
+
+Other: @vkm\_bot @scloud\_bot @GetMusicBot
