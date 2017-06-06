@@ -210,7 +210,7 @@ def main():
         updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
                               url_path=TG_BOT_TOKEN)
-        print(PORT)
+        print(urljoin(APP_URL, TG_BOT_TOKEN))
         updater.bot.set_webhook(urljoin(APP_URL, TG_BOT_TOKEN))
         updater.idle()
     else:
