@@ -105,8 +105,8 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
                     url.to_text(full_quote=True)  # URL of album/track
                 )
         elif (patterns["youtube"] in url.host and "watch" in url.path) or \
-                (patterns["youtu.be"] in url.host) or \
-                (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
+            (patterns["youtu.be"] in url.host) or \
+            (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'postprocessors': [{
@@ -125,7 +125,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
             path = os.path.join(d, f)
             file_list.append(path)
     file_list = sorted(file_list)
-    sent_audio = []
+    sent_audio_ids = []
     for file in file_list:
         if ".mp3" in file:
             if os.path.getsize(file) < 45000000:
@@ -133,45 +133,44 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
                 # file_translit = translit(file, 'ru', reversed=True)
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            audio=open(file, 'rb'), caption=caption)  # TODO add site hashtag
-                sent_audio.append(audio_msg)
+                sent_audio_ids.append(audio_msg.audio.file_id)
     shutil.rmtree(download_dir, ignore_errors=True)
-    if not sent_audio:
+    if not sent_audio_ids:
         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
                          text='_Sorry, something went wrong_')
     bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
-    return sent_audio
+    return sent_audio_ids
 
 
 def download(bot, update, args=None):
     event_name = 'Download'
-    if args:
-        text = " ".join(args)
-        chat_id = update.message.chat_id
-        botan.track(update.message, event_name=event_name) if botan else None
-    elif update.inline_query:
+    if update.inline_query:
         text = update.inline_query.query
         chat_id = STORE_CHAT_ID
         botan.track(update.inline_query, event_name=event_name + ' Inline Query') if botan else None
     else:
-        text = update.message.text
         chat_id = update.message.chat_id
         botan.track(update.message, event_name=event_name) if botan else None
+        text = " ".join(args) if args else update.message.text
     urls = find_all_links(text, default_scheme="http")
     str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
     if any((pattern in str_urls for pattern in patterns.values())):
-        reply_to_message_id = update.message.message_id if update.message and chat_id not in NO_CLUTTER_CHAT_IDS else None
-        caption = "Downloaded with @scdlbot #scdlbot" if chat_id not in NO_CLUTTER_CHAT_IDS else None
+        reply_to_message_id = None
+        caption = None
+        if update.message and chat_id not in NO_CLUTTER_CHAT_IDS:
+            reply_to_message_id = update.message.message_id
+            caption = "Downloaded with @scdlbot #scdlbot"
 
-        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id,
-                                             reply_to_message_id=reply_to_message_id,
-                                             caption=caption)
+        sent_audio_ids = download_and_send_audio(bot, urls, chat_id=chat_id,
+                                                 reply_to_message_id=reply_to_message_id,
+                                                 caption=caption)
         if update.inline_query:
             results = []
-            for audio_msg in sent_audio:
+            for audio_id in sent_audio_ids:
                 results.append(
                     InlineQueryResultCachedAudio(
                         id=str(uuid4()),
-                        audio_file_id=audio_msg.audio.file_id,
+                        audio_file_id=audio_id,
                     )
                 )
             bot.answer_inline_query(update.inline_query.id, results)
