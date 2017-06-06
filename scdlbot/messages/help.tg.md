@@ -18,6 +18,6 @@ _More to come.._
 *You could use a command /dl or /dl@scdlbot with a link:*
 `/dl https://m.youtube.com/watch?v=Ug0y1ZhdHT0`
 
-*Created by* @gpchelkin / [pchelk.in](http://pchelk.in) — [Star on GitHub!](https://github.com/gpchelkin/scdlbot)
-With love for @Eklight / [Электрокружок.РФ](http://электрокружок.рф)
+*Created by* @gpchelkin [🐝👍.ws](http://xn--lo8h6c.ws/) — [🌟 on GitHub!](https://github.com/gpchelkin/scdlbot)
+With love for @Eklight ⚡⭕ [Электрокружок.РФ](http://электрокружок.рф)
 Other music bots: @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
