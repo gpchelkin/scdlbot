@@ -14,8 +14,8 @@ import youtube_dl
 from boltons.urlutils import find_all_links
 from plumbum import local
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
 from telegram.contrib.botan import Botan
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
 
 # from transliterate import translit
 
@@ -153,7 +153,9 @@ def download(bot, update, args=None):
         reply_to_message_id = update.message.message_id if update.message and chat_id not in NO_CLUTTER_CHAT_IDS else None
         caption = "Downloaded with @scdlbot #scdlbot" if chat_id not in NO_CLUTTER_CHAT_IDS else None
 
-        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id, caption=caption)
+        sent_audio = download_and_send_audio(bot, urls, chat_id=chat_id,
+                                             reply_to_message_id=reply_to_message_id,
+                                             caption=caption)
         if update.inline_query:
             results = []
             for audio_msg in sent_audio:
