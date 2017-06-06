@@ -7,6 +7,7 @@ import configparser
 import logging
 import os
 import shutil
+from urllib.parse import urljoin
 from uuid import uuid4
 
 import pkg_resources
@@ -16,6 +17,7 @@ from plumbum import local
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
+from telegram.ext.dispatcher import run_async
 
 # from transliterate import translit
 
@@ -24,7 +26,10 @@ BOTAN_TOKEN = os.getenv('BOTAN_TOKEN', '')
 STORE_CHAT_ID = os.environ['STORE_CHAT_ID']
 SC_AUTH_TOKEN = os.environ['SC_AUTH_TOKEN']
 NO_CLUTTER_CHAT_IDS = list(map(int, os.getenv('NO_CLUTTER_CHAT_IDS', '').split(',')))
-DL_DIR = os.path.join(os.path.expanduser(os.getenv('DL_DIR', '~')), 'scdlbot_downloads')
+DL_DIR = os.path.expanduser(os.getenv('DL_DIR', '~'))
+USE_WEBHOOK = int(os.getenv('USE_WEBHOOK', '0'))
+PORT = int(os.getenv('PORT', '5000'))
+APP_URL = os.getenv('APP_URL', '')
 true_cwd = os.getcwd()
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
@@ -40,12 +45,13 @@ patterns = {
 }
 
 botan = Botan(BOTAN_TOKEN) if BOTAN_TOKEN else None
+help_path = '/'.join(('messages', 'help.tg.md'))
+help_message = pkg_resources.resource_string(__name__, help_path)
+help_message_decoded = help_message.decode("UTF-8")
 
 
 def show_help(bot, update):
-    help_path = '/'.join(('messages', 'help.tg.md'))
-    help_message = pkg_resources.resource_string(__name__, help_path)
-    bot.send_message(chat_id=update.message.chat_id, text=help_message.decode("UTF-8"),
+    bot.send_message(chat_id=update.message.chat_id, text=help_message_decoded,
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
@@ -62,11 +68,13 @@ def initialize():
         config.write(f)
 
 
+@run_async
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None, caption=None):
     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
                                     text='_Wait a bit_..')
-    shutil.rmtree(DL_DIR, ignore_errors=True)
-    os.makedirs(DL_DIR)
+    download_dir = os.path.join(DL_DIR, str(uuid4()))
+    shutil.rmtree(download_dir, ignore_errors=True)
+    os.makedirs(download_dir)
 
     # def wait_append_dot():
     #     bot.edit_message_text(chat_id=chat_id, message_id=wait_message.message_id, parse_mode='Markdown',
@@ -81,14 +89,14 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
                 scdl(
                     "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
                     "-c",  # Continue if a music already exist
-                    "--path", DL_DIR,  # Download the music to a custom path
+                    "--path", download_dir,  # Download the music to a custom path
                     "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                     "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
                 )
         elif patterns["bandcamp"] in url.host:
             if 2 <= url_parts_len <= 2:
                 bcdl(
-                    "--base-dir=" + DL_DIR,  # Base location of which all files are downloaded
+                    "--base-dir=" + download_dir,  # Base location of which all files are downloaded
                     "--template=" + bcdl_template,  # Output filename template
                     "--overwrite",  # Overwrite tracks that already exist
                     "--group",  # Use album/track Label as iTunes grouping
@@ -107,12 +115,12 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
                     'preferredquality': '128',
                 }],
             }
-            os.chdir(DL_DIR)
+            os.chdir(download_dir)
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url.to_text(full_quote=True)])
             os.chdir(true_cwd)
     file_list = []
-    for d, dirs, files in os.walk(DL_DIR):
+    for d, dirs, files in os.walk(download_dir):
         for f in files:
             path = os.path.join(d, f)
             file_list.append(path)
@@ -126,7 +134,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
                 audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            audio=open(file, 'rb'), caption=caption)  # TODO add site hashtag
                 sent_audio.append(audio_msg)
-    shutil.rmtree(DL_DIR, ignore_errors=True)
+    shutil.rmtree(download_dir, ignore_errors=True)
     if not sent_audio:
         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
                          text='_Sorry, something went wrong_')
@@ -197,8 +205,14 @@ def main():
     dispatcher.add_handler(inline_download_handler)
     # inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
     # dispatcher.add_handler(inline_chosen_handler)
-
-    updater.start_polling()
+    if USE_WEBHOOK:
+        updater.start_webhook(listen="0.0.0.0",
+                              port=PORT,
+                              url_path=TG_BOT_TOKEN)
+        updater.bot.set_webhook(urljoin(APP_URL, TG_BOT_TOKEN))
+        updater.idle()
+    else:
+        updater.start_polling()
 
 
 if __name__ == '__main__':
