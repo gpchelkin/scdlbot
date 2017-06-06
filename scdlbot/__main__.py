@@ -208,7 +208,7 @@ def main():
 
     if USE_WEBHOOK:
         url_path = TG_BOT_TOKEN.replace(":", "")
-        updater.start_webhook(listen="127.0.0.1",
+        updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
                               url_path=url_path)
         updater.bot.set_webhook(urljoin(APP_URL, url_path))
