@@ -18,5 +18,5 @@ _More to come.._
 `@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
 
 *Created by* @gpchelkin / [🐝👍.WS](http://xn--lo8h6c.ws/) / [🌟GitHub](https://github.com/gpchelkin/scdlbot)
-With `<3` for @Eklight / [⚡⭕.РФ](http://Электрокружок.РФ)
-Not mine: @scloud\_bot @GetMusicBot @vkmusic\_bot\_news
+*With* `<3` *for* @Eklight / [⚡⭕.РФ](http://Электрокружок.РФ)
+Not mine: @vkm\_bot @scloud\_bot @GetMusicBot
