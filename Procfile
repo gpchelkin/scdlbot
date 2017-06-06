@@ -1,1 +1,1 @@
-worker: python3 -m scdlbot
+web: python3 -m scdlbot

@@ -16,7 +16,7 @@ from boltons.urlutils import find_all_links
 from plumbum import local
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
 from telegram.contrib.botan import Botan
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, ChosenInlineResultHandler
 from telegram.ext.dispatcher import run_async
 
 # from transliterate import translit
@@ -151,6 +151,7 @@ def download(bot, update, args=None):
     elif update.inline_query:
         text = update.inline_query.query
         chat_id = STORE_CHAT_ID
+        botan.track(update.inline_query, event_name=event_name + ' Inline Query') if botan else None
     else:
         text = update.message.text
         chat_id = update.message.chat_id
@@ -176,9 +177,8 @@ def download(bot, update, args=None):
             bot.answer_inline_query(update.inline_query.id, results)
 
 
-# def inline_chosen_callback(bot, update, args=None):
-#     result_id = update.chosen_inline_result.result_id
-#     user = update.chosen_inline_result.from_user
+def inline_chosen_callback(bot, update, args=None):
+    botan.track(update.chosen_inline_result, event_name='Download Inline Chosen Result') if botan else None
 
 
 def main():
@@ -203,12 +203,14 @@ def main():
     dispatcher.add_handler(link_handler)
     inline_download_handler = InlineQueryHandler(download)
     dispatcher.add_handler(inline_download_handler)
-    # inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
-    # dispatcher.add_handler(inline_chosen_handler)
+    inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
+    dispatcher.add_handler(inline_chosen_handler)
+
     if USE_WEBHOOK:
         updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
                               url_path=TG_BOT_TOKEN)
+        print(PORT)
         updater.bot.set_webhook(urljoin(APP_URL, TG_BOT_TOKEN))
         updater.idle()
     else:

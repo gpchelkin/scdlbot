@@ -82,14 +82,14 @@ heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack
 git push heroku master
 # Set config vars:
 heroku config:set TG_BOT_TOKEN='<TG_BOT_TOKEN>' STORE_CHAT_ID='<STORE_CHAT_ID>' SC_AUTH_TOKEN='<SC_AUTH_TOKEN>'
-# Start 1 worker dyno:
-heroku ps:scale worker=1
-# Stop worker dyno:
-heroku ps:stop worker
-# Restart worker dyno:
-heroku ps:restart worker
+# Start 1 web dyno:
+heroku ps:scale web=1
+# Stop web dyno:
+heroku ps:stop web
+# Restart web dyno:
+heroku ps:restart web
 # Attach to logs:
-heroku logs -t -p worker
+heroku logs -t -p web
 # Test run
 heroku run "ffprobe -version"
 ```
