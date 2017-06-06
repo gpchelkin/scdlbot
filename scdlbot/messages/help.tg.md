@@ -6,17 +6,16 @@
 *Mixcloud* — unstable and slow, 128 kbps
 _More to come.._
 
-*Include a link(-s) in a message, even from mobile, like this (forwarded messages work too):*
+*Use a /dl or /dl@scdlbot command with a link(-s) / text with links:*
+`/dl hey, https://m.youtube.com/watch?v=Ug0y1ZhdHT0 is neat! luvin' it`
 
+*Or just send text with links, even mobile, like this (forwarded messages work too):*
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _enabled_, so if you want bot to check all messages in a chat for links, make him an _admin_
+[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _enabled_, so make bot an _admin_ you want bot to grab links from messages _without command_ in a group chat. 
 
-*Inline mode, but it is unstable and slow:*
+*Inline mode might be slow:*
 `@scdlbot https://www.youtube.com/watch?v=N9XKLqGqwLA`
-
-*You could use a command /dl or /dl@scdlbot with a link:*
-`/dl https://m.youtube.com/watch?v=Ug0y1ZhdHT0`
 
 *Created by* @gpchelkin / [🐝👍.ws](http://xn--lo8h6c.ws/) / [🌟 GitHub](https://github.com/gpchelkin/scdlbot)
 With love for @Eklight / [⚡⭕.РФ](http://Электрокружок.РФ)
