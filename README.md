@@ -12,13 +12,11 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 ## Development
 
 ### TODO
+- [Dokku webhooks support](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot)
 - YouTube playlists support
-- Split audio by 50 MB size and send it
+- Split audio by 50 MB size for sending
 - Disable privacy mode and check a subset of patterns
-- If bot is admin, delete command messages after fulfilling them
-- Add thread for send_chat_action
-- Do something cool with Botan
-- Secret stuff
+- Something cool with Botan
 
 ### Supported Sites and Requirements
 
@@ -33,16 +31,16 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 ### Environment Variables
 
 #### Required
-- `TG_BOT_TOKEN` — Telegram Bot API Token, [obtain here](https://t.me/BotFather)
-- `STORE_CHAT_ID` — Chat ID for storing audios for inline mode
-- `SC_AUTH_TOKEN` — SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
+- `TG_BOT_TOKEN`: Telegram Bot API Token, [obtain here](https://t.me/BotFather)
+- `STORE_CHAT_ID`: Chat ID for storing audios for inline mode
+- `SC_AUTH_TOKEN`: SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
 "https://<appname>.herokuapp.com/"
 #### Optional
-- `USE_WEBHOOK` - `0` or `1`, default: `0`
-- `PORT`
-- `APP_URL`
-- `BOTAN_TOKEN` — [Botan.io](http://botan.io/) [token](http://appmetrica.yandex.com/)
+- `USE_WEBHOOK`: `0` or `1`, default: `0`
+- `PORT`: 
+- `APP_URL`: 
+- `BOTAN_TOKEN`: [Botan.io](http://botan.io/) [token](http://appmetrica.yandex.com/)
 - `NO_CLUTTER_CHAT_IDS` — Comma-separated chat IDs with no replying and caption hashtags
 - `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
 - `DL_DIR` — Parent directory for MP3 download directory, default: ~ (user's home directory)

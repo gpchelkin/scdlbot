@@ -22,7 +22,7 @@ requirements = [
 
 setup(
     name='scdlbot',
-    version='0.1.0',
+    version='0.2.0',
     description=" Downloads MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
     long_description=readme + '\n\n' + history,
     author="George Pchelkin",
