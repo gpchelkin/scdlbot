@@ -207,11 +207,11 @@ def main():
     dispatcher.add_handler(inline_chosen_handler)
 
     if USE_WEBHOOK:
+        url_path = TG_BOT_TOKEN.replace(":", "")
         updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
-                              url_path=TG_BOT_TOKEN)
-        print(urljoin(APP_URL, TG_BOT_TOKEN))
-        updater.bot.set_webhook(urljoin(APP_URL, TG_BOT_TOKEN))
+                              url_path=url_path)
+        updater.bot.set_webhook(urljoin(APP_URL, url_path))
         updater.idle()
     else:
         updater.start_polling()
