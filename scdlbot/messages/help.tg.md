@@ -21,4 +21,4 @@ _More to come.._
 *Created by* @gpchelkin | [🐝👍.WS](http://xn--lo8h6c.ws/)
 *with* `<3` *for* @Eklight | [⚡⭕.РФ](http://Электрокружок.РФ)
 
-Other: @vkm\_bot @scloud\_bot @GetMusicBot
+Not mine: @vkm\_bot @scloud\_bot @GetMusicBot
