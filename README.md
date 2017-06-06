@@ -16,6 +16,7 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - YouTube playlists support
 - Split audio by 50 MB size for sending
 - Disable privacy mode and check a subset of patterns
+- Async download and send
 - Something cool with Botan
 
 ### Supported Sites and Requirements
@@ -92,4 +93,4 @@ heroku logs -t -p web
 heroku run "ffprobe -version"
 ```
 
-Or use [Dokku](https://github.com/dokku/dokku) on your own server. App is tested and fully ready for deployment.
+Or use [Dokku](https://github.com/dokku/dokku) on your own server. App is tested and fully ready for deployment (just no webhooks yet).

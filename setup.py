@@ -12,7 +12,7 @@ with open('HISTORY.md') as history_file:
 requirements = [
     "python-telegram-bot",
     "boltons",
-    "transliterate",
+    # "transliterate",
     "plumbum",
     "scdl",
     "bandcamp-downloader",
@@ -23,7 +23,7 @@ requirements = [
 setup(
     name='scdlbot',
     version='0.2.0',
-    description=" Downloads MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
+    description="Downloads MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
     long_description=readme + '\n\n' + history,
     author="George Pchelkin",
     author_email='george@pchelk.in',
