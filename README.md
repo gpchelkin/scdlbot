@@ -36,11 +36,10 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - `STORE_CHAT_ID`: Chat ID for storing audios for inline mode
 - `SC_AUTH_TOKEN`: SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
-"https://<appname>.herokuapp.com/"
 #### Optional
 - `USE_WEBHOOK`: `0` or `1`, default: `0`
 - `PORT`: 
-- `APP_URL`: 
+- `APP_URL`: `https://<appname>.herokuapp.com/`
 - `BOTAN_TOKEN`: [Botan.io](http://botan.io/) [token](http://appmetrica.yandex.com/)
 - `NO_CLUTTER_CHAT_IDS` — Comma-separated chat IDs with no replying and caption hashtags
 - `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
