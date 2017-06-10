@@ -154,7 +154,7 @@ def download_callback(bot, update, args=None):
                     bot.answer_inline_query(update.inline_query.id, results)
         else:
             reply_to_message_id = update.message.message_id
-            texts[reply_to_message_id] = update.message.text
+            texts[str(reply_to_message_id)] = update.message.text
             button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + str(reply_to_message_id))
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
             inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
@@ -226,7 +226,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
             file_parts.append(file)
         file_parts_len = len(file_parts)
         sent_audio_ids = []
-        for file, index in enumerate(file_parts):
+        for index, file in enumerate(file_parts):
             logger.debug(file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
