@@ -18,6 +18,7 @@ requirements = [
     "bandcamp-downloader",
     "youtube_dl",
     "setuptools",
+    "pydub",
 ]
 
 setup(

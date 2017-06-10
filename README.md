@@ -21,10 +21,6 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 
 ### TODO
 - [Dokku webhooks support](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot)
-- YouTube playlists support
-- Split audio by 50 MB size for sending
-- Disable privacy mode and check a subset of patterns
-- Async download and send
 - Something cool with Botan
 
 ### Installation
@@ -59,7 +55,7 @@ nano .env
 ```
 
 ##### Required
-- `TG_BOT_TOKEN`: Telegram Bot API Token, [obtain here](https://t.me/BotFather)
+- `TG_BOT_TOKEN`: Telegram Bot API Token, [obtain here](https://t.me/BotFather), also diable privacy mode if you want
 - `STORE_CHAT_ID`: Chat ID for storing audios for inline mode
 - `SC_AUTH_TOKEN`: SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
