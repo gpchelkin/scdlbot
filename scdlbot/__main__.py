@@ -15,9 +15,10 @@ import youtube_dl
 from boltons.urlutils import find_all_links
 from plumbum import local
 from pydub import AudioSegment
-from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
+from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.contrib.botan import Botan
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, ChosenInlineResultHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, \
+    ChosenInlineResultHandler, CallbackQueryHandler
 
 # from transliterate import translit
 
@@ -35,6 +36,7 @@ USE_WEBHOOK = int(os.getenv('USE_WEBHOOK', '0'))
 PORT = int(os.getenv('PORT', '5000'))
 APP_URL = os.getenv('APP_URL', '')
 MAX_TG_FILE_SIZE = 45000000
+texts = []
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -75,61 +77,90 @@ def help_callback(bot, update):
 def download_callback(bot, update, args=None):
     event_name = 'Download'
     if update.inline_query:
-        text = update.inline_query.query
         chat_id = STORE_CHAT_ID
+        text = update.inline_query.query
         # botan.track(update.inline_query, event_name=event_name + ' Inline Query') if botan else None
+    elif update.callback_query:
+        chat_id = update.callback_query.message.chat_id
+        if str(update.callback_query.data) == "cancel":
+            bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+            return
+        else:
+            update.callback_query.answer(text="Wait a bit..")
+            update.callback_query.edit_message_text(text="Wait a bit..")
+            text = texts[str(update.callback_query.data).replace("dl_", "")]
+
     else:
         chat_id = update.message.chat_id
         botan.track(update.message, event_name=event_name) if botan else None
-        text = " ".join(args) if args else update.message.text
+        if args:
+            text = " ".join(args)
+        else:
+            text = update.message.text
+
     urls = find_all_links(text, default_scheme="http")
 
     str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
     if any((pattern in str_urls for pattern in patterns.values())):
-        reply_to_message_id = None
-        if update.message and chat_id not in NO_CLUTTER_CHAT_IDS:
-            reply_to_message_id = update.message.message_id
+        if args or update.inline_query or update.callback_query:
+            if update.callback_query:
+                wait_message_id = update.callback_query.message.message_id
+            elif args or update.inline_query:
+                reply_to_message_id = None
+                if update.message and chat_id not in NO_CLUTTER_CHAT_IDS:
+                    reply_to_message_id = update.message.message_id
 
-        wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                        parse_mode='Markdown', text='_Wait a bit_..')
-        download_dir = os.path.join(DL_DIR, str(uuid4()))
-        shutil.rmtree(download_dir, ignore_errors=True)
-        os.makedirs(download_dir)
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                parse_mode='Markdown', text='_Wait a bit_..')
+                wait_message_id = wait_message.message_id
 
-        for url in urls:
-            bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
-            download_audio(url, download_dir)
+            download_dir = os.path.join(DL_DIR, str(uuid4()))
+            shutil.rmtree(download_dir, ignore_errors=True)
+            os.makedirs(download_dir)
 
-        file_list = []
-        for d, dirs, files in os.walk(download_dir):
-            for f in files:
-                path = os.path.join(d, f)
-                file_list.append(path)
-        file_list = sorted(file_list)
+            for url in urls:
+                bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
+                download_audio(url, download_dir)
 
-        sent_audio_ids = []
-        for file in file_list:
-            sent_audio_ids_file = send_audio(bot, chat_id, reply_to_message_id, file)
-            sent_audio_ids.extend(sent_audio_ids_file)
+            file_list = []
+            for d, dirs, files in os.walk(download_dir):
+                for f in files:
+                    path = os.path.join(d, f)
+                    file_list.append(path)
+            file_list = sorted(file_list)
 
-        shutil.rmtree(download_dir, ignore_errors=True)
-        bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
+            sent_audio_ids = []
+            for file in file_list:
+                sent_audio_ids_file = send_audio(bot, chat_id, reply_to_message_id, file)
+                sent_audio_ids.extend(sent_audio_ids_file)
 
-        if not sent_audio_ids:
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
-                             text='_Sorry, something went wrong_')
-        else:
-            if update.inline_query:
-                results = []
-                for audio_id in sent_audio_ids:
-                    if audio_id:
-                        results.append(
-                            InlineQueryResultCachedAudio(
-                                id=str(uuid4()),
-                                audio_file_id=audio_id,
+            shutil.rmtree(download_dir, ignore_errors=True)
+            bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+
+            if not sent_audio_ids:
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
+                                 text='_Sorry, something went wrong_')
+            else:
+                if update.inline_query:
+                    results = []
+                    for audio_id in sent_audio_ids:
+                        if audio_id:
+                            results.append(
+                                InlineQueryResultCachedAudio(
+                                    id=str(uuid4()),
+                                    audio_file_id=audio_id,
+                                )
                             )
-                        )
-                bot.answer_inline_query(update.inline_query.id, results)
+                    bot.answer_inline_query(update.inline_query.id, results)
+        else:
+            reply_to_message_id = update.message.message_id
+            global texts
+            texts[reply_to_message_id] = update.message.text
+            button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + reply_to_message_id)
+            button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
+            inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             reply_markup=inline_keyboard, text="Wanna download?")
 
 
 def inline_chosen_callback(bot, update):
@@ -222,6 +253,8 @@ def main():
                                                                 Filters.entity(MessageEntity.TEXT_LINK)),
                                                 download_callback)
     dispatcher.add_handler(message_with_links_handler)
+    inline_keyboard_handler = CallbackQueryHandler(download_callback)
+    dispatcher.add_handler(inline_keyboard_handler)
     inline_download_handler = InlineQueryHandler(download_callback)
     dispatcher.add_handler(inline_download_handler)
     inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
