@@ -5,7 +5,7 @@
 [![Telegram Bot](https://img.shields.io/badge/telegram-bot-blue.svg)](https://t.me/scdlbot)
 
 
-## Usage
+## Bot Usage
 
 Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directly to the [help message](scdlbot/messages/help.tg.md).
 
@@ -19,77 +19,134 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - Async download and send
 - Something cool with Botan
 
-### Supported Sites and Requirements
+### Supported sites and used packages
 
-- [**Python 3.6**](https://www.python.org/): [pyenv](https://github.com/pyenv/pyenv) recommended
 - [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 - [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
 - [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
 - [**YouTube**](https://www.youtube.com/), [**Mixcloud**](https://www.mixcloud.com/), etc.: [youtube-dl](https://rg3.github.io/youtube-dl)
-- [**FFmpeg**](https://ffmpeg.org): [Windows builds](https://ffmpeg.zeranoe.com/builds/), [Linux builds](https://johnvansickle.com/ffmpeg/)
 - Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
 
-### Environment Variables
 
-#### Required
+### Installation
+
+#### Requirements
+Those should be available in your `PATH`:
+- [**Python 3.6**](https://www.python.org/) ([pyenv](https://github.com/pyenv/pyenv) recommended)
+- [**FFmpeg**](https://ffmpeg.org/download.html) for running locally (fresh builds for [Windows](https://ffmpeg.zeranoe.com/builds/) and [Linux](https://johnvansickle.com/ffmpeg/) recommended)
+- [**Heroku CLI**](https://cli.heroku.com/) is recommended
+
+Install [Python 3.6]() and [FFmpeg](https://ffmpeg.org/download.html).
+
+#### Install from PyPI (preferred)
+```
+pip3 install scdlbot
+```
+
+#### Install from Git source
+```
+git clone https://github.com/gpchelkin/scdlbot.git
+cd scdlbot
+pip3 install --requirement requirements.txt
+
+# If you want to install system-wide, not necessary:
+python3 setup.py install
+```
+
+### Configuration
+
+Copy config file sample and set up config environment variables in it:
+```
+cp .env.sample .env
+nano .env
+```
+
+##### Required
 - `TG_BOT_TOKEN`: Telegram Bot API Token, [obtain here](https://t.me/BotFather)
 - `STORE_CHAT_ID`: Chat ID for storing audios for inline mode
 - `SC_AUTH_TOKEN`: SoundCloud Auth Token, [obtain here](https://flyingrub.github.io/scdl/)
 
-#### Optional
-- `USE_WEBHOOK`: `0` or `1`, default: `0`
-- `PORT`: 
-- `APP_URL`: `https://<appname>.herokuapp.com/`
+##### Optional
+- `USE_WEBHOOK`: use polling for bot updates (default): `0`, use webhook: `1`, [more info](https://core.telegram.org/bots/api#getting-updates)
+- `PORT`: Heroku sets this automatically for web dynos if you are using webhook
+- `APP_URL`: Heroku App URL like `https://<appname>.herokuapp.com/`, required for webhook
 - `BOTAN_TOKEN`: [Botan.io](http://botan.io/) [token](http://appmetrica.yandex.com/)
 - `NO_CLUTTER_CHAT_IDS` — Comma-separated chat IDs with no replying and caption hashtags
-- `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available
+- `BIN_PATH` — Custom directory with `scdl` and `bandcamp-dl` binaries are available, e.g. `~/.pyenv/shims/` if you use pyenv, default: empty
 - `DL_DIR` — Parent directory for MP3 download directory, default: ~ (user's home directory)
 
+
 ### Running Locally
-Install Python 3.6 and FFmpeg, then:
 
+#### Using [Heroku Local](https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool) (preferred)
+You need [Heroku CLI](https://cli.heroku.com/).
 ```
-git clone https://github.com/gpchelkin/scdlbot.git
-cd scdlbot
+# for long polling:
+heroku local worker
+# for webhooks (you will also need to set up some NGINX with SSL):
+heroku local web
+```
+
+#### Using just Python
+```
+export $(cat .env | xargs)
 python3 -m scdlbot
+# or just:
+env $(cat .env | xargs) python3 -m scdlbot
 ```
 
-### Deploying to [Heroku](https://heroku.com/) or [Dokku](https://github.com/dokku/dokku)
 
-#### Automatically
-
-Press this button:
+### Deploying to [Heroku](https://heroku.com/)
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
+When app is deployed you **must** set only one dyno working on "Resources" tab in your app settings depending on [which way of getting updates](https://core.telegram.org/bots/api#getting-updates) you have chosen and set in config variables.
+
+
 #### Manually
-Register on Heroku, install [Heroku CLI](https://cli.heroku.com/), then:
+You can do the same as the button above but using [Heroku CLI](https://cli.heroku.com/), not much of a fun. Assuming you are in `scdbot` directory:
 
 ```
-git clone https://github.com/gpchelkin/scdlbot.git
-cd scdlbot
-# Login to Heroku:
 heroku login
-# Create app with Python3 buildpack:
+# Create app with Python3 buildpack and set it for upcoming builds:
 heroku create --buildpack heroku/python
-# Set Python3 buildpack for upcoming builds:
 heroku buildpacks:set heroku/python
-# Add FFmpeg buildpack for youtube-dl:
+# Add FFmpeg buildpack needed for youtube-dl:
 heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
-# Deploy this app to Heroku:
+# Deploy app to Heroku:
 git push heroku master
-# Set config vars:
-heroku config:set TG_BOT_TOKEN='<TG_BOT_TOKEN>' STORE_CHAT_ID='<STORE_CHAT_ID>' SC_AUTH_TOKEN='<SC_AUTH_TOKEN>'
+# Set config vars automatically from your .env file
+heroku plugins:install heroku-config
+heroku config:push
+
+# Or set them one by one:
+heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" STORE_CHAT_ID="<STORE_CHAT_ID>" ...
+```
+
+If you use webhook:
+```
 # Start 1 web dyno:
 heroku ps:scale web=1
+# Stop worker dyno:
+heroku ps:stop worker
+```
+
+If you use polling:
+```
+# Start 1 worker dyno:
+heroku ps:scale worker=1
 # Stop web dyno:
 heroku ps:stop web
-# Restart web dyno:
-heroku ps:restart web
+```
+
+Some useful commands:
+```
 # Attach to logs:
-heroku logs -t -p web
-# Test run
+heroku logs -t
+# Test run ffprobe
 heroku run "ffprobe -version"
 ```
 
-Or use [Dokku](https://github.com/dokku/dokku) on your own server. App is tested and fully ready for deployment (just no webhooks yet).
+### Deploying to [Dokku](https://github.com/dokku/dokku)
+
+Use Dokku and their docs on your own server. App is tested and fully ready for deployment with polling (no webhooks yet).

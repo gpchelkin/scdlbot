@@ -46,6 +46,9 @@
     },
     "formation": {
         "web": {
+            "quantity": 0
+        },
+        "worker": {
             "quantity": 1
         }
     }
