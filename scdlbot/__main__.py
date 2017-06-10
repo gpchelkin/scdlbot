@@ -206,7 +206,6 @@ def download_audio(url, download_dir):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url.to_text(full_quote=True)])
         os.chdir(prev_cwd)
-    logger.debug("done downloading", url)
 
 
 # @run_async
@@ -228,6 +227,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
         file_parts_len = len(file_parts)
         sent_audio_ids = []
         for file, index in enumerate(file_parts):
+            logger.debug(file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
             # TODO add site hashtag
