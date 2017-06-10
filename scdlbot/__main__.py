@@ -109,7 +109,7 @@ def download_callback(bot, update, args=None):
 
         sent_audio_ids = []
         for file in file_list:
-            sent_audio_ids_file = send_audio(file)
+            sent_audio_ids_file = send_audio(bot, chat_id, reply_to_message_id, file)
             sent_audio_ids.extend(sent_audio_ids_file)
 
         shutil.rmtree(download_dir, ignore_errors=True)
