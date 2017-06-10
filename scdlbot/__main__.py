@@ -110,8 +110,8 @@ def download_callback(bot, update, args=None):
 
         sent_audio_ids = []
         for file in file_list:
-            sent_audio_id = send_audio(file)
-            sent_audio_ids.append(sent_audio_id)
+            sent_audio_ids_file = send_audio(file)
+            sent_audio_ids.extend(sent_audio_ids_file)
 
         shutil.rmtree(download_dir, ignore_errors=True)
         bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
@@ -177,6 +177,7 @@ def download_audio(url, download_dir):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url.to_text(full_quote=True)])
         os.chdir(prev_cwd)
+    logger.debug("done downloading", url)
 
 
 @run_async
@@ -196,6 +197,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
         else:
             file_parts.append(file)
         file_parts_len = len(file_parts)
+        sent_audio_ids = []
         for file, index in enumerate(file_parts):
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
@@ -203,8 +205,8 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
             caption = " ".join(["Part", str(index + 1), "of", str(file_parts_len)]) if file_parts_len > 1 else None
             audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                        audio=open(file, 'rb'), caption=caption)
-            return audio_msg.audio.file_id
-    return None
+            sent_audio_ids.append(audio_msg.audio.file_id)
+    return sent_audio_ids
 
 
 def main():
