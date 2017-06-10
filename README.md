@@ -1,9 +1,9 @@
 # [Music Downloader Telegram Bot](https://t.me/scdlbot)
 
+[![PyPI version](https://badge.fury.io/py/scdlbot.svg)](https://pypi.python.org/pypi/scdlbot)
 [![Updates](https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
-[![Python 3](https://pyup.io/repos/github/gpchelkin/scdlbot/python-3-shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f)](https://pyup.io/repos/github/gpchelkin/scdlbot/)
+[![GitHub license](https://img.shields.io/badge/license-GPLv3-green.svg)](https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt)
 [![Telegram Bot](https://img.shields.io/badge/telegram-bot-blue.svg)](https://t.me/scdlbot)
-
 
 ## Bot Usage
 
@@ -36,9 +36,7 @@ Those should be available in your `PATH`:
 - [**FFmpeg**](https://ffmpeg.org/download.html) for running locally (fresh builds for [Windows](https://ffmpeg.zeranoe.com/builds/) and [Linux](https://johnvansickle.com/ffmpeg/) recommended)
 - [**Heroku CLI**](https://cli.heroku.com/) is recommended
 
-Install [Python 3.6]() and [FFmpeg](https://ffmpeg.org/download.html).
-
-#### Install from PyPI (preferred)
+#### Install from [PyPI](https://pypi.python.org/pypi/scdlbot) (preferred)
 ```
 pip3 install scdlbot
 ```
@@ -49,7 +47,7 @@ git clone https://github.com/gpchelkin/scdlbot.git
 cd scdlbot
 pip3 install --requirement requirements.txt
 
-# If you want to install system-wide, not necessary:
+# If you want to install system-wide, not recommended:
 python3 setup.py install
 ```
 
