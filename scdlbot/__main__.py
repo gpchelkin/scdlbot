@@ -155,7 +155,7 @@ def download_callback(bot, update, args=None):
         else:
             reply_to_message_id = update.message.message_id
             texts[reply_to_message_id] = update.message.text
-            button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + reply_to_message_id)
+            button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + str(reply_to_message_id))
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
             inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
