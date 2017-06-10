@@ -210,6 +210,7 @@ def download_audio(url, download_dir):
 
 # @run_async
 def send_audio(bot, chat_id, reply_to_message_id, file):
+    sent_audio_ids = []
     if ".mp3" in file:
         file_parts = []
         file_size = os.path.getsize(file)
@@ -225,7 +226,6 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
         else:
             file_parts.append(file)
         file_parts_len = len(file_parts)
-        sent_audio_ids = []
         for index, file in enumerate(file_parts):
             logger.debug(file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
@@ -235,7 +235,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
             audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                        audio=open(file, 'rb'), caption=caption)
             sent_audio_ids.append(audio_msg.audio.file_id)
-        return sent_audio_ids
+    return sent_audio_ids
 
 
 def main():
