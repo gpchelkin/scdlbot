@@ -235,7 +235,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
             audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                        audio=open(file, 'rb'), caption=caption)
             sent_audio_ids.append(audio_msg.audio.file_id)
-    return sent_audio_ids
+        return sent_audio_ids
 
 
 def main():
