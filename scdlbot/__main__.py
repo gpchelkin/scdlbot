@@ -36,7 +36,7 @@ USE_WEBHOOK = int(os.getenv('USE_WEBHOOK', '0'))
 PORT = int(os.getenv('PORT', '5000'))
 APP_URL = os.getenv('APP_URL', '')
 MAX_TG_FILE_SIZE = 45000000
-texts = []
+texts = {}
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -75,6 +75,7 @@ def help_callback(bot, update):
 
 
 def download_callback(bot, update, args=None):
+    global texts
     event_name = 'Download'
     if update.inline_query:
         chat_id = STORE_CHAT_ID
@@ -89,7 +90,6 @@ def download_callback(bot, update, args=None):
             update.callback_query.answer(text="Wait a bit..")
             update.callback_query.edit_message_text(text="Wait a bit..")
             text = texts[str(update.callback_query.data).replace("dl_", "")]
-
     else:
         chat_id = update.message.chat_id
         botan.track(update.message, event_name=event_name) if botan else None
@@ -154,7 +154,6 @@ def download_callback(bot, update, args=None):
                     bot.answer_inline_query(update.inline_query.id, results)
         else:
             reply_to_message_id = update.message.message_id
-            global texts
             texts[reply_to_message_id] = update.message.text
             button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + reply_to_message_id)
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
