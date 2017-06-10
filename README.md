@@ -9,6 +9,14 @@
 
 Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directly to the [help message](scdlbot/messages/help.tg.md).
 
+### Supported sites and used packages
+
+- [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
+- [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
+- [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
+- [**YouTube**](https://www.youtube.com/), [**Mixcloud**](https://www.mixcloud.com/), etc.: [youtube-dl](https://rg3.github.io/youtube-dl)
+- Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
+
 ## Development
 
 ### TODO
@@ -18,15 +26,6 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 - Disable privacy mode and check a subset of patterns
 - Async download and send
 - Something cool with Botan
-
-### Supported sites and used packages
-
-- [**Telegram Bot API**](https://core.telegram.org/bots/api): [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
-- [**SoundCloud**](https://soundcloud.com): [scdl](https://github.com/flyingrub/scdl)
-- [**Bandcamp**](https://bandcamp.com): [bandcamp-dl](https://github.com/iheanyi/bandcamp-dl)
-- [**YouTube**](https://www.youtube.com/), [**Mixcloud**](https://www.mixcloud.com/), etc.: [youtube-dl](https://rg3.github.io/youtube-dl)
-- Use [SoundScrape](https://github.com/Miserlou/SoundScrape) in the future?
-
 
 ### Installation
 
