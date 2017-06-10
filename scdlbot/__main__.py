@@ -103,10 +103,10 @@ def download_callback(bot, update, args=None):
     str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
     if any((pattern in str_urls for pattern in patterns.values())):
         if args or update.inline_query or update.callback_query:
+            reply_to_message_id = None
             if update.callback_query:
                 wait_message_id = update.callback_query.message.message_id
             elif args or update.inline_query:
-                reply_to_message_id = None
                 if update.message and chat_id not in NO_CLUTTER_CHAT_IDS:
                     reply_to_message_id = update.message.message_id
 
