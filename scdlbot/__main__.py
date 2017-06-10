@@ -18,7 +18,6 @@ from pydub import AudioSegment
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, ChosenInlineResultHandler
-from telegram.ext.dispatcher import run_async
 
 # from transliterate import translit
 
@@ -138,7 +137,7 @@ def inline_chosen_callback(bot, update):
     # botan.track(update.chosen_inline_result, event_name='Download Inline Chosen Result') if botan else None
 
 
-@run_async
+# @run_async
 def download_audio(url, download_dir):
     url_parts_len = len([part for part in url.path_parts if part])
     if patterns["soundcloud"] in url.host:
@@ -180,7 +179,7 @@ def download_audio(url, download_dir):
     logger.debug("done downloading", url)
 
 
-@run_async
+# @run_async
 def send_audio(bot, chat_id, reply_to_message_id, file):
     if ".mp3" in file:
         file_parts = []
