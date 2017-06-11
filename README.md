@@ -23,6 +23,7 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 ### TODO
 - [Dokku webhooks support](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot)
 - Async download and send
+- Ask in groups only
 - Check all links for Bandcamp type
 - Something cool with Botan
 
