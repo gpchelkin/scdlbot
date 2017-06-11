@@ -42,7 +42,7 @@ DL_EVENT_NAME = 'Download'
 WAIT_TEXT = "Wait a bit.."
 WAIT_TEXT_MD = "".join(["_", WAIT_TEXT, "_"])
 ERROR_TEXT_MD = "_Sorry, something went wrong_"
-texts = {}  # TODO shelve
+urls_store = {}  # TODO shelve
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -80,7 +80,9 @@ def help_callback(bot, update):
 
 
 def download_callback(bot, update, args=None):
-    global texts
+    global urls_store
+    urls = None
+    text = None
     if update.inline_query:
         chat_id = STORE_CHAT_ID
         text = update.inline_query.query
@@ -92,7 +94,8 @@ def download_callback(bot, update, args=None):
         else:
             update.callback_query.answer(text=WAIT_TEXT)
             update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
-            text = texts[update.callback_query.data]
+            urls = urls_store[update.callback_query.data]
+            urls_store.pop(update.callback_query.data)
     else:
         botan.track(update.message, event_name=DL_EVENT_NAME) if botan else None
         chat_id = update.message.chat_id
@@ -100,11 +103,13 @@ def download_callback(bot, update, args=None):
             text = " ".join(args)
         else:
             text = update.message.text
+    test = True
+    if not urls:
+        urls = find_all_links(text, default_scheme="http")
+        str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
+        test = any((pattern in str_urls for pattern in patterns.values()))
 
-    urls = find_all_links(text, default_scheme="http")
-    str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
-
-    if any((pattern in str_urls for pattern in patterns.values())):
+    if test:
         if args or update.inline_query or update.callback_query:
             reply_to_message_id = None
             wait_message_id = None
@@ -158,7 +163,7 @@ def download_callback(bot, update, args=None):
                     bot.answer_inline_query(update.inline_query.id, results)
         elif not args:
             reply_to_message_id = update.message.message_id
-            texts[str(reply_to_message_id)] = update.message.text
+            urls_store[str(reply_to_message_id)] = urls
             button_download = InlineKeyboardButton(text="Download", callback_data=str(reply_to_message_id))
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
             inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
