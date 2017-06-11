@@ -6,12 +6,13 @@ from __future__ import unicode_literals
 import configparser
 import logging
 import os
+# import shelve
 import shutil
+# import time
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import mutagen.id3
-# import shelve
 import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
@@ -22,6 +23,7 @@ from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
 # from transliterate import translit
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -163,12 +165,14 @@ def download_callback(bot, update, args=None):
                     bot.answer_inline_query(update.inline_query.id, results)
         elif not args:
             reply_to_message_id = update.message.message_id
-            urls_store[str(reply_to_message_id)] = urls
             button_download = InlineKeyboardButton(text="Download", callback_data=str(reply_to_message_id))
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
             inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             reply_markup=inline_keyboard, text="Wanna download?")
+            question = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                        reply_markup=inline_keyboard, text="Wanna download?")
+            # time.sleep(7)
+            # bot.delete_message(chat_id=chat_id, message_id=question.message_id)
+            urls_store[str(reply_to_message_id)] = urls
 
 
 # @run_async
