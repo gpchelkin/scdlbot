@@ -10,7 +10,7 @@ import shutil
 from urllib.parse import urljoin
 from uuid import uuid4
 
-import mutagen
+import mutagen.id3
 # import shelve
 import pkg_resources
 import youtube_dl
