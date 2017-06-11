@@ -1,18 +1,19 @@
-*Download MP3 of tracks/sets/albums from various websites with tags and artwork. Files over 50 MB a split into parts due to bot-sent file size limit.*
+*I download MP3 of tracks/sets/albums from various websites with tags and artwork. Files over 50 MB are split into parts due to bot-sent file size limit.*
 
-*SoundCloud* — tracks/playlists, 128 kbps
-*Bandcamp* — tracks/albums, 128 kbps
-*YouTube* — no live streams pls, audio 128 kbps
-*Mixcloud* — unstable and slow, 128 kbps
+*Everything is 128 kbps:*
+*SoundCloud*: tracks/playlists
+*Bandcamp*: tracks/albums
+*YouTube*: videos/playlists/no live streams pls
+*Mixcloud*: unstable and slow
 _More to come.._
 
-*Use a /dl or /dl@scdlbot command with a link(-s) / text with links:*
-`/dl hey, https://m.youtube.com/watch?v=Ug0y1ZhdHT0 is neat! luvin' it`
-
-*Or just send text with links, even mobile, like this (forwarded messages work too):*
+*Just send a text with links, even mobile, like this (forwarded messages work too) and I will ask you whether to download them or not:*
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, bot will grab links from messages _without command_ in a group chat and ask your whether to download them or not.
+[Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_ so I will grab links from all messages in groups too.
+
+*Or use /dl or /dl@scdlbot command to download immediately:*
+`/dl hey, https://m.youtube.com/watch?v=Ug0y1ZhdHT0 is neat! luvin' it`
 
 *Inline mode might be slow:*
 `@scdlbot https://youtube.com/watch?v=N9XKLqGqwLA`

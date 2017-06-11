@@ -10,6 +10,8 @@ import shutil
 from urllib.parse import urljoin
 from uuid import uuid4
 
+import mutagen
+# import shelve
 import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
@@ -17,8 +19,7 @@ from plumbum import local
 from pydub import AudioSegment
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.contrib.botan import Botan
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, \
-    ChosenInlineResultHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
 # from transliterate import translit
 
@@ -35,8 +36,13 @@ DL_DIR = os.path.expanduser(os.getenv('DL_DIR', '~'))
 USE_WEBHOOK = int(os.getenv('USE_WEBHOOK', '0'))
 PORT = int(os.getenv('PORT', '5000'))
 APP_URL = os.getenv('APP_URL', '')
+
 MAX_TG_FILE_SIZE = 45000000
-texts = {}
+DL_EVENT_NAME = 'Download'
+WAIT_TEXT = "Wait a bit.."
+WAIT_TEXT_MD = "".join(["_", WAIT_TEXT, "_"])
+ERROR_TEXT_MD = "_Sorry, something went wrong_"
+texts = {}  # TODO shelve
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
 bcdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'bandcamp-dl')]
@@ -52,8 +58,7 @@ patterns = {
 
 botan = Botan(BOTAN_TOKEN) if BOTAN_TOKEN else None
 help_path = '/'.join(('messages', 'help.tg.md'))
-help_message = pkg_resources.resource_string(__name__, help_path)
-help_message_decoded = help_message.decode("UTF-8")
+help_message = pkg_resources.resource_string(__name__, help_path).decode("UTF-8")
 
 
 def configure_scdl():
@@ -70,40 +75,39 @@ def configure_scdl():
 
 
 def help_callback(bot, update):
-    bot.send_message(chat_id=update.message.chat_id, text=help_message_decoded,
+    bot.send_message(chat_id=update.message.chat_id, text=help_message,
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
 def download_callback(bot, update, args=None):
     global texts
-    event_name = 'Download'
     if update.inline_query:
         chat_id = STORE_CHAT_ID
         text = update.inline_query.query
-        # botan.track(update.inline_query, event_name=event_name + ' Inline Query') if botan else None
     elif update.callback_query:
         chat_id = update.callback_query.message.chat_id
-        if str(update.callback_query.data) == "cancel":
+        if update.callback_query.data == "cancel":
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
             return
         else:
-            update.callback_query.answer(text="Wait a bit..")
-            update.callback_query.edit_message_text(text="Wait a bit..")
-            text = texts[str(update.callback_query.data).replace("dl_", "")]
+            update.callback_query.answer(text=WAIT_TEXT)
+            update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
+            text = texts[update.callback_query.data]
     else:
+        botan.track(update.message, event_name=DL_EVENT_NAME) if botan else None
         chat_id = update.message.chat_id
-        botan.track(update.message, event_name=event_name) if botan else None
         if args:
             text = " ".join(args)
         else:
             text = update.message.text
 
     urls = find_all_links(text, default_scheme="http")
-
     str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
+
     if any((pattern in str_urls for pattern in patterns.values())):
         if args or update.inline_query or update.callback_query:
             reply_to_message_id = None
+            wait_message_id = None
             if update.callback_query:
                 wait_message_id = update.callback_query.message.message_id
             elif args or update.inline_query:
@@ -111,7 +115,7 @@ def download_callback(bot, update, args=None):
                     reply_to_message_id = update.message.message_id
 
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text='_Wait a bit_..')
+                                                parse_mode='Markdown', text=WAIT_TEXT_MD)
                 wait_message_id = wait_message.message_id
 
             download_dir = os.path.join(DL_DIR, str(uuid4()))
@@ -125,8 +129,7 @@ def download_callback(bot, update, args=None):
             file_list = []
             for d, dirs, files in os.walk(download_dir):
                 for f in files:
-                    path = os.path.join(d, f)
-                    file_list.append(path)
+                    file_list.append(os.path.join(d, f))
             file_list = sorted(file_list)
 
             sent_audio_ids = []
@@ -138,8 +141,9 @@ def download_callback(bot, update, args=None):
             bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
 
             if not sent_audio_ids:
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode='Markdown',
-                                 text='_Sorry, something went wrong_')
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 parse_mode='Markdown', text=ERROR_TEXT_MD)
+                return
             else:
                 if update.inline_query:
                     results = []
@@ -152,19 +156,14 @@ def download_callback(bot, update, args=None):
                                 )
                             )
                     bot.answer_inline_query(update.inline_query.id, results)
-        else:
+        elif not args:
             reply_to_message_id = update.message.message_id
             texts[str(reply_to_message_id)] = update.message.text
-            button_download = InlineKeyboardButton(text="Download", callback_data="dl_" + str(reply_to_message_id))
+            button_download = InlineKeyboardButton(text="Download", callback_data=str(reply_to_message_id))
             button_cancel = InlineKeyboardButton(text="Cancel", callback_data="cancel")
             inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              reply_markup=inline_keyboard, text="Wanna download?")
-
-
-def inline_chosen_callback(bot, update):
-    pass
-    # botan.track(update.chosen_inline_result, event_name='Download Inline Chosen Result') if botan else None
 
 
 # @run_async
@@ -214,7 +213,9 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
     if ".mp3" in file:
         file_parts = []
         file_size = os.path.getsize(file)
+        parts_number = 1
         if file_size > MAX_TG_FILE_SIZE:
+            id3 = mutagen.id3.ID3(file, translate=False)
             parts_number = file_size // MAX_TG_FILE_SIZE + 1
             sound = AudioSegment.from_mp3(file)
             part_size = len(sound) / parts_number
@@ -222,16 +223,17 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
                 file_part = file.replace(".mp3", ".part" + str(i + 1) + ".mp3")
                 part = sound[part_size * i:part_size * (i + 1)]
                 part.export(file_part, format="mp3")
+                id3.save(file_part, v1=2, v2_version=4)
                 file_parts.append(file_part)
         else:
             file_parts.append(file)
-        file_parts_len = len(file_parts)
         for index, file in enumerate(file_parts):
-            logger.debug(file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
             # TODO add site hashtag
-            caption = " ".join(["Part", str(index + 1), "of", str(file_parts_len)]) if file_parts_len > 1 else None
+            caption = None
+            if file_size > MAX_TG_FILE_SIZE:
+                caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
             audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                        audio=open(file, 'rb'), caption=caption)
             sent_audio_ids.append(audio_msg.audio.file_id)
@@ -256,8 +258,6 @@ def main():
     dispatcher.add_handler(inline_keyboard_handler)
     inline_download_handler = InlineQueryHandler(download_callback)
     dispatcher.add_handler(inline_download_handler)
-    inline_chosen_handler = ChosenInlineResultHandler(inline_chosen_callback)
-    dispatcher.add_handler(inline_chosen_handler)
 
     if USE_WEBHOOK:
         url_path = TG_BOT_TOKEN.replace(":", "")

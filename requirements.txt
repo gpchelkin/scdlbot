@@ -6,3 +6,4 @@ scdl==1.6.4
 bandcamp-downloader==0.0.8.post6
 youtube-dl==2017.6.5
 pydub==0.19.0
+mutagen==1.38

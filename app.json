@@ -26,8 +26,17 @@
             "description": "A secret key for verifying the integrity of signed cookies",
             "required": true
         },
+        "USE_WEBHOOK": {
+            "description": "Use webhook for bot updates: 1, use polling: 0",
+            "value": "0",
+            "required": false
+        },
         "BOTAN_TOKEN": {
             "description": "Botan.io Token",
+            "required": false
+        },
+        "APP_URL": {
+            "description": "Heroku App URL like `https://<appname>.herokuapp.com/`, required for webhook",
             "required": false
         },
         "NO_CLUTTER_CHAT_IDS": {
@@ -35,7 +44,7 @@
             "required": false
         },
         "BIN_PATH": {
-            "description": "Custom directory with scdl and bandcamp-dl binaries are available",
+            "description": "Custom directory where scdl and bandcamp-dl binaries are available",
             "required": false
         },
         "DL_DIR": {

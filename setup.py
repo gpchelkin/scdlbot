@@ -19,6 +19,7 @@ requirements = [
     "youtube_dl",
     "setuptools",
     "pydub",
+    "mutagen",
 ]
 
 setup(
