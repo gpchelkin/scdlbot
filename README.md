@@ -21,6 +21,8 @@ Send `/start` or `/help` command to [bot](https://t.me/scdlbot) or refer directl
 
 ### TODO
 - [Dokku webhooks support](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot)
+- Async download and send
+- Check all links for Bandcamp type
 - Something cool with Botan
 
 ### Installation
@@ -116,19 +118,15 @@ heroku config:push
 heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" STORE_CHAT_ID="<STORE_CHAT_ID>" ...
 ```
 
-If you use webhook:
+If you use webhook, start web dyno and stop worker dyno:
 ```
-# Start 1 web dyno:
-heroku ps:scale web=1
-# Stop worker dyno:
+heroku ps:scale web=1 worker=0
 heroku ps:stop worker
 ```
 
-If you use polling:
+If you use polling, start worker dyno and stop web dyno:
 ```
-# Start 1 worker dyno:
-heroku ps:scale worker=1
-# Stop web dyno:
+heroku ps:scale worker=1 web=0
 heroku ps:stop web
 ```
 
@@ -143,3 +141,16 @@ heroku run "ffprobe -version"
 ### Deploying to [Dokku](https://github.com/dokku/dokku)
 
 Use Dokku and their docs on your own server. App is tested and fully ready for deployment with polling (no webhooks yet).
+
+```
+scp .env dokku.pchelk.in:~
+ssh dokku.pchelk.in
+dokku apps:create scdlbot
+dokku config:set scdlbot $(cat .env | xargs)
+# Ctrl+D
+git remote add dokku dokku@dokku.pchelk.in:scdlbot
+git push dokku master
+ssh dokku.pchelk.in
+dokku ps:scale scdlbot worker=1 web=0
+dokku ps:restart
+```

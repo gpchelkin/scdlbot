@@ -2,7 +2,6 @@
 
 0.3.0 (2017-06-10)
 ------------------
-* Really async download and send
 * YouTube playlists support
 * Split audio by 50 MB size for sending
 * Disable privacy mode and ask for download
