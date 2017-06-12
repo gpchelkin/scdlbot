@@ -1,4 +1,6 @@
-# Credits
+=======
+Credits
+=======
 
 Development Lead
 ----------------

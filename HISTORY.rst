@@ -1,4 +1,12 @@
-# History
+=======
+History
+=======
+
+0.3.1 (2017-06-12)
+------------------
+
+* Markdown to reStructuredText
+* Copy tags to parts
 
 0.3.0 (2017-06-10)
 ------------------

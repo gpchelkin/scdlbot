@@ -3,10 +3,10 @@
 
 from setuptools import setup
 
-with open('README.md') as readme_file:
+with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.md') as history_file:
+with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
@@ -24,7 +24,7 @@ requirements = [
 
 setup(
     name='scdlbot',
-    version='0.3.0',
+    version='0.3.1',
     description="Downloads MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
     long_description=readme + '\n\n' + history,
     author="George Pchelkin",
