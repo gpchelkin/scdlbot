@@ -221,7 +221,7 @@ ready for deployment with polling (no webhooks yet).
     dokku ps:restart
 
 .. |PyPI version| image:: https://badge.fury.io/py/scdlbot.svg
-    :target: https://pypi.python.org/pypi/scdlbot
+    :target: https://pypi.org/project/scdlbot
 .. |Updates| image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
     :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
 .. |GitHub license| image:: https://img.shields.io/badge/license-GPLv3-green.svg
