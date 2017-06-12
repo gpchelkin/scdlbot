@@ -2,10 +2,7 @@
 `Music Downloader Telegram Bot <https://t.me/scdlbot>`__
 ========================================================
 
-| |PyPI version|
-| |Updates|
-| |GitHub license|
-| |Telegram Bot|
+| |PyPI version| |Updates| |GitHub license| |Telegram Bot|
 
 Bot Usage
 ---------
@@ -110,12 +107,12 @@ Optional
    ``https://<appname>.herokuapp.com/``, required for webhook
 -  ``BOTAN_TOKEN``: `Botan.io <http://botan.io/>`__
    `token <http://appmetrica.yandex.com/>`__
--  ``NO_CLUTTER_CHAT_IDS`` — Comma-separated chat IDs with no replying
+-  ``NO_CLUTTER_CHAT_IDS``: Comma-separated chat IDs with no replying
    and caption hashtags
--  ``BIN_PATH`` — Custom directory where ``scdl`` and ``bandcamp-dl``
+-  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
    default: empty
--  ``DL_DIR`` — Parent directory for MP3 download directory, default: ~
+-  ``DL_DIR``: Parent directory for MP3 download directory, default: ~
    (user's home directory)
 
 Running Locally
