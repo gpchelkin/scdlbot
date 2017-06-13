@@ -33,6 +33,8 @@ TODO
 
 -  `Dokku webhooks
    support <https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot>`__
+-  Give only a link to download
+-  SoundCloud set order
 -  Async download and send
 -  Ask in groups only
 -  Check all links for Bandcamp type
