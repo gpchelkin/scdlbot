@@ -2,7 +2,7 @@
 
 *Everything is 128 kbps:*
 *SoundCloud*: tracks/playlists
-*Bandcamp*: tracks/albums
+*Bandcamp*: tracks/albums, non-`bandcamp.com` links work only with `/dl` command
 *YouTube*: videos/playlists/no live streams pls
 *Mixcloud*: unstable and slow
 _More to come.._
@@ -18,7 +18,8 @@ _More to come.._
 *Inline mode might be slow:*
 `@scdlbot https://youtube.com/watch?v=N9XKLqGqwLA`
 
-[🌟GitHub💻](https://github.com/gpchelkin/scdlbot)
+[🌟GitHub💻](https://github.com/gpchelkin/scdlbot) [Bugs/Improvements here](https://github.com/gpchelkin/scdlbot/issues)
+
 *Created by* @gpchelkin | [🐝👍.WS](http://xn--lo8h6c.ws/)
 *with* `<3` *for* @Eklight | [⚡⭕.РФ](http://Электрокружок.РФ)
 

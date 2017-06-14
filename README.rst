@@ -1,6 +1,6 @@
-========================================================
-`Music Downloader Telegram Bot <https://t.me/scdlbot>`__
-========================================================
+=============================
+Music Downloader Telegram Bot
+=============================
 
 | |PyPI version| |Updates| |GitHub license| |Telegram Bot|
 
@@ -9,6 +9,8 @@ Bot Usage
 
 Send ``/start`` or ``/help`` command to `bot <https://t.me/scdlbot>`__
 or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
+
+Please report all bugs and issues and suggest your improvements to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 
 Supported sites and used packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,23 +24,9 @@ Supported sites and used packages
 -  `YouTube <https://www.youtube.com/>`__,
    `Mixcloud <https://www.mixcloud.com/>`__, etc.:
    `youtube-dl <https://rg3.github.io/youtube-dl>`__
--  Use `SoundScrape <https://github.com/Miserlou/SoundScrape>`__ in the
-   future?
 
 Development
 -----------
-
-TODO
-~~~~
-
--  `Dokku webhooks
-   support <https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-haproxy-with-one-subdomain-per-bot>`__
--  Give only a link to download
--  SoundCloud set order
--  Async download and send
--  Ask in groups only
--  Check all links for Bandcamp type
--  Something cool with Botan
 
 Installation
 ~~~~~~~~~~~~
@@ -48,7 +36,7 @@ Requirements
 
 Those should be available in your ``PATH``:
 
--  `Python 3.6 <https://www.python.org/>`__
+-  `Python 3.4+ <https://www.python.org/>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ recommended)
 -  `FFmpeg <https://ffmpeg.org/download.html>`__ for running locally
    (fresh builds for `Windows <https://ffmpeg.zeranoe.com/builds/>`__
@@ -62,8 +50,8 @@ Install from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (preferred)
 
     pip3 install scdlbot
 
-Install from Git source
-^^^^^^^^^^^^^^^^^^^^^^^
+Install from `Git source <https://github.com/gpchelkin/scdlbot>`__
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -73,6 +61,8 @@ Install from Git source
 
     # If you want to install system-wide, not recommended:
     python3 setup.py install
+    # Install only a link to current project sources:
+    python3 setup.py develop
 
 Configuration
 ~~~~~~~~~~~~~
@@ -140,10 +130,18 @@ Using just Python
 
 ::
 
+    # if you installed from PyPI or system-wide:
     export $(cat .env | xargs)
-    python3 -m scdlbot
+    scdlbot
     # or just:
-    env $(cat .env | xargs) python3 -m scdlbot
+    env $(cat .env | xargs) scdlbot
+
+    # if you haven't installed from PyPI or system-wide:
+    export $(cat .env | xargs)
+    python -m scdlbot
+    # or just:
+    env $(cat .env | xargs) python -m scdlbot
+
 
 Deploying to `Heroku <https://heroku.com/>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,11 +204,11 @@ Deploying to `Dokku <https://github.com/dokku/dokku>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use Dokku and their docs on your own server. App is tested and fully
-ready for deployment with polling (no webhooks yet).
+ready for deployment with polling (no webhook yet).
 
 ::
 
-    export $DOKKU=<your_dokku_server>
+    export DOKKU=<your_dokku_server>
     scp .env dokku.pchelk.in:~
     ssh $DOKKU
     dokku apps:create scdlbot

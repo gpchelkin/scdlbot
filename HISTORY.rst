@@ -2,6 +2,16 @@
 History
 =======
 
+0.4.0 (2017-06-15)
+------------------
+
+* Console script!
+* Setup script version improvements
+* Ask in groups only, download immediately in private
+* Bandcamp: Download links without 'bandcamp' for /dl
+* Move TODOs to issues
+* Button to destroy music from the Internet
+
 0.3.1 (2017-06-12)
 ------------------
 
