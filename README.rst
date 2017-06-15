@@ -7,8 +7,7 @@ Music Downloader Telegram Bot
 Bot Usage
 ---------
 
-Send ``/start`` or ``/help`` command to `bot <https://t.me/scdlbot>`__
-or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
+Send ``/start`` or ``/help`` command to bot or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
 
 Please report all bugs and issues and suggest your improvements to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 
