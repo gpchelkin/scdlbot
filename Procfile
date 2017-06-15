@@ -1,2 +1,2 @@
-web: scdlbot
-worker: scdlbot
+web: python -m scdlbot
+worker: python -m scdlbot
