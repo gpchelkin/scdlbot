@@ -4,8 +4,8 @@ Music Downloader Telegram Bot
 
 | |PyPI version| |Updates| |GitHub license| |Telegram Bot|
 
-.. contents::
-    :depth: 2
+
+.. contents:: :depth: 2
 
 Bot Usage
 ---------
