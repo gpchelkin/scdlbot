@@ -18,7 +18,7 @@ _More to come.._
 *Inline mode might be slow:*
 `@scdlbot https://youtube.com/watch?v=N9XKLqGqwLA`
 
-[🌟GitHub💻](https://github.com/gpchelkin/scdlbot) [Bugs/Improvements here](https://github.com/gpchelkin/scdlbot/issues)
+[🌟GitHub](https://github.com/gpchelkin/scdlbot) [💻Bugs/Improvements here](https://github.com/gpchelkin/scdlbot/issues)
 
 *Created by* @gpchelkin | [🐝👍.WS](http://xn--lo8h6c.ws/)
 *with* `<3` *for* @Eklight | [⚡⭕.РФ](http://Электрокружок.РФ)
