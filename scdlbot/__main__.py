@@ -143,6 +143,11 @@ def dl_command_callback(bot, update, args=None):
                             wait_message_id=wait_message.message_id)
 
 
+def test_urls(urls):  # TODO make it better
+    str_urls = " ".join([url.to_text() for url in urls])
+    return any((pattern in str_urls for pattern in patterns.values()))
+
+
 def message_callback(bot, update):
     event_name = "message"
     logger.debug(event_name)
@@ -164,50 +169,6 @@ def message_callback(bot, update):
                          reply_markup=inline_keyboard, text="Download?")
 
 
-def test_urls(urls):  # TODO make it better
-    str_urls = " ".join([url.to_text() for url in urls])
-    return any((pattern in str_urls for pattern in patterns.values()))
-
-
-def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None,
-                            wait_message_id=None, inline_query_id=None):
-    download_dir = os.path.join(DL_DIR, str(uuid4()))
-    shutil.rmtree(download_dir, ignore_errors=True)
-    os.makedirs(download_dir)
-
-    for url in urls:
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
-        status = download_audio(url, download_dir)
-        if status != "success":
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             parse_mode='Markdown', text="`" + status + "`")
-
-    file_list = []
-    for d, dirs, files in os.walk(download_dir):
-        for f in files:
-            file_list.append(os.path.join(d, f))
-    file_list = sorted(file_list)
-
-    sent_audio_ids = []
-    for file in file_list:
-        sent_audio_ids.extend(send_audio(bot, chat_id, reply_to_message_id, file))
-
-    shutil.rmtree(download_dir, ignore_errors=True)
-    bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
-
-    if not sent_audio_ids:
-        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                         parse_mode='Markdown', text=NO_AUDIO_TEXT_MD)
-        return
-
-    if inline_query_id:
-        results = []
-        for audio_id in sent_audio_ids:
-            if audio_id:
-                results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
-        bot.answer_inline_query(inline_query_id, results)
-
-
 # @run_async
 def download_audio(url, download_dir):
     downloader = URLopener()
@@ -222,7 +183,7 @@ def download_audio(url, download_dir):
                 "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
             )
     elif (patterns["bandcamp"] in url.host) or \
-        ("track/" in url.path) or ("album/" in url.path):  # TODO try/except/log
+        ("/track/" in url.path) or ("/album/" in url.path):  # TODO try/except/log
         if 2 <= url_parts_len <= 2:
             bcdl(
                 "--base-dir=" + download_dir,  # Base location of which all files are downloaded
@@ -294,6 +255,46 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
                                        audio=open(file, 'rb'), caption=caption)
             sent_audio_ids.append(audio_msg.audio.file_id)
     return sent_audio_ids
+
+
+def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None,
+                            wait_message_id=None, inline_query_id=None):
+    download_dir = os.path.join(DL_DIR, str(uuid4()))
+    shutil.rmtree(download_dir, ignore_errors=True)
+    os.makedirs(download_dir)
+
+    for url in urls:
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
+        status = download_audio(url, download_dir)
+        if status != "success":
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             parse_mode='Markdown', text="`" + status + "`")
+
+    file_list = []
+    for d, dirs, files in os.walk(download_dir):
+        for f in files:
+            file_list.append(os.path.join(d, f))
+    file_list = sorted(file_list)
+
+    sent_audio_ids = []
+    for file in file_list:
+        sent_audio_ids.extend(send_audio(bot, chat_id, reply_to_message_id, file))
+
+    shutil.rmtree(download_dir, ignore_errors=True)
+    bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+
+    if not sent_audio_ids:
+        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                         parse_mode='Markdown', text=NO_AUDIO_TEXT_MD)
+        return
+
+    if inline_query_id:
+        results = []
+        for audio_id in sent_audio_ids:
+            if audio_id:
+                results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
+        bot.answer_inline_query(inline_query_id, results)
+
 
 
 def main():
