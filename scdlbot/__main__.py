@@ -8,7 +8,6 @@ import logging
 import os
 # import shelve
 import shutil
-import sys
 # import time
 from urllib.parse import urljoin
 from urllib.request import URLopener
@@ -127,7 +126,7 @@ def callback_query_callback(bot, update):
 
 def dl_command_callback(bot, update, args=None):
     event_name = "dl_command"  # Type of chat, can be either “private”, “group”, “supergroup” or “channel”
-    logger.debug(event_name, update.message.chat.type)
+    logger.debug(event_name)
     botan.track(update.message, event_name=event_name) if botan else None
     chat_id = update.message.chat_id
 
@@ -256,8 +255,9 @@ def download_audio(url, download_dir):
             patoolib.extract_archive(file_name, outdir=DL_DIR)
             os.remove(file_name)
         return "success"
-    except:
-        return sys.exc_info()[0]
+    except Exception as exc:
+        return str(exc)
+        # return str(sys.exc_info()[0:1])
 
 
 # @run_async
