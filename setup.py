@@ -45,6 +45,7 @@ requirements = [
     "setuptools",
     "pydub",
     "mutagen",
+    "patool"
 ]
 
 setup(

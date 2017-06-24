@@ -8,11 +8,14 @@ import logging
 import os
 # import shelve
 import shutil
+import sys
 # import time
 from urllib.parse import urljoin
+from urllib.request import URLopener
 from uuid import uuid4
 
 import mutagen.id3
+import patoolib
 import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
@@ -23,7 +26,6 @@ from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
 # from transliterate import translit
-
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -40,12 +42,10 @@ PORT = int(os.getenv('PORT', '5000'))
 APP_URL = os.getenv('APP_URL', '')
 
 MAX_TG_FILE_SIZE = 45000000
-DL_EVENT_NAME = 'Download'
 WAIT_TEXT = "Wait a bit.."
 WAIT_TEXT_MD = "".join(["_", WAIT_TEXT, "_"])
 ERROR_TEXT_MD = "_Sorry, something went wrong_"
 DESTROY_TEXT = "Destroyed from the Internets!"  # TODO more fun
-urls_store = {}  # TODO shelve
 msg_store = {}  # TODO shelve
 
 scdl = local[os.path.join(os.getenv('BIN_PATH', ''), 'scdl')]
@@ -78,126 +78,142 @@ def configure_scdl():
         config.write(f)
 
 
-def help_callback(bot, update):
+def start_command_callback(bot, update):
+    event_name = "start_command"
+    logger.debug(event_name)
+    botan.track(update.message, event_name=event_name) if botan else None
     bot.send_message(chat_id=update.message.chat_id, text=HELP_MESSAGE,
                      parse_mode='Markdown', disable_web_page_preview=True)
 
 
-def download_callback(bot, update, args=None):
-    global urls_store
+def help_command_callback(bot, update):
+    event_name = "help_command"
+    logger.debug(event_name)
+    botan.track(update.message, event_name=event_name) if botan else None
+    bot.send_message(chat_id=update.message.chat_id, text=HELP_MESSAGE,
+                     parse_mode='Markdown', disable_web_page_preview=True)
+
+
+def inline_query_callback(bot, update):
+    event_name = "inline"
+    logger.debug(event_name)
+    urls = find_all_links(update.inline_query.query, default_scheme="http")
+    download_and_send_audio(bot, urls, inline_query_id=update.inline_query.id)
+
+
+def callback_query_callback(bot, update):
     global msg_store
-    urls = None
-    text = None
-    if update.inline_query:
-        chat_id = STORE_CHAT_ID
-        text = update.inline_query.query
-        urls = find_all_links(text, default_scheme="http")
-        logger.debug("inline query")
-    elif update.callback_query:
-        chat_id = update.callback_query.message.chat_id
-        command, orig_msg_id = update.callback_query.data.split()
-        logger.debug("callback query")
-        botan.track(msg_store[orig_msg_id], event_name=command) if botan else None
-        msg_store.pop(orig_msg_id)
-        urls = urls_store[orig_msg_id]
-        urls_store.pop(orig_msg_id)
-        if command == "Download":
-            update.callback_query.answer(text=WAIT_TEXT)
-            update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
-        elif command == "Cancel" or command == "Destroy":
-            if command == "Destroy":
-                update.callback_query.answer(show_alert=True, text=DESTROY_TEXT)
-            bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
-            return
-    else:
-        botan.track(update.message, event_name=DL_EVENT_NAME) if botan else None
-        chat_id = update.message.chat_id
-        reply_to_message_id = update.message.message_id
-        cmd = False
-        for entity in update.message.entities:
-            if entity.type == MessageEntity.BOT_COMMAND:
-                cmd = True
-                break
-        if cmd:
-            logger.debug("command")
-            text = " ".join(args)
-            if not args:
-                logger.debug("  with no args")
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 text="See /help")
-        else:
-            logger.debug("message")
-            text = update.message.text
-        urls = find_all_links(text, default_scheme="http")
+    command, orig_msg_id = update.callback_query.data.split()
+    event_name = "message_" + command
+    logger.debug(event_name)
+    botan.track(msg_store[orig_msg_id], event_name=event_name) if botan else None
+    urls = find_all_links(msg_store[orig_msg_id].text, default_scheme="http")
+    chat_id = update.callback_query.message.chat_id
+    wait_message_id = update.callback_query.message.message_id
 
-    str_urls = " ".join([url.to_text() for url in urls])  # TODO make it better
-    test = any((pattern in str_urls for pattern in patterns.values()))
-    if args or update.inline_query or update.callback_query or (test and not args and update.message.chat.type == "private"):
-        logger.debug("  command or inline query or callback_query or private message")
-        reply_to_message_id = None
-        wait_message_id = None
-        if update.callback_query:
-            logger.debug("      callback_query")
-            wait_message_id = update.callback_query.message.message_id
-        elif args or update.inline_query:
-            logger.debug("      command or inline query")
-            if update.message and chat_id not in NO_CLUTTER_CHAT_IDS:
-                reply_to_message_id = update.message.message_id
+    if command == "download":
+        update.callback_query.answer(text=WAIT_TEXT)
+        update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
+    elif command == "cancel" or command == "destroy":
+        if command == "destroy":
+            update.callback_query.answer(show_alert=True, text=DESTROY_TEXT)
+        bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+        return
 
-            wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                            parse_mode='Markdown', text=WAIT_TEXT_MD)
-            wait_message_id = wait_message.message_id
+    msg_store.pop(orig_msg_id)
+    download_and_send_audio(bot, urls, chat_id=chat_id,
+                            wait_message_id=wait_message_id)
 
-        download_dir = os.path.join(DL_DIR, str(uuid4()))
-        shutil.rmtree(download_dir, ignore_errors=True)
-        os.makedirs(download_dir)
 
-        for url in urls:
-            bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
+def dl_command_callback(bot, update, args=None):
+    event_name = "dl_command"  # Type of chat, can be either “private”, “group”, “supergroup” or “channel”
+    logger.debug(event_name, update.message.chat.type)
+    botan.track(update.message, event_name=event_name) if botan else None
+    chat_id = update.message.chat_id
+
+    if not args:
+        bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                         text="See /help")
+        return
+
+    urls = find_all_links(" ".join(args), default_scheme="http")
+    reply_to_message_id = update.message.message_id if chat_id not in NO_CLUTTER_CHAT_IDS else None
+    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                    parse_mode='Markdown', text=WAIT_TEXT_MD)
+    download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                            wait_message_id=wait_message.message_id)
+
+
+def message_callback(bot, update):
+    event_name = "message"
+    logger.debug(event_name, update.message.chat.type)
+    botan.track(update.message, event_name=event_name) if botan else None
+    urls = find_all_links(update.message.text, default_scheme="http")
+    chat_id = update.message.chat_id
+    reply_to_message_id = update.message.message_id
+
+    if update.message.chat.type == "private":
+        download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id)
+    elif test_urls(urls):
+        orig_msg_id = str(reply_to_message_id)
+        msg_store[orig_msg_id] = update.message
+        button_download = InlineKeyboardButton(text="YES", callback_data=" ".join(["download", orig_msg_id]))
+        button_cancel = InlineKeyboardButton(text="NO", callback_data=" ".join(["cancel", orig_msg_id]))
+        button_destroy = InlineKeyboardButton(text="💥", callback_data=" ".join(["destroy", orig_msg_id]))
+        inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel, button_destroy]])
+        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                         reply_markup=inline_keyboard, text="Download?")
+
+
+def test_urls(urls):  # TODO make it better
+    str_urls = " ".join([url.to_text() for url in urls])
+    return any((pattern in str_urls for pattern in patterns.values()))
+
+
+def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None,
+                            wait_message_id=None, inline_query_id=None):
+    download_dir = os.path.join(DL_DIR, str(uuid4()))
+    shutil.rmtree(download_dir, ignore_errors=True)
+    os.makedirs(download_dir)
+
+    for url in urls:
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
+        try:
             download_audio(url, download_dir)
-
-        file_list = []
-        for d, dirs, files in os.walk(download_dir):
-            for f in files:
-                file_list.append(os.path.join(d, f))
-        file_list = sorted(file_list)
-
-        sent_audio_ids = []
-        for file in file_list:
-            sent_audio_ids_file = send_audio(bot, chat_id, reply_to_message_id, file)
-            sent_audio_ids.extend(sent_audio_ids_file)
-
-        shutil.rmtree(download_dir, ignore_errors=True)
-        bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
-
-        if not sent_audio_ids:
+        except:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             parse_mode='Markdown', text=ERROR_TEXT_MD)
+                             parse_mode='Markdown', text=ERROR_TEXT_MD + "`" + sys.exc_info()[0] + "`")
             return
-        else:
-            if update.inline_query:
-                results = []
-                for audio_id in sent_audio_ids:
-                    if audio_id:
-                        results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
-                bot.answer_inline_query(update.inline_query.id, results)
-    elif not args:
-        if test:
-            logger.debug("  non-private message")
-            reply_to_message_id = update.message.message_id
-            orig_msg_id = str(reply_to_message_id)
-            button_download = InlineKeyboardButton(text="YES", callback_data=" ".join(["Download", orig_msg_id]))
-            button_cancel = InlineKeyboardButton(text="NO", callback_data=" ".join(["Cancel", orig_msg_id]))
-            button_destroy = InlineKeyboardButton(text="💥", callback_data=" ".join(["Destroy", orig_msg_id]))
-            inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel, button_destroy]])
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             reply_markup=inline_keyboard, text="Download?")
-            urls_store[orig_msg_id] = urls
-            msg_store[orig_msg_id] = update.message
+
+    file_list = []
+    for d, dirs, files in os.walk(download_dir):
+        for f in files:
+            file_list.append(os.path.join(d, f))
+    file_list = sorted(file_list)
+
+    sent_audio_ids = []
+    for file in file_list:
+        sent_audio_ids.extend(send_audio(bot, chat_id, reply_to_message_id, file))
+
+    shutil.rmtree(download_dir, ignore_errors=True)
+    bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+
+    if not sent_audio_ids:
+        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                         parse_mode='Markdown', text=ERROR_TEXT_MD)
+        return
+
+    if inline_query_id:
+        results = []
+        for audio_id in sent_audio_ids:
+            if audio_id:
+                results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
+        bot.answer_inline_query(inline_query_id, results)
 
 
 # @run_async
 def download_audio(url, download_dir):
+    downloader = URLopener()
     url_parts_len = len([part for part in url.path_parts if part])
     if patterns["soundcloud"] in url.host:
         if 2 <= url_parts_len <= 3:
@@ -236,22 +252,28 @@ def download_audio(url, download_dir):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url.to_text(full_quote=True)])
         os.chdir(prev_cwd)
+    else:
+        file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
+        patoolib.extract_archive(file_name, outdir=DL_DIR)
+        os.remove(file_name)
 
 
 # @run_async
 def send_audio(bot, chat_id, reply_to_message_id, file):
     sent_audio_ids = []
-    if ".mp3" in file:
+    file_root, file_ext = os.path.splitext(file)
+    file_format = file_ext.replace(".", "")
+    if file_format == "mp3" or file_format == "m4a":
         file_parts = []
         file_size = os.path.getsize(file)
         parts_number = 1
         if file_size > MAX_TG_FILE_SIZE:
             id3 = mutagen.id3.ID3(file, translate=False)
             parts_number = file_size // MAX_TG_FILE_SIZE + 1
-            sound = AudioSegment.from_mp3(file)
+            sound = AudioSegment.from_file(file, file_format)
             part_size = len(sound) / parts_number
             for i in range(parts_number):
-                file_part = file.replace(".mp3", ".part" + str(i + 1) + ".mp3")
+                file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
                 part = sound[part_size * i:part_size * (i + 1)]
                 part.export(file_part, format="mp3")
                 id3.save(file_part, v1=2, v2_version=4)
@@ -275,20 +297,25 @@ def main():
     configure_scdl()
     updater = Updater(token=TG_BOT_TOKEN)
     dispatcher = updater.dispatcher
-    start_handler = CommandHandler('start', help_callback)
-    dispatcher.add_handler(start_handler)
-    help_handler = CommandHandler('help', help_callback)
-    dispatcher.add_handler(help_handler)
-    download_handler = CommandHandler('dl', download_callback, pass_args=True)
-    dispatcher.add_handler(download_handler)
+
+    start_command_handler = CommandHandler('start', start_command_callback)
+    dispatcher.add_handler(start_command_handler)
+    help_command_handler = CommandHandler('help', help_command_callback)
+    dispatcher.add_handler(help_command_handler)
+
+    dl_command_handler = CommandHandler('dl', dl_command_callback, pass_args=True)
+    dispatcher.add_handler(dl_command_handler)
+
     message_with_links_handler = MessageHandler(Filters.text & (Filters.entity(MessageEntity.URL) |
                                                                 Filters.entity(MessageEntity.TEXT_LINK)),
-                                                download_callback)
+                                                message_callback)
     dispatcher.add_handler(message_with_links_handler)
-    inline_keyboard_handler = CallbackQueryHandler(download_callback)
-    dispatcher.add_handler(inline_keyboard_handler)
-    inline_download_handler = InlineQueryHandler(download_callback)
-    dispatcher.add_handler(inline_download_handler)
+
+    callback_query_handler = CallbackQueryHandler(callback_query_callback)
+    dispatcher.add_handler(callback_query_handler)
+
+    inline_query_handler = InlineQueryHandler(inline_query_callback)
+    dispatcher.add_handler(inline_query_handler)
 
     if USE_WEBHOOK:
         url_path = TG_BOT_TOKEN.replace(":", "")
