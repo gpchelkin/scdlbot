@@ -43,7 +43,7 @@ APP_URL = os.getenv('APP_URL', '')
 MAX_TG_FILE_SIZE = 45000000
 WAIT_TEXT = "Wait a bit.."
 WAIT_TEXT_MD = "".join(["_", WAIT_TEXT, "_"])
-ERROR_TEXT_MD = "_Sorry, something went wrong_"
+NO_AUDIO_TEXT_MD = "_Sorry, no audios were downloaded_"
 DESTROY_TEXT = "Destroyed from the Internets!"  # TODO more fun
 msg_store = {}  # TODO shelve
 
@@ -145,7 +145,7 @@ def dl_command_callback(bot, update, args=None):
 
 def message_callback(bot, update):
     event_name = "message"
-    logger.debug(event_name, update.message.chat.type)
+    logger.debug(event_name)
     botan.track(update.message, event_name=event_name) if botan else None
     urls = find_all_links(update.message.text, default_scheme="http")
     chat_id = update.message.chat_id
@@ -180,7 +180,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
         status = download_audio(url, download_dir)
         if status != "success":
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             parse_mode='Markdown', text=ERROR_TEXT_MD + "`" + status + "`")
+                             parse_mode='Markdown', text="`" + status + "`")
 
     file_list = []
     for d, dirs, files in os.walk(download_dir):
@@ -197,7 +197,7 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
 
     if not sent_audio_ids:
         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                         parse_mode='Markdown', text=ERROR_TEXT_MD)
+                         parse_mode='Markdown', text=NO_AUDIO_TEXT_MD)
         return
 
     if inline_query_id:
@@ -212,52 +212,53 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
 def download_audio(url, download_dir):
     downloader = URLopener()
     url_parts_len = len([part for part in url.path_parts if part])
-    try:
-        if patterns["soundcloud"] in url.host:
-            if 2 <= url_parts_len <= 3:
-                scdl(
-                    "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
-                    "-c",  # Continue if a music already exist
-                    "--path", download_dir,  # Download the music to a custom path
-                    "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-                    "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-                )
-        elif (patterns["bandcamp"] in url.host) or \
-            ("track/" in url.path) or ("album/" in url.path):  # TODO try/except/log
-            if 2 <= url_parts_len <= 2:
-                bcdl(
-                    "--base-dir=" + download_dir,  # Base location of which all files are downloaded
-                    "--template=" + BANDCAMP_TEMPLATE,  # Output filename template
-                    "--overwrite",  # Overwrite tracks that already exist
-                    "--group",  # Use album/track Label as iTunes grouping
-                    "--embed-art",  # Embed album art (if available)
-                    "--no-slugify",  # Disable slugification of track, album, and artist names
-                    url.to_text(full_quote=True)  # URL of album/track
-                )
-        elif (patterns["youtube"] in url.host and ("watch" in url.path or "playlist" in url.path)) or \
-            (patterns["youtu.be"] in url.host) or \
-            (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '128',
-                }],
-            }
-            prev_cwd = os.getcwd()
-            os.chdir(download_dir)
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url.to_text(full_quote=True)])
-            os.chdir(prev_cwd)
-        else:
+    if patterns["soundcloud"] in url.host:
+        if 2 <= url_parts_len <= 3:
+            scdl(
+                "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
+                "-c",  # Continue if a music already exist
+                "--path", download_dir,  # Download the music to a custom path
+                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+            )
+    elif (patterns["bandcamp"] in url.host) or \
+        ("track/" in url.path) or ("album/" in url.path):  # TODO try/except/log
+        if 2 <= url_parts_len <= 2:
+            bcdl(
+                "--base-dir=" + download_dir,  # Base location of which all files are downloaded
+                "--template=" + BANDCAMP_TEMPLATE,  # Output filename template
+                "--overwrite",  # Overwrite tracks that already exist
+                "--group",  # Use album/track Label as iTunes grouping
+                "--embed-art",  # Embed album art (if available)
+                "--no-slugify",  # Disable slugification of track, album, and artist names
+                url.to_text(full_quote=True)  # URL of album/track
+            )
+    elif (patterns["youtube"] in url.host and ("watch" in url.path or "playlist" in url.path)) or \
+        (patterns["youtu.be"] in url.host) or \
+        (patterns["mixcloud"] in url.host and 2 <= url_parts_len <= 2):
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '128',
+            }],
+        }
+        prev_cwd = os.getcwd()
+        os.chdir(download_dir)
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url.to_text(full_quote=True)])
+        os.chdir(prev_cwd)
+    else:
+        try:
             file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
             patoolib.extract_archive(file_name, outdir=DL_DIR)
             os.remove(file_name)
-        return "success"
-    except Exception as exc:
-        return str(exc)
-        # return str(sys.exc_info()[0:1])
+        except Exception as exc:
+            return str(exc)
+        #     return str(sys.exc_info()[0:1])
+
+    return "success"
 
 
 # @run_async
@@ -265,7 +266,7 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
     sent_audio_ids = []
     file_root, file_ext = os.path.splitext(file)
     file_format = file_ext.replace(".", "")
-    if file_format == "mp3" or file_format == "m4a":
+    if file_format == "mp3" or file_format == "m4a" or file_format == "mp4":
         file_parts = []
         file_size = os.path.getsize(file)
         parts_number = 1
