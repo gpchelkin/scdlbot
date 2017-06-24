@@ -211,7 +211,7 @@ ready for deployment with polling (no webhook yet).
 ::
 
     export DOKKU=<your_dokku_server>
-    scp .env dokku.pchelk.in:~
+    scp .env $DOKKU:~
     ssh $DOKKU
     dokku apps:create scdlbot
     dokku config:set scdlbot $(cat .env | xargs)
