@@ -36,7 +36,7 @@ class ContextFilter(logging.Filter):
     return True
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("scdlbot")
 logger.setLevel(logging.DEBUG)
 
 # http://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-python-apps/
@@ -134,10 +134,9 @@ def dl_command_callback(bot, update, args=None):
         return
 
     urls = find_all_links(" ".join(args), default_scheme="http")
-    reply_to_message_id = update.message.message_id if chat_id not in NO_CLUTTER_CHAT_IDS else None
-    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                     parse_mode='Markdown', text=WAIT_TEXT_MD)
-    download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+    download_and_send_audio(bot, urls, chat_id=chat_id, reply_to_message_id=update.message.message_id,
                             wait_message_id=wait_message.message_id)
 
 
@@ -244,7 +243,7 @@ def download_audio(url, download_dir):
 
 
 # @run_async
-def send_audio(bot, chat_id, reply_to_message_id, file):
+def send_audio(bot, chat_id, reply_to_message_id=None, file=""):
     sent_audio_ids = []
     file_root, file_ext = os.path.splitext(file)
     file_format = file_ext.replace(".", "")
@@ -280,6 +279,9 @@ def send_audio(bot, chat_id, reply_to_message_id, file):
 
 def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_id=None,
                             wait_message_id=None, inline_query_id=None):
+    if chat_id in NO_CLUTTER_CHAT_IDS:
+        reply_to_message_id = None
+
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
