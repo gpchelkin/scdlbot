@@ -8,13 +8,14 @@ import logging
 import os
 # import shelve
 import shutil
+import socket
+from logging.handlers import SysLogHandler
 # import time
 from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
 
 import mutagen.id3
-import patoolib
 import pkg_resources
 import youtube_dl
 from boltons.urlutils import find_all_links
@@ -24,11 +25,32 @@ from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, In
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
+
 # from transliterate import translit
+
+class ContextFilter(logging.Filter):
+  hostname = socket.gethostname()
+
+  def filter(self, record):
+    record.hostname = ContextFilter.hostname
+    return True
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+# http://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-python-apps/
+SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
+if SYSLOG_ADDRESS:
+    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_udp_port = int(syslog_udp_port)
+    f = ContextFilter()
+    logger.addFilter(f)
+    syslog = SysLogHandler(address=(syslog_hostname, syslog_udp_port))
+    formatter = logging.Formatter('%(asctime)s %(hostname)s scdlbot: %(message)s', datefmt='%b %d %H:%M:%S')
+    syslog.setFormatter(formatter)
+    logger.addHandler(syslog)
+
 
 TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 BOTAN_TOKEN = os.getenv('BOTAN_TOKEN', '')
@@ -100,30 +122,6 @@ def inline_query_callback(bot, update):
     download_and_send_audio(bot, urls, inline_query_id=update.inline_query.id)
 
 
-def callback_query_callback(bot, update):
-    global msg_store
-    command, orig_msg_id = update.callback_query.data.split()
-    event_name = "message_" + command
-    logger.debug(event_name)
-    botan.track(msg_store[orig_msg_id], event_name=event_name) if botan else None
-    urls = find_all_links(msg_store[orig_msg_id].text, default_scheme="http")
-    chat_id = update.callback_query.message.chat_id
-    wait_message_id = update.callback_query.message.message_id
-
-    if command == "download":
-        update.callback_query.answer(text=WAIT_TEXT)
-        update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
-    elif command == "cancel" or command == "destroy":
-        if command == "destroy":
-            update.callback_query.answer(show_alert=True, text=DESTROY_TEXT)
-        bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
-        return
-
-    msg_store.pop(orig_msg_id)
-    download_and_send_audio(bot, urls, chat_id=chat_id,
-                            wait_message_id=wait_message_id)
-
-
 def dl_command_callback(bot, update, args=None):
     event_name = "dl_command"  # Type of chat, can be either “private”, “group”, “supergroup” or “channel”
     logger.debug(event_name)
@@ -148,6 +146,30 @@ def test_urls(urls):  # TODO make it better
     return any((pattern in str_urls for pattern in patterns.values()))
 
 
+def callback_query_callback(bot, update):
+    global msg_store
+    command, orig_msg_id = update.callback_query.data.split()
+    event_name = "message_" + command
+    logger.debug(event_name)
+    botan.track(msg_store[orig_msg_id], event_name=event_name) if botan else None
+    urls = find_all_links(msg_store[orig_msg_id].text, default_scheme="http")
+    chat_id = update.callback_query.message.chat_id
+    wait_message_id = update.callback_query.message.message_id
+
+    if command == "download":
+        update.callback_query.answer(text=WAIT_TEXT)
+        update.callback_query.edit_message_text(parse_mode='Markdown', text=WAIT_TEXT_MD)
+    elif command == "cancel" or command == "destroy":
+        if command == "destroy":
+            update.callback_query.answer(show_alert=True, text=DESTROY_TEXT)
+        bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+        return
+
+    msg_store.pop(orig_msg_id)
+    download_and_send_audio(bot, urls, chat_id=chat_id,
+                            wait_message_id=update.callback_query.message.message_id)
+
+
 def message_callback(bot, update):
     event_name = "message"
     logger.debug(event_name)
@@ -163,8 +185,7 @@ def message_callback(bot, update):
         msg_store[orig_msg_id] = update.message
         button_download = InlineKeyboardButton(text="YES", callback_data=" ".join(["download", orig_msg_id]))
         button_cancel = InlineKeyboardButton(text="NO", callback_data=" ".join(["cancel", orig_msg_id]))
-        button_destroy = InlineKeyboardButton(text="💥", callback_data=" ".join(["destroy", orig_msg_id]))
-        inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel, button_destroy]])
+        inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                          reply_markup=inline_keyboard, text="Download?")
 
@@ -210,16 +231,16 @@ def download_audio(url, download_dir):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url.to_text(full_quote=True)])
         os.chdir(prev_cwd)
-    else:
-        try:
-            file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
-            patoolib.extract_archive(file_name, outdir=DL_DIR)
-            os.remove(file_name)
-        except Exception as exc:
-            return str(exc)
-        #     return str(sys.exc_info()[0:1])
-
-    return "success"
+    # else:
+    #     try:
+    #         file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
+    #         patoolib.extract_archive(file_name, outdir=DL_DIR)
+    #         os.remove(file_name)
+    #     except Exception as exc:
+    #         return str(exc)
+    #     #     return str(sys.exc_info()[0:1])
+    #
+    # return "success"
 
 
 # @run_async
@@ -265,10 +286,10 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
 
     for url in urls:
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
-        status = download_audio(url, download_dir)
-        if status != "success":
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             parse_mode='Markdown', text="`" + status + "`")
+        download_audio(url, download_dir)
+        # if status != "success":
+        #     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+        #                      parse_mode='Markdown', text="`" + status + "`")
 
     file_list = []
     for d, dirs, files in os.walk(download_dir):
@@ -281,7 +302,8 @@ def download_and_send_audio(bot, urls, chat_id=STORE_CHAT_ID, reply_to_message_i
         sent_audio_ids.extend(send_audio(bot, chat_id, reply_to_message_id, file))
 
     shutil.rmtree(download_dir, ignore_errors=True)
-    bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+    if wait_message_id:
+        bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
 
     if not sent_audio_ids:
         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
