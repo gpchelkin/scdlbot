@@ -5,7 +5,6 @@ import logging
 import os
 # import shelve
 import shutil
-import socket
 from logging.handlers import SysLogHandler
 # import time
 from urllib.parse import urljoin
@@ -22,19 +21,17 @@ from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, In
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
-
 # from transliterate import translit
 
-class ContextFilter(logging.Filter):
-    hostname = socket.gethostname()
+# class ContextFilter(logging.Filter):
+#     hostname = socket.gethostname()
+#
+#     def filter(self, record):
+#         record.hostname = ContextFilter.hostname
+#         return True
 
-    def filter(self, record):
-        record.hostname = ContextFilter.hostname
-        return True
-
-logger = logging.getLogger(__name__)
-filt = ContextFilter()
-logger.addFilter(filt)
+# filt = ContextFilter()
+# logger.addFilter(filt)
 
 # http://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-python-apps/
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
@@ -46,6 +43,7 @@ if SYSLOG_ADDRESS:
     handlers.append(syslog_handler)
 logging.basicConfig(format='%(asctime)s %(hostname)s %(name)s: %(message)s', datefmt='%b %d %H:%M:%S',
                     level=logging.DEBUG, handlers=handlers)
+logger = logging.getLogger(__name__)
 
 
 class SCDLBot:
@@ -63,8 +61,8 @@ class SCDLBot:
     def __init__(self, tg_bot_token, botan_token, use_webhook,
                  app_url, app_port, bin_path,
                  sc_auth_token, store_chat_id, no_clutter_chat_ids, dl_dir):
-        self.WAIT_TEXT = self.get_response_text('no_audio.txt')
-        self.NO_AUDIO_TEXT = self.get_response_text('wait.txt')
+        self.WAIT_TEXT = self.get_response_text('wait.txt')
+        self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
         self.HELP_TEXT = self.get_response_text('help.tg.md')
         self.NO_CLUTTER_CHAT_IDS = no_clutter_chat_ids if no_clutter_chat_ids else []
         self.STORE_CHAT_ID = store_chat_id
