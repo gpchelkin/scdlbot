@@ -1,2 +1,2 @@
-dl - Download track or set from a link
-help - Show the help message
+dl - + link required! download now
+help - show the help message
