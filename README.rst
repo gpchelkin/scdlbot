@@ -108,6 +108,8 @@ Optional
    default: empty
 -  ``DL_DIR``: Parent directory for MP3 download directory, default: ~
    (user's home directory)
+-  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``
+-  ``HOSTNAME``: Hostname to show up in Syslog messages
 
 Running Locally
 ~~~~~~~~~~~~~~~

@@ -32,7 +32,7 @@ if SYSLOG_ADDRESS:
     syslog_handler = SysLogHandler(address=(syslog_hostname, syslog_udp_port))
     handlers.append(syslog_handler)
 
-logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "host")),
+logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "unknown_host")),
                     datefmt='%b %d %H:%M:%S',
                     level=logging.DEBUG, handlers=handlers)
 logger = logging.getLogger(__name__)

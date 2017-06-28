@@ -2,6 +2,13 @@
 History
 =======
 
+0.5.0 (2017-06-28)
+------------------
+
+* Big refactor to class-based
+* Syslog support
+* Some fixes
+
 0.4.0 (2017-06-15)
 ------------------
 
