@@ -21,27 +21,19 @@ from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, In
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
-# from transliterate import translit
-
-# class ContextFilter(logging.Filter):
-#     hostname = socket.gethostname()
-#
-#     def filter(self, record):
-#         record.hostname = ContextFilter.hostname
-#         return True
-
-# filt = ContextFilter()
-# logger.addFilter(filt)
-
 # http://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-python-apps/
+console_handler = logging.StreamHandler()
+handlers = [console_handler]
+
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-handlers = []
 if SYSLOG_ADDRESS:
     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
     syslog_udp_port = int(syslog_udp_port)
     syslog_handler = SysLogHandler(address=(syslog_hostname, syslog_udp_port))
     handlers.append(syslog_handler)
-logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format('heroku'), datefmt='%b %d %H:%M:%S',
+
+logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "host")),
+                    datefmt='%b %d %H:%M:%S',
                     level=logging.DEBUG, handlers=handlers)
 logger = logging.getLogger(__name__)
 
