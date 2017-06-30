@@ -4,15 +4,14 @@
 *YouTube*: videos/playlists/no live streams pls
 *Mixcloud*: unstable and slow
 
-Send a message with links and I will instantly download them in PM or ask you in groups. [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_ so I parse all group messages for links. Forwarded messages work too. Example:
+- Send a message with links to chat and I will instantly download them in PM or ask you in groups. [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_ so I parse all group messages for links. Forwarded messages work too. Example:
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix`
 
-Use "/dl + link" command to download instantly in groups:
-`/dl hey, https://m.youtube.com/watch?v=Ug0y1ZhdHT0 is neat!`
+- Use `/dl <link(-s)>` command to download instantly in groups.
 
 *Created by* @gpchelkin //[🐝👍.WS](http://xn--lo8h6c.ws/)
 *With* 🖤 *for* @Eklight //[⚡⚫.РФ](http://Электрокружок.РФ)
 *Botpic by* @Lowonbudget //[👩‍🎨🖼️](https://www.behance.net/lowonbudget)
-[🌟GitHub](https://github.com/gpchelkin/scdlbot) // [💻Bugs and Improvements](https://github.com/gpchelkin/scdlbot/issues)
+[🌟GitHub](https://github.com/gpchelkin/scdlbot) // [💻Issues](https://github.com/gpchelkin/scdlbot/issues)
 
 Not mine: @vkm\_bot @scloud\_bot @GetMusicBot
