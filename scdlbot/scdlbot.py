@@ -18,6 +18,8 @@ from plumbum import local
 from pydub import AudioSegment
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.contrib.botan import Botan
+from telegram.error import (TelegramError, Unauthorized, BadRequest,
+                            TimedOut, ChatMigrated, NetworkError)
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
 logger = logging.getLogger(__name__)
@@ -81,6 +83,37 @@ class SCDLBot:
 
         inline_query_handler = InlineQueryHandler(self.inline_query_callback)
         dispatcher.add_handler(inline_query_handler)
+
+        unknown_handler = MessageHandler(Filters.command, self.unknown_command_callback)
+        dispatcher.add_handler(unknown_handler)
+
+        dispatcher.add_error_handler(self.error_callback)
+
+    def unknown_command_callback(self, bot, update):
+        bot.send_message(chat_id=update.message.chat_id,
+                         text="Unknown command")
+
+    def error_callback(self, bot, update, error):
+        try:
+            raise error
+        except Unauthorized:
+            # remove update.message.chat_id from conversation list
+            logger.debug('Update {} caused Unauthorized error: {}'.format(update, error))
+        except BadRequest:
+            # handle malformed requests - read more below!
+            logger.debug('Update {} caused BadRequest error: {}'.format(update, error))
+        except TimedOut:
+            # handle slow connection problems
+            logger.debug('Update {} caused TimedOut error: {}'.format(update, error))
+        except NetworkError:
+            # handle other connection problems
+            logger.debug('Update {} caused NetworkError: {}'.format(update, error))
+        except ChatMigrated as e:
+            # the chat_id of a group has changed, use e.new_chat_id instead
+            logger.debug('Update {} caused ChatMigrated error: {}'.format(update, error))
+        except TelegramError:
+            # handle all other telegram related errors
+            logger.debug('Update {} caused TelegramError: {}'.format(update, error))
 
     def start(self, use_webhook=False, app_url=None, app_port=None):
         if use_webhook:
