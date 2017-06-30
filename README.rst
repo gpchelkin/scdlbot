@@ -2,7 +2,7 @@
 Music Downloader Telegram Bot
 =============================
 
-| |PyPI version| |Updates| |GitHub license| |Telegram Bot|
+| |PyPI version| |Build Status| |Scrutinizer Code Quality| |Updates| |GitHub license| |Telegram Bot|
 
 
 .. contents:: :depth: 2
@@ -45,15 +45,15 @@ Those should be available in your ``PATH``:
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ recommended)
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
 
-Install from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (preferred)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Install / Update from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (recommended)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     pip3 install scdlbot
 
-Install from `Git source <https://github.com/gpchelkin/scdlbot>`__
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Install / Update from `Git source <https://github.com/gpchelkin/scdlbot>`__
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -61,30 +61,37 @@ Install from `Git source <https://github.com/gpchelkin/scdlbot>`__
     cd scdlbot
     pip3 install --requirement requirements.txt
 
-    # If you want to install system-wide, not recommended:
-    python3 setup.py install
-    # Install only a link to current project sources:
+    # Update:
+    git pull
+    pip3 install --requirement requirements.txt
+
+    # System-wide install link to current sources, recommended:
     python3 setup.py develop
+
+    # System-wide install copy of current sources, not recommended:
+    python3 setup.py install
 
 Configuration
 ~~~~~~~~~~~~~
 
-Copy config file sample and set up config environment variables in it:
+Download or copy config file sample and set up config environment variables in it:
 
 ::
 
-    # if you installed from PyPI, download sample:
-    wget https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
+    # For PyPI installs: download sample config:
+    curl -o .env https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
 
+    # For Git source installs: copy sample config:
     cp .env.sample .env
+
+    # Use your favourite editor:
     nano .env
 
 Required
 ^^^^^^^^
 
 -  ``TG_BOT_TOKEN``: Telegram Bot API Token, `obtain
-   here <https://t.me/BotFather>`__, also diable privacy mode if you
-   want
+   here <https://t.me/BotFather>`__
 -  ``STORE_CHAT_ID``: Chat ID for storing audios for inline mode
 -  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
    here <https://flyingrub.github.io/scdl/>`__
@@ -111,6 +118,12 @@ Optional
 -  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``
 -  ``HOSTNAME``: Hostname to show up in Syslog messages
 
+Telegram Settings
+^^^^^^^^^^^^^^^^^
+
+Send the commands from filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
+
+
 Running Locally
 ~~~~~~~~~~~~~~~
 
@@ -121,12 +134,12 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
 
 ::
 
-    # if you installed from PyPI, download Procfile:
-    wget https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
+    # For PyPI installs: first download Procfile:
+    curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # for long polling:
+    # For long polling:
     heroku local worker
-    # for webhooks (you will also need to set up some NGINX with SSL):
+    # For webhooks (you will also need to set up some NGINX with SSL):
     heroku local web
 
 Using just Python
@@ -134,13 +147,13 @@ Using just Python
 
 ::
 
-    # if you installed from PyPI or system-wide:
+    # For PyPI or Git source system-wide installs:
     export $(cat .env | xargs)
     scdlbot
     # or just:
     env $(cat .env | xargs) scdlbot
 
-    # if you haven't installed from PyPI or system-wide:
+    # For not-installed Git source repository directory:
     export $(cat .env | xargs)
     python -m scdlbot
     # or just:
@@ -152,6 +165,7 @@ Deploying to `Heroku <https://heroku.com/>`__
 
 |Deploy|
 
+Register on Heroku, press the button above and configure variables for deploying.
 When app is deployed you **must** set only one dyno working on
 "Resources" tab in your app settings depending on `which way of getting
 updates <https://core.telegram.org/bots/api#getting-updates>`__ you have
@@ -207,7 +221,7 @@ Some useful commands:
 Deploying to `Dokku <https://github.com/dokku/dokku>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use Dokku and their docs on your own server. App is tested and fully
+Use Dokku (your own Heroku) installed on your own server. App is tested and fully
 ready for deployment with polling (no webhook yet).
 
 ::
@@ -215,14 +229,14 @@ ready for deployment with polling (no webhook yet).
     export DOKKU=<your_dokku_server>
     scp .env $DOKKU:~
     ssh $DOKKU
-    dokku apps:create scdlbot
-    dokku config:set scdlbot $(cat .env | xargs)
-    # Ctrl+D
+        dokku apps:create scdlbot
+        dokku config:set scdlbot $(cat .env | xargs)
+        # Ctrl+D
     git remote add dokku dokku@$DOKKU:scdlbot
     git push dokku master
     ssh $DOKKU
-    dokku ps:scale scdlbot worker=1 web=0
-    dokku ps:restart
+        dokku ps:scale scdlbot worker=1 web=0
+        dokku ps:restart
 
 .. |PyPI version| image:: https://badge.fury.io/py/scdlbot.svg
     :target: https://pypi.org/project/scdlbot
@@ -232,5 +246,9 @@ ready for deployment with polling (no webhook yet).
     :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
 .. |Telegram Bot| image:: https://img.shields.io/badge/telegram-bot-blue.svg
     :target: https://t.me/scdlbot
+.. |Scrutinizer Code Quality| image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/quality-score.png?b=master
+    :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/?branch=master
+.. |Build Status| image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/build.png?b=master
+    :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/build-status/master
 .. |Deploy| image:: https://www.herokucdn.com/deploy/button.svg
     :target: https://heroku.com/deploy

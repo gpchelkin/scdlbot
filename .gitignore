@@ -139,5 +139,5 @@ ENV/
 # Rope project settings
 .ropeproject
 
-All Intellij files
+# All Intellij files
 .idea

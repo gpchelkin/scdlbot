@@ -15,9 +15,6 @@ _More to come.._
 *Use "/dl + link" command to download instantly in groups:*
 `/dl hey, https://m.youtube.com/watch?v=Ug0y1ZhdHT0 is neat!`
 
-*Inline mode might be slow so I don't recommend using it:*
-`@scdlbot https://youtube.com/watch?v=N9XKLqGqwLA`
-
 [🌟GitHub](https://github.com/gpchelkin/scdlbot) // [💻Bugs and Improvements](https://github.com/gpchelkin/scdlbot/issues)
 
 *Created by* @gpchelkin //[🐝👍.WS](http://xn--lo8h6c.ws/)

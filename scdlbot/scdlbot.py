@@ -50,8 +50,7 @@ class SCDLBot:
         "mixcloud": "mixcloud.com"
     }
 
-    def __init__(self, tg_bot_token, botan_token, use_webhook,
-                 app_url, app_port, bin_path,
+    def __init__(self, tg_bot_token, botan_token, bin_path,
                  sc_auth_token, store_chat_id, no_clutter_chat_ids, dl_dir):
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
@@ -61,6 +60,7 @@ class SCDLBot:
         self.DL_DIR = dl_dir
         self.scdl = local[os.path.join(bin_path, 'scdl')]
         self.bcdl = local[os.path.join(bin_path, 'bandcamp-dl')]
+        self.tg_bot_token = tg_bot_token
         self.botan = Botan(botan_token) if botan_token else None
         self.msg_store = {}  # TODO shelve
 
@@ -75,8 +75,8 @@ class SCDLBot:
         with open(config_path, 'w') as config_file:
             config.write(config_file)
 
-        updater = Updater(token=tg_bot_token)
-        dispatcher = updater.dispatcher
+        self.updater = Updater(token=self.tg_bot_token)
+        dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.start_command_callback)
         dispatcher.add_handler(start_command_handler)
@@ -97,15 +97,16 @@ class SCDLBot:
         inline_query_handler = InlineQueryHandler(self.inline_query_callback)
         dispatcher.add_handler(inline_query_handler)
 
+    def start(self, use_webhook=False, app_port=None, app_url=None):
         if use_webhook:
-            url_path = tg_bot_token.replace(":", "")
-            updater.start_webhook(listen="0.0.0.0",
-                                  port=app_port,
-                                  url_path=url_path)
-            updater.bot.set_webhook(urljoin(app_url, url_path))
-            updater.idle()
+            url_path = self.tg_bot_token.replace(":", "")
+            self.updater.start_webhook(listen="0.0.0.0",
+                                       port=app_port,
+                                       url_path=url_path)
+            self.updater.bot.set_webhook(urljoin(app_url, url_path))
         else:
-            updater.start_polling()
+            self.updater.start_polling()
+        self.updater.idle()
 
     @staticmethod
     def get_response_text(file_name):

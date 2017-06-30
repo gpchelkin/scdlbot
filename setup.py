@@ -5,6 +5,8 @@ import os
 
 from setuptools import setup, find_packages
 
+module_name = 'scdlbot'
+
 
 def get_version(version_tuple):
     # additional handling of a,b,rc tags, this can be simpler depending on your versioning scheme
@@ -16,7 +18,7 @@ def get_version(version_tuple):
 
 
 # path to the packages __init__ module in project source tree
-init = os.path.join(os.path.dirname(__file__), 'scdlbot', '__init__.py')
+init = os.path.join(os.path.dirname(__file__), module_name, '__init__.py')
 
 version_line = list(
     filter(lambda l: l.startswith('VERSION'), open(init))
@@ -49,21 +51,20 @@ requirements = [
 ]
 
 setup(
-    name='scdlbot',
+    name=module_name,
     version=VERSION,
-    description="Downloads MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
+    description="Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
     long_description=readme + '\n\n' + history,
     author="George Pchelkin",
     author_email='george@pchelk.in',
     url='https://github.com/gpchelkin/scdlbot',
     packages=find_packages(),
-    package_dir={'scdlbot':'scdlbot'},
     include_package_data=True,
     install_requires=requirements,
     python_requires='~=3.4',
     license="GNU General Public License v3",
     zip_safe=True,
-    keywords='scdlbot',
+    keywords='scdlbot telegram bot soundcloud bandcamp youtube audio music download',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -79,7 +80,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'scdlbot=scdlbot.__main__:main',
+            'scdlbot={}.__main__:main'.format(module_name),
         ],
     },
 )
