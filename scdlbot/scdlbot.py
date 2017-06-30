@@ -121,8 +121,8 @@ class SCDLBot:
             self.updater.start_webhook(listen="0.0.0.0",
                                        port=app_port,
                                        url_path=url_path)
-            self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
-                                         certificate=open(cert_file, 'rb'))
+            self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
+                                         # certificate=open(cert_file, 'rb'))
         else:
             self.updater.start_polling()
         self.updater.idle()
