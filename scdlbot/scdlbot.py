@@ -99,6 +99,7 @@ class SCDLBot:
 
     def start(self, use_webhook=False, app_port=None, app_url=None):
         if use_webhook:
+            logger.debug("APP_URL_PORT:", app_url, app_port)
             url_path = self.tg_bot_token.replace(":", "")
             self.updater.start_webhook(listen="0.0.0.0",
                                        port=app_port,
