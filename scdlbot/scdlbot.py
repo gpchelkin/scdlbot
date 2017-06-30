@@ -7,7 +7,6 @@ import os
 import shutil
 from logging.handlers import SysLogHandler
 # import time
-from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
 
@@ -100,11 +99,11 @@ class SCDLBot:
     def start(self, use_webhook=False, app_port=None, app_url=None):
         if use_webhook:
             logger.debug("APP_URL_PORT:", app_url, app_port)
-            url_path = self.tg_bot_token.replace(":", "")
-            self.updater.start_webhook(listen="0.0.0.0",
-                                       port=app_port,
-                                       url_path=url_path)
-            self.updater.bot.set_webhook(urljoin(app_url, url_path))
+            # url_path = self.tg_bot_token.replace(":", "")
+            # self.updater.start_webhook(listen="0.0.0.0",
+            #                            port=app_port,
+            #                            url_path=url_path)
+            # self.updater.bot.set_webhook(urljoin(app_url, url_path))
         else:
             self.updater.start_polling()
         self.updater.idle()
@@ -161,20 +160,19 @@ class SCDLBot:
         logger.debug(event_name)
         self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
         urls = find_all_links(self.msg_store[orig_msg_id].text, default_scheme="http")
+        self.msg_store.pop(orig_msg_id)
         chat_id = update.callback_query.message.chat_id
 
         if action == "dl":
             update.callback_query.answer(text=self.WAIT_TEXT)
-            update.callback_query.edit_message_text(parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+            edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+            self.download_and_send(bot, urls, chat_id=chat_id,
+                                   wait_message_id=edited_msg.message_id)
         elif action == "nodl" or action == "destroy":
             # if action == "destroy":
             #     update.callback_query.answer(show_alert=True, text="Destroyed!")
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
-            return
 
-        self.msg_store.pop(orig_msg_id)
-        self.download_and_send(bot, urls, chat_id=chat_id,
-                               wait_message_id=update.callback_query.message.message_id)
 
     def message_callback(self, bot, update):
         urls = find_all_links(update.message.text, default_scheme="http")
