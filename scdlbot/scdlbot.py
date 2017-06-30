@@ -5,7 +5,6 @@ import logging
 import os
 # import shelve
 import shutil
-from logging.handlers import SysLogHandler
 # import time
 from urllib.request import URLopener
 from uuid import uuid4
@@ -20,20 +19,6 @@ from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, In
 from telegram.contrib.botan import Botan
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 
-# http://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-python-apps/
-console_handler = logging.StreamHandler()
-handlers = [console_handler]
-
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-if SYSLOG_ADDRESS:
-    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_udp_port = int(syslog_udp_port)
-    syslog_handler = SysLogHandler(address=(syslog_hostname, syslog_udp_port))
-    handlers.append(syslog_handler)
-
-logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "unknown_host")),
-                    datefmt='%b %d %H:%M:%S',
-                    level=logging.DEBUG, handlers=handlers)
 logger = logging.getLogger(__name__)
 
 
@@ -165,14 +150,14 @@ class SCDLBot:
 
         if action == "dl":
             update.callback_query.answer(text=self.WAIT_TEXT)
-            edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+            edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
+                                                                 text=self.md_italic(self.WAIT_TEXT))
             self.download_and_send(bot, urls, chat_id=chat_id,
                                    wait_message_id=edited_msg.message_id)
         elif action == "nodl" or action == "destroy":
             # if action == "destroy":
             #     update.callback_query.answer(show_alert=True, text="Destroyed!")
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
-
 
     def message_callback(self, bot, update):
         urls = find_all_links(update.message.text, default_scheme="http")

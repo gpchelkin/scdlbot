@@ -1,10 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import logging
 import os
+from logging.handlers import SysLogHandler
 
 from scdlbot.scdlbot import SCDLBot
 
+console_handler = logging.StreamHandler()
+handlers = [console_handler]
+
+SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
+if SYSLOG_ADDRESS:
+    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_udp_port = int(syslog_udp_port)
+    syslog_handler = SysLogHandler(address=(syslog_hostname, syslog_udp_port))
+    handlers.append(syslog_handler)
+
+logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "unknown_host")),
+                    datefmt='%b %d %H:%M:%S',
+                    level=logging.DEBUG, handlers=handlers)
+
+logger = logging.getLogger(__name__)
 
 def main():
     tg_bot_token = os.environ['TG_BOT_TOKEN']
@@ -17,11 +33,13 @@ def main():
     app_url = os.getenv('APP_URL', '')
     app_port = int(os.getenv('PORT', '5000'))
     bin_path = os.getenv('BIN_PATH', '')
+    logger.debug(app_url, app_port)
 
     scdlbot = SCDLBot(tg_bot_token, botan_token, bin_path,
                       sc_auth_token, store_chat_id,
                       no_clutter_chat_ids, dl_dir)
     scdlbot.start(use_webhook, app_url, app_port)
+
 
 if __name__ == '__main__':
     main()
