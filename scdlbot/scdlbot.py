@@ -6,6 +6,7 @@ import os
 # import shelve
 import shutil
 # import time
+from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
 
@@ -81,14 +82,13 @@ class SCDLBot:
         inline_query_handler = InlineQueryHandler(self.inline_query_callback)
         dispatcher.add_handler(inline_query_handler)
 
-    def start(self, use_webhook=False, app_port=None, app_url=None):
+    def start(self, use_webhook=False, app_url=None, app_port=None):
         if use_webhook:
-            logger.debug("APP_URL_PORT:", app_url, app_port)
-            # url_path = self.tg_bot_token.replace(":", "")
-            # self.updater.start_webhook(listen="0.0.0.0",
-            #                            port=app_port,
-            #                            url_path=url_path)
-            # self.updater.bot.set_webhook(urljoin(app_url, url_path))
+            url_path = self.tg_bot_token.replace(":", "")
+            self.updater.start_webhook(listen="0.0.0.0",
+                                       port=app_port,
+                                       url_path=url_path)
+            self.updater.bot.set_webhook(urljoin(app_url, url_path))
         else:
             self.updater.start_polling()
         self.updater.idle()
@@ -155,8 +155,7 @@ class SCDLBot:
             self.download_and_send(bot, urls, chat_id=chat_id,
                                    wait_message_id=edited_msg.message_id)
         elif action == "nodl" or action == "destroy":
-            # if action == "destroy":
-            #     update.callback_query.answer(show_alert=True, text="Destroyed!")
+            # update.callback_query.answer(text="Cancelled!", show_alert=True)
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
 
     def message_callback(self, bot, update):
