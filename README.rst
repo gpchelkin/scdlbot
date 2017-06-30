@@ -223,20 +223,23 @@ Deploying to `Dokku <https://github.com/dokku/dokku>`__
 
 Use Dokku (your own Heroku) installed on your own server. App is tested and fully
 ready for deployment with polling (no webhook yet).
+https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#creating-a-self-signed-certificate-using-openssl
 
 ::
 
     export DOKKU=<your_dokku_server>
     scp .env $DOKKU:~
     ssh $DOKKU
+        export DOKKU=<your_dokku_server>
         dokku apps:create scdlbot
+        dokku certs:generate scdlbot scdlbot.$DOKKU
         dokku config:set scdlbot $(cat .env | xargs)
         # Ctrl+D
     git remote add dokku dokku@$DOKKU:scdlbot
     git push dokku master
     ssh $DOKKU
         dokku ps:scale scdlbot worker=1 web=0
-        dokku ps:restart
+        dokku ps:restart scdlbot
 
 .. |PyPI version| image:: https://badge.fury.io/py/scdlbot.svg
     :target: https://pypi.org/project/scdlbot

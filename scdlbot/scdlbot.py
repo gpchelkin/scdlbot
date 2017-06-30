@@ -115,13 +115,14 @@ class SCDLBot:
             # handle all other telegram related errors
             logger.debug('Update {} caused TelegramError: {}'.format(update, error))
 
-    def start(self, use_webhook=False, app_url=None, app_port=None):
+    def start(self, use_webhook=False, app_url=None, app_port=None, cert_file=None):
         if use_webhook:
             url_path = self.tg_bot_token.replace(":", "")
             self.updater.start_webhook(listen="0.0.0.0",
                                        port=app_port,
                                        url_path=url_path)
-            self.updater.bot.set_webhook(urljoin(app_url, url_path))
+            self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
+                                         certificate=open(cert_file, 'rb'))
         else:
             self.updater.start_polling()
         self.updater.idle()

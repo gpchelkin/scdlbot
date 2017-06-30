@@ -33,11 +33,11 @@ def main():
     app_url = os.getenv('APP_URL', '')
     app_port = int(os.getenv('PORT', '5000'))
     bin_path = os.getenv('BIN_PATH', '')
-
+    cert_file = os.getenv('CERT_FILE', '')
     scdlbot = SCDLBot(tg_bot_token, botan_token, bin_path,
                       sc_auth_token, store_chat_id,
                       no_clutter_chat_ids, dl_dir)
-    scdlbot.start(use_webhook, app_url, app_port)
+    scdlbot.start(use_webhook, app_url, app_port, cert_file)
 
 
 if __name__ == '__main__':
