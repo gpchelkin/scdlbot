@@ -293,9 +293,15 @@ class SCDLBot:
                 caption = None
                 if file_size > self.MAX_TG_FILE_SIZE:
                     caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
-                audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                           audio=open(file, 'rb'), caption=caption)
-                sent_audio_ids.append(audio_msg.audio.file_id)
+                for i in range(3):
+                    try:
+                        audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                   audio=open(file, 'rb'), caption=caption)
+                        sent_audio_ids.append(audio_msg.audio.file_id)
+                        break
+                    except TelegramError as exc:
+                        logger.debug('Caught TelegramError: {}'.format(exc))
+                        pass
         return sent_audio_ids
 
     def download_and_send(self, bot, urls, chat_id, reply_to_message_id=None,
