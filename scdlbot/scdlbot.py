@@ -233,24 +233,22 @@ class SCDLBot:
         if urls:
             chat_id = update.message.chat_id
             reply_to_message_id = update.message.message_id
-
-            if update.message.chat.type == "private" or self.prepare_urls(urls):
-                event_name = "_".join(["dl", "msg"])
-                logger.debug(event_name)
-                if update.message.chat.type == "private":
-                    self.botan.track(update.message, event_name) if self.botan else None
-                    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                                    parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-                    self.download_and_send(bot, urls.keys(), chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                           wait_message_id=wait_message.message_id)
-                else:
-                    orig_msg_id = str(reply_to_message_id)
-                    self.msg_store[orig_msg_id] = update.message
-                    button_download = InlineKeyboardButton(text="YES", callback_data="_".join(["dl", orig_msg_id]))
-                    button_cancel = InlineKeyboardButton(text="NO", callback_data="_".join(["nodl", orig_msg_id]))
-                    inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     reply_markup=inline_keyboard, text="Download 🎶?")
+            event_name = "_".join(["dl", "msg"])
+            logger.debug(event_name)
+            if update.message.chat.type == "private":
+                self.botan.track(update.message, event_name) if self.botan else None
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                                                parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                self.download_and_send(bot, urls.keys(), chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                       wait_message_id=wait_message.message_id)
+            else:
+                orig_msg_id = str(reply_to_message_id)
+                self.msg_store[orig_msg_id] = update.message
+                button_download = InlineKeyboardButton(text="YES", callback_data="_".join(["dl", orig_msg_id]))
+                button_cancel = InlineKeyboardButton(text="NO", callback_data="_".join(["nodl", orig_msg_id]))
+                inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 reply_markup=inline_keyboard, text="Download 🎶?")
 
     def youtube_dl_get_direct_urls(self, url):
         try:
@@ -356,7 +354,10 @@ class SCDLBot:
             file_size = os.path.getsize(file)
             parts_number = 1
             if file_size > self.MAX_TG_FILE_SIZE:
-                id3 = mutagen.id3.ID3(file, translate=False)
+                try:
+                    id3 = mutagen.id3.ID3(file, translate=False)
+                except:
+                    id3 = None
                 parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
                 sound = AudioSegment.from_file(file, file_format)
                 part_size = len(sound) / parts_number
@@ -364,7 +365,8 @@ class SCDLBot:
                     file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
                     part = sound[part_size * i:part_size * (i + 1)]
                     part.export(file_part, format="mp3")
-                    id3.save(file_part, v1=2, v2_version=4)
+                    if id3:
+                        id3.save(file_part, v1=2, v2_version=4)
                     file_parts.append(file_part)
             else:
                 file_parts.append(file)
