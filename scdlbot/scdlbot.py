@@ -177,8 +177,11 @@ class SCDLBot:
             event_name = "link"
             logger.debug(event_name)
             self.botan.track(update.message, event_name) if self.botan else None
+            link_text = ""
+            for link in urls.values():
+                link_text += "[Download link](" + link + ")"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                            text=" \n ".join(urls.values()))
+                                            parse_mode='Markdown', text=link_text)
 
     def dl_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
