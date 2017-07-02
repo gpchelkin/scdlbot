@@ -250,7 +250,6 @@ class SCDLBot:
 
     def prepare_urls(self, text, get_direct_urls=False):
         urls = find_all_links(text, default_scheme="http")
-        logger.debug(urls)
         urls_dict = {}
         for url in urls:
             url_parts_num = len([part for part in url.path_parts if part])
@@ -299,8 +298,8 @@ class SCDLBot:
         try:
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url.to_text(full_quote=True)])
-        except:
-            pass  # TODO
+        except Exception as e:
+            logger.debug(url, e)  # TODO
         os.chdir(prev_cwd)
 
         downloader = URLopener()
