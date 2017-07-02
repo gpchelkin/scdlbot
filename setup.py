@@ -39,15 +39,15 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     "python-telegram-bot",
     "boltons",
-    # "transliterate",
     "plumbum",
-    "scdl",
-    "bandcamp-downloader",
+    # "transliterate",
+    # "scdl",
+    # "bandcamp-downloader",
     "youtube_dl",
     "setuptools",
     "pydub",
     "mutagen",
-    "patool"
+    "patool",
 ]
 
 setup(

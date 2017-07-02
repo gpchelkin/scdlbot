@@ -2,10 +2,12 @@
 History
 =======
 
-0.5.2 (2017-07-02)
+0.6.0 (2017-07-02)
 ------------------
 
 * Added text files to sdist
+* Better checks and parsing of SoundCloud and Bandcamp pages
+* Support Bandcamp incomplete through fork
 
 0.5.1 (2017-07-02)
 ------------------

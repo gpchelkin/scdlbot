@@ -38,7 +38,7 @@ def main():
     scdlbot = SCDLBot(tg_bot_token, botan_token, bin_path,
                       sc_auth_token, store_chat_id,
                       no_clutter_chat_ids, dl_dir)
-    scdlbot.start(use_webhook, app_url, app_port, cert_file)
+    scdlbot.run(use_webhook, app_url, app_port, cert_file)
 
 
 if __name__ == '__main__':

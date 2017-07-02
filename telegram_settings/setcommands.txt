@@ -1,2 +1,4 @@
 dl - + link required! download now
+link - + link required! get direct url
+clutter - toggle replies on sent audios
 help - show the help message
