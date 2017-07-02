@@ -30,6 +30,7 @@ class SCDLBot:
     MAX_TG_FILE_SIZE = 45000000
     SITES = {
         "sc": "soundcloud",
+        "scapi": "api.soundcloud",
         "bc": "bandcamp",
         "yt": "youtu",
     }
@@ -265,7 +266,7 @@ class SCDLBot:
             url_parts_num = len([part for part in url.path_parts if part])
             if (
                     # SoundCloud: tracks, sets and widget pages
-                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or "/player/" in url.path)) or
+                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url.to_text())) or
                     # Bandcamp: tracks and albums
                     (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
                     # YouTube: videos and playlists
@@ -285,7 +286,7 @@ class SCDLBot:
 
     # @run_async
     def download_audio_url(self, url, download_dir):
-        if self.SITES["sc"] in url:
+        if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
             self.scdl(
                 "-l", url,  # URL of track/playlist/user
                 "-c",  # Continue if a music already exist

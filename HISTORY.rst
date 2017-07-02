@@ -6,8 +6,9 @@ History
 ------------------
 
 * Added text files to sdist
-* Better checks and parsing of SoundCloud and Bandcamp pages
-* Support Bandcamp incomplete through fork
+* Bandcamp and SoundCloud-widgets is now downloaded with youtube-dl
+* Supported parsing widgets from pages
+* Refactor
 
 0.5.1 (2017-07-02)
 ------------------
