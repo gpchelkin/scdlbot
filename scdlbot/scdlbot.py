@@ -181,7 +181,7 @@ class SCDLBot:
             for link in urls.values():
                 link_text += "[Download link](" + link + ")"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                            parse_mode='Markdown', text=link_text)
+                                            parse_mode='Markdown', text="[test](http://pchelk.in)")
 
     def dl_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
