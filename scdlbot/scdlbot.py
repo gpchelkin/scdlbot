@@ -41,7 +41,7 @@ class SCDLBot:
         self.NO_CLUTTER_CHAT_IDS = no_clutter_chat_ids if no_clutter_chat_ids else []
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
-        # self.scdl = local[os.path.join(bin_path, 'scdl')]
+        self.scdl = local[os.path.join(bin_path, 'scdl')]
         # self.bcdl = local[os.path.join(bin_path, 'bandcamp-dl')]
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
         self.tg_bot_token = tg_bot_token
@@ -275,33 +275,42 @@ class SCDLBot:
 
     # @run_async
     def download_audio_url(self, url, download_dir):
-        logger.debug(url)
-        ydl_opts = {
-            # https://github.com/rg3/youtube-dl/blob/master/README.md#output-template
-            'outtmpl': '%(track_number)s - %(artist)s - %(track)s [%(album)s].%(ext)s',  # %(title)s-%(id)s.%(ext)s
-            'format': 'bestaudio/best',
-            'postprocessors': [
-                {
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '128',
-                },
-                {
-                    'key': 'EmbedThumbnail',
-                },
-                {
-                    'key': 'FFmpegMetadata',
-                },
-            ],
-        }
-        prev_cwd = os.getcwd()
-        os.chdir(download_dir)
-        try:
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url.to_text(full_quote=True)])
-        except Exception as e:
-            logger.debug(url, e)  # TODO
-        os.chdir(prev_cwd)
+        if self.SITES["sc"] in url:
+            self.scdl(
+                "-l", url,  # URL of track/playlist/user
+                "-c",  # Continue if a music already exist
+                "--path", download_dir,  # Download the music to a custom path
+                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+            )
+        else:
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': '%(autonumber)s - %(title)s.%(ext)s',  # %(title)s-%(id)s.%(ext)s
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '128',
+                    },
+                    # {
+                    #     'key': 'EmbedThumbnail',
+                    # },
+                    # {
+                    #     'key': 'FFmpegMetadata',
+                    # },
+                ],
+            }
+
+
+            prev_cwd = os.getcwd()
+            os.chdir(download_dir)
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            except Exception as e:
+                logger.debug(url, e)  # TODO
+            os.chdir(prev_cwd)
 
         downloader = URLopener()
         # else:
@@ -316,13 +325,6 @@ class SCDLBot:
         # return "success"
 
 
-        # self.scdl(
-        #     "-l", url.to_text(full_quote=True),  # URL of track/playlist/user
-        #     "-c",  # Continue if a music already exist
-        #     "--path", download_dir,  # Download the music to a custom path
-        #     "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-        #     "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-        # )
         # self.bcdl(
         #     "--base-dir=" + download_dir,  # Base location of which all files are downloaded
         #     "--template=" + self.BANDCAMP_TEMPLATE,  # Output filename template

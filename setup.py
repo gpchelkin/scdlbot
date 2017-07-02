@@ -41,7 +41,7 @@ requirements = [
     "boltons",
     "plumbum",
     # "transliterate",
-    # "scdl",
+    "scdl",
     # "bandcamp-downloader",
     "youtube_dl",
     "setuptools",
