@@ -17,11 +17,12 @@ from boltons.urlutils import find_all_links
 from plumbum import local
 from pydub import AudioSegment
 from pyshorteners import Shortener
-from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.contrib.botan import Botan
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
+from telegram.ext.dispatcher import run_async
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,8 @@ class SCDLBot:
         if urls:
             event_name = "dl_inline"
             logger.debug(event_name)
-            self.download_and_send(bot, urls.keys(), self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
+            for url in urls.keys():
+                self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
 
     def link_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
@@ -205,7 +207,8 @@ class SCDLBot:
             self.botan.track(update.message, event_name) if self.botan else None
             wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-            self.download_and_send(bot, urls.keys(), chat_id=chat_id, reply_to_message_id=update.message.message_id,
+            for url in urls.keys():
+                self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                    wait_message_id=wait_message.message_id)
 
     def callback_query_callback(self, bot, update):
@@ -222,8 +225,9 @@ class SCDLBot:
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                      text=self.md_italic(self.WAIT_TEXT))
-                self.download_and_send(bot, urls.keys(), chat_id=chat_id,
-                                       wait_message_id=edited_msg.message_id)
+                for url in urls.keys():
+                    self.download_and_send(bot, url, chat_id=chat_id,
+                                           wait_message_id=edited_msg.message_id)
             elif action == "nodl" or action == "destroy":
                 # update.callback_query.answer(text="Cancelled!", show_alert=True)
                 bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
@@ -239,8 +243,9 @@ class SCDLBot:
                 self.botan.track(update.message, event_name) if self.botan else None
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-                self.download_and_send(bot, urls.keys(), chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                       wait_message_id=wait_message.message_id)
+                for url in urls.keys():
+                    self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                           wait_message_id=wait_message.message_id)
             else:
                 orig_msg_id = str(reply_to_message_id)
                 self.msg_store[orig_msg_id] = update.message
@@ -282,69 +287,7 @@ class SCDLBot:
                     urls_dict[url.to_text(True)] = direct_urls
         return urls_dict
 
-    # @run_async
-    def download_audio_url(self, url, download_dir):
-        if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-            self.scdl(
-                "-l", url,  # URL of track/playlist/user
-                "-c",  # Continue if a music already exist
-                "--path", download_dir,  # Download the music to a custom path
-                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-            )
-        else:
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': '%(autonumber)s - %(title)s.%(ext)s',  # %(title)s-%(id)s.%(ext)s
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '128',
-                    },
-                    # {
-                    #     'key': 'EmbedThumbnail',
-                    # },
-                    # {
-                    #     'key': 'FFmpegMetadata',
-                    # },
-                ],
-            }
 
-
-            prev_cwd = os.getcwd()
-            os.chdir(download_dir)
-            try:
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-            except Exception as e:
-                logger.debug(url, e)  # TODO
-            os.chdir(prev_cwd)
-
-        downloader = URLopener()
-        # else:
-        #     try:
-        #         file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
-        #         patoolib.extract_archive(file_name, outdir=DL_DIR)
-        #         os.remove(file_name)
-        #     except Exception as exc:
-        #         return str(exc)
-        #     #     return str(sys.exc_info()[0:1])
-        #
-        # return "success"
-
-
-        # self.bcdl(
-        #     "--base-dir=" + download_dir,  # Base location of which all files are downloaded
-        #     "--template=" + self.BANDCAMP_TEMPLATE,  # Output filename template
-        #     "--overwrite",  # Overwrite tracks that already exist
-        #     "--group",  # Use album/track Label as iTunes grouping
-        #     "--embed-art",  # Embed album art (if available)
-        #     "--no-slugify",  # Disable slugification of track, album, and artist names
-        #     url.to_text(full_quote=True)  # URL of album/track
-        # )
-
-    # @run_async
     def split_and_send_audio_file(self, bot, chat_id, reply_to_message_id=None, file=""):
         sent_audio_ids = []
         file_root, file_ext = os.path.splitext(file)
@@ -388,46 +331,94 @@ class SCDLBot:
                         pass
         return sent_audio_ids
 
-    def download_and_send(self, bot, urls, chat_id, reply_to_message_id=None,
+    @run_async
+    def download_and_send(self, bot, url, chat_id, reply_to_message_id=None,
                           wait_message_id=None, inline_query_id=None):
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
         if chat_id in self.NO_CLUTTER_CHAT_IDS:
             reply_to_message_id = None
+        download_dir = os.path.join(self.DL_DIR, str(uuid4()))
+        shutil.rmtree(download_dir, ignore_errors=True)
+        os.makedirs(download_dir)
 
-        sent_audio_ids = []
+        if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
+            self.scdl(
+                "-l", url,  # URL of track/playlist/user
+                "-c",  # Continue if a music already exist
+                "--path", download_dir,  # Download the music to a custom path
+                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+            )
+        else:
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': os.path.join(download_dir, '%(autonumber)s - %(title)s.%(ext)s'),  # %(title)s-%(id)s.%(ext)s
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '128',
+                    },
+                    # {
+                    #     'key': 'EmbedThumbnail',
+                    # },
+                    # {
+                    #     'key': 'FFmpegMetadata',
+                    # },
+                ],
+            }
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            except Exception as e:
+                logger.debug(url, e)  # TODO
 
-        for url in urls:
-            download_dir = os.path.join(self.DL_DIR, str(uuid4()))
-            shutil.rmtree(download_dir, ignore_errors=True)
-            os.makedirs(download_dir)
+        file_list = []
+        for d, dirs, files in os.walk(download_dir):
+            for file in files:
+                file_list.append(os.path.join(d, file))
+        file_list = sorted(file_list)
 
-            bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
-            self.download_audio_url(url, download_dir)
-            # if status != "success":
-            #     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-            #                      parse_mode='Markdown', text="`" + status + "`")
+        for file in file_list:
+            self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file)
 
-            file_list = []
-            for d, dirs, files in os.walk(download_dir):
-                for file in files:
-                    file_list.append(os.path.join(d, file))
-            file_list = sorted(file_list)
-
-            for file in file_list:
-                sent_audio_ids.extend(self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file))
-
-            shutil.rmtree(download_dir, ignore_errors=True)
+        shutil.rmtree(download_dir, ignore_errors=True)
 
         if wait_message_id:
-            bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            try:
+                bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            except:
+                pass
 
-        if not sent_audio_ids:
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             parse_mode='Markdown', text=self.md_italic(self.NO_AUDIO_TEXT))
-            return
+        # if not sent_audio_ids:
+        #     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+        #                      parse_mode='Markdown', text=self.md_italic(self.NO_AUDIO_TEXT))
 
-        if inline_query_id:
-            results = []
-            for audio_id in sent_audio_ids:
-                if audio_id:
-                    results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
-            bot.answer_inline_query(inline_query_id, results)
+        # if inline_query_id:
+        #     results = []
+        #     for audio_id in sent_audio_ids:
+        #         if audio_id:
+        #             results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
+        #     bot.answer_inline_query(inline_query_id, results)
+
+        downloader = URLopener()
+
+                # self.bcdl(
+        #     "--base-dir=" + download_dir,  # Base location of which all files are downloaded
+        #     "--template=" + self.BANDCAMP_TEMPLATE,  # Output filename template
+        #     "--overwrite",  # Overwrite tracks that already exist
+        #     "--group",  # Use album/track Label as iTunes grouping
+        #     "--embed-art",  # Embed album art (if available)
+        #     "--no-slugify",  # Disable slugification of track, album, and artist names
+        #     url.to_text(full_quote=True)  # URL of album/track
+        # )
+
+        #     try:
+        #         file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
+        #         patoolib.extract_archive(file_name, outdir=DL_DIR)
+        #         os.remove(file_name)
+        #     except Exception as exc:
+        #         return str(exc)
+        #     #     return str(sys.exc_info()[0:1])
+        #
+        # return "success"
