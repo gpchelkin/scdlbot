@@ -200,6 +200,7 @@ class SCDLBot:
             bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                              text="Learn how to use me in /help" + rant)
             return
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(" ".join(args))
         if urls:
             event_name = "dl_cmd"
@@ -212,14 +213,15 @@ class SCDLBot:
                                    wait_message_id=wait_message.message_id)
 
     def callback_query_callback(self, bot, update):
+        chat_id = update.callback_query.message.chat_id
         action, orig_msg_id = update.callback_query.data.split("_")
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(self.msg_store[orig_msg_id].text)
         if urls:
             event_name = "_".join([action, "msg"])
             logger.debug(event_name)
             self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
             self.msg_store.pop(orig_msg_id)
-            chat_id = update.callback_query.message.chat_id
 
             if action == "dl":
                 update.callback_query.answer(text=self.WAIT_TEXT)
@@ -233,9 +235,10 @@ class SCDLBot:
                 bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
 
     def message_callback(self, bot, update):
+        chat_id = update.message.chat_id
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(update.message.text)
         if urls:
-            chat_id = update.message.chat_id
             reply_to_message_id = update.message.message_id
             event_name = "_".join(["dl", "msg"])
             logger.debug(event_name)
@@ -286,50 +289,6 @@ class SCDLBot:
                 if direct_urls:
                     urls_dict[url.to_text(True)] = direct_urls
         return urls_dict
-
-
-    def split_and_send_audio_file(self, bot, chat_id, reply_to_message_id=None, file=""):
-        sent_audio_ids = []
-        file_root, file_ext = os.path.splitext(file)
-        file_format = file_ext.replace(".", "")
-        if file_format == "mp3" or file_format == "m4a" or file_format == "mp4":
-            file_parts = []
-            file_size = os.path.getsize(file)
-            parts_number = 1
-            if file_size > self.MAX_TG_FILE_SIZE:
-                try:
-                    id3 = mutagen.id3.ID3(file, translate=False)
-                except:
-                    id3 = None
-                parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
-                sound = AudioSegment.from_file(file, file_format)
-                part_size = len(sound) / parts_number
-                for i in range(parts_number):
-                    file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
-                    part = sound[part_size * i:part_size * (i + 1)]
-                    part.export(file_part, format="mp3")
-                    if id3:
-                        id3.save(file_part, v1=2, v2_version=4)
-                    file_parts.append(file_part)
-            else:
-                file_parts.append(file)
-            for index, file in enumerate(file_parts):
-                bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-                # file = translit(file, 'ru', reversed=True)
-                # TODO add site hashtag
-                caption = None
-                if file_size > self.MAX_TG_FILE_SIZE:
-                    caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
-                for i in range(3):
-                    try:
-                        audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                   audio=open(file, 'rb'), caption=caption)
-                        sent_audio_ids.append(audio_msg.audio.file_id)
-                        break
-                    except TelegramError as exc:
-                        logger.debug('Caught TelegramError: {}'.format(exc))
-                        pass
-        return sent_audio_ids
 
     @run_async
     def download_and_send(self, bot, url, chat_id, reply_to_message_id=None,
@@ -403,7 +362,7 @@ class SCDLBot:
 
         downloader = URLopener()
 
-                # self.bcdl(
+        # self.bcdl(
         #     "--base-dir=" + download_dir,  # Base location of which all files are downloaded
         #     "--template=" + self.BANDCAMP_TEMPLATE,  # Output filename template
         #     "--overwrite",  # Overwrite tracks that already exist
@@ -422,3 +381,46 @@ class SCDLBot:
         #     #     return str(sys.exc_info()[0:1])
         #
         # return "success"
+
+    def split_and_send_audio_file(self, bot, chat_id, reply_to_message_id=None, file=""):
+        sent_audio_ids = []
+        file_root, file_ext = os.path.splitext(file)
+        file_format = file_ext.replace(".", "")
+        if file_format == "mp3" or file_format == "m4a" or file_format == "mp4":
+            file_parts = []
+            file_size = os.path.getsize(file)
+            parts_number = 1
+            if file_size > self.MAX_TG_FILE_SIZE:
+                try:
+                    id3 = mutagen.id3.ID3(file, translate=False)
+                except:
+                    id3 = None
+                parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
+                sound = AudioSegment.from_file(file, file_format)
+                part_size = len(sound) / parts_number
+                for i in range(parts_number):
+                    file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
+                    part = sound[part_size * i:part_size * (i + 1)]
+                    part.export(file_part, format="mp3")
+                    if id3:
+                        id3.save(file_part, v1=2, v2_version=4)
+                    file_parts.append(file_part)
+            else:
+                file_parts.append(file)
+            for index, file in enumerate(file_parts):
+                bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
+                # file = translit(file, 'ru', reversed=True)
+                # TODO add site hashtag
+                caption = None
+                if file_size > self.MAX_TG_FILE_SIZE:
+                    caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
+                for i in range(3):
+                    try:
+                        audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                   audio=open(file, 'rb'), caption=caption)
+                        sent_audio_ids.append(audio_msg.audio.file_id)
+                        break
+                    except TelegramError as exc:
+                        logger.debug('Caught TelegramError: {}'.format(exc))
+                        pass
+        return sent_audio_ids
