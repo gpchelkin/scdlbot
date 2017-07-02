@@ -2,6 +2,13 @@
 History
 =======
 
+0.5.1 (2017-07-02)
+------------------
+
+* New clutter command
+* Help refinements
+* Some fixes
+
 0.5.0 (2017-06-28)
 ------------------
 

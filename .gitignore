@@ -141,3 +141,6 @@ ENV/
 
 # All Intellij files
 .idea
+
+# Different envs
+.env-*

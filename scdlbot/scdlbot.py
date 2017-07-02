@@ -69,6 +69,8 @@ class SCDLBot:
         dispatcher.add_handler(start_command_handler)
         help_command_handler = CommandHandler('help', self.help_command_callback)
         dispatcher.add_handler(help_command_handler)
+        clutter_command_handler = CommandHandler('clutter', self.clutter_command_callback)
+        dispatcher.add_handler(clutter_command_handler)
 
         dl_command_handler = CommandHandler('dl', self.dl_command_callback, pass_args=True)
         dispatcher.add_handler(dl_command_handler)
@@ -122,13 +124,14 @@ class SCDLBot:
                                        port=app_port,
                                        url_path=url_path)
             self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
-                                         # certificate=open(cert_file, 'rb'))
+            # certificate=open(cert_file, 'rb'))
         else:
             self.updater.start_polling()
         self.updater.idle()
 
     @staticmethod
     def get_response_text(file_name):
+        # https://stackoverflow.com/a/20885799/2490759
         path = '/'.join(('texts', file_name))
         return pkg_resources.resource_string(__name__, path).decode("UTF-8")
 
@@ -140,6 +143,19 @@ class SCDLBot:
         self.botan.track(update.message, event_name) if self.botan else None
         bot.send_message(chat_id=update.message.chat_id, text=self.HELP_TEXT,
                          parse_mode='Markdown', disable_web_page_preview=True)
+
+    def clutter_command_callback(self, bot, update):
+        event_name = "clutter"
+        logger.debug(event_name)
+        self.botan.track(update.message, event_name) if self.botan else None
+        if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
+            self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)
+            bot.send_message(chat_id=update.message.chat_id, text="Chat will be cluttered with replies",
+                             parse_mode='Markdown', disable_web_page_preview=True)
+        else:
+            self.NO_CLUTTER_CHAT_IDS.append(update.message.chat_id)
+            bot.send_message(chat_id=update.message.chat_id, text="Chat will not be cluttered with replies",
+                             parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
         event_name = "dl_inline"
@@ -202,7 +218,10 @@ class SCDLBot:
             logger.debug(event_name)
             if update.message.chat.type == "private":
                 self.botan.track(update.message, event_name) if self.botan else None
-                self.download_and_send(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id)
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                                                parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                self.download_and_send(bot, urls, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                       wait_message_id=wait_message.message_id)
             elif self.test_urls(urls):
                 orig_msg_id = str(reply_to_message_id)
                 self.msg_store[orig_msg_id] = update.message
