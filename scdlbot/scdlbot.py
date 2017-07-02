@@ -394,6 +394,7 @@ class SCDLBot:
             reply_to_message_id = None
 
         sent_audio_ids = []
+
         for url in urls:
             download_dir = os.path.join(self.DL_DIR, str(uuid4()))
             shutil.rmtree(download_dir, ignore_errors=True)
