@@ -250,6 +250,7 @@ class SCDLBot:
 
     def prepare_urls(self, text, get_direct_urls=False):
         urls = find_all_links(text, default_scheme="http")
+        logger.debug(urls)
         urls_dict = {}
         for url in urls:
             url_parts_num = len([part for part in url.path_parts if part])
