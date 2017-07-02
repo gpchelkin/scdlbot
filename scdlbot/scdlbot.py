@@ -47,7 +47,7 @@ class SCDLBot:
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
         self.tg_bot_token = tg_bot_token
         self.botan = Botan(botan_token) if botan_token else None
-        self.shortener = Shortener('Dagd')
+        self.shortener = Shortener('Osdb')
         self.msg_store = {}  # TODO prune it
 
         config = configparser.ConfigParser()
