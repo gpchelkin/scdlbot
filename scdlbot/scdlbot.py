@@ -180,13 +180,13 @@ class SCDLBot:
             logger.debug(event_name)
             self.botan.track(update.message, event_name) if self.botan else None
             link_text = ""
-            for i, link in enumerate(urls.values()):
+            for i, link in enumerate("\n".join(urls.values()).split()):
                 logger.debug(link)
                 try:
                     link = self.shortener.short(link)
                 except:
                     pass
-                link_text += "[Download link" + str(i) + "](" + link + ")\n"
+                link_text += "[Download Link #" + str(i+1) + "](" + link + ")\n"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=link_text)
 
