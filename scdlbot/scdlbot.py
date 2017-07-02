@@ -275,6 +275,7 @@ class SCDLBot:
 
     # @run_async
     def download_audio_url(self, url, download_dir):
+        logger.debug(url)
         ydl_opts = {
             # https://github.com/rg3/youtube-dl/blob/master/README.md#output-template
             'outtmpl': '%(track_number)s - %(artist)s - %(track)s [%(album)s].%(ext)s',  # %(title)s-%(id)s.%(ext)s
