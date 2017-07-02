@@ -144,3 +144,4 @@ ENV/
 
 # Different envs
 .env-*
+scdlbot.service

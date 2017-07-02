@@ -72,7 +72,7 @@ class SCDLBot:
         clutter_command_handler = CommandHandler('clutter', self.clutter_command_callback)
         dispatcher.add_handler(clutter_command_handler)
 
-        dl_command_handler = CommandHandler('dl', self.dl_command_callback, pass_args=True)
+        dl_command_handler = CommandHandler('dl', self.dl_command_callback, filters=~ Filters.forwarded, pass_args=True)
         dispatcher.add_handler(dl_command_handler)
 
         message_with_links_handler = MessageHandler(Filters.text & (Filters.entity(MessageEntity.URL) |

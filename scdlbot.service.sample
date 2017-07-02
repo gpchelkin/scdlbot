@@ -1,0 +1,18 @@
+# sudo nano /etc/systemd/system/scdlbot.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable scdlbot
+# sudo systemctl start scdlbot
+[Unit]
+Description=scdlbot
+After=syslog.target
+
+[Service]
+Type=simple
+Environment=PYENV_VERSION=3.6.1
+EnvironmentFile=/home/gpchelkin/scdlbot/.env-prod-gce
+ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
