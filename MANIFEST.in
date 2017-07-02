@@ -1,0 +1,2 @@
+recursive-include scdlbot/texts *.txt *.md
+include LICENSE.txt
