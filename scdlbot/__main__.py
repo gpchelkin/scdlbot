@@ -35,7 +35,8 @@ def main():
     app_port = int(os.getenv('PORT', '5000'))
     bin_path = os.getenv('BIN_PATH', '')
     cert_file = os.getenv('CERT_FILE', '')
-    scdlbot = SCDLBot(tg_bot_token, botan_token, bin_path,
+    google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')  # https://developers.google.com/url-shortener/v1/getting_started#APIKey
+    scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key, bin_path,
                       sc_auth_token, store_chat_id,
                       no_clutter_chat_ids, dl_dir)
     scdlbot.run(use_webhook, app_url, app_port, cert_file)

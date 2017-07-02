@@ -34,7 +34,7 @@ class SCDLBot:
         "yt": "youtu",
     }
 
-    def __init__(self, tg_bot_token, botan_token, bin_path,
+    def __init__(self, tg_bot_token, botan_token, google_shortener_api_key, bin_path,
                  sc_auth_token, store_chat_id, no_clutter_chat_ids, dl_dir):
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
@@ -47,7 +47,7 @@ class SCDLBot:
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
         self.tg_bot_token = tg_bot_token
         self.botan = Botan(botan_token) if botan_token else None
-        self.shortener = Shortener('Osdb')
+        self.shortener = Shortener('Google', api_key=google_shortener_api_key)
         self.msg_store = {}  # TODO prune it
 
         config = configparser.ConfigParser()
@@ -181,8 +181,11 @@ class SCDLBot:
             self.botan.track(update.message, event_name) if self.botan else None
             link_text = ""
             for link in urls.values():
-                short_link = self.shortener.short(link)
-                link_text += "[Download link](" + short_link + ")"
+                try:
+                    link = self.shortener.short(link)
+                except:
+                    pass
+                link_text += "[Download link](" + link + ")"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=link_text)
 
