@@ -48,6 +48,7 @@ requirements = [
     "pydub",
     "mutagen",
     "patool",
+    "pyshorteners",
 ]
 
 setup(

@@ -8,3 +8,4 @@ youtube-dl==2017.7.2
 pydub==0.19.0
 mutagen==1.38
 patool==1.12
+pyshorteners==0.6.1

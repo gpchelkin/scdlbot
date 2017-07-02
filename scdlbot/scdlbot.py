@@ -16,6 +16,7 @@ import youtube_dl
 from boltons.urlutils import find_all_links
 from plumbum import local
 from pydub import AudioSegment
+from pyshorteners import Shortener
 from telegram import MessageEntity, InlineQueryResultCachedAudio, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.contrib.botan import Botan
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
@@ -46,6 +47,7 @@ class SCDLBot:
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
         self.tg_bot_token = tg_bot_token
         self.botan = Botan(botan_token) if botan_token else None
+        self.shortener = Shortener('Dagd')
         self.msg_store = {}  # TODO prune it
 
         config = configparser.ConfigParser()
@@ -179,7 +181,8 @@ class SCDLBot:
             self.botan.track(update.message, event_name) if self.botan else None
             link_text = ""
             for link in urls.values():
-                link_text += "[Download link](" + link.replace("_", "\_") + ")"
+                short_link = self.shortener.short(link)
+                link_text += "[Download link](" + short_link + ")"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=link_text)
 
