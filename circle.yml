@@ -2,8 +2,8 @@ machine:
   post:
     - pyenv global 3.6.1
 
-deployment:
-  production:
-    branch: master
-    commands:
-      - fab deploy
+#deployment:
+#  production:
+#    branch: master
+#    commands:
+#      - fab deploy
