@@ -2,6 +2,17 @@
 History
 =======
 
+0.6.2 (2017-07-04)
+------------------
+
+* Help message in groups now redirects to PM
+
+0.6.1 (2017-07-03)
+------------------
+
+* Async run of download/send command
+* Link command
+
 0.6.0 (2017-07-02)
 ------------------
 

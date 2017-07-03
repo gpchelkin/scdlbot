@@ -9,7 +9,7 @@ import shutil
 from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
-from time import sleep
+
 import mutagen.id3
 import pkg_resources
 import youtube_dl
@@ -97,14 +97,14 @@ class SCDLBot:
 
         dispatcher.add_error_handler(self.error_callback)
 
-        self.bot_username = "@scdlbot" # self.updater.bot.get_me().username
-        self.RANT_TEXT = "[PLEASE PRESS HERE TO READ HELP IN MY PM](t.me/" + bot_username + "?start=1)"
+        self.bot_username = self.updater.bot.get_me().username
+        self.RANT_TEXT = "[PRESS HERE TO READ HELP IN PM](t.me/" + self.bot_username + "?start=1)"
 
-    def run(self, use_webhook=False, app_url=None, app_port=None, cert_file=None):
+    def run(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None):
         if use_webhook:
             url_path = self.tg_bot_token.replace(":", "")
             self.updater.start_webhook(listen="0.0.0.0",
-                                       port=app_port,
+                                       port=webhook_port,
                                        url_path=url_path)
             self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
             # ... certificate=open(cert_file, 'rb')
@@ -164,10 +164,11 @@ class SCDLBot:
         self.rant_msg_ids[chat_id].append(rant_msg.message_id)
 
     def help_command_callback(self, bot, update, event_name="help"):
+        chat_id = update.message.chat_id
         logger.debug(event_name)
         self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat.type == "private":
-            bot.send_message(chat_id=update.message.chat_id, text=self.HELP_TEXT,
+            bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
             self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT)
@@ -178,11 +179,11 @@ class SCDLBot:
         self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Chat will be cluttered with replies",
+            bot.send_message(chat_id=update.message.chat_id, text="Chat will now be cluttered with replies",
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
             self.NO_CLUTTER_CHAT_IDS.append(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Chat will not be cluttered with replies",
+            bot.send_message(chat_id=update.message.chat_id, text="Chat will now NOT be cluttered with replies",
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
@@ -280,10 +281,13 @@ class SCDLBot:
 
     def youtube_dl_get_direct_urls(self, url):
         try:
-            direct_urls = self.youtube_dl("--get-url", url)
+            ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run()
+            if "returning it as such" in std_err:
+                return None
+            else:
+                return direct_urls
         except:
-            direct_urls = None
-        return direct_urls
+            return None
 
     def prepare_urls(self, text, get_direct_urls=False):
         urls = find_all_links(text, default_scheme="http")

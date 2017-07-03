@@ -102,10 +102,10 @@ Optional
 -  ``USE_WEBHOOK``: use webhook for bot updates: ``1``, use polling
    (default): ``0``, `more
    info <https://core.telegram.org/bots/api#getting-updates>`__
--  ``PORT``: Heroku sets this automatically for web dynos if you are
-   using webhook
--  ``APP_URL``: Heroku App URL like
+-  ``APP_URL``: app URL like
    ``https://<appname>.herokuapp.com/``, required for webhook
+-  ``PORT``: port for webhook to listen to; Heroku sets this automatically
+   for web dynos
 -  ``BOTAN_TOKEN``: `Botan.io <http://botan.io/>`__
    `token <http://appmetrica.yandex.com/>`__
 -  ``NO_CLUTTER_CHAT_IDS``: Comma-separated chat IDs with no replying
@@ -117,6 +117,8 @@ Optional
    (user's home directory)
 -  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``
 -  ``HOSTNAME``: Hostname to show up in Syslog messages
+-  ``GOOGL_API_KEY``: `Goo.gl URL shortener <https://goo.gl>`__
+   `API key <https://developers.google.com/url-shortener/v1/getting_started#APIKey>`__
 
 Telegram Settings
 ^^^^^^^^^^^^^^^^^
