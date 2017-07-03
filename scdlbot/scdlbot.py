@@ -218,7 +218,7 @@ class SCDLBot:
                 rant_text = "Learn how to use me in /help, you can send links without command or command with links."
             else:
                 rant_text = self.RANT_TEXT + ", you can send links without command or command with links."
-            self.rant_and_cleanup(bot, chat_id, rant)
+            self.rant_and_cleanup(bot, chat_id, rant_text)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(" ".join(args))
