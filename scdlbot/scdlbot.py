@@ -97,7 +97,7 @@ class SCDLBot:
 
         dispatcher.add_error_handler(self.error_callback)
 
-        self.bot_username = self.updater.bot.get_me().username
+        self.bot_username = "@scdlbot" # self.updater.bot.get_me().username
         self.RANT_TEXT = "[PLEASE PRESS HERE TO READ HELP IN MY PM](t.me/" + bot_username + "?start=1)"
 
     def run(self, use_webhook=False, app_url=None, app_port=None, cert_file=None):
