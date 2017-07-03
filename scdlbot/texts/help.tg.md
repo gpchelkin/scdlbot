@@ -11,7 +11,7 @@
 • Use `/link <link(-s)>` command to get URL for downloading locally.
 
 🤖 @gpchelkin //[🐝👍.WS](http://xn--lo8h6c.ws/)
-🖼️ @Lowonbudget //[👩‍🎨🎨️](https://www.behance.net/lowonbudget)
+🖼️ @lowonbudget //[👩‍🎨🎨️](https://www.behance.net/lowonbudget)
 🖤 @electrocircle //[⚡⚫.РФ](http://Электрокружок.РФ)
 [🌟GitHub](https://github.com/gpchelkin/scdlbot) // [💻Issues](https://github.com/gpchelkin/scdlbot/issues)
 

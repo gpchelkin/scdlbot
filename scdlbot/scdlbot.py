@@ -9,7 +9,7 @@ import shutil
 from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
-
+from time import sleep
 import mutagen.id3
 import pkg_resources
 import youtube_dl
@@ -51,6 +51,7 @@ class SCDLBot:
         self.botan = Botan(botan_token) if botan_token else None
         self.shortener = Shortener('Google', api_key=google_shortener_api_key)
         self.msg_store = {}  # TODO prune it
+        self.rant_msg_ids = {}
 
         config = configparser.ConfigParser()
         config['scdl'] = {
@@ -95,6 +96,9 @@ class SCDLBot:
         dispatcher.add_handler(unknown_handler)
 
         dispatcher.add_error_handler(self.error_callback)
+
+        self.bot_username = self.updater.bot.get_me().username
+        self.RANT_TEXT = "[PLEASE PRESS HERE TO READ HELP IN MY PM](t.me/" + bot_username + "?start=1)"
 
     def run(self, use_webhook=False, app_url=None, app_port=None, cert_file=None):
         if use_webhook:
@@ -148,11 +152,25 @@ class SCDLBot:
     def start_command_callback(self, bot, update):
         self.help_command_callback(bot, update, event_name="start")
 
+    def rant_and_cleanup(self, bot, chat_id, rant_text):
+        if not chat_id in self.rant_msg_ids.keys():
+            self.rant_msg_ids[chat_id] = []
+        else:
+            for rant_msg_id in self.rant_msg_ids[chat_id]:
+                bot.delete_message(chat_id=chat_id, message_id=rant_msg_id)
+                self.rant_msg_ids[chat_id].remove(rant_msg_id)
+        rant_msg = bot.send_message(chat_id=chat_id, text=rant_text,
+                                    parse_mode='Markdown', disable_web_page_preview=True)
+        self.rant_msg_ids[chat_id].append(rant_msg.message_id)
+
     def help_command_callback(self, bot, update, event_name="help"):
         logger.debug(event_name)
         self.botan.track(update.message, event_name) if self.botan else None
-        bot.send_message(chat_id=update.message.chat_id, text=self.HELP_TEXT,
-                         parse_mode='Markdown', disable_web_page_preview=True)
+        if update.message.chat.type == "private":
+            bot.send_message(chat_id=update.message.chat_id, text=self.HELP_TEXT,
+                             parse_mode='Markdown', disable_web_page_preview=True)
+        else:
+            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT)
 
     def clutter_command_callback(self, bot, update):
         event_name = "clutter"
@@ -196,9 +214,11 @@ class SCDLBot:
     def dl_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
         if not args:
-            rant = " in my PM, don't clutter the group chat, okay?" if update.message.chat.type != "private" else ""
-            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                             text="Learn how to use me in /help" + rant)
+            if update.message.chat.type == "private":
+                rant_text = "Learn how to use me in /help, you can send links without command or command with links."
+            else:
+                rant_text = self.RANT_TEXT + ", you can send links without command or command with links."
+            self.rant_and_cleanup(bot, chat_id, rant)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(" ".join(args))
