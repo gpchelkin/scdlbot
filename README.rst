@@ -236,7 +236,7 @@ https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#creatin
         dokku apps:create scdlbot
         dokku certs:generate scdlbot scdlbot.$DOKKU
         dokku config:set scdlbot $(cat .env | xargs)
-        # Ctrl+D
+        logout
     git remote add dokku dokku@$DOKKU:scdlbot
     git push dokku master
     ssh $DOKKU

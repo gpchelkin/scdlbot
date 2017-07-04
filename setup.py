@@ -42,13 +42,14 @@ requirements = [
     "plumbum",
     # "transliterate",
     "scdl",
-    # "bandcamp-downloader",
+    "bandcamp-downloader",
     "youtube_dl",
     "setuptools",
     "pydub",
     "mutagen",
     "patool",
     "pyshorteners",
+    "Celery",
 ]
 
 setup(

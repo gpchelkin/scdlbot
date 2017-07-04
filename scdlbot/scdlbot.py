@@ -9,7 +9,7 @@ import shutil
 from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
-
+from subprocess import PIPE, TimeoutExpired
 import mutagen.id3
 import pkg_resources
 import youtube_dl
@@ -45,11 +45,11 @@ class SCDLBot:
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.scdl = local[os.path.join(bin_path, 'scdl')]
-        # self.bcdl = local[os.path.join(bin_path, 'bandcamp-dl')]
+        self.bandcamp_dl = local[os.path.join(bin_path, 'bandcamp-dl')]
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
         self.tg_bot_token = tg_bot_token
         self.botan = Botan(botan_token) if botan_token else None
-        self.shortener = Shortener('Google', api_key=google_shortener_api_key)
+        self.shortener = Shortener('Google', api_key=google_shortener_api_key) if google_shortener_api_key else None
         self.msg_store = {}  # TODO prune it
         self.rant_msg_ids = {}
 
@@ -106,8 +106,10 @@ class SCDLBot:
             self.updater.start_webhook(listen="0.0.0.0",
                                        port=webhook_port,
                                        url_path=url_path)
-            self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
-            # ... certificate=open(cert_file, 'rb')
+            if cert_file:
+                self.updater.bot.set_webhook(url=urljoin(app_url, url_path), certificate=open(cert_file, 'rb'))
+            else:
+                self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
         else:
             self.updater.start_polling()
         self.updater.idle()
@@ -204,10 +206,11 @@ class SCDLBot:
             link_text = ""
             for i, link in enumerate("\n".join(urls.values()).split()):
                 logger.debug(link)
-                try:
-                    link = self.shortener.short(link)
-                except:
-                    pass
+                if self.shortener:
+                    try:
+                        link = self.shortener.short(link)
+                    except:
+                        pass
                 link_text += "[Download Link #" + str(i+1) + "](" + link + ")\n"
             link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=link_text)
@@ -280,14 +283,14 @@ class SCDLBot:
                                  reply_markup=inline_keyboard, text="Download 🎶?")
 
     def youtube_dl_get_direct_urls(self, url):
-        try:
-            ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run()
+        ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run(retcode=None)
+        if ret_code:
+            return None
+        else:
             if "returning it as such" in std_err:
                 return None
             else:
                 return direct_urls
-        except:
-            return None
 
     def prepare_urls(self, text, get_direct_urls=False):
         urls = find_all_links(text, default_scheme="http")
@@ -324,37 +327,69 @@ class SCDLBot:
         shutil.rmtree(download_dir, ignore_errors=True)
         os.makedirs(download_dir)
 
+        scdl_cmd = self.scdl[
+            "-l", url,  # URL of track/playlist/user
+            "-c",  # Continue if a music already exist
+            "--path", download_dir,  # Download the music to a custom path
+            "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+            "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+        ]
+        bandcamp_dl_cmd = self.bandcamp_dl[
+            "--base-dir", download_dir,  # Base location of which all files are downloaded
+            "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
+            "--overwrite",  # Overwrite tracks that already exist
+            "--group",  # Use album/track Label as iTunes grouping
+            "--embed-art",  # Embed album art (if available)
+            "--no-slugify",  # Disable slugification of track, album, and artist names
+            url  # URL of album/track
+        ]
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(download_dir, '%(autonumber)s - %(title)s.%(ext)s'),  # %(title)s-%(id)s.%(ext)s
+            'postprocessors': [
+                {
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '128',
+                },
+                # {
+                #     'key': 'EmbedThumbnail',
+                # },
+                # {
+                #     'key': 'FFmpegMetadata',
+                # },
+            ],
+        }
+        ydl = youtube_dl.YoutubeDL(ydl_opts)
+
+        success = False
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-            self.scdl(
-                "-l", url,  # URL of track/playlist/user
-                "-c",  # Continue if a music already exist
-                "--path", download_dir,  # Download the music to a custom path
-                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-            )
-        else:
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': os.path.join(download_dir, '%(autonumber)s - %(title)s.%(ext)s'),  # %(title)s-%(id)s.%(ext)s
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '128',
-                    },
-                    # {
-                    #     'key': 'EmbedThumbnail',
-                    # },
-                    # {
-                    #     'key': 'FFmpegMetadata',
-                    # },
-                ],
-            }
+            cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
+                std_out, std_err = cmd_popen.communicate(timeout=70)
+                if cmd_popen.returncode:
+                    logger.debug(std_out, std_err)
+                else:
+                    success = True
+            except TimeoutExpired:
+                cmd_popen.kill()
+                logger.debug("Dropped long downloading")
+        elif self.SITES["bc"] in url:
+            cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            try:
+                std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=70)
+                if cmd_popen.returncode:
+                    logger.debug(std_out, std_err)
+                else:
+                    success = True
+            except TimeoutExpired:
+                cmd_popen.kill()
+                logger.debug("Dropped long downloading")
+        if not success:
+            try:
+                ydl.download([url])
             except Exception as e:
-                logger.debug(url, e)  # TODO
+                logger.debug("youtube-dl exception:", e)  # TODO
 
         file_list = []
         for d, dirs, files in os.walk(download_dir):
@@ -386,15 +421,6 @@ class SCDLBot:
 
         downloader = URLopener()
 
-        # self.bcdl(
-        #     "--base-dir=" + download_dir,  # Base location of which all files are downloaded
-        #     "--template=" + self.BANDCAMP_TEMPLATE,  # Output filename template
-        #     "--overwrite",  # Overwrite tracks that already exist
-        #     "--group",  # Use album/track Label as iTunes grouping
-        #     "--embed-art",  # Embed album art (if available)
-        #     "--no-slugify",  # Disable slugification of track, album, and artist names
-        #     url.to_text(full_quote=True)  # URL of album/track
-        # )
 
         #     try:
         #         file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
