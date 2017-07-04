@@ -5,11 +5,12 @@ import logging
 import os
 # import shelve
 import shutil
+from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
 from urllib.request import URLopener
 from uuid import uuid4
-from subprocess import PIPE, TimeoutExpired
+
 import mutagen.id3
 import pkg_resources
 import youtube_dl
@@ -366,7 +367,7 @@ class SCDLBot:
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
             cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
-                std_out, std_err = cmd_popen.communicate(timeout=70)
+                std_out, std_err = cmd_popen.communicate(timeout=120)
                 if cmd_popen.returncode:
                     logger.debug(std_out, std_err)
                 else:
@@ -377,7 +378,7 @@ class SCDLBot:
         elif self.SITES["bc"] in url:
             cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
-                std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=70)
+                std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=120)
                 if cmd_popen.returncode:
                     logger.debug(std_out, std_err)
                 else:
