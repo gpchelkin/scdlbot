@@ -5,7 +5,7 @@ Music Downloader Telegram Bot
 
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
         :target: https://pypi.org/project/scdlbot
-        :alt: PyPI version
+        :alt: PyPI Version
 
 .. image:: https://img.shields.io/travis/gpchelkin/scdlbot.svg
         :target: https://travis-ci.org/gpchelkin/scdlbot
@@ -45,7 +45,7 @@ Music Downloader Telegram Bot
 
 .. image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
         :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
-        :alt: pyup Updates
+        :alt: PyUp Updates
 
 .. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
         :target: https://scdlbot.readthedocs.io/en/latest/?badge=latest
