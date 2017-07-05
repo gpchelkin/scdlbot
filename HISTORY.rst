@@ -2,6 +2,10 @@
 History
 =======
 
+0.7.1 (2017-07-05)
+------------------
+* Hotfix
+
 0.7.0 (2017-07-05)
 ------------------
 * Travis CI, tests and docs from cookiecutter
