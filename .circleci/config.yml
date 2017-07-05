@@ -1,0 +1,9 @@
+version: 2
+jobs:
+   build:
+     working_directory: ~/scdlbot
+     docker:
+       - image: circleci/python:3.6.1
+     steps:
+       - checkout
+       - run: echo "hello world"

@@ -157,15 +157,15 @@ class SCDLBot:
     def start_command_callback(self, bot, update):
         self.help_command_callback(bot, update, event_name="start")
 
-    def rant_and_cleanup(self, bot, chat_id, rant_text):
+    def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
         if not chat_id in self.rant_msg_ids.keys():
             self.rant_msg_ids[chat_id] = []
         else:
             for rant_msg_id in self.rant_msg_ids[chat_id]:
                 bot.delete_message(chat_id=chat_id, message_id=rant_msg_id)
                 self.rant_msg_ids[chat_id].remove(rant_msg_id)
-        rant_msg = bot.send_message(chat_id=chat_id, text=rant_text,
-                                    parse_mode='Markdown', disable_web_page_preview=True)
+        rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                    text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
         self.rant_msg_ids[chat_id].append(rant_msg.message_id)
 
     def help_command_callback(self, bot, update, event_name="help"):
@@ -176,7 +176,7 @@ class SCDLBot:
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
-            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT)
+            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT, reply_to_message_id=update.message.message_id)
 
     def clutter_command_callback(self, bot, update):
         event_name = "clutter"
@@ -226,7 +226,7 @@ class SCDLBot:
                 rant_text = "Learn how to use me in /help, you can send links without command or command with links."
             else:
                 rant_text = self.RANT_TEXT + ", you can send links without command or command with links."
-            self.rant_and_cleanup(bot, chat_id, rant_text)
+            self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(" ".join(args))
@@ -374,7 +374,7 @@ class SCDLBot:
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
             cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
-                std_out, std_err = cmd_popen.communicate(timeout=120)
+                std_out, std_err = cmd_popen.communicate(timeout=300)
                 if cmd_popen.returncode:
                     logger.debug(std_out, std_err)
                 else:
@@ -385,7 +385,7 @@ class SCDLBot:
         elif self.SITES["bc"] in url:
             cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
-                std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=120)
+                std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=300)
                 if cmd_popen.returncode:
                     logger.debug(std_out, std_err)
                 else:
@@ -405,9 +405,7 @@ class SCDLBot:
             for d, dirs, files in os.walk(download_dir):
                 for file in files:
                     file_list.append(os.path.join(d, file))
-            file_list = sorted(file_list)
-
-            for file in file_list:
+            for file in sorted(file_list):
                 self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file)
 
         shutil.rmtree(download_dir, ignore_errors=True)
