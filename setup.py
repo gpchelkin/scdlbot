@@ -64,7 +64,7 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     python_requires='~=3.4',
-    license="GNU General Public License v3",
+    license="MIT",
     zip_safe=True,
     keywords='scdlbot telegram bot soundcloud bandcamp youtube audio music download',
     classifiers=[
@@ -72,7 +72,7 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Multimedia :: Sound/Audio',
         'Topic :: Internet',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',

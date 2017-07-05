@@ -117,7 +117,7 @@ target/
 .ipynb_checkpoints
 
 # pyenv
-#.python-version
+.python-version
 
 # celery beat schedule file
 celerybeat-schedule
@@ -144,4 +144,6 @@ ENV/
 
 # Different envs
 .env-*
+
+# systemd service
 scdlbot.service

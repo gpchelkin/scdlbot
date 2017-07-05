@@ -2,10 +2,73 @@
 Music Downloader Telegram Bot
 =============================
 
-| |PyPI version| |Build Status| |Scrutinizer Code Quality| |Updates| |GitHub license| |Telegram Bot|
+
+.. image:: https://img.shields.io/pypi/v/scdlbot.svg
+        :target: https://pypi.org/project/scdlbot
+        :alt: PyPI version
+
+.. image:: https://img.shields.io/travis/gpchelkin/scdlbot.svg
+        :target: https://travis-ci.org/gpchelkin/scdlbot
+        :alt: Travis CI Build Status
+
+.. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/gpa.svg
+        :target: https://codeclimate.com/github/gpchelkin/scdlbot
+        :alt: Code Climate
+
+.. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
+        :target: https://codeclimate.com/github/gpchelkin/scdlbot
+        :alt: Issue Count
+
+.. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/coverage.svg
+        :target: https://codeclimate.com/github/gpchelkin/scdlbot/coverage
+        :alt: Test Coverage
+
+.. image:: https://www.quantifiedcode.com/api/v1/project/5e956d578a6a4dcdb555132d06652482/badge.svg
+        :target: https://www.quantifiedcode.com/app/project/5e956d578a6a4dcdb555132d06652482
+        :alt: QuantifiedCode Code issues
+
+.. image:: https://api.codacy.com/project/badge/Grade/7dfb6d8e7a094987b303e9283fc7368c
+        :target: https://www.codacy.com/app/gpchelkin/scdlbot?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gpchelkin/scdlbot&amp;utm_campaign=Badge_Grade
+        :alt: Codacy Build Status
+
+.. image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/build.png?b=master
+        :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/build-status/master
+        :alt: Scrutinizer Build Status
+
+.. image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/quality-score.png?b=master
+        :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/?branch=master
+        :alt: Scrutinizer Code Quality
+
+.. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
+        :target: https://bettercodehub.com
+        :alt: Better Code Hub Compliance
+
+.. image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
+        :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
+        :alt: pyup Updates
+
+.. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
+        :target: https://scdlbot.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
+
+.. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
+        :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
+        :alt: GitHub License
+
+.. image:: https://img.shields.io/badge/telegram-bot-blue.svg
+        :target: https://t.me/scdlbot
+        :alt: Telegram Bot
+
+
+Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
+
+
+* Free software: MIT license
+* Documentation: https://scdlbot.readthedocs.io.
 
 
 .. contents:: :depth: 2
+
 
 Bot Usage
 ---------
@@ -243,17 +306,5 @@ https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#creatin
         dokku ps:scale scdlbot worker=1 web=0
         dokku ps:restart scdlbot
 
-.. |PyPI version| image:: https://badge.fury.io/py/scdlbot.svg
-    :target: https://pypi.org/project/scdlbot
-.. |Updates| image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
-    :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
-.. |GitHub license| image:: https://img.shields.io/badge/license-GPLv3-green.svg
-    :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
-.. |Telegram Bot| image:: https://img.shields.io/badge/telegram-bot-blue.svg
-    :target: https://t.me/scdlbot
-.. |Scrutinizer Code Quality| image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/quality-score.png?b=master
-    :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/?branch=master
-.. |Build Status| image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/build.png?b=master
-    :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/build-status/master
 .. |Deploy| image:: https://www.herokucdn.com/deploy/button.svg
     :target: https://heroku.com/deploy
