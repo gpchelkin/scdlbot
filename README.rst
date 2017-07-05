@@ -68,7 +68,7 @@ Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, 
 
 
 * Free software: MIT license
-* Documentation: https://scdlbot.readthedocs.io.
+* Documentation: https://scdlbot.readthedocs.io
 
 
 .. contents:: :depth: 2

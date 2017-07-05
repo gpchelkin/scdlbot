@@ -171,7 +171,7 @@ class SCDLBot:
     def help_command_callback(self, bot, update, event_name="help"):
         chat_id = update.message.chat_id
         logger.debug(event_name)
-        self.botan.track(update.message, event_name) if self.botan else pass
+        self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat.type == "private":
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
@@ -181,7 +181,7 @@ class SCDLBot:
     def clutter_command_callback(self, bot, update):
         event_name = "clutter"
         logger.debug(event_name)
-        self.botan.track(update.message, event_name) if self.botan else pass
+        self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)
             bot.send_message(chat_id=update.message.chat_id, text="Chat will now be cluttered with replies",
@@ -206,7 +206,7 @@ class SCDLBot:
         if urls:
             event_name = "link"
             logger.debug(event_name)
-            self.botan.track(update.message, event_name) if self.botan else pass
+            self.botan.track(update.message, event_name) if self.botan else None
             link_text = ""
             for i, link in enumerate("\n".join(urls.values()).split()):
                 logger.debug(link)
@@ -233,7 +233,7 @@ class SCDLBot:
         if urls:
             event_name = "dl_cmd"
             logger.debug(event_name)
-            self.botan.track(update.message, event_name) if self.botan else pass
+            self.botan.track(update.message, event_name) if self.botan else None
             wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
             for url in urls.keys():
@@ -249,7 +249,7 @@ class SCDLBot:
             if urls:
                 event_name = "_".join([action, "msg"])
                 logger.debug(event_name)
-                self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else pass
+                self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
                 self.msg_store.pop(orig_msg_id)
 
                 if action == "dl":
@@ -275,7 +275,7 @@ class SCDLBot:
             event_name = "_".join(["dl", "msg"])
             logger.debug(event_name)
             if update.message.chat.type == "private":
-                self.botan.track(update.message, event_name) if self.botan else pass
+                self.botan.track(update.message, event_name) if self.botan else None
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 for url in urls.keys():
