@@ -258,7 +258,7 @@ texinfo_documents = [
      u'Music Downloader Telegram Bot Documentation',
      u'George Pchelkin',
      'scdlbot',
-     'One line description of project.',
+     'Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.',
      'Miscellaneous'),
 ]
 

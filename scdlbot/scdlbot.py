@@ -201,6 +201,7 @@ class SCDLBot:
 
     def link_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(" ".join(args), get_direct_urls=True)
         if urls:
             event_name = "link"
@@ -243,23 +244,27 @@ class SCDLBot:
         chat_id = update.callback_query.message.chat_id
         action, orig_msg_id = update.callback_query.data.split("_")
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(self.msg_store[orig_msg_id].text)
-        if urls:
-            event_name = "_".join([action, "msg"])
-            logger.debug(event_name)
-            self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
-            self.msg_store.pop(orig_msg_id)
+        if orig_msg_id in self.msg_store.keys():
+            urls = self.prepare_urls(self.msg_store[orig_msg_id].text)
+            if urls:
+                event_name = "_".join([action, "msg"])
+                logger.debug(event_name)
+                self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
+                self.msg_store.pop(orig_msg_id)
 
-            if action == "dl":
-                update.callback_query.answer(text=self.WAIT_TEXT)
-                edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                     text=self.md_italic(self.WAIT_TEXT))
-                for url in urls.keys():
-                    self.download_and_send(bot, url, chat_id=chat_id,
-                                           wait_message_id=edited_msg.message_id)
-            elif action == "nodl" or action == "destroy":
-                # update.callback_query.answer(text="Cancelled!", show_alert=True)
-                bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+                if action == "dl":
+                    update.callback_query.answer(text=self.WAIT_TEXT)
+                    edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
+                                                                         text=self.md_italic(self.WAIT_TEXT))
+                    for url in urls.keys():
+                        self.download_and_send(bot, url, chat_id=chat_id,
+                                               wait_message_id=edited_msg.message_id)
+                elif action == "nodl" or action == "destroy":
+                    # update.callback_query.answer(text="Cancelled!", show_alert=True)
+                    bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+        else:
+            update.callback_query.answer(text="Very old message, sorry.")
+            bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
 
     def message_callback(self, bot, update):
         chat_id = update.message.chat_id
@@ -391,17 +396,19 @@ class SCDLBot:
         if not success:
             try:
                 ydl.download([url])
+                success = True
             except Exception as e:
-                logger.debug("youtube-dl exception:", e)  # TODO
+                logger.debug("youtube-dl exception:", e)
 
-        file_list = []
-        for d, dirs, files in os.walk(download_dir):
-            for file in files:
-                file_list.append(os.path.join(d, file))
-        file_list = sorted(file_list)
+        if success:
+            file_list = []
+            for d, dirs, files in os.walk(download_dir):
+                for file in files:
+                    file_list.append(os.path.join(d, file))
+            file_list = sorted(file_list)
 
-        for file in file_list:
-            self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file)
+            for file in file_list:
+                self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file)
 
         shutil.rmtree(download_dir, ignore_errors=True)
 
@@ -463,7 +470,6 @@ class SCDLBot:
             for index, file in enumerate(file_parts):
                 bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
                 # file = translit(file, 'ru', reversed=True)
-                # TODO add site hashtag
                 caption = None
                 if file_size > self.MAX_TG_FILE_SIZE:
                     caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])

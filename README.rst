@@ -55,7 +55,7 @@ Music Downloader Telegram Bot
         :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
         :alt: GitHub License
 
-.. image:: https://img.shields.io/badge/telegram-bot-blue.svg
+.. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
         :target: https://t.me/scdlbot
         :alt: Telegram Bot
 
