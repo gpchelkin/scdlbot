@@ -6,4 +6,4 @@ jobs:
        - image: circleci/python:3.6.1
      steps:
        - checkout
-       - run: echo "hello world"
+       - run: echo "scdlbot"
