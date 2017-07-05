@@ -2,11 +2,14 @@
 History
 =======
 
+0.7.0 (2017-07-05)
+------------------
+* Travis CI, tests and docs from cookiecutter
+
 0.6.3 (2017-07-04)
 ------------------
 
 * Back to bandcamp-dl and scdl and download timeouts
-
 
 0.6.2 (2017-07-04)
 ------------------
