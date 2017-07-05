@@ -11,6 +11,10 @@ Music Downloader Telegram Bot
         :target: https://travis-ci.org/gpchelkin/scdlbot
         :alt: Travis CI Build Status
 
+.. image:: https://circleci.com/gh/gpchelkin/scdlbot.svg?style=svg
+        :target: https://circleci.com/gh/gpchelkin/scdlbot
+        :alt: CircleCI Build Status
+
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/gpa.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
         :alt: Code Climate
