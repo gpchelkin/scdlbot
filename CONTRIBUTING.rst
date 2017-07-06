@@ -1,3 +1,10 @@
+.. |Project Name| replace:: Music Downloader Telegram Bot
+.. |GitHub User| replace:: gpchelkin
+.. |GitHub Repo| replace:: scdlbot
+.. |GitHub UserRepo| replace:: |GitHub User|/|GitHub Repo|
+.. |GitHub URL| replace:: https://github.com/|GitHub UserRepo|
+.. _GitHub URL: https://github.com/|GitHub User|/|GitHub Repo|
+
 ============
 Contributing
 ============
@@ -13,7 +20,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/gpchelkin/scdlbot/issues.
+Report bugs at |GitHub URL|/issues.
 
 If you are reporting a bug, please include:
 
@@ -36,14 +43,14 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-Music Downloader Telegram Bot could always use more documentation, whether as part of the
-official Music Downloader Telegram Bot docs, in docstrings, or even on the web in blog posts,
+|Project Name| could always use more documentation, whether as part of the
+official |Project Name| docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/gpchelkin/scdlbot/issues.
+The best way to send feedback is to file an issue at |GitHub URL|/issues.
 
 If you are proposing a feature:
 
@@ -60,7 +67,7 @@ Ready to contribute? Here's how to set up `scdlbot` for local development.
 1. Fork the `scdlbot` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/scdlbot.git
+    $ git clone git@github.com:|GitHub UserRepo|.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
