@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install Music Downloader Telegram Bot, run this command in your terminal:
+To install |project|, run this command in your terminal:
 
 .. code-block:: console
 
     $ pip install scdlbot
 
-This is the preferred method to install Music Downloader Telegram Bot, as it will always install the most recent stable release.
+This is the preferred method to install |project|, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,7 +26,7 @@ you through the process.
 From sources
 ------------
 
-The sources for Music Downloader Telegram Bot can be downloaded from the `GitHub repo`_.
+The sources for |project| can be downloaded from the `GitHub repo`_.
 
 You can either clone the public repository:
 
