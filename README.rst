@@ -11,33 +11,21 @@ Music Downloader Telegram Bot
         :target: https://travis-ci.org/gpchelkin/scdlbot
         :alt: Travis CI Build Status
 
-.. image:: https://circleci.com/gh/gpchelkin/scdlbot.svg?style=svg
-        :target: https://circleci.com/gh/gpchelkin/scdlbot
-        :alt: CircleCI Build Status
-
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/gpa.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
-        :alt: Code Climate
+        :alt: Code Climate GPA
 
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
-        :alt: Issue Count
+        :alt: Code Climate Issue Count
 
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/coverage.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot/coverage
-        :alt: Test Coverage
-
-.. image:: https://www.quantifiedcode.com/api/v1/project/5e956d578a6a4dcdb555132d06652482/badge.svg
-        :target: https://www.quantifiedcode.com/app/project/5e956d578a6a4dcdb555132d06652482
-        :alt: QuantifiedCode Code issues
+        :alt: Code Climate Test Coverage
 
 .. image:: https://api.codacy.com/project/badge/Grade/7dfb6d8e7a094987b303e9283fc7368c
         :target: https://www.codacy.com/app/gpchelkin/scdlbot?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gpchelkin/scdlbot&amp;utm_campaign=Badge_Grade
         :alt: Codacy Build Status
-
-.. image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/build.png?b=master
-        :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/build-status/master
-        :alt: Scrutinizer Build Status
 
 .. image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/quality-score.png?b=master
         :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/?branch=master
