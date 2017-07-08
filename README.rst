@@ -3,13 +3,9 @@ Music Downloader Telegram Bot
 =============================
 
 
-.. image:: https://img.shields.io/pypi/v/scdlbot.svg
-        :target: https://pypi.org/project/scdlbot
-        :alt: PyPI Version
-
-.. image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
-        :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
-        :alt: PyUp Updates
+.. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
+        :target: https://t.me/scdlbot
+        :alt: Telegram Bot
 
 .. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
         :target: https://scdlbot.readthedocs.io/en/latest/?badge=latest
@@ -19,9 +15,13 @@ Music Downloader Telegram Bot
         :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
         :alt: GitHub License
 
-.. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
-        :target: https://t.me/scdlbot
-        :alt: Telegram Bot
+.. image:: https://img.shields.io/pypi/v/scdlbot.svg
+        :target: https://pypi.org/project/scdlbot
+        :alt: PyPI Version
+
+.. image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
+        :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
+        :alt: PyUp Updates
 
 .. image:: https://img.shields.io/travis/gpchelkin/scdlbot.svg
         :target: https://travis-ci.org/gpchelkin/scdlbot
@@ -50,6 +50,10 @@ Music Downloader Telegram Bot
 .. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
         :target: https://bettercodehub.com
         :alt: Better Code Hub Compliance
+
+.. image:: https://codebeat.co/badges/102be98c-56c1-46af-895d-f1f15b2f2520
+        :target: https://codebeat.co/projects/github-com-gpchelkin-scdlbot-master
+        :alt: Codebeat Quality
 
 
 Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
