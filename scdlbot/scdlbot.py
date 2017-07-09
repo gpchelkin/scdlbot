@@ -243,25 +243,23 @@ class SCDLBot:
     def callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
         action, orig_msg_id = update.callback_query.data.split("_")
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        event_name = "_".join([action, "msg"])
+        logger.debug(event_name)
         if orig_msg_id in self.msg_store.keys():
-            urls = self.prepare_urls(self.msg_store[orig_msg_id].text)
-            if urls:
-                event_name = "_".join([action, "msg"])
-                logger.debug(event_name)
-                self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
-                self.msg_store.pop(orig_msg_id)
-
-                if action == "dl":
-                    update.callback_query.answer(text=self.WAIT_TEXT)
-                    edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                         text=self.md_italic(self.WAIT_TEXT))
-                    for url in urls.keys():
-                        self.download_and_send(bot, url, chat_id=chat_id,
-                                               wait_message_id=edited_msg.message_id)
-                elif action == "nodl" or action == "destroy":
-                    # update.callback_query.answer(text="Cancelled!", show_alert=True)
-                    bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+            self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
+            self.msg_store.pop(orig_msg_id)
+            if action == "dl":
+                update.callback_query.answer(text=self.WAIT_TEXT)
+                edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
+                                                                     text=self.md_italic(self.WAIT_TEXT))
+                bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                urls = self.prepare_urls(self.msg_store[orig_msg_id].text)
+                for url in urls.keys():
+                    self.download_and_send(bot, url, chat_id=chat_id,
+                                           wait_message_id=edited_msg.message_id)
+            elif action == "nodl" or action == "destroy":
+                # update.callback_query.answer(text="Cancelled!", show_alert=True)
+                bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
         else:
             update.callback_query.answer(text="Very old message, sorry.")
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
