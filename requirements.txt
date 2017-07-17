@@ -2,7 +2,7 @@ python-telegram-bot==6.1.0
 boltons==17.1.0
 plumbum==1.6.3
 #transliterate==1.9
-scdl==1.6.4
+scdl==1.6.5
 bandcamp-downloader==0.0.8.post6
 youtube-dl==2017.7.2
 pydub==0.19.0
