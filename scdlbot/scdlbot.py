@@ -247,7 +247,6 @@ class SCDLBot:
         logger.debug(event_name)
         if orig_msg_id in self.msg_store.keys():
             self.botan.track(self.msg_store[orig_msg_id], event_name) if self.botan else None
-            self.msg_store.pop(orig_msg_id)
             if action == "dl":
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
@@ -260,13 +259,14 @@ class SCDLBot:
             elif action == "nodl" or action == "destroy":
                 # update.callback_query.answer(text="Cancelled!", show_alert=True)
                 bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+            self.msg_store.pop(orig_msg_id)
         else:
             update.callback_query.answer(text="Very old message, sorry.")
             bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
 
     def message_callback(self, bot, update):
         chat_id = update.message.chat_id
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        # bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(update.message.text)
         if urls:
             reply_to_message_id = update.message.message_id

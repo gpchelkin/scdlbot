@@ -2,6 +2,10 @@
 History
 =======
 
+0.7.3 (2017-07-20)
+------------------
+* orig_msg_id hotfix and don't send chat action on every link
+
 0.7.2 (2017-07-19)
 ------------------
 * Updated requirements
