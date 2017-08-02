@@ -1,4 +1,4 @@
-python-telegram-bot==7.0.0
+python-telegram-bot==7.0.1
 boltons==17.1.0
 plumbum==1.6.3
 #transliterate==1.9
