@@ -2,6 +2,10 @@
 History
 =======
 
+0.7.4 (2017-08-03)
+------------------
+* msg_store fixes
+
 0.7.3 (2017-07-20)
 ------------------
 * orig_msg_id hotfix and don't send chat action on every link
