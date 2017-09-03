@@ -29,6 +29,7 @@ from telegram.ext.dispatcher import run_async
 
 logger = logging.getLogger(__name__)
 
+from botanio import botan
 
 class SCDLBot:
     MAX_TG_FILE_SIZE = 45000000
@@ -181,6 +182,10 @@ class SCDLBot:
     def clutter_command_callback(self, bot, update):
         event_name = "clutter"
         logger.debug(event_name)
+        # uid = message.from_user
+        # message_dict = message.to_dict()
+        # event_name = update.message.text
+        # botan.track(botan_token, uid, message_dict, event_name)
         self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)

@@ -10,3 +10,4 @@ mutagen==1.38
 patool==1.12
 pyshorteners==0.6.1
 Celery==4.1.0
+botanio==1.0.0
