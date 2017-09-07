@@ -384,6 +384,8 @@ class SCDLBot:
         }
         ydl = youtube_dl.YoutubeDL(ydl_opts)
 
+        # direct_urls = self.youtube_dl_get_direct_urls(url)
+
         success = False
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
             cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -396,7 +398,7 @@ class SCDLBot:
             except TimeoutExpired:
                 cmd_popen.kill()
                 logger.debug("Dropped long downloading")
-        elif self.SITES["bc"] in url:
+        elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
             cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
                 std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=300)
