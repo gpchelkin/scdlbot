@@ -312,7 +312,7 @@ class SCDLBot:
             urls = []
             for url_str in msg.parse_entities(types=["url"]).values():
                 if "://" not in url_str:
-                    url_str = "//" + url_str
+                    url_str = "http://" + url_str
                 urls.append(URL(url_str))
         else:
             urls = []
