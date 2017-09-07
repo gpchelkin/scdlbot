@@ -50,6 +50,7 @@ requirements = [
     "patool",
     "pyshorteners",
     "Celery",
+    "botanio",
 ]
 
 setup(

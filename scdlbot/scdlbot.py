@@ -29,7 +29,6 @@ from telegram.ext.dispatcher import run_async
 
 logger = logging.getLogger(__name__)
 
-from botanio import botan
 
 class SCDLBot:
     MAX_TG_FILE_SIZE = 45000000
@@ -197,7 +196,7 @@ class SCDLBot:
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
-        urls = self.prepare_urls(update.inline_query.query)
+        urls = self.prepare_urls(text=update.inline_query.query)
         if urls:
             event_name = "dl_inline"
             logger.debug(event_name)
@@ -207,7 +206,7 @@ class SCDLBot:
     def link_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(" ".join(args), get_direct_urls=True)
+        urls = self.prepare_urls(msg=update.message, get_direct_urls=True)  # text=" ".join(args)
         if urls:
             event_name = "link"
             logger.debug(event_name)
@@ -234,7 +233,7 @@ class SCDLBot:
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(" ".join(args))
+        urls = self.prepare_urls(msg=update.message)  # text=" ".join(args)
         if urls:
             event_name = "dl_cmd"
             logger.debug(event_name)
@@ -258,7 +257,7 @@ class SCDLBot:
                     edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                          text=self.md_italic(self.WAIT_TEXT))
                     bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                    urls = self.prepare_urls(self.msg_store[chat_id][orig_msg_id].text)
+                    urls = self.prepare_urls(msg=self.msg_store[chat_id][orig_msg_id])  # text=self.msg_store[chat_id][orig_msg_id].text
                     for url in urls.keys():
                         self.download_and_send(bot, url, chat_id=chat_id,
                                                wait_message_id=edited_msg.message_id)
@@ -273,7 +272,7 @@ class SCDLBot:
     def message_callback(self, bot, update):
         chat_id = update.message.chat_id
         # bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(update.message.text)
+        urls = self.prepare_urls(msg=update.message)  # text=update.message.text
         if urls:
             reply_to_message_id = update.message.message_id
             event_name = "_".join(["dl", "msg"])
@@ -306,8 +305,13 @@ class SCDLBot:
             else:
                 return direct_urls
 
-    def prepare_urls(self, text, get_direct_urls=False):
-        urls = find_all_links(text, default_scheme="http")
+    def prepare_urls(self, msg=None, text=None, get_direct_urls=False):
+        if text:
+            urls = find_all_links(text, default_scheme="http")
+        elif msg:
+            urls = list(msg.parse_entities(types=["url"]).values())
+        else:
+            urls = []
         urls_dict = {}
         for url in urls:
             url_parts_num = len([part for part in url.path_parts if part])
@@ -359,7 +363,7 @@ class SCDLBot:
         ]
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(download_dir, '%(autonumber)s - %(title)s.%(ext)s'),  # %(title)s-%(id)s.%(ext)s
+            'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
             'postprocessors': [
                 {
                     'key': 'FFmpegExtractAudio',
