@@ -16,7 +16,7 @@ from uuid import uuid4
 import mutagen.id3
 import pkg_resources
 import youtube_dl
-from boltons.urlutils import find_all_links
+from boltons.urlutils import find_all_links, URL
 from plumbum import local
 from pydub import AudioSegment
 from pyshorteners import Shortener
@@ -309,7 +309,11 @@ class SCDLBot:
         if text:
             urls = find_all_links(text, default_scheme="http")
         elif msg:
-            urls = list(msg.parse_entities(types=["url"]).values())
+            urls = []
+            for url_str in msg.parse_entities(types=["url"]).values():
+                if "://" not in url_str:
+                    url_str = "//" + url_str
+                urls.append(URL(url_str))
         else:
             urls = []
         urls_dict = {}
