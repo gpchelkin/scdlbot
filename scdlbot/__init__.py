@@ -3,7 +3,7 @@
 """Top-level package for Music Downloader Telegram Bot."""
 
 # version as tuple for simple comparisons
-VERSION = (0, 7, 5)
+VERSION = (0, 7, 5, 1)
 
 __author__ = """George Pchelkin"""
 __email__ = 'george@pchelk.in'
