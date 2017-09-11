@@ -2,6 +2,11 @@
 History
 =======
 
+0.7.6 (2017-09-11)
+------------------
+* SYSLOG_DEBUG env var to disable logging of full messages
+* maintenance
+
 0.7.5.1 (2017-09-03)
 ------------------
 * YouTube number remove

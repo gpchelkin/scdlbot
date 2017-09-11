@@ -57,6 +57,11 @@
             "value": "",
             "required": false
         },
+        "SYSLOG_DEBUG": {
+            "description": "Enable verbose debug logging: 1",
+            "value": "0",
+            "required": false
+        },
         "HOSTNAME": {
             "description": "",
             "value": "",
