@@ -388,6 +388,7 @@ class SCDLBot:
 
         success = False
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
+            logger.debug("scdl started...")
             cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
                 std_out, std_err = cmd_popen.communicate(timeout=300)
@@ -399,6 +400,7 @@ class SCDLBot:
                 cmd_popen.kill()
                 logger.debug("Dropped long downloading")
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
+            logger.debug("bandcamp-dl started...")
             cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
             try:
                 std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=300)
@@ -411,6 +413,7 @@ class SCDLBot:
                 logger.debug("Dropped long downloading")
         if not success:
             try:
+                logger.debug("youtube-dl started...")
                 ydl.download([url])
                 success = True
             except Exception as e:

@@ -1,4 +1,4 @@
-* Music Downloader Telegram Bot version:
+* scdlbot version:
 * Python version:
 * Operating System:
 
