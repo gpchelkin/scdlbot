@@ -10,14 +10,19 @@ console_handler = logging.StreamHandler()
 logging_handlers = [console_handler]
 
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
+SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_ADDRESS:
     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
     syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
     logging_handlers.append(syslog_handler)
+if SYSLOG_DEBUG:
+    logging_level = logging.DEBUG
+else:
+    logging_level = logging.INFO
 
 logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")),
                     datefmt='%b %d %H:%M:%S',
-                    level=logging.DEBUG,
+                    level=logging_level,
                     handlers=logging_handlers)
 
 logger = logging.getLogger(__name__)
