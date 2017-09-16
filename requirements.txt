@@ -3,7 +3,7 @@ boltons==17.1.0
 plumbum==1.6.3
 #transliterate==1.9
 scdl==1.6.7
-bandcamp-downloader==0.0.8.post6
+bandcamp-downloader==0.0.8.post7
 youtube-dl==2017.9.15
 pydub==0.20.0
 mutagen==1.38
