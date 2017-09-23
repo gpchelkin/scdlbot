@@ -6,6 +6,7 @@ History
 ------------------
 * SYSLOG_DEBUG env var to disable logging of full messages
 * maintenance
+* Logentries support
 
 0.7.5.1 (2017-09-03)
 ------------------

@@ -51,7 +51,8 @@ requirements = [
     "pyshorteners",
     "Celery",
     "botanio",
-    "logentries"
+    "logentries",
+    "loggly-python-handler"
 ]
 
 setup(

@@ -6,6 +6,7 @@ from logging.handlers import SysLogHandler
 
 from logentries import LogentriesHandler
 
+# import loggly.handlers
 from scdlbot.scdlbot import SCDLBot
 
 console_handler = logging.StreamHandler()
