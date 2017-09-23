@@ -4,17 +4,25 @@ import logging
 import os
 from logging.handlers import SysLogHandler
 
+from logentries import LogentriesHandler
+
 from scdlbot.scdlbot import SCDLBot
 
 console_handler = logging.StreamHandler()
 logging_handlers = [console_handler]
 
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_ADDRESS:
     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
     syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
     logging_handlers.append(syslog_handler)
+
+LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
+if LOGENTRIES_TOKEN:
+    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
+    logging_handlers.append(logentries_handler)
+
+SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_DEBUG:
     logging_level = logging.DEBUG
 else:
@@ -24,8 +32,6 @@ logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.gete
                     datefmt='%b %d %H:%M:%S',
                     level=logging_level,
                     handlers=logging_handlers)
-
-logger = logging.getLogger(__name__)
 
 
 def main():

@@ -51,6 +51,7 @@ requirements = [
     "pyshorteners",
     "Celery",
     "botanio",
+    "logentries"
 ]
 
 setup(

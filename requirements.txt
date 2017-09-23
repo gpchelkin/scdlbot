@@ -11,3 +11,4 @@ patool==1.12
 pyshorteners==0.6.1
 Celery==4.1.0
 botanio==1.0.0
+logentries==0.17
