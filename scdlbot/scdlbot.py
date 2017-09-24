@@ -10,7 +10,6 @@ import shutil
 from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
-from urllib.request import URLopener
 from uuid import uuid4
 
 import mutagen.id3
@@ -281,7 +280,9 @@ class SCDLBot:
                 self.botan.track(update.message, event_name) if self.botan else None
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                logger.debug(urls)
                 for url in urls.keys():
+                    logger.debug("downloading" + url)
                     self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            wait_message_id=wait_message.message_id)
             else:
@@ -446,7 +447,7 @@ class SCDLBot:
         #             results.append(InlineQueryResultCachedAudio(id=str(uuid4()), audio_file_id=audio_id))
         #     bot.answer_inline_query(inline_query_id, results)
 
-        downloader = URLopener()
+        # downloader = URLopener()
 
 
         #     try:
