@@ -187,11 +187,11 @@ class SCDLBot:
         self.botan.track(update.message, event_name) if self.botan else None
         if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Chat will now be cluttered with replies",
+            bot.send_message(chat_id=update.message.chat_id, text="Now I will reply with audios to your messages",
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
             self.NO_CLUTTER_CHAT_IDS.append(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Chat will now NOT be cluttered with replies",
+            bot.send_message(chat_id=update.message.chat_id, text="Now I will just send audios, no replies",
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
@@ -282,7 +282,7 @@ class SCDLBot:
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 logger.debug(urls)
                 for url in urls.keys():
-                    logger.debug("downloading" + url)
+                    logger.debug("downloading " + url)
                     self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            wait_message_id=wait_message.message_id)
             else:
