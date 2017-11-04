@@ -11,6 +11,7 @@ I download and send audios of videos/tracks/sets/albums in MP3 128 kbps with tag
 
 • Use `/dl <links>` to download instantly in groups.
 • Use `/link <links>` to just get URL for downloading.
+• Use `/clutter` to toggle replies to requests on or off.
 
 *Credits // Emoji-links:*
 [🌟 @GitHub](https://github.com/gpchelkin/scdlbot) // [⌨️⚠](https://github.com/gpchelkin/scdlbot/issues)
