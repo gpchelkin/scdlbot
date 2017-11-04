@@ -204,6 +204,13 @@ class SCDLBot:
 
     def link_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
+        if not args:
+            if update.message.chat.type == "private":
+                rant_text = "Learn how to use me in /help, you should send command with links."
+            else:
+                rant_text = self.RANT_TEXT + ", you should send command with links."
+            self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
+            return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg=update.message, get_direct_urls=True)  # text=" ".join(args)
         if urls:
@@ -226,9 +233,9 @@ class SCDLBot:
         chat_id = update.message.chat_id
         if not args:
             if update.message.chat.type == "private":
-                rant_text = "Learn how to use me in /help, you can send links without command or command with links."
+                rant_text = "Learn how to use me in /help, you should send links without command or command with links."
             else:
-                rant_text = self.RANT_TEXT + ", you can send links without command or command with links."
+                rant_text = self.RANT_TEXT + ", you should send links without command or command with links."
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
