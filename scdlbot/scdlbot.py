@@ -3,6 +3,7 @@
 """Main module."""
 
 import configparser
+import json
 import logging
 import os
 # import shelve
@@ -133,7 +134,7 @@ class SCDLBot:
             except AttributeError:
                 logger.warning('No chat_id in message')
                 return False
-            data = message.to_json().to_dict()
+            data = json.loads(message.to_json())
             return botan.track(self.botan_token, uid, data, event_name)
         else:
             return False
