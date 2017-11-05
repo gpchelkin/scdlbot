@@ -126,9 +126,17 @@ class SCDLBot:
     def md_italic(text):
         return "".join(["_", text, "_"])
 
-    def botan_track(self, message, event_name):
+    def botan_track(self, message, event_name='event'):
         if self.botan_token:
-            botan.track(self.botan_token, message.from_user.id, message, event_name)
+            try:
+                uid = message.chat_id
+            except AttributeError:
+                logger.warning('No chat_id in message')
+                return False
+            data = message.to_json().to_dict()
+            return botan.track(self.botan_token, uid, data, event_name)
+        else:
+            return False
 
     def unknown_command_callback(self, bot, update):
         pass
