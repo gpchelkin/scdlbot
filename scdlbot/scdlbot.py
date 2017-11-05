@@ -44,7 +44,7 @@ class SCDLBot:
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
         self.HELP_TEXT = self.get_response_text('help.tg.md')
-        self.NO_CLUTTER_CHAT_IDS = no_clutter_chat_ids if no_clutter_chat_ids else []
+        self.NO_CLUTTER_CHAT_IDS = set(no_clutter_chat_ids) if no_clutter_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.scdl = local[os.path.join(bin_path, 'scdl')]
@@ -191,16 +191,17 @@ class SCDLBot:
             self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT, reply_to_message_id=update.message.message_id)
 
     def clutter_command_callback(self, bot, update):
+        chat_id = update.message.chat_id
         event_name = "clutter"
         logger.debug(event_name)
         self.botan_track(update.message, event_name)
-        if update.message.chat_id in self.NO_CLUTTER_CHAT_IDS:
-            self.NO_CLUTTER_CHAT_IDS.remove(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Now I will reply with audios to your messages",
+        if chat_id in self.NO_CLUTTER_CHAT_IDS:
+            self.NO_CLUTTER_CHAT_IDS.remove(chat_id)
+            bot.send_message(chat_id=chat_id, text="Chat cluttering is now ON. I *will send audios as replies* to messages with links",
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
-            self.NO_CLUTTER_CHAT_IDS.append(update.message.chat_id)
-            bot.send_message(chat_id=update.message.chat_id, text="Now I will just send audios, no replies",
+            self.NO_CLUTTER_CHAT_IDS.add(chat_id)
+            bot.send_message(chat_id=chat_id, text="Chat cluttering is now OFF. I *will not send audios as replies* to messages with links",
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):

@@ -2,6 +2,12 @@
 History
 =======
 
+0.7.9 (2017-11-05)
+------------------
+* botanio fix
+* tmpreaper config sample
+* clutter fix
+
 0.7.8 (2017-11-04)
 ------------------
 * botanio
