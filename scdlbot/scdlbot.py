@@ -197,11 +197,11 @@ class SCDLBot:
         self.botan_track(update.message, event_name)
         if chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(chat_id)
-            bot.send_message(chat_id=chat_id, text="Chat cluttering is now ON. I *will send audios as replies* to messages with links",
+            bot.send_message(chat_id=chat_id, text="Chat cluttering is now ON. I *will send audios as replies* to messages with links.",
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
             self.NO_CLUTTER_CHAT_IDS.add(chat_id)
-            bot.send_message(chat_id=chat_id, text="Chat cluttering is now OFF. I *will not send audios as replies* to messages with links",
+            bot.send_message(chat_id=chat_id, text="Chat cluttering is now OFF. I *will not send audios as replies* to messages with links.",
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
