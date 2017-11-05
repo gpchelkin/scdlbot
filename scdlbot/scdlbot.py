@@ -276,7 +276,7 @@ class SCDLBot:
                     urls = self.prepare_urls(
                         msg=self.msg_store[chat_id][orig_msg_id])  # text=self.msg_store[chat_id][orig_msg_id].text
                     for url in urls.keys():
-                        self.download_and_send(bot, url, chat_id=chat_id,
+                        self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                                wait_message_id=edited_msg.message_id)
                 elif action == "nodl" or action == "destroy":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
