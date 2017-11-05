@@ -1,0 +1,10 @@
+# sudo apt install tmpreaper
+# sudo mv /etc/cron.daily/tmpreaper /etc/cron.hourly/
+# sudo mv tmpreaper.conf.sample /etc/tmpreaper.conf
+
+SHOWWARNING=false
+TMPREAPER_TIME=1h
+TMPREAPER_PROTECT_EXTRA='/tmp/.X*'
+TMPREAPER_DIRS='/tmp /root/scdl'
+TMPREAPER_DELAY='10'
+TMPREAPER_ADDITIONALOPTIONS=''
