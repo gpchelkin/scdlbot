@@ -130,7 +130,8 @@ class SCDLBot:
     def botan_track(self, message, event_name='event'):
         if self.botan_token:
             try:
-                uid = message.chat_id
+                # uid = message.chat_id
+                uid = message.from_user.id
             except AttributeError:
                 logger.warning('No chat_id in message')
                 return False
