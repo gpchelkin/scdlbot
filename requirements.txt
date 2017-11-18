@@ -6,7 +6,7 @@ scdl==1.6.9
 bandcamp-downloader==0.0.8.post8
 youtube-dl==2017.10.29
 pydub==0.20.0
-mutagen==1.38
+mutagen==1.39
 patool==1.12
 pyshorteners==0.6.1
 Celery==4.1.0
