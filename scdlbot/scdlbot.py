@@ -428,14 +428,13 @@ class SCDLBot:
                 cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
-                    if cmd_popen.returncode:
+                    if cmd_popen.returncode or "Error resolving url" in std_err:
                         text = "Failed download with scdl"
-                        logger.info(std_err)
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
                         text = "Success download with scdl"
-                        logger.info(std_err)
                         status = 1
+                    logger.info(text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
@@ -453,10 +452,11 @@ class SCDLBot:
                     std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
                         text = "Failed download with bandcamp-dl"
-                        logger.info(text, std_out, std_err)
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
+                        text = "Success download with bandcamp-dl"
                         status = 1
+                    logger.info(text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
