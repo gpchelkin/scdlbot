@@ -449,7 +449,7 @@ class SCDLBot:
             try:
                 cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
-                    std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=self.DL_TIMEOUT)
+                    std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
                         text = "Failed download with bandcamp-dl"
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
