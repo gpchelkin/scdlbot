@@ -425,16 +425,16 @@ class SCDLBot:
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
             logger.info("Started scdl...")
             try:
-                cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
                         text = "Failed download with scdl"
-                        logger.info(text)
+                        logger.info(std_err)
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
                         text = "Success download with scdl"
-                        logger.info(text)
+                        logger.info(std_err)
                         status = 1
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
@@ -448,7 +448,7 @@ class SCDLBot:
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
             logger.info("Started bandcamp-dl...")
             try:
-                cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
