@@ -366,10 +366,10 @@ class SCDLBot:
                     urls_dict[url.to_text(True)] = direct_urls
         return urls_dict
 
-    def send_alert(self, bot, text):
+    def send_alert(self, bot, text, url=None):
         for alert_chat_id in self.ALERT_CHAT_IDS:
             try:
-                bot.send_message(chat_id=alert_chat_id, text=text)
+                bot.send_message(chat_id=alert_chat_id, text="ALERT:" + url + "\n" + text)
             except:
                 pass
 
@@ -430,11 +430,11 @@ class SCDLBot:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode or "Error resolving url" in std_err:
                         text = "Failed download with scdl"
-                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
+                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
                     else:
                         text = "Success download with scdl"
                         status = 1
-                    logger.info(text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
+                    logger.info(text + "\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
@@ -443,7 +443,7 @@ class SCDLBot:
             except Exception as exc:
                 text = "Failed download with bandcamp-dl"
                 logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc))
+                self.send_alert(bot, text + "\n" + str(exc), url)
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
             logger.info("Started bandcamp-dl...")
             try:
@@ -452,11 +452,11 @@ class SCDLBot:
                     std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
                         text = "Failed download with bandcamp-dl"
-                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
+                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
                     else:
                         text = "Success download with bandcamp-dl"
                         status = 1
-                    logger.info(text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
+                    logger.info(text + "\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
@@ -465,7 +465,7 @@ class SCDLBot:
             except Exception as exc:
                 text = "Failed download with bandcamp-dl"
                 logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc))
+                self.send_alert(bot, text + "\n" + str(exc), url)
 
 
         if status == 0:
@@ -476,7 +476,7 @@ class SCDLBot:
             except Exception as exc:
                 text = "Failed download with youtube-dl"
                 logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc))
+                self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
 
         if status == -1:
@@ -553,8 +553,8 @@ class SCDLBot:
                                 id3.save(file_part, v1=2, v2_version=4)
                             file_parts.append(file_part)
                     except (OSError, MemoryError) as exc:
-                        logger.exception("Failed pydub convertation")
-                        self.send_alert(bot, "Failed pydub convertation:\n" + str(exc))
+                        logger.exception("Failed pydub convertaion")
+                        self.send_alert(bot, "Failed pydub convertion:\n" + str(exc), file)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="Not enough memory to convert, you may try again later...")
                         return
@@ -575,5 +575,5 @@ class SCDLBot:
                             break
                         except TelegramError as exc:
                             logger.exception('TelegramError')
-                            self.send_alert(bot, str(exc))
+                            self.send_alert(bot, str(exc), file)
         # return sent_audio_ids
