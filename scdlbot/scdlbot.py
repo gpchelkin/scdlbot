@@ -428,11 +428,13 @@ class SCDLBot:
                 cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
-                    if cmd_popen.returncode or "Error resolving url" in str(std_err):
+                    if cmd_popen.returncode:
                         text = "Failed download with scdl"
                         logger.info(text, std_out, std_err)
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
+                        text = "Success download with scdl"
+                        logger.info(text, std_out, std_err)
                         status = 1
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
