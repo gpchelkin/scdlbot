@@ -40,8 +40,9 @@ class SCDLBot:
     }
 
     def __init__(self, tg_bot_token, botan_token, google_shortener_api_key, bin_path,
-                 sc_auth_token, store_chat_id, no_clutter_chat_ids, alert_chat_ids, dl_dir, dl_timeout):
+                 sc_auth_token, store_chat_id, no_clutter_chat_ids, alert_chat_ids, dl_dir, dl_timeout, max_convert_file_size):
         self.DL_TIMEOUT = dl_timeout
+        self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
         self.TIMEOUT_TEXT = self.get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
@@ -518,35 +519,50 @@ class SCDLBot:
             file_parts = []
             file_size = os.path.getsize(file)
             parts_number = 1
-            if file_size > self.MAX_TG_FILE_SIZE:
-                try:
-                    id3 = mutagen.id3.ID3(file, translate=False)
-                except:
-                    id3 = None
-                parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
-                sound = AudioSegment.from_file(file, file_format)
-                part_size = len(sound) / parts_number
-                for i in range(parts_number):
-                    file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
-                    part = sound[part_size * i:part_size * (i + 1)]
-                    part.export(file_part, format="mp3")
-                    if id3:
-                        id3.save(file_part, v1=2, v2_version=4)
-                    file_parts.append(file_part)
+            if file_size > self.MAX_CONVERT_FILE_SIZE:
+                logger.info("Large file for convert")
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 text="Downloaded file is larger than I could convert, sorry...")
+                return
             else:
-                file_parts.append(file)
-            for index, file in enumerate(file_parts):
-                bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-                # file = translit(file, 'ru', reversed=True)
-                caption = None
                 if file_size > self.MAX_TG_FILE_SIZE:
-                    caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
-                for i in range(3):
                     try:
-                        audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                   audio=open(file, 'rb'), caption=caption)
-                        sent_audio_ids.append(audio_msg.audio.file_id)
-                        break
-                    except TelegramError as exc:
-                        logger.exception('TelegramError')
-        return sent_audio_ids
+                        id3 = mutagen.id3.ID3(file, translate=False)
+                    except:
+                        id3 = None
+                    parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
+                    try:
+                        sound = AudioSegment.from_file(file, file_format)
+                        part_size = len(sound) / parts_number
+                        for i in range(parts_number):
+                            file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
+                            part = sound[part_size * i:part_size * (i + 1)]
+                            part.export(file_part, format="mp3")
+                            if id3:
+                                id3.save(file_part, v1=2, v2_version=4)
+                            file_parts.append(file_part)
+                    except (OSError, MemoryError) as exc:
+                        logger.exception("Failed pydub convertation")
+                        self.send_alert(bot, "Failed pydub convertation:\n" + str(exc))
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         text="Not enough memory to convert, you may try again later...")
+                        return
+
+                else:
+                    file_parts.append(file)
+                for index, file in enumerate(file_parts):
+                    bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
+                    # file = translit(file, 'ru', reversed=True)
+                    caption = None
+                    if file_size > self.MAX_TG_FILE_SIZE:
+                        caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
+                    for i in range(3):
+                        try:
+                            audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                       audio=open(file, 'rb'), caption=caption)
+                            sent_audio_ids.append(audio_msg.audio.file_id)
+                            break
+                        except TelegramError as exc:
+                            logger.exception('TelegramError')
+                            self.send_alert(bot, str(exc))
+        # return sent_audio_ids

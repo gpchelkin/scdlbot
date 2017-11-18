@@ -47,12 +47,13 @@ def main():
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     app_url = os.getenv('APP_URL', '')
     webhook_port = int(os.getenv('PORT', '5000'))
+    max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '130000000'))
     bin_path = os.getenv('BIN_PATH', '')
     cert_file = os.getenv('CERT_FILE', '')
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key, bin_path,
                       sc_auth_token, store_chat_id,
-                      no_clutter_chat_ids, alert_chat_ids, dl_dir, dl_timeout)
+                      no_clutter_chat_ids, alert_chat_ids, dl_dir, dl_timeout, max_convert_file_size)
     scdlbot.run(use_webhook, app_url, webhook_port, cert_file)
 
 
