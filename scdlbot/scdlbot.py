@@ -428,18 +428,21 @@ class SCDLBot:
                 cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
-                    if cmd_popen.returncode or "Error resolving url" in std_err:
-                        logger.info(std_out, std_err)
-                        self.send_alert(bot, "Failed download with scdl, stdout:\n" + std_out + "\nstderr:\n" + std_err)
+                    if cmd_popen.returncode or "Error resolving url" in str(std_err):
+                        text = "Failed download with scdl"
+                        logger.info(text, std_out, std_err)
+                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
                         status = 1
                 except TimeoutExpired:
-                    logger.info("Download took too long, dropped")
+                    text = "Download took too long, dropped"
+                    logger.info(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
-                logger.exception("Failed download with scdl")
-                self.send_alert(bot, str(exc))
+                text = "Failed download with bandcamp-dl"
+                logger.exception(text)
+                self.send_alert(bot, text + "\n" + str(exc))
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
             logger.info("Started bandcamp-dl...")
             try:
@@ -447,17 +450,20 @@ class SCDLBot:
                 try:
                     std_out, std_err = cmd_popen.communicate(input=b"yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
-                        logger.info(std_out, std_err)
-                        self.send_alert(bot, "Failed download with bandcamp-dl, stdout:\n" + std_out + "\nstderr:\n" + std_err)
+                        text = "Failed download with bandcamp-dl"
+                        logger.info(text, std_out, std_err)
+                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err)
                     else:
                         status = 1
                 except TimeoutExpired:
-                    logger.info("Download took too long, dropped")
+                    text = "Download took too long, dropped"
+                    logger.info(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
-                logger.exception("Failed download with bandcamp-dl")
-                self.send_alert(bot, str(exc))
+                text = "Failed download with bandcamp-dl"
+                logger.exception(text)
+                self.send_alert(bot, text + "\n" + str(exc))
 
 
         if status == 0:
@@ -466,8 +472,9 @@ class SCDLBot:
                 ydl.download([url])
                 status = 1
             except Exception as exc:
-                logger.exception("Failed download with youtube-dl")
-                self.send_alert(bot, str(exc))
+                text = "Failed download with youtube-dl"
+                logger.exception(text)
+                self.send_alert(bot, text + "\n" + str(exc))
                 status = -2
 
         if status == -1:
