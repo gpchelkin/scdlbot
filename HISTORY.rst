@@ -2,6 +2,11 @@
 History
 =======
 
+0.8.2 (2017-11-19)
+------------------
+* cool refinements in logging
+* store urls, so button response is faster now
+
 0.8.1 (2017-11-19)
 ------------------
 * some logging fixes
