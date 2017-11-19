@@ -528,12 +528,13 @@ class SCDLBot:
             file_size = os.path.getsize(file)
             parts_number = 1
             if file_size > self.MAX_CONVERT_FILE_SIZE:
-                logger.info("Large file for convert")
+                logger.info("Large file for convert: %s", file)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  text="Downloaded file is larger than I could convert, sorry...")
                 return
             else:
                 if file_size > self.MAX_TG_FILE_SIZE:
+                    logger.info("Splitting: %s", file)
                     try:
                         id3 = mutagen.id3.ID3(file, translate=False)
                     except:
@@ -566,6 +567,7 @@ class SCDLBot:
                 else:
                     file_parts.append(file)
                 for index, file in enumerate(file_parts):
+                    logger.info("Sending: %s", file)
                     bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
                     # file = translit(file, 'ru', reversed=True)
                     caption = None
