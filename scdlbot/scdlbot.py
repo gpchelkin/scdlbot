@@ -265,7 +265,7 @@ class SCDLBot:
     def callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
         btn_msg_id = update.callback_query.message.message_id
-        action, orig_msg_id = update.callback_query.data.split("_")
+        orig_msg_id, action = update.callback_query.data.split()
         if chat_id in self.msg_store:
             if orig_msg_id in self.msg_store[chat_id]:
                 self.log_and_botan_track("_".join([action, "msg"]), self.msg_store[chat_id][orig_msg_id]["message"])
@@ -306,8 +306,8 @@ class SCDLBot:
                 if not chat_id in self.msg_store.keys():
                     self.msg_store[chat_id] = {}
                 self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
-                button_download = InlineKeyboardButton(text="✅ Yes", callback_data="_".join(["dl", orig_msg_id]))
-                button_cancel = InlineKeyboardButton(text="❎ No", callback_data="_".join(["nodl", orig_msg_id]))
+                button_download = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
+                button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
                 inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  reply_markup=inline_keyboard, text="🎶 links found. Download it?")
@@ -570,9 +570,12 @@ class SCDLBot:
                     logger.info("Sending: %s", file)
                     bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
                     # file = translit(file, 'ru', reversed=True)
-                    caption = None
+                    if chat_id in self.NO_CLUTTER_CHAT_IDS:
+                        caption = ""
+                    else:
+                        caption = "Downloaded with @{}".format(self.bot_username)
                     if file_size > self.MAX_TG_FILE_SIZE:
-                        caption = " ".join(["Part", str(index + 1), "of", str(parts_number)])
+                        caption += "\n" + " ".join(["Part", str(index + 1), "of", str(parts_number)])
                     for i in range(3):
                         try:
                             audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
