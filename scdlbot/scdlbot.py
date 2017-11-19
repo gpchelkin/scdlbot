@@ -3,6 +3,7 @@
 """Main module."""
 
 import configparser
+import gc
 import json
 import logging
 import os
@@ -545,15 +546,21 @@ class SCDLBot:
                             file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
                             part = sound[part_size * i:part_size * (i + 1)]
                             part.export(file_part, format="mp3")
+                            del part
                             if id3:
                                 id3.save(file_part, v1=2, v2_version=4)
                             file_parts.append(file_part)
+                        # https://github.com/jiaaro/pydub/issues/135
+                        # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
+                        del sound
+                        gc.collect()
                     except (OSError, MemoryError) as exc:
                         text = "Failed pydub convert"
                         logger.exception(text)
                         self.send_alert(bot, text + "\n" + str(exc), file)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="Not enough memory to convert, you may try again later...")
+                        gc.collect()
                         return
 
                 else:

@@ -2,6 +2,10 @@
 History
 =======
 
+0.8.3 (2017-11-19)
+------------------
+* gc.collect() according to https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
+
 0.8.2 (2017-11-19)
 ------------------
 * cool refinements in logging
