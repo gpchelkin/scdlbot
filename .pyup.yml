@@ -2,5 +2,3 @@
 # see https://pyup.io/docs/configuration/ for all available options
 
 schedule: every week on saturday
-label_prs: update
-assignees: gpchelkin
