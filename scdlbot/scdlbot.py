@@ -131,18 +131,20 @@ class SCDLBot:
     def md_italic(text):
         return "".join(["_", text, "_"])
 
-    def botan_track(self, message, event_name='event'):
-        if self.botan_token:
-            try:
-                # uid = message.chat_id
-                uid = message.from_user.id
-            except AttributeError:
-                logger.warning('No chat_id in message')
+    def log_and_botan_track(self, event_name, message=None):
+        logger.info("Event: %s", event_name)
+        if message:
+            if self.botan_token:
+                try:
+                    # uid = message.chat_id
+                    uid = message.from_user.id
+                except AttributeError:
+                    logger.warning('No chat_id in message')
+                    return False
+                data = json.loads(message.to_json())
+                return botan.track(self.botan_token, uid, data, event_name)
+            else:
                 return False
-            data = json.loads(message.to_json())
-            return botan.track(self.botan_token, uid, data, event_name)
-        else:
-            return False
 
     def unknown_command_callback(self, bot, update):
         pass
@@ -187,8 +189,7 @@ class SCDLBot:
 
     def help_command_callback(self, bot, update, event_name="help"):
         chat_id = update.message.chat_id
-        logger.info(event_name)
-        self.botan_track(update.message, event_name)
+        self.log_and_botan_track(event_name, update.message)
         if update.message.chat.type == "private":
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
@@ -197,9 +198,7 @@ class SCDLBot:
 
     def clutter_command_callback(self, bot, update):
         chat_id = update.message.chat_id
-        event_name = "clutter"
-        logger.info(event_name)
-        self.botan_track(update.message, event_name)
+        self.log_and_botan_track("clutter", update.message)
         if chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(chat_id)
             bot.send_message(chat_id=chat_id,
@@ -214,9 +213,8 @@ class SCDLBot:
     def inline_query_callback(self, bot, update):
         urls = self.prepare_urls(text=update.inline_query.query)
         if urls:
-            event_name = "dl_inline"
-            logger.info(event_name)
-            for url in urls.keys():
+            self.log_and_botan_track("dl_inline")
+            for url in urls:
                 self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
 
     def link_command_callback(self, bot, update, args=None):
@@ -231,20 +229,18 @@ class SCDLBot:
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg=update.message, get_direct_urls=True)  # text=" ".join(args)
         if urls:
-            event_name = "link"
-            logger.info(event_name)
-            self.botan_track(update.message, event_name)
+            self.log_and_botan_track("link", update.message)
             link_text = ""
             for i, link in enumerate("\n".join(urls.values()).split()):
-                logger.info(link)
+                logger.debug(link)
                 if self.shortener:
                     try:
                         link = self.shortener.short(link)
                     except:
                         pass
                 link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
-            link_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                            parse_mode='Markdown', text=link_text)
+            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                             parse_mode='Markdown', text=link_text)
 
     def dl_command_callback(self, bot, update, args=None):
         chat_id = update.message.chat_id
@@ -258,40 +254,36 @@ class SCDLBot:
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg=update.message)  # text=" ".join(args)
         if urls:
-            event_name = "dl_cmd"
-            logger.info(event_name)
-            self.botan_track(update.message, event_name)
+            self.log_and_botan_track("dl_cmd", update.message)
             wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                             parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-            for url in urls.keys():
+            for url in urls:
                 self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                        wait_message_id=wait_message.message_id)
 
     def callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
+        btn_msg_id = update.callback_query.message.message_id
         action, orig_msg_id = update.callback_query.data.split("_")
-        event_name = "_".join([action, "msg"])
-        logger.info(event_name)
-        if chat_id in self.msg_store.keys():
-            if orig_msg_id in self.msg_store[chat_id].keys():
-                self.botan_track(self.msg_store[chat_id][orig_msg_id], event_name)
+        if chat_id in self.msg_store:
+            if orig_msg_id in self.msg_store[chat_id]:
+                self.log_and_botan_track("_".join([action, "msg"]), self.msg_store[chat_id][orig_msg_id]["message"])
                 if action == "dl":
                     update.callback_query.answer(text=self.WAIT_TEXT)
                     edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                          text=self.md_italic(self.WAIT_TEXT))
-                    bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                    urls = self.prepare_urls(
-                        msg=self.msg_store[chat_id][orig_msg_id])  # text=self.msg_store[chat_id][orig_msg_id].text
-                    for url in urls.keys():
+                    # bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                    urls = self.msg_store[chat_id][orig_msg_id]["urls"]
+                    for url in urls:
                         self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                                wait_message_id=edited_msg.message_id)
-                elif action == "nodl" or action == "destroy":
+                elif action == "nodl":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
-                    bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+                    bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
                 self.msg_store[chat_id].pop(orig_msg_id)
                 return
         update.callback_query.answer(text="Very old message, sorry.")
-        bot.delete_message(chat_id=chat_id, message_id=update.callback_query.message.message_id)
+        bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
     def message_callback(self, bot, update):
         chat_id = update.message.chat_id
@@ -299,26 +291,25 @@ class SCDLBot:
         urls = self.prepare_urls(msg=update.message)  # text=update.message.text
         if urls:
             reply_to_message_id = update.message.message_id
-            event_name = "_".join(["dl", "msg"])
-            logger.info(event_name)
             if update.message.chat.type == "private":
-                self.botan_track(update.message, event_name)
+                self.log_and_botan_track("dl_msg", update.message)
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 logger.debug(urls)
-                for url in urls.keys():
+                for url in urls:
                     self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            wait_message_id=wait_message.message_id)
             else:
+                self.log_and_botan_track("dl_msg_income")
                 orig_msg_id = str(reply_to_message_id)
                 if not chat_id in self.msg_store.keys():
                     self.msg_store[chat_id] = {}
-                self.msg_store[chat_id][orig_msg_id] = update.message
-                button_download = InlineKeyboardButton(text="YES", callback_data="_".join(["dl", orig_msg_id]))
-                button_cancel = InlineKeyboardButton(text="NO", callback_data="_".join(["nodl", orig_msg_id]))
+                self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
+                button_download = InlineKeyboardButton(text="✅ Yes", callback_data="_".join(["dl", orig_msg_id]))
+                button_cancel = InlineKeyboardButton(text="❎ No", callback_data="_".join(["nodl", orig_msg_id]))
                 inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 reply_markup=inline_keyboard, text="Download 🎶?")
+                                 reply_markup=inline_keyboard, text="🎶 links found. Download it?")
 
     def youtube_dl_get_direct_urls(self, url):
         ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run(retcode=None)
@@ -340,13 +331,15 @@ class SCDLBot:
                     url_str = "http://" + url_str
                 urls.append(URL(url_str))
         else:
-            urls = []
+            logger.debug("Text or msg is required")
+            return
         urls_dict = {}
         for url in urls:
+            url_text = url.to_text(True)
             url_parts_num = len([part for part in url.path_parts if part])
             if (
                 # SoundCloud: tracks, sets and widget pages
-                (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url.to_text())) or
+                (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text)) or
                 # Bandcamp: tracks and albums
                 (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
                 # YouTube: videos and playlists
@@ -354,15 +347,15 @@ class SCDLBot:
                     "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
             ):
                 if get_direct_urls:
-                    direct_urls = self.youtube_dl_get_direct_urls(url.to_text(True))
+                    direct_urls = self.youtube_dl_get_direct_urls(url_text)
                     if direct_urls:
-                        urls_dict[url.to_text(True)] = direct_urls
+                        urls_dict[url_text] = direct_urls
                 else:
-                    urls_dict[url.to_text(True)] = ""
+                    urls_dict[url_text] = ""
             elif not any((site in url.host for site in self.SITES.values())):
-                direct_urls = self.youtube_dl_get_direct_urls(url.to_text(True))
+                direct_urls = self.youtube_dl_get_direct_urls(url_text)
                 if direct_urls:
-                    urls_dict[url.to_text(True)] = direct_urls
+                    urls_dict[url_text] = direct_urls
         return urls_dict
 
     def send_alert(self, bot, text, url=None):
@@ -473,6 +466,8 @@ class SCDLBot:
             try:
                 logger.info("Started youtube-dl...")
                 ydl.download([url])
+                text = "Success download with youtube-dl"
+                logger.info(text)
                 status = 1
             except Exception as exc:
                 text = "Failed download with youtube-dl"
