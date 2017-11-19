@@ -305,9 +305,8 @@ class SCDLBot:
                 self.botan_track(update.message, event_name)
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-                logger.info(urls)
+                logger.debug(urls)
                 for url in urls.keys():
-                    logger.info("downloading " + url)
                     self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                            wait_message_id=wait_message.message_id)
             else:
@@ -434,7 +433,8 @@ class SCDLBot:
                     else:
                         text = "Success download with scdl"
                         status = 1
-                    logger.info(text + "\nstderr:\n" + std_err)
+                    logger.info(text)
+                    logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
@@ -456,7 +456,8 @@ class SCDLBot:
                     else:
                         text = "Success download with bandcamp-dl"
                         status = 1
-                    logger.info(text + "\nstderr:\n" + std_err)
+                    logger.info(text)
+                    logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took too long, dropped"
                     logger.info(text)
@@ -553,8 +554,9 @@ class SCDLBot:
                                 id3.save(file_part, v1=2, v2_version=4)
                             file_parts.append(file_part)
                     except (OSError, MemoryError) as exc:
-                        logger.exception("Failed pydub convertaion")
-                        self.send_alert(bot, "Failed pydub convertion:\n" + str(exc), file)
+                        text = "Failed pydub convert"
+                        logger.exception(text)
+                        self.send_alert(bot, text + "\n" + str(exc), file)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="Not enough memory to convert, you may try again later...")
                         return
