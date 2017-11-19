@@ -2,6 +2,11 @@
 History
 =======
 
+0.8.0 (2017-11-19)
+------------------
+* many fixes and workarounds
+* alerting & logging
+
 0.7.10 (2017-11-05)
 ------------------
 * botanio fix - send user id, not chat id
