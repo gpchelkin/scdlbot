@@ -414,7 +414,7 @@ class SCDLBot:
         status = 0
         logger.info("Trying to download URL: %s", url)
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-            logger.info("Started scdl...")
+            logger.info("Started scdl process...")
             try:
                 cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
@@ -428,16 +428,16 @@ class SCDLBot:
                     logger.info(text)
                     logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
-                    text = "Download took too long, dropped"
+                    text = "Download took with scdl too long, dropped"
                     logger.info(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
-                text = "Failed download with bandcamp-dl"
+                text = "Failed download with scdl"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
-            logger.info("Started bandcamp-dl...")
+            logger.info("Started bandcamp-dl process...")
             try:
                 cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
@@ -451,7 +451,7 @@ class SCDLBot:
                     logger.info(text)
                     logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
-                    text = "Download took too long, dropped"
+                    text = "Download with bandcamp-dl took too long, dropped"
                     logger.info(text)
                     cmd_popen.kill()
                     status = -1
@@ -467,7 +467,7 @@ class SCDLBot:
             ydl.download([url])
 
         if status == 0:
-            logger.info("Started youtube-dl...")
+            logger.info("Started youtube-dl process...")
             # signal.signal(signal.SIGALRM, handler)
             # signal.alarm(5)
             try:
@@ -480,14 +480,14 @@ class SCDLBot:
                     # Terminate
                     p.terminate()
                     p.join()
-                    raise (TimeoutError())
+                    raise TimeoutError()
 
                 # ydl.download([url])
                 text = "Success download with youtube-dl"
                 logger.info(text)
                 status = 1
             except TimeoutError:
-                text = "Download took too long, dropped"
+                text = "Download with youtube-dl took too long, dropped"
                 logger.exception(text)
                 status = -1
             except Exception as exc:
@@ -496,7 +496,6 @@ class SCDLBot:
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
             # signal.alarm(0)
-            del ydl
             gc.collect()
 
         if status == -1:
