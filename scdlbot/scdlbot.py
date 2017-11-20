@@ -6,6 +6,7 @@ import configparser
 import gc
 import json
 import logging
+import multiprocessing
 import os
 # import shelve
 import shutil
@@ -460,18 +461,32 @@ class SCDLBot:
                 self.send_alert(bot, text + "\n" + str(exc), url)
 
         # def handler(signum, frame):
-        #     raise TimeoutExpired(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
+        #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
+
+        def ydl_download():
+            ydl.download([url])
 
         if status == 0:
             logger.info("Started youtube-dl...")
             # signal.signal(signal.SIGALRM, handler)
             # signal.alarm(5)
             try:
-                ydl.download([url])
+                p = multiprocessing.Process(target=ydl_download)
+                p.start()
+                # Wait for seconds or until process finishes
+                p.join(self.DL_TIMEOUT)
+                # If thread is still active
+                if p.is_alive():
+                    # Terminate
+                    p.terminate()
+                    p.join()
+                    raise (TimeoutError())
+
+                # ydl.download([url])
                 text = "Success download with youtube-dl"
                 logger.info(text)
                 status = 1
-            except TimeoutExpired:
+            except TimeoutError:
                 text = "Download took too long, dropped"
                 logger.exception(text)
                 status = -1
