@@ -473,13 +473,18 @@ class SCDLBot:
             try:
                 p = multiprocessing.Process(target=ydl_download)
                 p.start()
+                logger.info("start")
                 # Wait for seconds or until process finishes
                 p.join(self.DL_TIMEOUT)
+                logger.info("join")
                 # If thread is still active
                 if p.is_alive():
+                    logger.info("is_alive")
                     # Terminate
                     p.terminate()
+                    logger.info("terminate")
                     p.join()
+                    logger.info("join2")
                     raise TimeoutError()
 
                 # ydl.download([url])
