@@ -233,9 +233,9 @@ class SCDLBot:
         chat_id = update.message.chat_id
         if not args:
             if update.message.chat.type == "private":
-                rant_text = "Learn how to use me in /help, you should send /{} with links.".format(event_name)
+                rant_text = "Learn how to use me in /help. Hint: you should send `/{} <links>`.".format(event_name)
             else:
-                rant_text = self.RANT_TEXT + ", you should send /{} with links.".format(event_name)
+                rant_text = self.RANT_TEXT + ". Hint: you should send `/{} <links>`.".format(event_name)
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
@@ -283,7 +283,7 @@ class SCDLBot:
                     bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
                 self.msg_store[chat_id].pop(orig_msg_id)
                 return
-        update.callback_query.answer(text="Very old message, sorry.")
+        update.callback_query.answer(text="Sorry, very old message that I don't remember.")
         bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
     def message_callback(self, bot, update):
@@ -409,21 +409,24 @@ class SCDLBot:
         }
         ydl = youtube_dl.YoutubeDL(ydl_opts)
 
+        def ydl_download():
+            ydl.download([url])
+
         # direct_urls = self.youtube_dl_get_direct_urls(url)
 
         status = 0
         logger.info("Trying to download URL: %s", url)
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-            logger.info("Started scdl process...")
+            logger.info("scdl starts...")
             try:
                 cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode or "Error resolving url" in std_err:
-                        text = "Failed download with scdl"
+                        text = "scdl process failed"
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
                     else:
-                        text = "Success download with scdl"
+                        text = "scdl succeeded"
                         status = 1
                     logger.info(text)
                     logger.debug("\nstderr:\n" + std_err)
@@ -433,41 +436,38 @@ class SCDLBot:
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
-                text = "Failed download with scdl"
+                text = "scdl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
         elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
-            logger.info("Started bandcamp-dl process...")
+            logger.info("bandcamp-dl starts...")
             try:
                 cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
-                        text = "Failed download with bandcamp-dl"
+                        text = "bandcamp-dl process failed"
                         self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
                     else:
-                        text = "Success download with bandcamp-dl"
+                        text = "bandcamp-dl succeeded"
                         status = 1
                     logger.info(text)
                     logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
-                    text = "Download with bandcamp-dl took too long, dropped"
+                    text = "bandcamp-dl took too much time and dropped"
                     logger.info(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
-                text = "Failed download with bandcamp-dl"
+                text = "bandcamp-dl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
 
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
-        def ydl_download():
-            ydl.download([url])
-
         if status == 0:
-            logger.info("Started youtube-dl process...")
+            logger.info("youtube-dl starts...")
             # signal.signal(signal.SIGALRM, handler)
             # signal.alarm(5)
             try:
@@ -479,15 +479,15 @@ class SCDLBot:
                 if p.is_alive():
                     p.terminate()
                     raise TimeoutError()
-                text = "Success download with youtube-dl"
+                text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
             except TimeoutError:
-                text = "Download with youtube-dl took too long, dropped"
+                text = "youtube-dl took too much time and dropped"
                 logger.exception(text)
                 status = -1
             except Exception as exc:
-                text = "Failed download with youtube-dl"
+                text = "youtube-dl failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
@@ -543,66 +543,75 @@ class SCDLBot:
         sent_audio_ids = []
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "")
-        if file_format == "mp3" or file_format == "m4a" or file_format == "mp4":
-            file_parts = []
-            file_size = os.path.getsize(file)
-            parts_number = 1
-            if file_size > self.MAX_CONVERT_FILE_SIZE:
-                logger.info("Large file for convert: %s", file)
+        if not (file_format == "mp3" or file_format == "m4a" or file_format == "mp4"):
+            return
+        file_size = os.path.getsize(file)
+        if file_size > self.MAX_CONVERT_FILE_SIZE:
+            logger.info("Large file for convert: %s", file)
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text="Sorry, downloaded file is larger than I could convert.")
+            return
+        parts_number = 1
+        file_parts = []
+        if file_size <= self.MAX_TG_FILE_SIZE:
+            file_parts.append(file)
+        else:
+            logger.info("Splitting: %s", file)
+            try:
+                id3 = mutagen.id3.ID3(file, translate=False)
+            except:
+                id3 = None
+            parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
+            try:
+                sound = AudioSegment.from_file(file, file_format)
+                part_size = len(sound) / parts_number
+                for i in range(parts_number):
+                    file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
+                    part = sound[part_size * i:part_size * (i + 1)]
+                    part.export(file_part, format="mp3")
+                    del part
+                    if id3:
+                        id3.save(file_part, v1=2, v2_version=4)
+                    file_parts.append(file_part)
+                # https://github.com/jiaaro/pydub/issues/135
+                # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
+                del sound
+                gc.collect()
+            except (OSError, MemoryError) as exc:
+                text = "Failed pydub convert"
+                logger.exception(text)
+                self.send_alert(bot, text + "\n" + str(exc), file)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 text="Downloaded file is larger than I could convert, sorry...")
+                                 text="Not enough memory to convert, you may try again later..")
+                gc.collect()
                 return
+        total_status = 0
+        for index, file in enumerate(file_parts):
+            logger.info("Sending: %s", file)
+            bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
+            # file = translit(file, 'ru', reversed=True)
+            if chat_id in self.NO_CLUTTER_CHAT_IDS:
+                caption = ""
             else:
-                if file_size > self.MAX_TG_FILE_SIZE:
-                    logger.info("Splitting: %s", file)
-                    try:
-                        id3 = mutagen.id3.ID3(file, translate=False)
-                    except:
-                        id3 = None
-                    parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
-                    try:
-                        sound = AudioSegment.from_file(file, file_format)
-                        part_size = len(sound) / parts_number
-                        for i in range(parts_number):
-                            file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
-                            part = sound[part_size * i:part_size * (i + 1)]
-                            part.export(file_part, format="mp3")
-                            del part
-                            if id3:
-                                id3.save(file_part, v1=2, v2_version=4)
-                            file_parts.append(file_part)
-                        # https://github.com/jiaaro/pydub/issues/135
-                        # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
-                        del sound
-                        gc.collect()
-                    except (OSError, MemoryError) as exc:
-                        text = "Failed pydub convert"
-                        logger.exception(text)
-                        self.send_alert(bot, text + "\n" + str(exc), file)
-                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                         text="Not enough memory to convert, you may try again later...")
-                        gc.collect()
-                        return
-
-                else:
-                    file_parts.append(file)
-                for index, file in enumerate(file_parts):
-                    logger.info("Sending: %s", file)
-                    bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-                    # file = translit(file, 'ru', reversed=True)
-                    if chat_id in self.NO_CLUTTER_CHAT_IDS:
-                        caption = ""
-                    else:
-                        caption = "Downloaded with @{}".format(self.bot_username)
-                    if file_size > self.MAX_TG_FILE_SIZE:
-                        caption += "\n" + " ".join(["Part", str(index + 1), "of", str(parts_number)])
-                    for i in range(3):
-                        try:
-                            audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                       audio=open(file, 'rb'), caption=caption)
-                            sent_audio_ids.append(audio_msg.audio.file_id)
-                            break
-                        except TelegramError as exc:
-                            logger.exception('TelegramError')
-                            self.send_alert(bot, str(exc), file)
-        # return sent_audio_ids
+                caption = "Downloaded with @{}".format(self.bot_username)
+            if file_size > self.MAX_TG_FILE_SIZE:
+                caption += "\n" + " ".join(["Part", str(index + 1), "of", str(parts_number)])
+            status = 0
+            for i in range(3):
+                try:
+                    audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                               audio=open(file, 'rb'), caption=caption)
+                    # sent_audio_ids.append(audio_msg.audio.file_id)
+                    status = 1
+                    total_status = 1
+                    break
+                except TelegramError as exc:
+                    logger.exception('TelegramError')
+                    self.send_alert(bot, str(exc), file)
+            if status:
+                logger.info("Sending success: %s", file)
+            else:
+                logger.info("Sending failed: %s", file)
+        if not total_status:
+            logger.info("Sending total failed: %s", file)
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=self.NO_AUDIO_TEXT)
