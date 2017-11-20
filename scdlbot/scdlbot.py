@@ -459,13 +459,13 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
 
-        def handler(signum, frame):
-            raise TimeoutExpired(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
+        # def handler(signum, frame):
+        #     raise TimeoutExpired(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
         if status == 0:
             logger.info("Started youtube-dl...")
-            signal.signal(signal.SIGALRM, handler)
-            signal.alarm(5)
+            # signal.signal(signal.SIGALRM, handler)
+            # signal.alarm(5)
             try:
                 ydl.download([url])
                 text = "Success download with youtube-dl"
@@ -480,9 +480,9 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
+            # signal.alarm(0)
             del ydl
             gc.collect()
-            signal.alarm(0)
 
         if status == -1:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
