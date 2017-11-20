@@ -9,6 +9,7 @@ import logging
 import os
 # import shelve
 import shutil
+import signal
 from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
@@ -368,8 +369,6 @@ class SCDLBot:
     def download_and_send(self, bot, url, chat_id, reply_to_message_id=None,
                           wait_message_id=None, inline_query_id=None):
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
-        if chat_id in self.NO_CLUTTER_CHAT_IDS:
-            reply_to_message_id = None
         download_dir = os.path.join(self.DL_DIR, str(uuid4()))
         shutil.rmtree(download_dir, ignore_errors=True)
         os.makedirs(download_dir)
@@ -460,19 +459,30 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
 
+        def handler(signum, frame):
+            raise TimeoutExpired(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
         if status == 0:
+            logger.info("Started youtube-dl...")
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(5)
             try:
-                logger.info("Started youtube-dl...")
                 ydl.download([url])
                 text = "Success download with youtube-dl"
                 logger.info(text)
                 status = 1
+            except TimeoutExpired:
+                text = "Download took too long, dropped"
+                logger.exception(text)
+                status = -1
             except Exception as exc:
                 text = "Failed download with youtube-dl"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
+            del ydl
+            gc.collect()
+            signal.alarm(0)
 
         if status == -1:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -483,6 +493,8 @@ class SCDLBot:
                              text=self.NO_AUDIO_TEXT)
 
         if status == 1:
+            if chat_id in self.NO_CLUTTER_CHAT_IDS:
+                reply_to_message_id = None
             file_list = []
             for d, dirs, files in os.walk(download_dir):
                 for file in files:
