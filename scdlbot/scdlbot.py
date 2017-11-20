@@ -472,7 +472,7 @@ class SCDLBot:
             # signal.alarm(5)
             try:
                 # ydl.download([url])
-                p = multiprocessing.Process(target=ydl_download)
+                p = multiprocessing.Process(target=ydl_download, daemon=True)
                 p.start()
                 # Wait for seconds or until process finishes
                 p.join(self.DL_TIMEOUT)
