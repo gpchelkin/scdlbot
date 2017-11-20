@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.0 (2017-11-20)
+------------------
+* return of inline mode as fast download (link is sent to telegram servers for download)
+* refactor and refinement
+* help updates
+* add some spam captions :)
+
 0.8.3 (2017-11-19)
 ------------------
 * gc.collect() according to https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
