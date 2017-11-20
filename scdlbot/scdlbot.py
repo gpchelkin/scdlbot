@@ -459,8 +459,8 @@ class SCDLBot:
                 text = "bandcamp-dl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
-        elif self.SITES["yt"] in url:
-            logger.info("youtube-dl get direct urls for checking for live...")
+        else:
+            logger.info("youtube-dl get direct urls and check for slow unsupported links...")
             direct_urls = self.youtube_dl_get_direct_urls(url)
             if "yt_live_broadcast" in direct_urls:
                 text = "youtube live passed..."
@@ -518,7 +518,7 @@ class SCDLBot:
 
         shutil.rmtree(download_dir, ignore_errors=True)
 
-        if wait_message_id:
+        if wait_message_id:  # TODO
             try:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
