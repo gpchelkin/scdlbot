@@ -218,8 +218,9 @@ class SCDLBot:
             self.log_and_botan_track("link_inline")
             for url in urls:
                 # self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
-                for direct_url in urls[url].splitlines():
-                    results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_DOWNLOAD_DUNNO_WHAT"))
+                for direct_url in urls[url].splitlines():  #TODO fix multiple links and allow only sc/bc
+                    logger.info(direct_url)
+                    results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD_DUNNO_WHAT"))
         bot.answer_inline_query(inline_query_id, results)
 
 
