@@ -3,7 +3,7 @@ Hi! I download and send audios from videos/tracks/sets/albums in *MP3 128 kbps* 
 • Send or forward a message containing links in groups with me and I will ask you.
 • [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, so I scan every group message for links.
 • `/dl <links>` to download immediately.
-• `/link <links>` to get only direct download URLs.
+• `/link <links>` to get direct download URLs only.
 • /clutter to toggle replies and spam captions on / off.
 • Files over 50 MB (bot-sent size limit) are split into parts.
 • Supported links and resources:
@@ -15,8 +15,8 @@ Hi! I download and send audios from videos/tracks/sets/albums in *MP3 128 kbps* 
 *Example message:*
 `Check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
 
-*Credits // Emoji-links:*
-[🌟 @GitHub](https://github.com/gpchelkin/scdlbot) // [⌨️⚠](https://github.com/gpchelkin/scdlbot/issues)
-👨🏻‍💻 @gpchelkin // [🐝👍](http://pchelk.in/)
-👩🏻‍🎨 @lowonbudget // [🎨🖼️](https://www.behance.net/lowonbudget)
-🎶 @electrocircle // [⚡⚫](https://t.me/Eklight)
+*Credits / Emoji-links:*
+[🌟 @GitHub](https://github.com/gpchelkin/scdlbot) / [⌨️⚠](https://github.com/gpchelkin/scdlbot/issues)
+👨🏻‍💻 @gpchelkin / [🐝👍](http://pchelk.in/)
+👩🏻‍🎨 @lowonbudget / [🎨🖼️](https://www.behance.net/lowonbudget)
+🎶 @electrocircle / [⚡⚫](https://t.me/Eklight)

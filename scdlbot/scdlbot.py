@@ -22,7 +22,7 @@ from botanio import botan
 from plumbum import local
 from pydub import AudioSegment
 from pyshorteners import Shortener
-from telegram import MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultAudio
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
@@ -81,10 +81,8 @@ class SCDLBot:
         dispatcher.add_handler(help_command_handler)
         clutter_command_handler = CommandHandler('clutter', self.clutter_command_callback)
         dispatcher.add_handler(clutter_command_handler)
-
         dl_command_handler = CommandHandler('dl', self.dl_command_callback, filters=~ Filters.forwarded, pass_args=True)
         dispatcher.add_handler(dl_command_handler)
-
         link_command_handler = CommandHandler('link', self.link_command_callback, filters=~ Filters.forwarded,
                                               pass_args=True)
         dispatcher.add_handler(link_command_handler)
@@ -94,8 +92,8 @@ class SCDLBot:
                                                     self.message_callback)
         dispatcher.add_handler(message_with_links_handler)
 
-        callback_query_handler = CallbackQueryHandler(self.callback_query_callback)
-        dispatcher.add_handler(callback_query_handler)
+        message_callback_query_handler = CallbackQueryHandler(self.message_callback_query_callback)
+        dispatcher.add_handler(message_callback_query_handler)
 
         inline_query_handler = InlineQueryHandler(self.inline_query_callback)
         dispatcher.add_handler(inline_query_handler)
@@ -212,57 +210,56 @@ class SCDLBot:
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def inline_query_callback(self, bot, update):
-        urls = self.prepare_urls(text=update.inline_query.query)
+        inline_query_id = update.inline_query.id
+        text = update.inline_query.query
+        urls = self.prepare_urls(text=text, get_direct_urls=True)
+        results = []
         if urls:
-            self.log_and_botan_track("dl_inline")
+            self.log_and_botan_track("link_inline")
             for url in urls:
-                self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
+                # self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
+                for direct_url in urls[url].splitlines():
+                    results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_DOWNLOAD_DUNNO_WHAT"))
+        bot.answer_inline_query(inline_query_id, results)
+
 
     def link_command_callback(self, bot, update, args=None):
+        self.dl_command_callback(bot, update, args, event_name="link")
+
+    def dl_command_callback(self, bot, update, args=None, event_name="dl"):
         chat_id = update.message.chat_id
         if not args:
             if update.message.chat.type == "private":
-                rant_text = "Learn how to use me in /help, you should send command with links."
+                rant_text = "Learn how to use me in /help, you should send /{} with links.".format(event_name)
             else:
-                rant_text = self.RANT_TEXT + ", you should send command with links."
+                rant_text = self.RANT_TEXT + ", you should send /{} with links.".format(event_name)
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(msg=update.message, get_direct_urls=True)  # text=" ".join(args)
+        urls = self.prepare_urls(msg=update.message, get_direct_urls=(event_name == "link"))  # text=" ".join(args)
         if urls:
-            self.log_and_botan_track("link", update.message)
-            link_text = ""
-            for i, link in enumerate("\n".join(urls.values()).split()):
-                logger.debug(link)
-                if self.shortener:
-                    try:
-                        link = self.shortener.short(link)
-                    except:
-                        pass
-                link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
-            bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                             parse_mode='Markdown', text=link_text)
+            self.log_and_botan_track("{}_cmd".format(event_name), update.message)
 
-    def dl_command_callback(self, bot, update, args=None):
-        chat_id = update.message.chat_id
-        if not args:
-            if update.message.chat.type == "private":
-                rant_text = "Learn how to use me in /help, you should send links without command or command with links."
-            else:
-                rant_text = self.RANT_TEXT + ", you should send links without command or command with links."
-            self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
-            return
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(msg=update.message)  # text=" ".join(args)
-        if urls:
-            self.log_and_botan_track("dl_cmd", update.message)
-            wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                            parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-            for url in urls:
-                self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                       wait_message_id=wait_message.message_id)
+            if event_name == "dl":
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                                                parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                for url in urls:
+                    self.download_and_send(bot, url, chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                                           wait_message_id=wait_message.message_id)
+            elif event_name == "link":
+                link_text = ""
+                for i, link in enumerate("\n".join(urls.values()).split()):
+                    logger.debug(link)
+                    if self.shortener:
+                        try:
+                            link = self.shortener.short(link)
+                        except:
+                            pass
+                    link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
+                bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                                 parse_mode='Markdown', text=link_text)
 
-    def callback_query_callback(self, bot, update):
+    def message_callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
