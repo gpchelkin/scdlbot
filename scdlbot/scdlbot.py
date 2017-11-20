@@ -411,8 +411,6 @@ class SCDLBot:
         def ydl_download():
             ydl.download([url])
 
-        direct_urls = self.youtube_dl_get_direct_urls(url)
-
         status = 0
         logger.info("Trying to download URL: %s", url)
         if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
@@ -461,10 +459,13 @@ class SCDLBot:
                 text = "bandcamp-dl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
-        elif self.SITES["yt"] in url and "live" in direct_urls:
-            text = "youtube live passed..."
-            logger.info(text)
-            status = -2
+        elif self.SITES["yt"] in url:
+            logger.info("youtube-dl get direct urls for checking for live...")
+            direct_urls = self.youtube_dl_get_direct_urls(url)
+            if "yt_live_broadcast" in direct_urls:
+                text = "youtube live passed..."
+                logger.info(text)
+                status = -2
 
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
