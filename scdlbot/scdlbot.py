@@ -463,31 +463,22 @@ class SCDLBot:
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
-        def ydl_download():
-            ydl.download([url])
+        # def ydl_download():
+        #     ydl.download([url])
 
         if status == 0:
             logger.info("Started youtube-dl process...")
             # signal.signal(signal.SIGALRM, handler)
             # signal.alarm(5)
             try:
-                p = multiprocessing.Process(target=ydl_download)
+                # ydl.download([url])
+                p = multiprocessing.Process(target=ydl.download, args=([url]), daemon=True)
                 p.start()
-                logger.info("start")
                 # Wait for seconds or until process finishes
                 p.join(self.DL_TIMEOUT)
-                logger.info("join")
-                # If thread is still active
                 if p.is_alive():
-                    logger.info("is_alive")
-                    # Terminate
                     p.terminate()
-                    logger.info("terminate")
-                    # p.join()
-                    # logger.info("join2")
                     raise TimeoutError()
-
-                # ydl.download([url])
                 text = "Success download with youtube-dl"
                 logger.info(text)
                 status = 1
