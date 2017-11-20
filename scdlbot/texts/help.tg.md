@@ -9,7 +9,7 @@ Hi! I download and send audios from videos/tracks/sets/albums in *MP3 128 kbps* 
 • Supported links and resources:
 *SoundCloud*: tracks/playlists/pages with private widgets
 *Bandcamp*: tracks/albums/custom links
-*YouTube*: videos/playlists
+*YouTube*: videos/playlists/no lives
 *Mixcloud, Vimeo and* [everything from this list](https://rg3.github.io/youtube-dl/supportedsites.html) (no VK music)
 
 *Example message:*
