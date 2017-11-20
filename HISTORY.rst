@@ -2,6 +2,14 @@
 History
 =======
 
+0.9.1 (2017-11-20)
+------------------
+* more error checking and responding
+* limit youtube-dl time to download
+* avoid live downloads
+* logging refactor and refinement
+* help updates
+
 0.9.0 (2017-11-20)
 ------------------
 * return of inline mode as fast download (link is sent to telegram servers for download)
