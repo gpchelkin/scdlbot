@@ -483,8 +483,8 @@ class SCDLBot:
                     # Terminate
                     p.terminate()
                     logger.info("terminate")
-                    p.join()
-                    logger.info("join2")
+                    # p.join()
+                    # logger.info("join2")
                     raise TimeoutError()
 
                 # ydl.download([url])
