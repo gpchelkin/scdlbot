@@ -365,6 +365,19 @@ class SCDLBot:
                     urls_dict[url_text] = direct_urls
         return urls_dict
 
+    @staticmethod
+    def ydl(url, ydl_opts, queue):
+        ydl = youtube_dl.YoutubeDL(ydl_opts)
+        try:
+            ydl.download([url])
+        except Exception as exc:
+            # ydl_status = exc
+            import sys
+            ydl_status = sys.exc_info()
+        else:
+            ydl_status = 0
+        queue.put(ydl_status)
+
     @run_async
     def download_url_and_send(self, bot, url, chat_id, reply_to_message_id=None,
                               wait_message_id=None, inline_query_id=None):
@@ -464,36 +477,23 @@ class SCDLBot:
                 logger.info(text)
                 status = -2
 
-        # def handler(signum, frame):
-        #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
-
-        def ydl_download(url_, ydl_, q):
-            try:
-                ydl_.download([url_])
-            except Exception as exc:
-                q.put([-1, str(exc)])
-            else:
-                q.put([1, "success"])
-
         if status == 0:
             logger.info("youtube-dl starts...")
-            ydl = youtube_dl.YoutubeDL(ydl_opts)
             queue = multiprocessing.Queue()
-            p = multiprocessing.Process(target=ydl_download, args=(url, ydl, queue,), daemon=True)
-            p.start()
+            ydl = multiprocessing.Process(target=self.ydl, args=(url, ydl_opts, queue,), daemon=True)
+            ydl.start()
             try:
-                # wait for ydl function to put something
                 ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
-                p.join()
-                if ydl_status[0] != 1:
-                    raise Exception(ydl_status[1])
+                ydl.join()
+                if ydl_status:
+                    raise (ydl_status[1], None, ydl_status[2])
                 text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
             except Empty:
-                p.join(1)
-                if p.is_alive():
-                    p.terminate()
+                ydl.join(1)
+                if ydl.is_alive():
+                    ydl.terminate()
                 text = "youtube-dl took too much time and dropped"
                 logger.exception(text)
                 status = -1
