@@ -121,6 +121,7 @@ class SCDLBot:
         else:
             self.updater.start_polling()
         self.updater.idle()
+        self.send_alert(self.updater.bot, "bot restarted")
 
     @staticmethod
     def get_response_text(file_name):
@@ -371,9 +372,9 @@ class SCDLBot:
         try:
             ydl.download([url])
         except Exception as exc:
-            # ydl_status = exc
-            import sys
-            ydl_status = sys.exc_info()
+            ydl_status = str(exc)
+            # import sys
+            # ydl_status = sys.exc_info()
         else:
             ydl_status = 0
         queue.put(ydl_status)
