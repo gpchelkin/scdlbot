@@ -54,6 +54,8 @@ class SCDLBot:
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = self.get_response_text('no_urls.txt')
         self.REGION_RESTRICTION_TEXT = self.get_response_text('region_restriction.txt')
+        self.DIRECT_RESTRICTION_TEXT = self.get_response_text('direct_restriction.txt')
+        self.LIVE_RESTRICTION_TEXT = self.get_response_text('live_restriction.txt')
         self.NO_CLUTTER_CHAT_IDS = set(no_clutter_chat_ids) if no_clutter_chat_ids else set()
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
@@ -268,7 +270,7 @@ class SCDLBot:
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 for url in urls:
-                    self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                    self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif event_name == "link":
                 self.log_and_botan_track("link_cmd", update.message)
@@ -289,7 +291,7 @@ class SCDLBot:
                     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                     parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                     for url in urls:
-                        self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                        self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                    wait_message_id=wait_message.message_id)
                 else:
                     self.log_and_botan_track("dl_msg_income")
@@ -324,7 +326,7 @@ class SCDLBot:
                                                                          text=self.md_italic(self.WAIT_TEXT))
                     urls = self.msg_store[chat_id][orig_msg_id]["urls"]
                     for url in urls:
-                        self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=orig_msg_id,
+                        self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                                    wait_message_id=edited_msg.message_id)
                 elif action == "nodl":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
@@ -354,14 +356,16 @@ class SCDLBot:
             queue.put(ydl_status)
 
     def youtube_dl_get_direct_urls(self, url):
-        ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run(retcode=None)
-        if ret_code:
-            return None
+        ret_code, std_out, std_err = self.youtube_dl["--get-url", url].run(retcode=None)
+        # TODO: case when one page has multiple videos some available some not
+        if "returning it as such" in std_err:
+            return "direct"
+        elif "proxy server" in std_err:
+            return "proxy"
+        elif "yt_live_broadcast" in std_out:
+            return "live"
         else:
-            if "returning it as such" in std_err:
-                return None
-            else:
-                return direct_urls
+            return std_out
 
     def prepare_urls(self, msg=None, text=None, get_direct_urls=False):
         if text:
@@ -391,8 +395,7 @@ class SCDLBot:
                 if get_direct_urls or self.SITES["yt"] in url.host:
                     direct_urls = self.youtube_dl_get_direct_urls(url_text)
                     if direct_urls:
-                        if "yt_live_broadcast" not in direct_urls:
-                            urls_dict[url_text] = direct_urls
+                        urls_dict[url_text] = direct_urls
                 else:
                     urls_dict[url_text] = ""
             elif not any((site in url.host for site in self.SITES.values())):
@@ -404,7 +407,7 @@ class SCDLBot:
         return urls_dict
 
     @run_async
-    def download_url_and_send(self, bot, url, chat_id, reply_to_message_id=None,
+    def download_url_and_send(self, bot, url, direct_urls, chat_id, reply_to_message_id=None,
                               wait_message_id=None, inline_query_id=None):
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
         download_dir = os.path.join(self.DL_DIR, str(uuid4()))
@@ -447,53 +450,60 @@ class SCDLBot:
         }
 
         status = 0
-        logger.info("Trying to download URL: %s", url)
-        if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-            logger.info("scdl starts...")
-            try:
-                cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+        if direct_urls == "direct":
+            status = -3
+        elif direct_urls == "proxy":
+            status = -4
+        elif direct_urls == "live":
+            status = -5
+        else:
+            logger.info("Trying to download URL: %s", url)
+            if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
+                logger.info("scdl starts...")
                 try:
-                    std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
-                    if cmd_popen.returncode or "Error resolving url" in std_err:
-                        text = "scdl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
-                        logger.error(text)
-                        self.send_alert(bot, text, url)
-                    else:
-                        text = "scdl succeeded"
-                        logger.info(text)
-                        status = 1
-                except TimeoutExpired:
-                    text = "Download took with scdl too long, dropped"
-                    logger.warning(text)
-                    cmd_popen.kill()
-                    status = -1
-            except Exception as exc:
-                text = "scdl start failed"
-                logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc), url)
-        elif self.SITES["bc"] in url:
-            logger.info("bandcamp-dl starts...")
-            try:
-                cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+                    cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+                    try:
+                        std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
+                        if cmd_popen.returncode or "Error resolving url" in std_err:
+                            text = "scdl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                            logger.error(text)
+                            self.send_alert(bot, text, url)
+                        else:
+                            text = "scdl succeeded"
+                            logger.info(text)
+                            status = 1
+                    except TimeoutExpired:
+                        text = "Download took with scdl too long, dropped"
+                        logger.warning(text)
+                        cmd_popen.kill()
+                        status = -1
+                except Exception as exc:
+                    text = "scdl start failed"
+                    logger.exception(text)
+                    self.send_alert(bot, text + "\n" + str(exc), url)
+            elif self.SITES["bc"] in url:
+                logger.info("bandcamp-dl starts...")
                 try:
-                    std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
-                    if cmd_popen.returncode:
-                        text = "bandcamp-dl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
-                        logger.error(text)
-                        self.send_alert(bot, text, url)
-                    else:
-                        text = "bandcamp-dl succeeded"
-                        logger.info(text)
-                        status = 1
-                except TimeoutExpired:
-                    text = "bandcamp-dl took too much time and dropped"
-                    logger.warning(text)
-                    cmd_popen.kill()
-                    status = -1
-            except Exception as exc:
-                text = "bandcamp-dl start failed"
-                logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc), url)
+                    cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+                    try:
+                        std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
+                        if cmd_popen.returncode:
+                            text = "bandcamp-dl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                            logger.error(text)
+                            self.send_alert(bot, text, url)
+                        else:
+                            text = "bandcamp-dl succeeded"
+                            logger.info(text)
+                            status = 1
+                    except TimeoutExpired:
+                        text = "bandcamp-dl took too much time and dropped"
+                        logger.warning(text)
+                        cmd_popen.kill()
+                        status = -1
+                except Exception as exc:
+                    text = "bandcamp-dl start failed"
+                    logger.exception(text)
+                    self.send_alert(bot, text + "\n" + str(exc), url)
 
         if status == 0:
             logger.info("youtube-dl starts...")
@@ -521,23 +531,24 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
-                if "proxy server" in str(exc):
-                    status = -3
             gc.collect()
 
         if status == -1:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text=self.DL_TIMEOUT_TEXT, parse_mode='Markdown')
-
-        if status == -2:
+        elif status == -2:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text=self.NO_AUDIO_TEXT, parse_mode='Markdown')
-
-        if status == -3:
+        elif status == -3:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text=self.DIRECT_RESTRICTION_TEXT, parse_mode='Markdown')
+        elif status == -4:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text=self.REGION_RESTRICTION_TEXT, parse_mode='Markdown')
-
-        if status == 1:
+        elif status == -5:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text=self.LIVE_RESTRICTION_TEXT, parse_mode='Markdown')
+        elif status == 1:
             if chat_id in self.NO_CLUTTER_CHAT_IDS:
                 reply_to_message_id = None
             file_list = []
