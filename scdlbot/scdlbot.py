@@ -478,7 +478,7 @@ class SCDLBot:
             try:
                 # ydl.download([url])
                 ydl = youtube_dl.YoutubeDL(ydl_opts)
-                ydl_status = multiprocessing.Value(int, 0)
+                ydl_status = multiprocessing.Value('i', 0)
                 p = multiprocessing.Process(target=ydl_download, args=(url, ydl, ydl_status), daemon=True)
                 p.start()
                 # Wait for seconds or until process finishes
