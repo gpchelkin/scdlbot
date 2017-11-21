@@ -295,17 +295,19 @@ class SCDLBot:
                         self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                    wait_message_id=wait_message.message_id)
                 else:
-                    self.log_and_botan_track("dl_msg_income")
-                    orig_msg_id = str(reply_to_message_id)
-                    if not chat_id in self.msg_store.keys():
-                        self.msg_store[chat_id] = {}
-                    self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
-                    button_dl = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
-                    button_link = InlineKeyboardButton(text="✅ Get links", callback_data=" ".join([orig_msg_id, "link"]))
-                    button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
-                    inline_keyboard = InlineKeyboardMarkup([[button_dl, button_cancel]])
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     reply_markup=inline_keyboard, text="🎶 links found. Download it?")
+                    if "http" in " ".join(urls.values()):
+                        self.log_and_botan_track("dl_msg_income")
+                        orig_msg_id = str(reply_to_message_id)
+                        if not chat_id in self.msg_store.keys():
+                            self.msg_store[chat_id] = {}
+                        self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
+                        button_dl = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
+                        button_link = InlineKeyboardButton(text="✅ Get links", callback_data=" ".join([orig_msg_id, "link"]))
+                        button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
+                        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_cancel]])
+                        question = "🎶 links found. Download it?"
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         reply_markup=inline_keyboard, text=question)
 
 
     def link_command_callback(self, bot, update, args=None):
@@ -398,7 +400,7 @@ class SCDLBot:
                     if direct_urls:
                         urls_dict[url_text] = direct_urls
                 else:
-                    urls_dict[url_text] = ""
+                    urls_dict[url_text] = "http"
             elif not any((site in url.host for site in self.SITES.values())):
                 direct_urls = self.youtube_dl_get_direct_urls(url_text)
                 if direct_urls:
