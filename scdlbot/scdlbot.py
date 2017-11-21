@@ -43,15 +43,17 @@ class SCDLBot:
         "yt": "youtu",
     }
 
-    def __init__(self, tg_bot_token, botan_token, google_shortener_api_key, bin_path,
-                 sc_auth_token, store_chat_id, no_clutter_chat_ids, alert_chat_ids, dl_dir, dl_timeout, max_convert_file_size):
+    def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, bin_path="",
+                 sc_auth_token=None, store_chat_id=None, no_clutter_chat_ids=None,
+                 alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=3600, max_convert_file_size=500000000):
         self.DL_TIMEOUT = dl_timeout
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
+        self.HELP_TEXT = self.get_response_text('help.tg.md')
         self.DL_TIMEOUT_TEXT = self.get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = self.get_response_text('no_urls.txt')
-        self.HELP_TEXT = self.get_response_text('help.tg.md')
+        self.REGION_RESTRICTION_TEXT = self.get_response_text('region_restriction.txt')
         self.NO_CLUTTER_CHAT_IDS = set(no_clutter_chat_ids) if no_clutter_chat_ids else set()
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
@@ -65,10 +67,9 @@ class SCDLBot:
         self.rant_msg_ids = {}
 
         config = configparser.ConfigParser()
-        config['scdl'] = {
-            'auth_token': sc_auth_token,
-            'path': self.DL_DIR,
-        }
+        config['scdl']['path'] = self.DL_DIR
+        if sc_auth_token:
+            config['scdl']['auth_token'] = sc_auth_token
         config_dir = os.path.join(os.path.expanduser('~'), '.config', 'scdl')
         config_path = os.path.join(config_dir, 'scdl.cfg')
         os.makedirs(config_dir, exist_ok=True)
@@ -257,7 +258,7 @@ class SCDLBot:
         if not urls:
             if apologize:
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 parse_mode='Markdown', text=self.NO_URLS_TEXT)
+                                 text=self.NO_URLS_TEXT, parse_mode='Markdown')
             return
         else:
             logger.debug(urls)
@@ -520,15 +521,21 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
+                if "proxy server" in str(exc):
+                    status = -3
             gc.collect()
 
         if status == -1:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             text=self.DL_TIMEOUT_TEXT)
+                             text=self.DL_TIMEOUT_TEXT, parse_mode='Markdown')
 
         if status == -2:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             text=self.NO_AUDIO_TEXT)
+                             text=self.NO_AUDIO_TEXT, parse_mode='Markdown')
+
+        if status == -3:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text=self.REGION_RESTRICTION_TEXT, parse_mode='Markdown')
 
         if status == 1:
             if chat_id in self.NO_CLUTTER_CHAT_IDS:
@@ -645,4 +652,5 @@ class SCDLBot:
                 logger.warning("Sending failed: %s", file)
         if not total_status:
             logger.warning("Sending total failed: %s", file)
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=self.NO_AUDIO_TEXT)
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text=self.NO_AUDIO_TEXT, parse_mode='Markdown')
