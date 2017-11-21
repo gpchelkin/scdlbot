@@ -49,6 +49,7 @@ class SCDLBot:
         self.DL_TIMEOUT_TEXT = self.get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
         self.WAIT_TEXT = self.get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = self.get_response_text('no_audio.txt')
+        self.NO_URLS_TEXT = self.get_response_text('no_urls.txt')
         self.HELP_TEXT = self.get_response_text('help.tg.md')
         self.NO_CLUTTER_CHAT_IDS = set(no_clutter_chat_ids) if no_clutter_chat_ids else set()
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
@@ -233,28 +234,32 @@ class SCDLBot:
                     results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD_DUNNO_WHAT"))
         bot.answer_inline_query(inline_query_id, results)
 
-    def link_command_callback(self, bot, update, args=None):
-        self.dl_command_callback(bot, update, args, event_name="link")
-
     def dl_command_callback(self, bot, update, args=None, event_name="dl"):
         chat_id = update.message.chat_id
-        if not args:
+        chat_type = update.message.chat.type
+        reply_to_message_id = update.message.message_id
+        apologize = not (event_name == "dl_msg" and chat_type != "private")
+        if event_name != "dl_msg" and not args:
             if update.message.chat.type == "private":
                 rant_text = "Learn how to use me in /help. Hint: you should send `/{} <links>`.".format(event_name)
             else:
                 rant_text = self.RANT_TEXT + ". Hint: you should send `/{} <links>`.".format(event_name)
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        if apologize:
+            bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg=update.message, get_direct_urls=(event_name == "link"))  # text=" ".join(args)
-        if urls:
+        if not urls:
+            if apologize:
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 parse_mode='Markdown', text=self.md_italic(self.NO_URLS_TEXT))
+        else:
             self.log_and_botan_track("{}_cmd".format(event_name), update.message)
-
             if event_name == "dl":
-                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 for url in urls:
-                    self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                    self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif event_name == "link":
                 link_text = ""
@@ -266,34 +271,35 @@ class SCDLBot:
                         except:
                             pass
                     link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
-                bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', text=link_text)
+            elif event_name == "dl_msg":
+                if chat_type == "private":
+                    self.log_and_botan_track("dl_msg", update.message)
+                    wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                    parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                    logger.debug(urls)
+                    for url in urls:
+                        self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                   wait_message_id=wait_message.message_id)
+                else:
+                    self.log_and_botan_track("dl_msg_income")
+                    orig_msg_id = str(reply_to_message_id)
+                    if not chat_id in self.msg_store.keys():
+                        self.msg_store[chat_id] = {}
+                    self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
+                    button_download = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
+                    button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
+                    inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
+                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     reply_markup=inline_keyboard, text="🎶 links found. Download it?")
+
+
+    def link_command_callback(self, bot, update, args=None):
+        self.dl_command_callback(bot, update, args, event_name="link")
 
     def message_callback(self, bot, update):
-        chat_id = update.message.chat_id
-        # bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        urls = self.prepare_urls(msg=update.message)  # text=update.message.text
-        if urls:
-            reply_to_message_id = update.message.message_id
-            if update.message.chat.type == "private":
-                self.log_and_botan_track("dl_msg", update.message)
-                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=update.message.message_id,
-                                                parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-                logger.debug(urls)
-                for url in urls:
-                    self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               wait_message_id=wait_message.message_id)
-            else:
-                self.log_and_botan_track("dl_msg_income")
-                orig_msg_id = str(reply_to_message_id)
-                if not chat_id in self.msg_store.keys():
-                    self.msg_store[chat_id] = {}
-                self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
-                button_download = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
-                button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
-                inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 reply_markup=inline_keyboard, text="🎶 links found. Download it?")
+        self.dl_command_callback(bot, update, event_name="dl_msg")
 
     def message_callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
@@ -325,7 +331,8 @@ class SCDLBot:
         try:
             ydl.download([url])
         except Exception as exc:
-            ydl_status = Exception(exc)
+            ydl_status = str(exc)
+            # ydl_status = exc
         else:
             ydl_status = 0
         if queue:
@@ -366,9 +373,9 @@ class SCDLBot:
                 (self.SITES["yt"] in url.host and (
                     "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
             ):
-                if get_direct_urls:
+                if get_direct_urls or self.SITES["yt"] in url.host:
                     direct_urls = self.youtube_dl_get_direct_urls(url_text)
-                    if direct_urls:
+                    if "yt_live_broadcast" not in direct_urls:
                         urls_dict[url_text] = direct_urls
                 else:
                     urls_dict[url_text] = ""
@@ -430,13 +437,12 @@ class SCDLBot:
                 try:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode or "Error resolving url" in std_err:
-                        text = "scdl process failed"
-                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
+                        text = "scdl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                        self.send_alert(bot, text, url)
                     else:
                         text = "scdl succeeded"
                         status = 1
                     logger.info(text)
-                    logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "Download took with scdl too long, dropped"
                     logger.info(text)
@@ -446,20 +452,19 @@ class SCDLBot:
                 text = "scdl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
-        elif self.SITES["bc"] in url:  # or self.SITES["bc"] in " ".join(direct_urls)
+        elif self.SITES["bc"] in url:
             logger.info("bandcamp-dl starts...")
             try:
                 cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
-                        text = "bandcamp-dl process failed"
-                        self.send_alert(bot, text + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err, url)
+                        text = "bandcamp-dl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                        self.send_alert(bot, text, url)
                     else:
                         text = "bandcamp-dl succeeded"
                         status = 1
                     logger.info(text)
-                    logger.debug("\nstderr:\n" + std_err)
                 except TimeoutExpired:
                     text = "bandcamp-dl took too much time and dropped"
                     logger.info(text)
@@ -469,25 +474,25 @@ class SCDLBot:
                 text = "bandcamp-dl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
-        else:
-            logger.info("youtube-dl get direct urls and check for slow unsupported links...")
-            direct_urls = self.youtube_dl_get_direct_urls(url)
-            if "yt_live_broadcast" in direct_urls:
-                text = "youtube live passed..."
-                logger.info(text)
-                status = -2
+        # else:
+        #     logger.info("youtube-dl get direct urls and check for slow unsupported links...")
+        #     direct_urls = self.youtube_dl_get_direct_urls(url)
+        #     if "yt_live_broadcast" in direct_urls:
+        #         text = "youtube live passed..."
+        #         logger.info(text)
+        #         status = -2
 
         if status == 0:
             logger.info("youtube-dl starts...")
             queue = multiprocessing.Queue()
-            ydl = multiprocessing.Process(target=self.youtube_dl_download_url, args=(url, ydl_opts, queue,), daemon=True)
+            ydl = multiprocessing.Process(target=self.youtube_dl_download_url, args=(url, ydl_opts, queue,))
             ydl.start()
             try:
                 ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
                 ydl.join()
                 if ydl_status:
-                    raise ydl_status
-                    # raise (ydl_status[1], None, ydl_status[2])
+                    raise Exception(ydl_status)
+                    # raise ydl_status
                 text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
@@ -496,7 +501,7 @@ class SCDLBot:
                 if ydl.is_alive():
                     ydl.terminate()
                 text = "youtube-dl took too much time and dropped"
-                logger.exception(text)
+                logger.info(text)
                 status = -1
             except Exception as exc:
                 text = "youtube-dl failed"
