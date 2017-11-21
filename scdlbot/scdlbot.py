@@ -10,6 +10,7 @@ import multiprocessing
 import os
 # import shelve
 import shutil
+from ctypes import c_char_p
 from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
@@ -465,11 +466,12 @@ class SCDLBot:
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
-        def ydl_download(url_, ydl_, ydl_status_):
+        def ydl_download(url_, ydl_, ydl_status_, ydl_exc):
             try:
                 ydl_.download([url_])
             except Exception as exc:
                 ydl_status_.value = -1
+                ydl_exc_.value = str(exc)
 
         if status == 0:
             logger.info("youtube-dl starts...")
@@ -479,7 +481,8 @@ class SCDLBot:
                 # ydl.download([url])
                 ydl = youtube_dl.YoutubeDL(ydl_opts)
                 ydl_status = multiprocessing.Value('i', 0)
-                p = multiprocessing.Process(target=ydl_download, args=(url, ydl, ydl_status), daemon=True)
+                ydl_exc = multiprocessing.Value(c_char_p, '')
+                p = multiprocessing.Process(target=ydl_download, args=(url, ydl, ydl_status, ydl_exc), daemon=True)
                 p.start()
                 # Wait for seconds or until process finishes
                 p.join(self.DL_TIMEOUT)
@@ -487,7 +490,7 @@ class SCDLBot:
                     p.terminate()
                     raise TimeoutError()
                 if ydl_status.value != 0:
-                    raise Exception("youtube-dl failed")
+                    raise Exception(ydl_exc.value)
                 text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
