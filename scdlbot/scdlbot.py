@@ -466,7 +466,7 @@ class SCDLBot:
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
-        def ydl_download(url_, ydl_, ydl_status_, ydl_exc):
+        def ydl_download(url_, ydl_, ydl_status_, ydl_exc_):
             try:
                 ydl_.download([url_])
             except Exception as exc:
