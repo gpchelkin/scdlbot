@@ -10,7 +10,7 @@ import multiprocessing
 import os
 # import shelve
 import shutil
-from ctypes import c_char_p
+from ctypes import c_wchar_p
 from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
@@ -389,6 +389,7 @@ class SCDLBot:
             "--no-slugify",  # Disable slugification of track, album, and artist names
             url  # URL of album/track
         ]
+        # TODO: change ydl_opts for different sites
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
@@ -481,7 +482,7 @@ class SCDLBot:
                 # ydl.download([url])
                 ydl = youtube_dl.YoutubeDL(ydl_opts)
                 ydl_status = multiprocessing.Value('i', 0)
-                ydl_exc = multiprocessing.Value(c_char_p, '')
+                ydl_exc = multiprocessing.Value(c_wchar_p, '')
                 p = multiprocessing.Process(target=ydl_download, args=(url, ydl, ydl_status, ydl_exc), daemon=True)
                 p.start()
                 # Wait for seconds or until process finishes
