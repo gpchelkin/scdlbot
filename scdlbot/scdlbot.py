@@ -120,8 +120,8 @@ class SCDLBot:
                 self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
         else:
             self.updater.start_polling()
-        self.updater.idle()
         self.send_alert(self.updater.bot, "bot restarted")
+        self.updater.idle()
 
     @staticmethod
     def get_response_text(file_name):
@@ -319,6 +319,18 @@ class SCDLBot:
         update.callback_query.answer(text="Sorry, very old message that I don't remember.")
         bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
+    @staticmethod
+    def youtube_dl_download_url(url, ydl_opts, queue=None):
+        ydl = youtube_dl.YoutubeDL(ydl_opts)
+        try:
+            ydl.download([url])
+        except Exception as exc:
+            ydl_status = exc
+        else:
+            ydl_status = 0
+        if queue:
+            queue.put(ydl_status)
+
     def youtube_dl_get_direct_urls(self, url):
         ret_code, direct_urls, std_err = self.youtube_dl["--get-url", url].run(retcode=None)
         if ret_code:
@@ -365,19 +377,6 @@ class SCDLBot:
                 if direct_urls:
                     urls_dict[url_text] = direct_urls
         return urls_dict
-
-    @staticmethod
-    def ydl(url, ydl_opts, queue):
-        ydl = youtube_dl.YoutubeDL(ydl_opts)
-        try:
-            ydl.download([url])
-        except Exception as exc:
-            ydl_status = str(exc)
-            # import sys
-            # ydl_status = sys.exc_info()
-        else:
-            ydl_status = 0
-        queue.put(ydl_status)
 
     @run_async
     def download_url_and_send(self, bot, url, chat_id, reply_to_message_id=None,
@@ -481,13 +480,13 @@ class SCDLBot:
         if status == 0:
             logger.info("youtube-dl starts...")
             queue = multiprocessing.Queue()
-            ydl = multiprocessing.Process(target=self.ydl, args=(url, ydl_opts, queue,), daemon=True)
+            ydl = multiprocessing.Process(target=self.youtube_dl_download_url, args=(url, ydl_opts, queue,), daemon=True)
             ydl.start()
             try:
                 ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
                 ydl.join()
                 if ydl_status:
-                    raise Exception(ydl_status)
+                    raise ydl_status
                     # raise (ydl_status[1], None, ydl_status[2])
                 text = "youtube-dl succeeded"
                 logger.info(text)
