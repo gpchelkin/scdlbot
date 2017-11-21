@@ -149,10 +149,10 @@ class SCDLBot:
             else:
                 return False
 
-    def send_alert(self, bot, text, url=None):
+    def send_alert(self, bot, text, url=""):
         for alert_chat_id in self.ALERT_CHAT_IDS:
             try:
-                bot.send_message(chat_id=alert_chat_id, text="ALERT:" + url + "\n" + text)
+                bot.send_message(chat_id=alert_chat_id, text="BOT ADMIN ALERT\nURL or file failed:\n" + url + "\n" + text)
             except:
                 pass
 
@@ -252,7 +252,7 @@ class SCDLBot:
         if not urls:
             if apologize:
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 parse_mode='Markdown', text=self.md_italic(self.NO_URLS_TEXT))
+                                 parse_mode='Markdown', text=self.NO_URLS_TEXT)
         else:
             self.log_and_botan_track("{}_cmd".format(event_name), update.message)
             if event_name == "dl":
@@ -375,14 +375,17 @@ class SCDLBot:
             ):
                 if get_direct_urls or self.SITES["yt"] in url.host:
                     direct_urls = self.youtube_dl_get_direct_urls(url_text)
-                    if "yt_live_broadcast" not in direct_urls:
-                        urls_dict[url_text] = direct_urls
+                    if direct_urls:
+                        if "yt_live_broadcast" not in direct_urls:
+                            urls_dict[url_text] = direct_urls
                 else:
                     urls_dict[url_text] = ""
             elif not any((site in url.host for site in self.SITES.values())):
                 direct_urls = self.youtube_dl_get_direct_urls(url_text)
                 if direct_urls:
                     urls_dict[url_text] = direct_urls
+        if not urls_dict:
+            logger.info("No supported URLs found")
         return urls_dict
 
     @run_async
@@ -474,13 +477,6 @@ class SCDLBot:
                 text = "bandcamp-dl start failed"
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
-        # else:
-        #     logger.info("youtube-dl get direct urls and check for slow unsupported links...")
-        #     direct_urls = self.youtube_dl_get_direct_urls(url)
-        #     if "yt_live_broadcast" in direct_urls:
-        #         text = "youtube live passed..."
-        #         logger.info(text)
-        #         status = -2
 
         if status == 0:
             logger.info("youtube-dl starts...")
@@ -560,6 +556,9 @@ class SCDLBot:
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "")
         if not (file_format == "mp3" or file_format == "m4a" or file_format == "mp4"):
+            logger.info("Unsupported file format: %s", file)
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text="Sorry, downloaded file is in format I could not yet send or convert.")
             return
         file_size = os.path.getsize(file)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
@@ -617,13 +616,13 @@ class SCDLBot:
                 try:
                     audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                audio=open(file, 'rb'), caption=caption)
-                    # sent_audio_ids.append(audio_msg.audio.file_id)
+                    sent_audio_ids.append(audio_msg.audio.file_id)
                     status = 1
                     total_status = 1
                     break
                 except TelegramError as exc:
-                    logger.exception('TelegramError')
-                    self.send_alert(bot, str(exc), file)
+                    logger.exception("Sending failed because of TelegramError: %s", file)
+                    self.send_alert(bot, "TelegramError:\n" + str(exc), file)
             if status:
                 logger.info("Sending success: %s", file)
             else:

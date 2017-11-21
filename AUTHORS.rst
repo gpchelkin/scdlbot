@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* George Pchelkin <george@pchelk.in>
+* George Pchelkin @gpchelkin <george@pchelk.in>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Leonid Runyshkin @leovp <runyshkin@gmail.com>
