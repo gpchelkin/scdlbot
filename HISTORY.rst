@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.2 (2017-11-21)
+------------------
+* more error checking and responding with errors
+* much much much polishing and refactoring
+
 0.9.1 (2017-11-20)
 ------------------
 * more error checking and responding
