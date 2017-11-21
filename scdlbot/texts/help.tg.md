@@ -1,8 +1,8 @@
 Hi! I download and send audios from videos/tracks/sets/albums in *MP3 128 kbps* with tags and artwork.
-• Send or forward a message containing links in my PM and I will download immediately.
-• Send or forward a message containing links in groups with me and I will ask you.
-• [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, so I scan every group message for links.
-• `/dl <links>` to download immediately.
+• Send or forward a message containing links to me in PM and I will download every link from it immediately.
+• Send or forward a message containing links to groups with me and I will scan it for supported links and ask you.
+• [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, so I scan every group message.
+• `/dl <links>` to download immediately in groups.
 • `/link <links>` to get direct download URLs only.
 • /clutter to toggle replies and spam captions on / off.
 • Files over 50 MB (bot-sent size limit) are split into parts.

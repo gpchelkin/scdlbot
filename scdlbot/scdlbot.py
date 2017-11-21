@@ -10,6 +10,7 @@ import multiprocessing
 import os
 # import shelve
 import shutil
+from datetime import datetime
 from queue import Empty
 from subprocess import PIPE, TimeoutExpired
 # import time
@@ -58,10 +59,9 @@ class SCDLBot:
         self.scdl = local[os.path.join(bin_path, 'scdl')]
         self.bandcamp_dl = local[os.path.join(bin_path, 'bandcamp-dl')]
         self.youtube_dl = local[os.path.join(bin_path, 'youtube-dl')]
-        self.tg_bot_token = tg_bot_token
         self.botan_token = botan_token if botan_token else None
         self.shortener = Shortener('Google', api_key=google_shortener_api_key) if google_shortener_api_key else None
-        self.msg_store = {}  # TODO prune it
+        self.msg_store = {}
         self.rant_msg_ids = {}
 
         config = configparser.ConfigParser()
@@ -75,7 +75,7 @@ class SCDLBot:
         with open(config_path, 'w') as config_file:
             config.write(config_file)
 
-        self.updater = Updater(token=self.tg_bot_token)
+        self.updater = Updater(token=tg_bot_token)
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.start_command_callback)
@@ -107,18 +107,17 @@ class SCDLBot:
         dispatcher.add_error_handler(self.error_callback)
 
         self.bot_username = self.updater.bot.get_me().username
-        self.RANT_TEXT = "[PRESS HERE TO READ HELP IN PM](t.me/" + self.bot_username + "?start=1)"
+        self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
+        self.RANT_TEXT_PUBLIC = "[Press here and start to read help in my PM to learn how to use me](t.me/" + self.bot_username + "?start=1)"
 
-    def run(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None):
+    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, webhook_host="0.0.0.0", url_path="scdlbot"):
         if use_webhook:
-            url_path = self.tg_bot_token.replace(":", "")
-            self.updater.start_webhook(listen="0.0.0.0",
+            url_path = url_path.replace(":", "")
+            self.updater.start_webhook(listen=webhook_host,
                                        port=webhook_port,
                                        url_path=url_path)
-            if cert_file:
-                self.updater.bot.set_webhook(url=urljoin(app_url, url_path), certificate=open(cert_file, 'rb'))
-            else:
-                self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
+            self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
+                                         certificate=open(cert_file, 'rb') if cert_file else None)
         else:
             self.updater.start_polling()
         # self.send_alert(self.updater.bot, "bot restarted")
@@ -157,16 +156,19 @@ class SCDLBot:
                 pass
 
     def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
-        if not chat_id in self.rant_msg_ids.keys():
-            self.rant_msg_ids[chat_id] = []
-        else:
-            for rant_msg_id in self.rant_msg_ids[chat_id]:
-                bot.delete_message(chat_id=chat_id, message_id=rant_msg_id)
-                self.rant_msg_ids[chat_id].remove(rant_msg_id)
         rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                     text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
+        if chat_id in self.NO_CLUTTER_CHAT_IDS:
+            if not chat_id in self.rant_msg_ids.keys():
+                self.rant_msg_ids[chat_id] = []
+            else:
+                for rant_msg_id in self.rant_msg_ids[chat_id]:
+                    try:
+                        bot.delete_message(chat_id=chat_id, message_id=rant_msg_id)
+                    except:
+                        pass
+                    self.rant_msg_ids[chat_id].remove(rant_msg_id)
         self.rant_msg_ids[chat_id].append(rant_msg.message_id)
-
 
     def unknown_command_callback(self, bot, update):
         pass
@@ -199,12 +201,14 @@ class SCDLBot:
 
     def help_command_callback(self, bot, update, event_name="help"):
         chat_id = update.message.chat_id
+        chat_type = update.message.chat.type
+        reply_to_message_id = update.message.message_id
         self.log_and_botan_track(event_name, update.message)
-        if update.message.chat.type == "private":
+        if (chat_type != "private") and (chat_id in self.NO_CLUTTER_CHAT_IDS):
+            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
+        else:
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
-        else:
-            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT, reply_to_message_id=update.message.message_id)
 
     def clutter_command_callback(self, bot, update):
         chat_id = update.message.chat_id
@@ -223,27 +227,28 @@ class SCDLBot:
     def inline_query_callback(self, bot, update):
         inline_query_id = update.inline_query.id
         text = update.inline_query.query
-        urls = self.prepare_urls(text=text, get_direct_urls=True)
         results = []
+        urls = self.prepare_urls(text=text, get_direct_urls=True)
         if urls:
             self.log_and_botan_track("link_inline")
             for url in urls:
                 # self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
-                for direct_url in urls[url].splitlines():  #TODO fix non-mp3 and only sc/bc
+                for direct_url in urls[url].splitlines():  #TODO: fix non-mp3 and allow only sc/bc
                     logger.debug(direct_url)
-                    results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD_DUNNO_WHAT"))
-        bot.answer_inline_query(inline_query_id, results)
+                    results.append(InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD"))
+        try:
+            bot.answer_inline_query(inline_query_id, results)
+        except:
+            pass
 
     def dl_command_callback(self, bot, update, args=None, event_name="dl"):
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
-        apologize = not (event_name == "dl_msg" and chat_type != "private")
-        if event_name != "dl_msg" and not args:
-            if update.message.chat.type == "private":
-                rant_text = "Learn how to use me in /help. Hint: you should send `/{} <links>`.".format(event_name)
-            else:
-                rant_text = self.RANT_TEXT + ". Hint: you should send `/{} <links>`.".format(event_name)
+        apologize = not (event_name == "msg" and chat_type != "private")
+        if event_name != "msg" and not args:
+            rant_text = self.RANT_TEXT_PRIVATE if chat_type == "private" else self.RANT_TEXT_PUBLIC
+            rant_text += "\nYou can simply send message with links (to download) OR command as `/{} <links>`.".format(event_name)
             self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=update.message.message_id)
             return
         if apologize:
@@ -253,15 +258,19 @@ class SCDLBot:
             if apologize:
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', text=self.NO_URLS_TEXT)
+            return
         else:
-            self.log_and_botan_track("{}_cmd".format(event_name), update.message)
+            logger.debug(urls)
+            # self.log_and_botan_track("{}_cmd".format(event_name), update.message)
             if event_name == "dl":
+                self.log_and_botan_track("dl_cmd", update.message)
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 for url in urls:
                     self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif event_name == "link":
+                self.log_and_botan_track("link_cmd", update.message)
                 link_text = ""
                 for i, link in enumerate("\n".join(urls.values()).split()):
                     logger.debug(link)
@@ -273,12 +282,11 @@ class SCDLBot:
                     link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', text=link_text)
-            elif event_name == "dl_msg":
+            elif event_name == "msg":
                 if chat_type == "private":
                     self.log_and_botan_track("dl_msg", update.message)
                     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                     parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
-                    logger.debug(urls)
                     for url in urls:
                         self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                    wait_message_id=wait_message.message_id)
@@ -288,9 +296,10 @@ class SCDLBot:
                     if not chat_id in self.msg_store.keys():
                         self.msg_store[chat_id] = {}
                     self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
-                    button_download = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
+                    button_dl = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
+                    button_link = InlineKeyboardButton(text="✅ Get links", callback_data=" ".join([orig_msg_id, "link"]))
                     button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
-                    inline_keyboard = InlineKeyboardMarkup([[button_download, button_cancel]])
+                    inline_keyboard = InlineKeyboardMarkup([[button_dl, button_cancel]])
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      reply_markup=inline_keyboard, text="🎶 links found. Download it?")
 
@@ -299,7 +308,7 @@ class SCDLBot:
         self.dl_command_callback(bot, update, args, event_name="link")
 
     def message_callback(self, bot, update):
-        self.dl_command_callback(bot, update, event_name="dl_msg")
+        self.dl_command_callback(bot, update, event_name="msg")
 
     def message_callback_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
@@ -312,7 +321,6 @@ class SCDLBot:
                     update.callback_query.answer(text=self.WAIT_TEXT)
                     edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                          text=self.md_italic(self.WAIT_TEXT))
-                    # bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
                     urls = self.msg_store[chat_id][orig_msg_id]["urls"]
                     for url in urls:
                         self.download_url_and_send(bot, url, chat_id=chat_id, reply_to_message_id=orig_msg_id,
@@ -320,7 +328,13 @@ class SCDLBot:
                 elif action == "nodl":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
                     bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+                elif action == "link":
+                    pass
                 self.msg_store[chat_id].pop(orig_msg_id)
+                for msg_id in self.msg_store[chat_id]:
+                    timedelta = datetime.now() - self.msg_store[chat_id][msg_id]["message"].date
+                    if timedelta.days > 0:
+                        self.msg_store[chat_id].pop(msg_id)
                 return
         update.callback_query.answer(text="Sorry, very old message that I don't remember.")
         bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
@@ -332,7 +346,7 @@ class SCDLBot:
             ydl.download([url])
         except Exception as exc:
             ydl_status = str(exc)
-            # ydl_status = exc
+            # ydl_status = exc  #TODO
         else:
             ydl_status = 0
         if queue:
@@ -412,7 +426,7 @@ class SCDLBot:
             "--no-slugify",  # Disable slugification of track, album, and artist names
             url  # URL of album/track
         ]
-        # TODO: change ydl_opts for different sites
+        # TODO: different ydl_opts for different sites
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
@@ -441,14 +455,15 @@ class SCDLBot:
                     std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode or "Error resolving url" in std_err:
                         text = "scdl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                        logger.error(text)
                         self.send_alert(bot, text, url)
                     else:
                         text = "scdl succeeded"
+                        logger.info(text)
                         status = 1
-                    logger.info(text)
                 except TimeoutExpired:
                     text = "Download took with scdl too long, dropped"
-                    logger.info(text)
+                    logger.warning(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
@@ -463,14 +478,15 @@ class SCDLBot:
                     std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
                     if cmd_popen.returncode:
                         text = "bandcamp-dl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
+                        logger.error(text)
                         self.send_alert(bot, text, url)
                     else:
                         text = "bandcamp-dl succeeded"
+                        logger.info(text)
                         status = 1
-                    logger.info(text)
                 except TimeoutExpired:
                     text = "bandcamp-dl took too much time and dropped"
-                    logger.info(text)
+                    logger.warning(text)
                     cmd_popen.kill()
                     status = -1
             except Exception as exc:
@@ -497,7 +513,7 @@ class SCDLBot:
                 if ydl.is_alive():
                     ydl.terminate()
                 text = "youtube-dl took too much time and dropped"
-                logger.info(text)
+                logger.warning(text)
                 status = -1
             except Exception as exc:
                 text = "youtube-dl failed"
@@ -526,7 +542,7 @@ class SCDLBot:
 
         shutil.rmtree(download_dir, ignore_errors=True)
 
-        if wait_message_id:  # TODO
+        if wait_message_id:  # TODO: delete only once
             try:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
@@ -556,13 +572,13 @@ class SCDLBot:
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "")
         if not (file_format == "mp3" or file_format == "m4a" or file_format == "mp4"):
-            logger.info("Unsupported file format: %s", file)
+            logger.warning("Unsupported file format: %s", file)
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text="Sorry, downloaded file is in format I could not yet send or convert.")
             return
         file_size = os.path.getsize(file)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
-            logger.info("Large file for convert: %s", file)
+            logger.warning("Large file for convert: %s", file)
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text="Sorry, downloaded file is larger than I could convert.")
             return
@@ -626,7 +642,7 @@ class SCDLBot:
             if status:
                 logger.info("Sending success: %s", file)
             else:
-                logger.info("Sending failed: %s", file)
+                logger.warning("Sending failed: %s", file)
         if not total_status:
-            logger.info("Sending total failed: %s", file)
+            logger.warning("Sending total failed: %s", file)
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=self.NO_AUDIO_TEXT)
