@@ -10,7 +10,7 @@ import multiprocessing
 import os
 # import shelve
 import shutil
-from ctypes import c_wchar_p
+from queue import Empty
 from subprocess import PIPE, TimeoutExpired
 # import time
 from urllib.parse import urljoin
@@ -467,35 +467,33 @@ class SCDLBot:
         # def handler(signum, frame):
         #     raise TimeoutError(cmd="youtube-dl", timeout=self.DL_TIMEOUT)
 
-        def ydl_download(url_, ydl_, ydl_status_, ydl_exc_):
+        def ydl_download(url_, ydl_, q):
             try:
                 ydl_.download([url_])
             except Exception as exc:
-                ydl_status_.value = -1
-                ydl_exc_.value = str(exc)
+                q.put([-1, str(exc)])
+            else:
+                q.put([1, "success"])
 
         if status == 0:
             logger.info("youtube-dl starts...")
-            # signal.signal(signal.SIGALRM, handler)
-            # signal.alarm(5)
+            ydl = youtube_dl.YoutubeDL(ydl_opts)
+            queue = multiprocessing.Queue()
+            p = multiprocessing.Process(target=ydl_download, args=(url, ydl, queue,), daemon=True)
+            p.start()
             try:
-                # ydl.download([url])
-                ydl = youtube_dl.YoutubeDL(ydl_opts)
-                ydl_status = multiprocessing.Value('i', 0)
-                ydl_exc = multiprocessing.Value(c_wchar_p, '')
-                p = multiprocessing.Process(target=ydl_download, args=(url, ydl, ydl_status, ydl_exc), daemon=True)
-                p.start()
-                # Wait for seconds or until process finishes
-                p.join(self.DL_TIMEOUT)
-                if p.is_alive():
-                    p.terminate()
-                    raise TimeoutError()
-                if ydl_status.value != 0:
-                    raise Exception(ydl_exc.value)
+                # wait for ydl function to put something
+                ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
+                p.join()
+                if ydl_status[0] != 1:
+                    raise Exception(ydl_status[1])
                 text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
-            except TimeoutError:
+            except Empty:
+                p.join(1)
+                if p.is_alive():
+                    p.terminate()
                 text = "youtube-dl took too much time and dropped"
                 logger.exception(text)
                 status = -1
@@ -504,7 +502,6 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), url)
                 status = -2
-            # signal.alarm(0)
             gc.collect()
 
         if status == -1:
