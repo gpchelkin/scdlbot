@@ -120,7 +120,7 @@ class SCDLBot:
                 self.updater.bot.set_webhook(url=urljoin(app_url, url_path))
         else:
             self.updater.start_polling()
-        self.send_alert(self.updater.bot, "bot restarted")
+        # self.send_alert(self.updater.bot, "bot restarted")
         self.updater.idle()
 
     @staticmethod
@@ -325,7 +325,7 @@ class SCDLBot:
         try:
             ydl.download([url])
         except Exception as exc:
-            ydl_status = exc
+            ydl_status = Exception(exc)
         else:
             ydl_status = 0
         if queue:
