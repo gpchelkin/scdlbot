@@ -322,20 +322,22 @@ class SCDLBot:
         orig_msg_id, action = update.callback_query.data.split()
         if chat_id in self.msg_store:
             if orig_msg_id in self.msg_store[chat_id]:
-                self.log_and_botan_track("_".join([action, "msg"]), self.msg_store[chat_id][orig_msg_id]["message"])
+                orig_msg = self.msg_store[chat_id][orig_msg_id]["message"]
+                urls = self.msg_store[chat_id][orig_msg_id]["urls"]
                 if action == "dl":
                     update.callback_query.answer(text=self.WAIT_TEXT)
                     edited_msg = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                          text=self.md_italic(self.WAIT_TEXT))
-                    urls = self.msg_store[chat_id][orig_msg_id]["urls"]
+                    self.log_and_botan_track(("dl_msg"), orig_msg)
                     for url in urls:
                         self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                                    wait_message_id=edited_msg.message_id)
                 elif action == "nodl":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
                     bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+                    self.log_and_botan_track(("nodl_msg"), orig_msg)
                 elif action == "link":
-                    pass
+                    self.log_and_botan_track(("link_msg"), orig_msg)
                 self.msg_store[chat_id].pop(orig_msg_id)
                 for msg_id in self.msg_store[chat_id]:
                     timedelta = datetime.now() - self.msg_store[chat_id][msg_id]["message"].date
