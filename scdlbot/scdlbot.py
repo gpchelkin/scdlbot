@@ -69,6 +69,7 @@ class SCDLBot:
         self.rant_msg_ids = {}
 
         config = configparser.ConfigParser()
+        config['scdl'] = {}
         config['scdl']['path'] = self.DL_DIR
         if sc_auth_token:
             config['scdl']['auth_token'] = sc_auth_token
