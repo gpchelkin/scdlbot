@@ -487,7 +487,8 @@ class SCDLBot:
                 ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
                 ydl.join()
                 if ydl_status:
-                    raise (ydl_status[1], None, ydl_status[2])
+                    raise Exception(ydl_status)
+                    # raise (ydl_status[1], None, ydl_status[2])
                 text = "youtube-dl succeeded"
                 logger.info(text)
                 status = 1
