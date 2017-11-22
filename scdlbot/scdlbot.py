@@ -645,7 +645,7 @@ class SCDLBot:
                 logger.exception(text)
                 self.send_alert(bot, text + "\n" + str(exc), file_name)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 text="Not enough memory to convert file `{}`, you may try again later..".format(file_name),
+                                 text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(file_name),
                                  parse_mode='Markdown')
                 gc.collect()
                 return "memory"
@@ -654,14 +654,13 @@ class SCDLBot:
             logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
-            if chat_id in self.NO_CLUTTER_CHAT_IDS:
-                caption = ""
-            else:
-                caption = "Downloaded with @{}".format(self.bot_username)
+            caption = ""
             if file_size > self.MAX_TG_FILE_SIZE:
                 caption += "\n" + " ".join(["Part", str(index + 1), "of", str(parts_number)])
             for i in range(3):
                 try:
+                    if (i == 0) and (chat_id not in self.NO_CLUTTER_CHAT_IDS):
+                        caption = "Downloaded with @{}".format(self.bot_username) + caption
                     audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                audio=open(file, 'rb'), caption=caption)
                     sent_audio_ids.append(audio_msg.audio.file_id)
