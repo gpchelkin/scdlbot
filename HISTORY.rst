@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.3 (2017-11-22)
+------------------
+* don't spam on second try
+* better logging config for different destinations
+
 0.9.2 (2017-11-21)
 ------------------
 * more error checking and responding with errors
