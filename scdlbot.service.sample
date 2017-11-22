@@ -14,6 +14,7 @@ After=syslog.target
 Type=simple
 EnvironmentFile=/home/gpchelkin/scdlbot/.env
 Environment=PYENV_VERSION=3.6.2
+#ExecStart=/usr/local/bin/scdlbot
 ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
 StandardOutput=syslog
 StandardError=syslog
