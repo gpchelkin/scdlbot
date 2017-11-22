@@ -9,6 +9,7 @@ from logentries import LogentriesHandler
 # import loggly.handlers
 from scdlbot.scdlbot import SCDLBot
 
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 console_formatter = logging.Formatter('%(name)s: %(message)s')
 syslog_formatter = logging.Formatter('%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")))
 
@@ -40,7 +41,7 @@ if LOGENTRIES_TOKEN:
     logentries_handler.setLevel(logging_level)
     logging_handlers.append(logentries_handler)
 
-logging.basicConfig(format=console_formatter,
+logging.basicConfig(format=FORMAT,
                     datefmt='%b %d %H:%M:%S',
                     level=logging_level,
                     handlers=logging_handlers)
