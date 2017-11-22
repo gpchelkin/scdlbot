@@ -9,19 +9,8 @@ from logentries import LogentriesHandler
 # import loggly.handlers
 from scdlbot.scdlbot import SCDLBot
 
-console_handler = logging.StreamHandler()
-logging_handlers = [console_handler]
-
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-if SYSLOG_ADDRESS:
-    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
-    logging_handlers.append(syslog_handler)
-
-LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
-if LOGENTRIES_TOKEN:
-    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
-    logging_handlers.append(logentries_handler)
+console_formatter = logging.Formatter('%(name)s: %(message)s')
+syslog_formatter = logging.Formatter('%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")))
 
 SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_DEBUG:
@@ -29,7 +18,29 @@ if SYSLOG_DEBUG:
 else:
     logging_level = logging.INFO
 
-logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")),
+logging_handlers = []
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(console_formatter)
+console_handler.setLevel(logging_level)
+logging_handlers.append(console_handler)
+
+SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
+if SYSLOG_ADDRESS:
+    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
+    syslog_handler.setFormatter(syslog_formatter)
+    syslog_handler.setLevel(logging_level)
+    logging_handlers.append(syslog_handler)
+
+LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
+if LOGENTRIES_TOKEN:
+    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
+    logentries_handler.setFormatter(syslog_formatter)
+    logentries_handler.setLevel(logging_level)
+    logging_handlers.append(logentries_handler)
+
+logging.basicConfig(format=console_formatter,
                     datefmt='%b %d %H:%M:%S',
                     level=logging_level,
                     handlers=logging_handlers)
