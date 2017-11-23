@@ -207,16 +207,16 @@ class SCDLBot:
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
-        self.log_and_botan_track(event_name, update.message)
         if (chat_type != "private") and (chat_id in self.NO_CLUTTER_CHAT_IDS):
             self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
         else:
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
+        self.log_and_botan_track(event_name, update.message)
+
 
     def clutter_command_callback(self, bot, update):
         chat_id = update.message.chat_id
-        self.log_and_botan_track("clutter", update.message)
         if chat_id in self.NO_CLUTTER_CHAT_IDS:
             self.NO_CLUTTER_CHAT_IDS.remove(chat_id)
             bot.send_message(chat_id=chat_id,
@@ -227,6 +227,7 @@ class SCDLBot:
             bot.send_message(chat_id=chat_id,
                              text="Chat cluttering is now OFF. I *will not send audios as replies* to messages with links.",
                              parse_mode='Markdown', disable_web_page_preview=True)
+        self.log_and_botan_track("clutter", update.message)
 
     def inline_query_callback(self, bot, update):
         inline_query_id = update.inline_query.id
@@ -234,7 +235,6 @@ class SCDLBot:
         results = []
         urls = self.prepare_urls(text=text, get_direct_urls=True)
         if urls:
-            self.log_and_botan_track("link_inline")
             for url in urls:
                 # self.download_and_send(bot, url, self.STORE_CHAT_ID, inline_query_id=update.inline_query.id)
                 for direct_url in urls[url].splitlines():  #TODO: fix non-mp3 and allow only sc/bc
@@ -244,6 +244,7 @@ class SCDLBot:
             bot.answer_inline_query(inline_query_id, results)
         except:
             pass
+        self.log_and_botan_track("link_inline")
 
     def dl_command_callback(self, bot, update, args=None, event_name="dl"):
         chat_id = update.message.chat_id
@@ -265,15 +266,16 @@ class SCDLBot:
             return
         else:
             logger.debug(urls)
-            # self.log_and_botan_track("{}_cmd".format(event_name), update.message)
             if event_name == "dl":
-                self.log_and_botan_track("dl_cmd", update.message)
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                self.log_and_botan_track("dl_cmd", update.message)
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif event_name == "link":
+                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                                parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 self.log_and_botan_track("link_cmd", update.message)
                 link_text = ""
                 for i, link in enumerate("\n".join(urls.values()).split()):
@@ -286,17 +288,17 @@ class SCDLBot:
                     link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', text=link_text)
+                bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif event_name == "msg":
                 if chat_type == "private":
-                    self.log_and_botan_track("dl_msg", update.message)
                     wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                     parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+                    self.log_and_botan_track("dl_msg", update.message)
                     for url in urls:
                         self.download_url_and_send(bot, url, urls[url], chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                    wait_message_id=wait_message.message_id)
                 else:
                     if "http" in " ".join(urls.values()):
-                        self.log_and_botan_track("dl_msg_income")
                         orig_msg_id = str(reply_to_message_id)
                         if not chat_id in self.msg_store.keys():
                             self.msg_store[chat_id] = {}
@@ -308,6 +310,8 @@ class SCDLBot:
                         question = "🎶 links found. Download it?"
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          reply_markup=inline_keyboard, text=question)
+                        self.log_and_botan_track("dl_msg_income")
+
 
 
     def link_command_callback(self, bot, update, args=None):
