@@ -555,14 +555,16 @@ class SCDLBot:
                              text=self.LIVE_RESTRICTION_TEXT, parse_mode='Markdown')
         elif status == 1:
             if chat_id in self.NO_CLUTTER_CHAT_IDS:
-                reply_to_message_id = None
+                reply_to_message_id_ = None
+            else:
+                reply_to_message_id_ = reply_to_message_id
             file_list = []
             for d, dirs, files in os.walk(download_dir):
                 for file in files:
                     file_list.append(os.path.join(d, file))
             send_status_flag = True
             for file in sorted(file_list):
-                send_status = self.split_and_send_audio_file(bot, chat_id, reply_to_message_id, file)
+                send_status = self.split_and_send_audio_file(bot, chat_id, reply_to_message_id_, file)
                 if send_status != "success":
                     send_status_flag = False
             if not send_status_flag:
