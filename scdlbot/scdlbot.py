@@ -341,7 +341,7 @@ class SCDLBot:
                         self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                    reply_to_message_id=orig_msg_id,
                                                    wait_message_id=wait_message.message_id)
-                elif action == "link":  # TODO
+                elif action == "link":
                     update.callback_query.answer(text=self.WAIT_TEXT)
                     wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                            text=self.md_italic(self.WAIT_TEXT))
@@ -370,7 +370,7 @@ class SCDLBot:
             ydl.download([url])
         except Exception as exc:
             ydl_status = str(exc)
-            # ydl_status = exc  #TODO
+            # ydl_status = exc  #TODO: throw original fails
         else:
             ydl_status = 0
         if queue:
@@ -612,7 +612,7 @@ class SCDLBot:
                     sent_audio_ids = exc.sent_audio_ids
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, could not send file `{}` or some of it's parts, you may try again later..".format(
-                                         file_name),  # TODO
+                                         file_name),
                                      parse_mode='Markdown')
                     logger.warning("Some parts"
                                    " of %s failed to send", file)
