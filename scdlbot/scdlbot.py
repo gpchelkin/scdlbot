@@ -286,8 +286,12 @@ class SCDLBot:
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 link_text = self.get_link_text(urls)
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 parse_mode='Markdown', text=link_text)
+                if link_text:
+                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     parse_mode='Markdown', text=link_text)
+                else:
+                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     parse_mode='Markdown', text=self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                 self.log_and_botan_track("link_cmd", update.message)
             elif event_name == "msg" and chat_type != "private":
@@ -317,6 +321,7 @@ class SCDLBot:
                     except:
                         pass
                 link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
+        return link_text
 
     def link_command_callback(self, bot, update, args=None):
         self.dl_command_callback(bot, update, args, event_name="link")
@@ -346,8 +351,12 @@ class SCDLBot:
                     wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                            text=self.md_italic(self.WAIT_TEXT))
                     link_text = self.get_link_text(urls)
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
-                                     parse_mode='Markdown', text=link_text)
+                    if link_text:
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
+                                         parse_mode='Markdown', text=link_text)
+                    else:
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
+                                         parse_mode='Markdown', text=self.NO_URLS_TEXT)
                     bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                     self.log_and_botan_track(("link_msg"), orig_msg)
                 elif action == "nodl":
