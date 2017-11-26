@@ -1,4 +1,4 @@
-dl - + link required! download now
-link - + link required! get direct url
-clutter - toggle replies on sent audios
+dl - <links> required! download now
+link - <links> required! get direct url
+flood - toggle replies and spam captions on / off
 help - show the help message

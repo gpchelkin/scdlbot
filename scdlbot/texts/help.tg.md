@@ -4,7 +4,7 @@ Hi! I download and send audios from videos/tracks/sets/albums in *MP3 128 kbps* 
 • [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, so I scan every group message.
 • `/dl <links>` to download immediately in groups.
 • `/link <links>` to get direct download URLs only.
-• /clutter to toggle replies and spam captions on / off.
+• /flood to toggle replies and spam captions on / off.
 • Files over 50 MB (bot-sent size limit) are split into parts.
 • Supported links and resources:
 *SoundCloud*: tracks/playlists/pages with private widgets

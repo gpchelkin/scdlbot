@@ -39,7 +39,7 @@
             "description": "Heroku App URL like `https://<appname>.herokuapp.com/`, required for webhook",
             "required": false
         },
-        "NO_CLUTTER_CHAT_IDS": {
+        "NO_FLOOD_CHAT_IDS": {
             "description": "Comma-separated chat IDs with no replying and caption hashtags",
             "required": false
         },

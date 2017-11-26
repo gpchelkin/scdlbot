@@ -167,8 +167,8 @@ Optional
    for web dynos
 -  ``BOTAN_TOKEN``: `Botan.io <http://botan.io/>`__
    `token <http://appmetrica.yandex.com/>`__
--  ``NO_CLUTTER_CHAT_IDS``: Comma-separated chat IDs with no replying
-   and caption hashtags
+-  ``NO_FLOOD_CHAT_IDS``: Comma-separated chat IDs with no replying
+   and caption spam
 -  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
    default: empty

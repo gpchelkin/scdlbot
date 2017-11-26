@@ -48,7 +48,7 @@ class SCDLBot:
     }
 
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, bin_path="",
-                 sc_auth_token=None, store_chat_id=None, no_clutter_chat_ids=None,
+                 sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=3600, max_convert_file_size=500000000):
         self.DL_TIMEOUT = dl_timeout
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
@@ -60,7 +60,7 @@ class SCDLBot:
         self.REGION_RESTRICTION_TEXT = self.get_response_text('region_restriction.txt')
         self.DIRECT_RESTRICTION_TEXT = self.get_response_text('direct_restriction.txt')
         self.LIVE_RESTRICTION_TEXT = self.get_response_text('live_restriction.txt')
-        self.NO_CLUTTER_CHAT_IDS = set(no_clutter_chat_ids) if no_clutter_chat_ids else set()
+        self.NO_FLOOD_CHAT_IDS = set(no_flood_chat_ids) if no_flood_chat_ids else set()
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
@@ -90,8 +90,8 @@ class SCDLBot:
         dispatcher.add_handler(start_command_handler)
         help_command_handler = CommandHandler('help', self.help_command_callback)
         dispatcher.add_handler(help_command_handler)
-        clutter_command_handler = CommandHandler('clutter', self.clutter_command_callback)
-        dispatcher.add_handler(clutter_command_handler)
+        flood_command_handler = CommandHandler('flood', self.flood_command_callback)
+        dispatcher.add_handler(flood_command_handler)
         dl_command_handler = CommandHandler('dl', self.dl_command_callback, filters=~ Filters.forwarded, pass_args=True)
         dispatcher.add_handler(dl_command_handler)
         link_command_handler = CommandHandler('link', self.link_command_callback, filters=~ Filters.forwarded,
@@ -168,7 +168,7 @@ class SCDLBot:
     def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
         rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                     text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
-        if chat_id in self.NO_CLUTTER_CHAT_IDS:
+        if chat_id in self.NO_FLOOD_CHAT_IDS:
             if not chat_id in self.rant_msg_ids.keys():
                 self.rant_msg_ids[chat_id] = []
             else:
@@ -179,6 +179,28 @@ class SCDLBot:
                         pass
                     self.rant_msg_ids[chat_id].remove(rant_msg_id)
         self.rant_msg_ids[chat_id].append(rant_msg.message_id)
+
+    def get_link_text(self, urls):
+        link_text = ""
+        for i, url in enumerate(urls):
+            link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
+            direct_urls = urls[url].splitlines()
+            for j, direct_url in enumerate(direct_urls):
+                logger.debug(direct_url)
+                if "http" in direct_url:
+                    content_type = ""
+                    if "googlevideo" in direct_url:
+                        if "audio" in direct_url:
+                            content_type = "Audio"
+                        else:
+                            content_type = "Video"
+                    if self.shortener:
+                        try:
+                            direct_url = self.shortener.short(direct_url)
+                        except:
+                            pass
+                    link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
+        return link_text
 
     def unknown_command_callback(self, bot, update):
         pass
@@ -213,24 +235,24 @@ class SCDLBot:
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
-        if (chat_type != "private") and (chat_id in self.NO_CLUTTER_CHAT_IDS):
+        if (chat_type != "private") and (chat_id in self.NO_FLOOD_CHAT_IDS):
             self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
         else:
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
         self.log_and_botan_track(event_name, update.message)
 
-    def clutter_command_callback(self, bot, update):
+    def flood_command_callback(self, bot, update):
         chat_id = update.message.chat_id
-        if chat_id in self.NO_CLUTTER_CHAT_IDS:
-            self.NO_CLUTTER_CHAT_IDS.remove(chat_id)
+        if chat_id in self.NO_FLOOD_CHAT_IDS:
+            self.NO_FLOOD_CHAT_IDS.remove(chat_id)
             bot.send_message(chat_id=chat_id,
-                             text="Chat cluttering is now ON. I *will send audios as replies* to messages with links.",
+                             text="Chat flooding is now ON. I *will send audios as replies* to messages with links.",
                              parse_mode='Markdown', disable_web_page_preview=True)
         else:
-            self.NO_CLUTTER_CHAT_IDS.add(chat_id)
+            self.NO_FLOOD_CHAT_IDS.add(chat_id)
             bot.send_message(chat_id=chat_id,
-                             text="Chat cluttering is now OFF. I *will not send audios as replies* to messages with links.",
+                             text="Chat flooding is now OFF. I *will not send audios as replies* to messages with links.",
                              parse_mode='Markdown', disable_web_page_preview=True)
         self.log_and_botan_track("clutter", update.message)
 
@@ -285,13 +307,10 @@ class SCDLBot:
             elif event_name == "link":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
+
                 link_text = self.get_link_text(urls)
-                if link_text:
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     parse_mode='Markdown', text=link_text)
-                else:
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     parse_mode='Markdown', text=self.NO_URLS_TEXT)
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 parse_mode='Markdown', disable_web_page_preview=True, text=link_text if link_text else self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                 self.log_and_botan_track("link_cmd", update.message)
             elif event_name == "msg" and chat_type != "private":
@@ -300,28 +319,15 @@ class SCDLBot:
                     if not chat_id in self.msg_store.keys():
                         self.msg_store[chat_id] = {}
                     self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
-                    button_dl = InlineKeyboardButton(text="✅ Yes", callback_data=" ".join([orig_msg_id, "dl"]))
-                    button_link = InlineKeyboardButton(text="✅ Get links",
+                    button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
+                    button_link = InlineKeyboardButton(text="❇️ Get links",
                                                        callback_data=" ".join([orig_msg_id, "link"]))
-                    button_cancel = InlineKeyboardButton(text="❎ No", callback_data=" ".join([orig_msg_id, "nodl"]))
+                    button_cancel = InlineKeyboardButton(text="❎ Cancel", callback_data=" ".join([orig_msg_id, "nodl"]))
                     inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
-                    question = "🎶 links found. Download it?"
+                    question = "I found 🎶 links. What to do?"
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      reply_markup=inline_keyboard, text=question)
                     self.log_and_botan_track("dl_msg_income")
-
-    def get_link_text(self, urls):
-        link_text = ""
-        for i, link in enumerate("\n".join(urls.values()).split()):
-            logger.debug(link)
-            if "http" in link:
-                if self.shortener:
-                    try:
-                        link = self.shortener.short(link)
-                    except:
-                        pass
-                link_text += "[Download Link #" + str(i + 1) + "](" + link + ")\n"
-        return link_text
 
     def link_command_callback(self, bot, update, args=None):
         self.dl_command_callback(bot, update, args, event_name="link")
@@ -350,13 +356,11 @@ class SCDLBot:
                     update.callback_query.answer(text=self.WAIT_TEXT)
                     wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                            text=self.md_italic(self.WAIT_TEXT))
+                    urls = self.prepare_urls(urls.keys(), get_direct_urls=True)
                     link_text = self.get_link_text(urls)
-                    if link_text:
-                        bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
-                                         parse_mode='Markdown', text=link_text)
-                    else:
-                        bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
-                                         parse_mode='Markdown', text=self.NO_URLS_TEXT)
+                    bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
+                                     parse_mode='Markdown', disable_web_page_preview=True,
+                                     text=link_text if link_text else self.NO_URLS_TEXT)
                     bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                     self.log_and_botan_track(("link_msg"), orig_msg)
                 elif action == "nodl":
@@ -388,6 +392,7 @@ class SCDLBot:
             return ydl_status
 
     def youtube_dl_get_direct_urls(self, url):
+        logger.debug("youtube_dl_get_direct_urls")
         try:
             ret_code, std_out, std_err = self.youtube_dl["--get-url", url].run()
         except ProcessExecutionError as exc:
@@ -404,9 +409,10 @@ class SCDLBot:
             return std_out
 
     def prepare_urls(self, msg_or_text, get_direct_urls=False):
-        if isinstance(type(msg_or_text), Message):
+        if type(msg_or_text) is Message:
             urls = []
             for url_str in msg_or_text.parse_entities(types=["url"]).values():
+                logger.debug("Entity URL Parsed: %s", url_str)
                 if "://" not in url_str:
                     url_str = "http://" + url_str
                 urls.append(URL(url_str))
@@ -615,8 +621,8 @@ class SCDLBot:
                 try:
                     caption = "Downloaded from {} with @{}\n".format(URL(url).host, self.bot_username)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
-                                                                reply_to_message_id if chat_id not in self.NO_CLUTTER_CHAT_IDS else None,
-                                                                caption if chat_id not in self.NO_CLUTTER_CHAT_IDS else None)
+                                                                reply_to_message_id if chat_id not in self.NO_FLOOD_CHAT_IDS else None,
+                                                                caption if chat_id not in self.NO_FLOOD_CHAT_IDS else None)
                 except FileSentPartiallyError as exc:
                     sent_audio_ids = exc.sent_audio_ids
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
