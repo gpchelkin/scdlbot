@@ -348,7 +348,7 @@ class SCDLBot:
                     link_text = self.get_link_text(urls)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                      parse_mode='Markdown', text=link_text)
-                    bot.delete_message(chat_id=chat_id, message_id=wait_message)
+                    bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                     self.log_and_botan_track(("link_msg"), orig_msg)
                 elif action == "nodl":
                     # update.callback_query.answer(text="Cancelled!", show_alert=True)
