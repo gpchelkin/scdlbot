@@ -178,7 +178,7 @@ class SCDLBot:
                     except:
                         pass
                     self.rant_msg_ids[chat_id].remove(rant_msg_id)
-        self.rant_msg_ids[chat_id].append(rant_msg.message_id)
+            self.rant_msg_ids[chat_id].append(rant_msg.message_id)
 
     def get_link_text(self, urls):
         link_text = ""
@@ -320,9 +320,9 @@ class SCDLBot:
                         self.msg_store[chat_id] = {}
                     self.msg_store[chat_id][orig_msg_id] = {"message": update.message, "urls": urls}
                     button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
-                    button_link = InlineKeyboardButton(text="❇️ Get links",
+                    button_link = InlineKeyboardButton(text="❇️ Links",
                                                        callback_data=" ".join([orig_msg_id, "link"]))
-                    button_cancel = InlineKeyboardButton(text="❎ Cancel", callback_data=" ".join([orig_msg_id, "nodl"]))
+                    button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
                     inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
                     question = "I found 🎶 links. What to do?"
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,

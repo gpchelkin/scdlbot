@@ -2,9 +2,11 @@
 History
 =======
 
-0.9.4 (2017-11-24)
+0.9.4 (2017-11-27)
 ------------------
-
+* exception-driven behavour
+* clutter is now flood
+* better alerting
 
 0.9.3 (2017-11-22)
 ------------------
