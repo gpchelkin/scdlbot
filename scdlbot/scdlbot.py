@@ -39,17 +39,17 @@ logger = logging.getLogger(__name__)
 
 
 class SCDLBot:
-    MAX_TG_FILE_SIZE = 45000000
-    SITES = {
-        "sc": "soundcloud",
-        "scapi": "api.soundcloud",
-        "bc": "bandcamp",
-        "yt": "youtu",
-    }
 
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, bin_path="",
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
-                 alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=3600, max_convert_file_size=500000000):
+                 alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=300, max_convert_file_size=80000000):
+        self.MAX_TG_FILE_SIZE = 45000000
+        self.SITES = {
+            "sc": "soundcloud",
+            "scapi": "api.soundcloud",
+            "bc": "bandcamp",
+            "yt": "youtu",
+        }
         self.DL_TIMEOUT = dl_timeout
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
         self.HELP_TEXT = self.get_response_text('help.tg.md')
@@ -118,16 +118,17 @@ class SCDLBot:
         self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
         self.RANT_TEXT_PUBLIC = "[Press here and start to read help in my PM to learn how to use me](t.me/" + self.bot_username + "?start=1)"
 
-    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, cert_key_file=None, webhook_host="0.0.0.0",
+    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, cert_key_file=None,
+              webhook_host="0.0.0.0",
               url_path="scdlbot"):
         if use_webhook:
             url_path = url_path.replace(":", "")
             self.updater.start_webhook(listen=webhook_host,
                                        port=webhook_port,
-                                       url_path=url_path,)
-                                       # cert=cert_file if cert_file else None,
-                                       # key=cert_key_file if cert_key_file else None,
-                                       # webhook_url=urljoin(app_url, url_path))
+                                       url_path=url_path, )
+            # cert=cert_file if cert_file else None,
+            # key=cert_key_file if cert_key_file else None,
+            # webhook_url=urljoin(app_url, url_path))
             self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
@@ -313,7 +314,8 @@ class SCDLBot:
 
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 parse_mode='Markdown', disable_web_page_preview=True, text=link_text if link_text else self.NO_URLS_TEXT)
+                                 parse_mode='Markdown', disable_web_page_preview=True,
+                                 text=link_text if link_text else self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
                 self.log_and_botan_track("link_cmd", update.message)
             elif event_name == "msg" and chat_type != "private":
@@ -601,11 +603,12 @@ class SCDLBot:
                     file_parts = self.split_audio_file(file)
                 except FileNotSupportedError as exc:
                     file_parts = []
-                    logger.warning("Unsupported file format: %s", file)
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, downloaded file `{}` is in `{}` format I could not yet send or convert".format(
-                                         file_name, exc.file_format),
-                                     parse_mode='Markdown')
+                    if not (exc.file_format == "m3u"):
+                        logger.warning("Unsupported file format: %s", file)
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
+                                             file_name),
+                                         parse_mode='Markdown')
                 except FileTooLargeError as exc:
                     file_parts = []
                     logger.warning("Large file for convert: %s", file)

@@ -151,12 +151,12 @@ Required
 
 -  ``TG_BOT_TOKEN``: Telegram Bot API Token, `obtain
    here <https://t.me/BotFather>`__
--  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
-   here <https://flyingrub.github.io/scdl/>`__
 
 Optional
 ^^^^^^^^
 
+-  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
+   here <https://flyingrub.github.io/scdl/>`__
 -  ``STORE_CHAT_ID``: Chat ID for storing audios of inline mode
 -  ``USE_WEBHOOK``: use webhook for bot updates: ``1``, use polling
    (default): ``0``, `more info <https://core.telegram.org/bots/api#getting-updates>`__

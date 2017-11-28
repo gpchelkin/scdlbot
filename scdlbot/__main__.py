@@ -10,7 +10,9 @@ from scdlbot.scdlbot import SCDLBot
 
 # import loggly.handlers
 
+console_formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
 console_handler = logging.StreamHandler()
+console_handler.setFormatter(console_formatter)
 logging_handlers = [console_handler]
 
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
@@ -80,7 +82,7 @@ def main():
     store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
     no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
     alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
-    dl_timeout = int(os.getenv('DL_TIMEOUT', '600'))
+    dl_timeout = int(os.getenv('DL_TIMEOUT', '300'))
     dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     app_url = os.getenv('APP_URL', '')

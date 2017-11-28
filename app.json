@@ -24,7 +24,7 @@
         },
         "SC_AUTH_TOKEN": {
             "description": "A secret key for verifying the integrity of signed cookies",
-            "required": true
+            "required": false
         },
         "USE_WEBHOOK": {
             "description": "Use webhook for bot updates: 1, use polling: 0",
