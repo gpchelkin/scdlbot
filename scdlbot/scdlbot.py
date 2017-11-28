@@ -439,7 +439,8 @@ class SCDLBot:
                 elif not any((site in url.host for site in self.SITES.values())):
                     urls_dict[url_text] = self.youtube_dl_get_direct_urls(url_text)
             except ProcessExecutionError:
-                logger.exception("youtube-dl get url failed")
+                logger.info("youtube-dl get url failed")
+                # logger.exception("youtube-dl get url failed")
             except URLError as exc:
                 urls_dict[url_text] = exc.status
         return urls_dict

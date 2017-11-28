@@ -78,8 +78,8 @@ def main():
     botan_token = os.getenv('BOTAN_TOKEN', '')
     sc_auth_token = os.environ['SC_AUTH_TOKEN']
     store_chat_id = os.environ['STORE_CHAT_ID']
-    no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '').split(',')))
-    alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '').split(',')))
+    no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
+    alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '600'))
     dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
