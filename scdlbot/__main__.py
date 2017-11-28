@@ -10,21 +10,8 @@ from scdlbot.scdlbot import SCDLBot
 
 # import loggly.handlers
 
-console_formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(console_formatter)
-logging_handlers = [console_handler]
-
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-if SYSLOG_ADDRESS:
-    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
-    logging_handlers.append(syslog_handler)
-
-LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
-if LOGENTRIES_TOKEN:
-    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
-    logging_handlers.append(logentries_handler)
+# FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# syslog_formatter = logging.Formatter('%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")))
 
 SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_DEBUG:
@@ -32,47 +19,34 @@ if SYSLOG_DEBUG:
 else:
     logging_level = logging.INFO
 
+logging_handlers = []
+
+console_formatter = logging.Formatter('[%(name)s] %(levelname)s: %(message)s')
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(console_formatter)
+console_handler.setLevel(logging_level)
+logging_handlers.append(console_handler)
+
+SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
+if SYSLOG_ADDRESS:
+    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
+#    syslog_handler.setFormatter(syslog_formatter)
+#    syslog_handler.setLevel(logging_level)
+    logging_handlers.append(syslog_handler)
+
+LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
+if LOGENTRIES_TOKEN:
+    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
+    #logentries_handler.setFormatter(syslog_formatter)
+    #logentries_handler.setLevel(logging_level)
+    logging_handlers.append(logentries_handler)
+
 logging.basicConfig(format='%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")),
                     datefmt='%b %d %H:%M:%S',
                     level=logging_level,
                     handlers=logging_handlers)
 
-# FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-# console_formatter = logging.Formatter('%(name)s: %(message)s')
-# syslog_formatter = logging.Formatter('%(asctime)s {} %(name)s: %(message)s'.format(os.getenv("HOSTNAME", "test-host")))
-#
-# SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
-# if SYSLOG_DEBUG:
-#     logging_level = logging.DEBUG
-# else:
-#     logging_level = logging.INFO
-#
-# logging_handlers = []
-#
-# console_handler = logging.StreamHandler()
-# console_handler.setFormatter(console_formatter)
-# console_handler.setLevel(logging_level)
-# logging_handlers.append(console_handler)
-#
-# SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-# if SYSLOG_ADDRESS:
-#     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-#     syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
-#     syslog_handler.setFormatter(syslog_formatter)
-#     syslog_handler.setLevel(logging_level)
-#     logging_handlers.append(syslog_handler)
-#
-# LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
-# if LOGENTRIES_TOKEN:
-#     logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
-#     logentries_handler.setFormatter(syslog_formatter)
-#     logentries_handler.setLevel(logging_level)
-#     logging_handlers.append(logentries_handler)
-#
-# logging.basicConfig(format=FORMAT,
-#                     datefmt='%b %d %H:%M:%S',
-#                     level=logging_level,
-#                     handlers=logging_handlers)
 
 
 def main():
