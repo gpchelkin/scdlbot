@@ -701,7 +701,7 @@ class SCDLBot:
         sent_audio_ids = []
         for index, file in enumerate(file_parts):
             file_name = os.path.split(file)[-1]
-            logger.info("Sending: %s...", file_name)
+            logger.info("Sending: %s...", file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
             caption_ = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
