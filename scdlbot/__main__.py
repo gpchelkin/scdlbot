@@ -25,7 +25,7 @@ console_handler.setFormatter(console_formatter)
 console_handler.setLevel(logging_level)
 logging_handlers.append(console_handler)
 
-syslog_formatter = logging.Formatter('%(asctime)s '+ os.getenv("HOSTNAME", "test-host") +' %(name)s: %(message)s',
+syslog_formatter = logging.Formatter('%(asctime)s ' + os.getenv("HOSTNAME", "test-host") + ' %(name)s: %(message)s',
                                      datefmt='%b %d %H:%M:%S')
 
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
