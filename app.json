@@ -20,7 +20,7 @@
         },
         "STORE_CHAT_ID": {
             "description": "Chat ID for storing audios for inline mode",
-            "required": true
+            "required": false
         },
         "SC_AUTH_TOKEN": {
             "description": "A secret key for verifying the integrity of signed cookies",
@@ -48,8 +48,18 @@
             "required": false
         },
         "DL_DIR": {
-            "description": "Parent directory for MP3 download directory, default: ~ (user's home directory)",
-            "value": "~",
+            "description": "Parent directory for downloads directories",
+            "value": "/tmp/scdl",
+            "required": false
+        },
+        "DL_TIMEOUT": {
+            "description": "Download timeout in seconds, stop downloading if it takes longer than allowed",
+            "value": "300",
+            "required": false
+        },
+        "MAX_CONVERT_FILE_SIZE": {
+            "description": "Don't try to split and send files over this number of bytes",
+            "value": "80000000",
             "required": false
         },
         "SYSLOG_ADDRESS": {
@@ -64,7 +74,7 @@
         },
         "HOSTNAME": {
             "description": "",
-            "value": "",
+            "value": "heroku",
             "required": false
         },
         "CERT_FILE": {

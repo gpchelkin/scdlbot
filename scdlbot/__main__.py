@@ -77,7 +77,7 @@ def main():
     tg_bot_token = os.environ['TG_BOT_TOKEN']
     botan_token = os.getenv('BOTAN_TOKEN', '')
     sc_auth_token = os.environ['SC_AUTH_TOKEN']
-    store_chat_id = os.environ['STORE_CHAT_ID']
+    store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
     no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
     alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '600'))
@@ -85,14 +85,15 @@ def main():
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     app_url = os.getenv('APP_URL', '')
     webhook_port = int(os.getenv('PORT', '5000'))
-    max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '130000000'))
+    max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80000000'))
     bin_path = os.getenv('BIN_PATH', '')
     cert_file = os.getenv('CERT_FILE', '')
+    cert_key_file = os.getenv('CERT_KEY_FILE', '')
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key, bin_path,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
                       dl_dir, dl_timeout, max_convert_file_size)
-    scdlbot.start(use_webhook, app_url, webhook_port, cert_file, url_path=tg_bot_token)
+    scdlbot.start(use_webhook, app_url, webhook_port, cert_file, cert_key_file, url_path=tg_bot_token)
 
 
 if __name__ == '__main__':

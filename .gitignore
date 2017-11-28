@@ -144,6 +144,3 @@ ENV/
 
 # Different envs
 .env-*
-
-# systemd service
-scdlbot.service

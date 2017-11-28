@@ -73,7 +73,7 @@ Send ``/start`` or ``/help`` command to bot or refer directly to the `help messa
 
 Please report all bugs and issues and suggest your improvements to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 
-Supported sites and used packages
+Supported sites and mainly used packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `Telegram Bot API <https://core.telegram.org/bots/api>`__:
@@ -83,7 +83,7 @@ Supported sites and used packages
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
 -  `YouTube <https://www.youtube.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, etc.:
+   `Mixcloud <https://www.mixcloud.com/>`__, everything else from the `list <https://rg3.github.io/youtube-dl/supportedsites.html>`__:
    `youtube-dl <https://rg3.github.io/youtube-dl>`__
 
 Development
@@ -97,21 +97,21 @@ Requirements
 
 Those should be available in your ``PATH``:
 
--  `Python 3.4+ <https://www.python.org/>`__
+-  `Python 3.5+ <https://www.python.org/>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ recommended)
--  `FFmpeg <https://ffmpeg.org/download.html>`__ for running locally
+-  `FFmpeg 3.4 <https://ffmpeg.org/download.html>`__ if not running on Heroku
    (fresh builds for `Windows <https://ffmpeg.zeranoe.com/builds/>`__
-   and `Linux <https://johnvansickle.com/ffmpeg/>`__ recommended)
+   and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
 
-Install / Update from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (recommended)
+Install / Update stable from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (recommended)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     pip3 install scdlbot
 
-Install / Update from `Git source <https://github.com/gpchelkin/scdlbot>`__
+Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -137,10 +137,10 @@ Download or copy config file sample and set up config environment variables in i
 
 ::
 
-    # For PyPI installs: download sample config:
+    # PyPI-installed: download sample config:
     curl -o .env https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
 
-    # For Git source installs: copy sample config:
+    # Git source-installed: copy sample config:
     cp .env.sample .env
 
     # Use your favourite editor:
@@ -151,16 +151,15 @@ Required
 
 -  ``TG_BOT_TOKEN``: Telegram Bot API Token, `obtain
    here <https://t.me/BotFather>`__
--  ``STORE_CHAT_ID``: Chat ID for storing audios for inline mode
 -  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
    here <https://flyingrub.github.io/scdl/>`__
 
 Optional
 ^^^^^^^^
 
+-  ``STORE_CHAT_ID``: Chat ID for storing audios of inline mode
 -  ``USE_WEBHOOK``: use webhook for bot updates: ``1``, use polling
-   (default): ``0``, `more
-   info <https://core.telegram.org/bots/api#getting-updates>`__
+   (default): ``0``, `more info <https://core.telegram.org/bots/api#getting-updates>`__
 -  ``APP_URL``: app URL like
    ``https://<appname>.herokuapp.com/``, required for webhook
 -  ``PORT``: port for webhook to listen to; Heroku sets this automatically
@@ -171,22 +170,28 @@ Optional
    and caption spam
 -  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
-   default: empty
--  ``DL_DIR``: Parent directory for MP3 download directory, default: ~
-   (user's home directory)
+   default: empty (binaries are availaible in PATH)
+-  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdl
+-  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading if it takes longer than allowed, default: 300
+-  ``MAX_CONVERT_FILE_SIZE``: Don't try to split and send files over this number of bytes, default: 80000000
 -  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``
 -  ``SYSLOG_DEBUG``: Enable verbose debug logging: 1
 -  ``HOSTNAME``: Hostname to show up in Syslog messages
 -  ``GOOGL_API_KEY``: `Goo.gl URL shortener <https://goo.gl>`__
    `API key <https://developers.google.com/url-shortener/v1/getting_started#APIKey>`__
 
-Telegram Settings
+Webhooks: These three links should help. In NGINX use TOKEN1 as TG_BOT_TOKEN without ":" symbol, and port in proxy_pass accroding to PORT envireonment variable.
+https://nginx.org/en/linux_packages.html#mainline
+https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-nginx-with-one-domainport-for-all-bots
+https://certbot.eff.org/#ubuntuxenial-nginx
+
+Telegram Bot Settings
 ^^^^^^^^^^^^^^^^^
 
-Send the commands from filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
+Send the commands from respective filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
 
 
-Running Locally
+Running Locally or at Dedicated Server
 ~~~~~~~~~~~~~~~
 
 Using `Heroku Local <https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool>`__ (preferred)
@@ -196,12 +201,12 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
 
 ::
 
-    # For PyPI installs: first download Procfile:
+    # PyPI-installed: download Procfile:
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
     # For long polling:
     heroku local worker
-    # For webhooks (you will also need to set up some NGINX with SSL):
+    # For webhook:
     heroku local web
 
 Using just Python
@@ -209,13 +214,13 @@ Using just Python
 
 ::
 
-    # For PyPI or Git source system-wide installs:
+    # PyPI or Git source system-wide installs:
     export $(cat .env | xargs)
     scdlbot
     # or just:
     env $(cat .env | xargs) scdlbot
 
-    # For not-installed Git source repository directory:
+    # Non-installed Git source repository directory:
     export $(cat .env | xargs)
     python -m scdlbot
     # or just:
@@ -285,7 +290,7 @@ Deploying to `Dokku <https://github.com/dokku/dokku>`__
 
 Use Dokku (your own Heroku) installed on your own server. App is tested and fully
 ready for deployment with polling (no webhook yet).
-https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#creating-a-self-signed-certificate-using-openssl
+https://github.com/dokku/dokku-letsencrypt
 
 ::
 

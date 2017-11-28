@@ -118,13 +118,16 @@ class SCDLBot:
         self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
         self.RANT_TEXT_PUBLIC = "[Press here and start to read help in my PM to learn how to use me](t.me/" + self.bot_username + "?start=1)"
 
-    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, webhook_host="0.0.0.0",
+    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, cert_key_file=None, webhook_host="0.0.0.0",
               url_path="scdlbot"):
         if use_webhook:
             url_path = url_path.replace(":", "")
             self.updater.start_webhook(listen=webhook_host,
                                        port=webhook_port,
-                                       url_path=url_path)
+                                       url_path=url_path,)
+                                       # cert=cert_file if cert_file else None,
+                                       # key=cert_key_file if cert_key_file else None,
+                                       # webhook_url=urljoin(app_url, url_path))
             self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
