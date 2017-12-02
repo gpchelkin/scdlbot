@@ -1,6 +1,6 @@
 python-telegram-bot==8.1.1
 boltons==17.1.0
-plumbum==1.6.3
+plumbum==1.6.4
 #transliterate==1.9
 scdl==1.6.10
 bandcamp-downloader==0.0.8.post8
