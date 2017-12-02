@@ -57,6 +57,11 @@
             "value": "300",
             "required": false
         },
+        "CHAT_STORAGE": {
+            "description": "Chat storage",
+            "value": "/tmp/scdlbotdata",
+            "required": false
+        },
         "MAX_CONVERT_FILE_SIZE": {
             "description": "Don't try to split and send files over this number of bytes",
             "value": "80000000",

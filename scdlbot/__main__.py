@@ -58,6 +58,7 @@ def main():
     alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '300'))
     dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
+    chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     app_url = os.getenv('APP_URL', '')
     webhook_port = int(os.getenv('PORT', '5000'))
@@ -68,7 +69,7 @@ def main():
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key, bin_path,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
-                      dl_dir, dl_timeout, max_convert_file_size)
+                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file)
     scdlbot.start(use_webhook, app_url, webhook_port, cert_file, cert_key_file, url_path=tg_bot_token)
 
 

@@ -144,3 +144,7 @@ ENV/
 
 # Different envs
 .env-*
+
+/scdlbotdata.dat
+/scdlbotdata.dir
+/scdlbotdata.bak
