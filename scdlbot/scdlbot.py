@@ -431,9 +431,10 @@ class SCDLBot:
                 self.log_and_botan_track(("nodl_msg"), orig_msg)
             self.chat_storage[str(chat_id)].pop(orig_msg_id)
             for msg_id in self.chat_storage[str(chat_id)]:
-                timedelta = datetime.now() - self.chat_storage[str(chat_id)][msg_id]["message"].date
-                if timedelta.days > 0:
-                    self.chat_storage[str(chat_id)].pop(msg_id)
+                if msg_id != "settings":
+                    timedelta = datetime.now() - self.chat_storage[str(chat_id)][msg_id]["message"].date
+                    if timedelta.days > 0:
+                        self.chat_storage[str(chat_id)].pop(msg_id)
             self.chat_storage.sync()
         else:
             update.callback_query.answer(text="Sorry, very old message that I don't remember.")
