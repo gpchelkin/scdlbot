@@ -2,6 +2,12 @@
 History
 =======
 
+0.9.5 (2017-02-02)
+------------------
+* settings command
+* persistent storage for settings
+* refactoring
+
 0.9.4 (2017-11-27)
 ------------------
 * exception-driven behavour
