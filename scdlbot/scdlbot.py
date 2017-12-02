@@ -247,6 +247,7 @@ class SCDLBot:
                     if self.shortener:
                         try:
                             direct_url = self.shortener.short(direct_url)
+                            # botan.shorten_url(original_url, botan_token, uid)
                         except:
                             pass
                     link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
@@ -374,7 +375,7 @@ class SCDLBot:
                     inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      reply_markup=inline_keyboard, text=question)
-                    self.log_and_botan_track("dl_msg_income")
+                    self.log_and_botan_track("ask_msg")  # former dl_msg_income
 
     def button_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
