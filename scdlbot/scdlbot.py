@@ -343,7 +343,7 @@ class SCDLBot:
                                  text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             if mode == "dl":
-                botan_event_name = "dl_cmd" if mode == "dl" else "dl_msg"
+                botan_event_name = "dl_msg" if args == "default" else "dl_cmd"
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
                 self.log_and_botan_track(botan_event_name, update.message)
@@ -352,6 +352,7 @@ class SCDLBot:
                                                reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif mode == "link":
+                botan_event_name = "link_msg" if args == "default" else "link_cmd"
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=self.md_italic(self.WAIT_TEXT))
 
@@ -360,7 +361,7 @@ class SCDLBot:
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
-                self.log_and_botan_track("link_cmd", update.message)
+                self.log_and_botan_track(botan_event_name, update.message)
             elif mode == "ask":
                 if chat_type == Chat.PRIVATE or "http" in " ".join(urls.values()):
                     orig_msg_id = str(reply_to_message_id)
