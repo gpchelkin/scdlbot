@@ -2,6 +2,12 @@
 History
 =======
 
+0.9.6 (2017-02-03)
+------------------
+* separate file for utils, botan track refactored
+* parse message for markdown text links too
+* temporary disable SSL verification for botan (cert expired)
+
 0.9.5.2 (2017-02-03)
 ------------------
 * hot fix
