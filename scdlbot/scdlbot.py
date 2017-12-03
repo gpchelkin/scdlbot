@@ -234,7 +234,9 @@ class SCDLBot:
                                           callback_data=" ".join(["settings", "ask"]))
         button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Flood"]),
                                             callback_data=" ".join(["settings", "flood"]))
-        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_ask], [button_flood]])
+        button_close = InlineKeyboardButton(text=" ".join([emoji_no, "Close settings"]),
+                                            callback_data=" ".join(["settings", "close"]))
+        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_ask], [button_flood, button_close]])
         return inline_keyboard
 
     def settings_command_callback(self, bot, update):
@@ -324,20 +326,23 @@ class SCDLBot:
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
-            if action in ["dl", "link", "ask"]:
-                # update.callback_query.answer(text="Default set")
-                self.chat_storage[str(chat_id)]["settings"]["mode"] = action
-                # self.log_and_botan_track(("settings_dl"), orig_msg)
-            elif action == "flood":
-                flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
-                self.chat_storage[str(chat_id)]["settings"]["flood"] = "no" if flood == "yes" else "yes"
+            if action == "close":
+                bot.delete_message(chat_id, btn_msg_id)
                 # self.log_and_botan_track(("settings_flood"), orig_msg)
-            self.log_and_botan_track("settings_" + action)
-            self.chat_storage.sync()
-            update.callback_query.answer(text="Settings changed")
-            update.callback_query.edit_message_reply_markup(parse_mode='Markdown',
-                                                            reply_markup=self.get_settings_inline_keyboard(
-                                                                chat_id))
+            else:
+                if action in ["dl", "link", "ask"]:
+                    # update.callback_query.answer(text="Default set")
+                    self.chat_storage[str(chat_id)]["settings"]["mode"] = action
+                    # self.log_and_botan_track(("settings_dl"), orig_msg)
+                elif action in ["flood"]:
+                    current_setting = self.chat_storage[str(chat_id)]["settings"][action]
+                    self.chat_storage[str(chat_id)]["settings"][action] = "no" if current_setting == "yes" else "yes"
+                self.log_and_botan_track("settings_" + action)
+                self.chat_storage.sync()
+                update.callback_query.answer(text="Settings changed")
+                update.callback_query.edit_message_reply_markup(parse_mode='Markdown',
+                                                                reply_markup=self.get_settings_inline_keyboard(
+                                                                    chat_id))
         elif orig_msg_id in self.chat_storage[str(chat_id)]:
             orig_msg = self.chat_storage[str(chat_id)][orig_msg_id]["message"]
             urls = self.chat_storage[str(chat_id)][orig_msg_id]["urls"]
