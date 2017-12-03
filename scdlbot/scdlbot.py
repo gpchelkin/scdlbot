@@ -210,7 +210,7 @@ class SCDLBot:
         event_name = "help"
         entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
         for entity_value in entities.values():
-            event_name = entity_value.replace("/", "").replace("@" + self.bot_username)
+            event_name = entity_value.replace("/", "").replace("@" + self.bot_username, "")
             break
         reply_to_message_id = update.message.message_id
         flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
@@ -261,7 +261,7 @@ class SCDLBot:
             # try to determine mode from command
             mode = None
             for entity_value in entities.values():
-                mode = entity_value.replace("/", "").replace("@" + self.bot_username)
+                mode = entity_value.replace("/", "").replace("@" + self.bot_username, "")
                 break
             if not mode:
                 mode = "dl"
