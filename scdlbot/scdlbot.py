@@ -332,8 +332,9 @@ class SCDLBot:
                 flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
                 self.chat_storage[str(chat_id)]["settings"]["flood"] = "no" if flood == "yes" else "yes"
                 # self.log_and_botan_track(("settings_flood"), orig_msg)
+            self.log_and_botan_track("settings_" + action)
             self.chat_storage.sync()
-            # logger.debug(self.chat_storage)
+            update.callback_query.answer(text="Settings changed")
             update.callback_query.edit_message_reply_markup(parse_mode='Markdown',
                                                             reply_markup=self.get_settings_inline_keyboard(
                                                                 chat_id))
@@ -345,7 +346,7 @@ class SCDLBot:
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=md_italic(self.WAIT_TEXT))
-                self.log_and_botan_track(("dl_msg"), orig_msg)
+                self.log_and_botan_track("dl_msg", orig_msg)
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
@@ -360,11 +361,11 @@ class SCDLBot:
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
-                self.log_and_botan_track(("link_msg"), orig_msg)
+                self.log_and_botan_track("link_msg", orig_msg)
             elif action == "nodl":
                 # update.callback_query.answer(text="Cancelled!", show_alert=True)
                 bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
-                self.log_and_botan_track(("nodl_msg"), orig_msg)
+                self.log_and_botan_track("nodl_msg", orig_msg)
             self.chat_storage[str(chat_id)].pop(orig_msg_id)
             for msg_id in self.chat_storage[str(chat_id)]:
                 if msg_id != "settings":
