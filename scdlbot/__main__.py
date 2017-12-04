@@ -3,8 +3,9 @@
 import logging
 import os
 from logging.handlers import SysLogHandler
-from telegram_handler import TelegramHandler
+
 from logentries import LogentriesHandler
+from telegram_handler import TelegramHandler
 
 from scdlbot.scdlbot import SCDLBot
 
@@ -17,7 +18,7 @@ if SYSLOG_DEBUG:
 else:
     common_logging_level = logging.INFO
 
-telegram_logging_level = logging.ERROR
+telegram_logging_level = logging.WARNING
 
 logging_handlers = []
 

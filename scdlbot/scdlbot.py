@@ -128,7 +128,7 @@ class SCDLBot:
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
             self.updater.start_polling()
-        logger.error("Bot started")
+        logger.warning("Bot started")
         self.updater.idle()
 
     def unknown_command_callback(self, bot, update):
@@ -543,7 +543,7 @@ class SCDLBot:
                     status = 1
                 except TimeoutExpired:
                     cmd_proc.kill()
-                    logger.warning("%s took too much time and dropped: %s", url)
+                    logger.info("%s took too much time and dropped: %s", url)
                     status = -1
                 except ProcessExecutionError:
                     logger.exception("%s failed: %s" % (cmd_name, url))
@@ -592,7 +592,7 @@ class SCDLBot:
                 cmd_proc.join(1)
                 if cmd_proc.is_alive():
                     cmd_proc.terminate()
-                logger.warning("%s took too much time and dropped: %s", cmd_name, url)
+                logger.info("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
             except ProcessExecutionError:
                 logger.exception("%s failed: %s" % (cmd_name, url))
@@ -626,14 +626,14 @@ class SCDLBot:
                 except FileNotSupportedError as exc:
                     file_parts = []
                     if not (exc.file_format == "m3u"):
-                        logger.warning("Unsupported file format: %s", file_name)
+                        logger.info("Unsupported file format: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
                                              file_name),
                                          parse_mode='Markdown')
                 except FileTooLargeError as exc:
                     file_parts = []
-                    logger.warning("Large file for convert: %s", file_name)
+                    logger.info("Large file for convert: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
                                          file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
