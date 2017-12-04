@@ -3,7 +3,7 @@
 import logging
 import os
 from logging.handlers import SysLogHandler
-
+from telegram_handler import TelegramHandler
 from logentries import LogentriesHandler
 
 from scdlbot.scdlbot import SCDLBot
@@ -13,17 +13,24 @@ from scdlbot.scdlbot import SCDLBot
 
 SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_DEBUG:
-    logging_level = logging.DEBUG
+    common_logging_level = logging.DEBUG
 else:
-    logging_level = logging.INFO
+    common_logging_level = logging.INFO
+
+telegram_logging_level = logging.ERROR
 
 logging_handlers = []
 
 console_formatter = logging.Formatter('[%(name)s] %(levelname)s: %(message)s')
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
-console_handler.setLevel(logging_level)
+console_handler.setLevel(common_logging_level)
 logging_handlers.append(console_handler)
+
+tg_bot_token = os.environ['TG_BOT_TOKEN']
+alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
+telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=alert_chat_ids[0])
+telegram_handler.setLevel(telegram_logging_level)
 
 syslog_formatter = logging.Formatter('%(asctime)s ' + os.getenv("HOSTNAME", "test-host") + ' %(name)s: %(message)s',
                                      datefmt='%b %d %H:%M:%S')
@@ -33,29 +40,27 @@ if SYSLOG_ADDRESS:
     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
     syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
     syslog_handler.setFormatter(syslog_formatter)
-    syslog_handler.setLevel(logging_level)
+    syslog_handler.setLevel(common_logging_level)
     logging_handlers.append(syslog_handler)
 
 LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
 if LOGENTRIES_TOKEN:
     logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
     logentries_handler.setFormatter(syslog_formatter)
-    logentries_handler.setLevel(logging_level)
+    logentries_handler.setLevel(common_logging_level)
     logging_handlers.append(logentries_handler)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%b %d %H:%M:%S',
-                    level=logging_level,
+                    level=common_logging_level,
                     handlers=logging_handlers)
 
 
 def main():
-    tg_bot_token = os.environ['TG_BOT_TOKEN']
     botan_token = os.getenv('BOTAN_TOKEN', '')
     sc_auth_token = os.environ['SC_AUTH_TOKEN']
     store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
     no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
-    alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '300'))
     dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
     chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))

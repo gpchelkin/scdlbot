@@ -59,7 +59,7 @@ class SCDLBot:
         self.chat_storage = shelve.open(chat_storage_file, writeback=True)
         for chat_id in no_flood_chat_ids:
             self.init_chat(str(chat_id), Chat.PRIVATE if chat_id > 0 else Chat.SUPERGROUP, flood="no")
-        self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
+        # self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.botan_token = botan_token if botan_token else None
@@ -127,7 +127,6 @@ class SCDLBot:
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
             self.updater.start_polling()
-        # self.send_alert(self.updater.bot, "bot restarted")
         self.updater.idle()
 
     def unknown_command_callback(self, bot, update):
@@ -172,7 +171,7 @@ class SCDLBot:
         if "rant_msg_ids" not in self.chat_storage[chat_id]["settings"]:
             self.chat_storage[chat_id]["settings"]["rant_msg_ids"] = []
         self.chat_storage.sync()
-        logger.debug(self.chat_storage)
+        logger.debug("Current chat_storage: %r", self.chat_storage)
 
     def log_and_botan_track(self, event_name, message=None):
         logger.info("Event: %s", event_name)
@@ -181,13 +180,13 @@ class SCDLBot:
         else:
             return False
 
-    def send_alert(self, bot, text, url=""):
-        for alert_chat_id in self.ALERT_CHAT_IDS:
-            try:
-                bot.send_message(chat_id=alert_chat_id,
-                                 text="BOT ADMIN ALERT\nURL or file failed:\n" + url + "\n" + text)
-            except:
-                pass
+    # def send_alert(self, bot, text, url=""):
+    #     for alert_chat_id in self.ALERT_CHAT_IDS:
+    #         try:
+    #             bot.send_message(chat_id=alert_chat_id,
+    #                              text="BOT ADMIN ALERT\nURL or file failed:\n" + url + "\n" + text)
+    #         except:
+    #             pass
 
     def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
         rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -280,11 +279,9 @@ class SCDLBot:
         urls = self.prepare_urls(msg_or_text=update.message,
                                  get_direct_urls=(mode == "link"))  # text=" ".join(args)
         logger.debug(urls)
-        if not urls:
-            logger.info("No supported URLs found")
-            if apologize:
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 text=self.NO_URLS_TEXT, parse_mode='Markdown')
+        if not urls and apologize:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                             text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             if mode == "dl":
                 botan_event_name = "dl_cmd" if command_passed else "dl_msg"
@@ -399,7 +396,7 @@ class SCDLBot:
         self.log_and_botan_track("link_inline")
 
     def get_direct_urls(self, url):
-        logger.debug("get_direct_urls")
+        logger.debug("Entered get_direct_urls")
         try:
             ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
         except ProcessExecutionError as exc:
@@ -541,7 +538,7 @@ class SCDLBot:
                     logger.warning("%s took too much time and dropped: %s", url)
                     status = -1
                 except ProcessExecutionError:
-                    logger.exception("%s failed: %s", cmd_name, url)  # TODO: send_alert
+                    logger.exception("%s failed: %s", cmd_name, url)
 
         if status == 0:
             cmd_name = "youtube-dl"
@@ -576,9 +573,10 @@ class SCDLBot:
             cmd_proc.start()
             try:
                 cmd_retcode, cmd_stderr = queue.get(block=True, timeout=self.DL_TIMEOUT)
+                cmd_stdout = ""
                 cmd_proc.join()
                 if cmd_retcode:
-                    raise ProcessExecutionError(cmd_args, cmd_retcode, "", cmd_stderr)
+                    raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
                     # raise cmd_status  #TODO: pass and re-raise original Exception
                 logger.info("%s succeeded: %s", cmd_name, url)
                 status = 1
@@ -588,8 +586,8 @@ class SCDLBot:
                     cmd_proc.terminate()
                 logger.warning("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
-            except Exception:
-                logger.exception("%s failed: %s", cmd_name, url)  # TODO: send_alert
+            except ProcessExecutionError:
+                logger.exception("%s failed: %s", cmd_name, url)
                 status = -2
             gc.collect()
 
@@ -635,7 +633,6 @@ class SCDLBot:
                 except FileConvertedPartiallyError as exc:
                     file_parts = exc.file_parts
                     logger.exception("Failed pydub convert: %s", file)
-                    self.send_alert(bot, "Memory Error", file)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
                                          file_name),
@@ -653,8 +650,7 @@ class SCDLBot:
                                      text="*Sorry*, could not send file `{}` or some of it's parts, you may try again later..".format(
                                          file_name),
                                      parse_mode='Markdown')
-                    logger.warning("Some parts"
-                                   " of %s failed to send", file)
+                    logger.warning("Some parts of %s failed to send", file)
 
         shutil.rmtree(download_dir, ignore_errors=True)
         if wait_message_id:  # TODO: delete only once or append errors
@@ -713,10 +709,10 @@ class SCDLBot:
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
         sent_audio_ids = []
         for index, file in enumerate(file_parts):
-            file_name = os.path.split(file)[-1]
+            # file_name = os.path.split(file)[-1]
+            # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-            # file = translit(file, 'ru', reversed=True)
             caption_ = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
             if caption:
                 caption_ = caption + caption_
@@ -727,10 +723,9 @@ class SCDLBot:
                     sent_audio_ids.append(audio_msg.audio.file_id)
                     logger.info("Sending succeeded: %s", file)
                     break
-                except TelegramError as exc:
-                    logger.exception("Sending failed because of TelegramError: %s", file)
+                except TelegramError:
                     if i == 2:
-                        self.send_alert(bot, "TelegramError:\n" + str(exc), file_name)
+                        logger.exception("Sending failed because of TelegramError: %s", file)
         if len(sent_audio_ids) != len(file_parts):
             raise FileSentPartiallyError(sent_audio_ids)
         return sent_audio_ids

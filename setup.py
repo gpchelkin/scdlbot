@@ -52,7 +52,8 @@ requirements = [
     "Celery",
     "botanio",
     "logentries",
-    "loggly-python-handler"
+    "loggly-python-handler",
+    "python-telegram-handler"
 ]
 
 setup(
