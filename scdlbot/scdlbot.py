@@ -4,6 +4,7 @@
 
 import configparser
 import gc
+import random
 import shelve
 import shutil
 from datetime import datetime
@@ -278,7 +279,7 @@ class SCDLBot:
         if apologize:
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg_or_text=update.message,
-                                 get_direct_urls=(mode == "link"))  # text=" ".join(args)
+                                 direct_urls=(mode == "link"))  # text=" ".join(args)
         logger.debug(urls)
         if not urls:
             if apologize:
@@ -364,7 +365,7 @@ class SCDLBot:
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=md_italic(self.WAIT_TEXT))
-                urls = self.prepare_urls(urls.keys(), get_direct_urls=True)
+                urls = self.prepare_urls(urls.keys(), direct_urls=True)
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
@@ -390,7 +391,7 @@ class SCDLBot:
         inline_query_id = update.inline_query.id
         text = update.inline_query.query
         results = []
-        urls = self.prepare_urls(msg_or_text=text, get_direct_urls=True)
+        urls = self.prepare_urls(msg_or_text=text, direct_urls=True)
         for url in urls:
             for direct_url in urls[url].splitlines():  # TODO: fix non-mp3 and allow only sc/bc
                 logger.debug(direct_url)
@@ -419,7 +420,7 @@ class SCDLBot:
         else:
             return std_out
 
-    def prepare_urls(self, msg_or_text, get_direct_urls=False):
+    def prepare_urls(self, msg_or_text, direct_urls=False):
         if isinstance(msg_or_text, Message):
             urls = []
             url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
@@ -450,7 +451,7 @@ class SCDLBot:
                     (self.SITES["yt"] in url.host and (
                         "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
                 ):
-                    if get_direct_urls or self.SITES["yt"] in url.host:
+                    if direct_urls or self.SITES["yt"] in url.host:
                         urls_dict[url_text] = self.get_direct_urls(url_text)
                     else:
                         urls_dict[url_text] = "http"
@@ -647,6 +648,15 @@ class SCDLBot:
 
                 try:
                     caption = "Downloaded from {} with @{}\n".format(URL(url).host, self.bot_username)
+                    if "qP303vxTLS8" in url:
+                        caption += "\n" + random.choice([
+                            "Скачал музла, машина эмпэтри дала!",
+                            "У тебя талант, братан! Ка-какой? Качать онлайн!",
+                            "Слушаю и не плачу́, то, что скачал вчера",
+                            "Всё по чесноку, если скачал, отгружу музла!",
+                            "Дёрнул за канат, и телега поймала трэкан!",
+                            "Сегодня я качаю, и трэки не влазят мне в RAM!",
+                        ])
                     flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
