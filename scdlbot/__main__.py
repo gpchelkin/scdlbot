@@ -31,6 +31,7 @@ tg_bot_token = os.environ['TG_BOT_TOKEN']
 alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
 telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=str(alert_chat_ids[0]))
 telegram_handler.setLevel(telegram_logging_level)
+logging_handlers.append(telegram_handler)
 
 syslog_formatter = logging.Formatter('%(asctime)s ' + os.getenv("HOSTNAME", "test-host") + ' %(name)s: %(message)s',
                                      datefmt='%b %d %H:%M:%S')
