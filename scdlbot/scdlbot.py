@@ -530,22 +530,22 @@ class SCDLBot:
                 logger.info("%s starts: %s", url)
                 cmd_proc = cmd[cmd_args].popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
-                    std_out, std_err = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
-                    if cmd_proc.returncode or "Error resolving url" in std_err:
-                        raise ProcessExecutionError(cmd_args, cmd_proc.returncode, std_out, std_err)
+                    cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
+                    cmd_retcode = cmd_proc.returncode
+                    if cmd_retcode or "Error resolving url" in cmd_stderr:
+                        raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
                     logger.info("%s succeeded: %s", cmd_name, url)
                     status = 1
                 except TimeoutExpired:
                     cmd_proc.kill()
                     logger.warning("%s took too much time and dropped: %s", url)
                     status = -1
-                except ProcessExecutionError as exc:
-                    logger.exception("%s failed: %s", cmd_name, url)
-                    # self.send_alert(bot, "scdl failed\nstdout:\n %s \nstderr:\n %s" % (std_out, std_err), url)
+                except ProcessExecutionError:
+                    logger.exception("%s failed: %s", cmd_name, url)  # TODO: send_alert
 
         if status == 0:
             cmd_name = "youtube-dl"
-            cmd = youtube_dl_download
+            cmd = youtube_dl_func
             # TODO: different ydl_opts for different sites
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -575,11 +575,11 @@ class SCDLBot:
             cmd_proc = Process(target=cmd, args=cmd_args)
             cmd_proc.start()
             try:
-                cmd_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
+                cmd_retcode, cmd_stderr = queue.get(block=True, timeout=self.DL_TIMEOUT)
                 cmd_proc.join()
-                if cmd_status:
-                    raise Exception(cmd_status)
-                    # raise cmd_status
+                if cmd_retcode:
+                    raise ProcessExecutionError(cmd_args, cmd_retcode, "", cmd_stderr)
+                    # raise cmd_status  #TODO: pass and re-raise original Exception
                 logger.info("%s succeeded: %s", cmd_name, url)
                 status = 1
             except Empty:
@@ -588,9 +588,8 @@ class SCDLBot:
                     cmd_proc.terminate()
                 logger.warning("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
-            except Exception as exc:
-                logger.exception("%s failed: %s", cmd_name, url)
-                # self.send_alert(bot, "youtube-dl failed\n" + str(exc), url)
+            except Exception:
+                logger.exception("%s failed: %s", cmd_name, url)  # TODO: send_alert
                 status = -2
             gc.collect()
 

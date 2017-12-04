@@ -27,15 +27,15 @@ def get_response_text(file_name):
 def md_italic(text):
     return "".join(["_", text, "_"])
 
-def youtube_dl_download(url, ydl_opts, queue=None):
+def youtube_dl_func(url, ydl_opts, queue=None):
     ydl = youtube_dl.YoutubeDL(ydl_opts)
     try:
         ydl.download([url])
     except Exception as exc:
-        ydl_status = str(exc)
-        # ydl_status = exc  #TODO: throw original fails
+        ydl_status = 1, str(exc)
+        # ydl_status = exc  #TODO: pass and re-raise original Exception
     else:
-        ydl_status = 0
+        ydl_status = 0, "OK"
     if queue:
         queue.put(ydl_status)
     else:
