@@ -619,21 +619,21 @@ class SCDLBot:
                 except FileNotSupportedError as exc:
                     file_parts = []
                     if not (exc.file_format == "m3u"):
-                        logger.warning("Unsupported file format: %s", file)
+                        logger.warning("Unsupported file format: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
                                              file_name),
                                          parse_mode='Markdown')
                 except FileTooLargeError as exc:
                     file_parts = []
-                    logger.warning("Large file for convert: %s", file)
+                    logger.warning("Large file for convert: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
                                          file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
                                      parse_mode='Markdown')
                 except FileConvertedPartiallyError as exc:
                     file_parts = exc.file_parts
-                    logger.exception("Failed pydub convert: %s", file)
+                    logger.exception("pydub failed: %s" % file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
                                          file_name),
@@ -651,7 +651,7 @@ class SCDLBot:
                                      text="*Sorry*, could not send file `{}` or some of it's parts, you may try again later..".format(
                                          file_name),
                                      parse_mode='Markdown')
-                    logger.warning("Some parts of %s failed to send", file)
+                    logger.warning("Some parts of %s failed to send", file_name)
 
         shutil.rmtree(download_dir, ignore_errors=True)
         if wait_message_id:  # TODO: delete only once or append errors
@@ -710,9 +710,9 @@ class SCDLBot:
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
         sent_audio_ids = []
         for index, file in enumerate(file_parts):
-            # file_name = os.path.split(file)[-1]
+            file_name = os.path.split(file)[-1]
             # file_name = translit(file_name, 'ru', reversed=True)
-            logger.info("Sending: %s", file)
+            logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             caption_ = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
             if caption:
@@ -722,11 +722,11 @@ class SCDLBot:
                     audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                audio=open(file, 'rb'), caption=caption_)
                     sent_audio_ids.append(audio_msg.audio.file_id)
-                    logger.info("Sending succeeded: %s", file)
+                    logger.info("Sending succeeded: %s", file_name)
                     break
                 except TelegramError:
                     if i == 2:
-                        logger.exception("Sending failed because of TelegramError: %s", file)
+                        logger.exception("Sending failed because of TelegramError: %s" % file_name)
         if len(sent_audio_ids) != len(file_parts):
             raise FileSentPartiallyError(sent_audio_ids)
         return sent_audio_ids
