@@ -453,8 +453,7 @@ class SCDLBot:
                 elif not any((site in url.host for site in self.SITES.values())):
                     urls_dict[url_text] = self.get_direct_urls(url_text)
             except ProcessExecutionError:
-                logger.info("youtube-dl get url failed")
-                # logger.exception("youtube-dl get url failed")
+                logger.debug("youtube-dl get url failed: %s", url_text)
             except URLError as exc:
                 urls_dict[url_text] = exc.status
         return urls_dict
@@ -465,7 +464,6 @@ class SCDLBot:
             link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
             direct_urls = urls[url].splitlines()
             for j, direct_url in enumerate(direct_urls):
-                logger.debug(direct_url)
                 if "http" in direct_url:
                     content_type = ""
                     if "googlevideo" in direct_url:
@@ -490,41 +488,6 @@ class SCDLBot:
         shutil.rmtree(download_dir, ignore_errors=True)
         os.makedirs(download_dir)
 
-        scdl_cmd = scdl_bin[
-            "-l", url,  # URL of track/playlist/user
-            "-c",  # Continue if a music already exist
-            "--path", download_dir,  # Download the music to a custom path
-            "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-            "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-        ]
-        bandcamp_dl_cmd = bandcamp_dl_bin[
-            "--base-dir", download_dir,  # Base location of which all files are downloaded
-            "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
-            "--overwrite",  # Overwrite tracks that already exist
-            "--group",  # Use album/track Label as iTunes grouping
-            "--embed-art",  # Embed album art (if available)
-            "--no-slugify",  # Disable slugification of track, album, and artist names
-            url  # URL of album/track
-        ]
-        # TODO: different ydl_opts for different sites
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
-            'postprocessors': [
-                {
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '128',
-                },
-                # {
-                #     'key': 'EmbedThumbnail',
-                # },
-                # {
-                #     'key': 'FFmpegMetadata',
-                # },
-            ],
-        }
-
         status = 0
         if direct_urls == "direct":
             status = -3
@@ -533,79 +496,101 @@ class SCDLBot:
         elif direct_urls == "live":
             status = -5
         else:
-            logger.info("Trying to download URL: %s", url)
-            if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-                logger.info("scdl starts")
+            if (self.SITES["sc"] in url and self.SITES["scapi"] not in url) or (self.SITES["bc"] in url):
+                cmd_name = "scdl"
+                cmd_args = []
+                cmd = None
+                cmd_input = None
+                if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
+                    cmd_name = "scdl"
+                    cmd_args = (
+                        "-l", url,  # URL of track/playlist/user
+                        "-c",  # Continue if a music already exist
+                        "--path", download_dir,  # Download the music to a custom path
+                        "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                        "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+                        "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                    )
+                    cmd = scdl_bin
+                    cmd_input = None
+                elif self.SITES["bc"] in url:
+                    cmd_name = "bandcamp-dl"
+                    cmd_args = (
+                        "--base-dir", download_dir,  # Base location of which all files are downloaded
+                        "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
+                        "--overwrite",  # Overwrite tracks that already exist
+                        "--group",  # Use album/track Label as iTunes grouping
+                        "--embed-art",  # Embed album art (if available)
+                        "--no-slugify",  # Disable slugification of track, album, and artist names
+                        url,  # URL of album/track
+                    )
+                    cmd = bandcamp_dl_bin
+                    cmd_input = "yes"
+
+                logger.info("%s starts: %s", url)
+                cmd_proc = cmd[cmd_args].popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
-                    cmd_popen = scdl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-                    try:
-                        std_out, std_err = cmd_popen.communicate(timeout=self.DL_TIMEOUT)
-                        if cmd_popen.returncode or "Error resolving url" in std_err:
-                            text = "scdl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
-                            logger.error(text)
-                            self.send_alert(bot, text, url)
-                        else:
-                            text = "scdl succeeded"
-                            logger.info(text)
-                            status = 1
-                    except TimeoutExpired:
-                        text = "Download took with scdl too long, dropped"
-                        logger.warning(text)
-                        cmd_popen.kill()
-                        status = -1
-                except Exception as exc:
-                    text = "scdl start failed"
-                    logger.exception(text)
-                    self.send_alert(bot, text + "\n" + str(exc), url)
-            elif self.SITES["bc"] in url:
-                logger.info("bandcamp-dl starts")
-                try:
-                    cmd_popen = bandcamp_dl_cmd.popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-                    try:
-                        std_out, std_err = cmd_popen.communicate(input="yes", timeout=self.DL_TIMEOUT)
-                        if cmd_popen.returncode:
-                            text = "bandcamp-dl process failed" + "\nstdout:\n" + std_out + "\nstderr:\n" + std_err
-                            logger.error(text)
-                            self.send_alert(bot, text, url)
-                        else:
-                            text = "bandcamp-dl succeeded"
-                            logger.info(text)
-                            status = 1
-                    except TimeoutExpired:
-                        text = "bandcamp-dl took too much time and dropped"
-                        logger.warning(text)
-                        cmd_popen.kill()
-                        status = -1
-                except Exception as exc:
-                    text = "bandcamp-dl start failed"
-                    logger.exception(text)
-                    self.send_alert(bot, text + "\n" + str(exc), url)
+                    std_out, std_err = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
+                    if cmd_proc.returncode or "Error resolving url" in std_err:
+                        raise ProcessExecutionError(cmd_args, cmd_proc.returncode, std_out, std_err)
+                    logger.info("%s succeeded: %s", cmd_name, url)
+                    status = 1
+                except TimeoutExpired:
+                    cmd_proc.kill()
+                    logger.warning("%s took too much time and dropped: %s", url)
+                    status = -1
+                except ProcessExecutionError as exc:
+                    logger.exception("%s failed: %s", cmd_name, url)
+                    # self.send_alert(bot, "scdl failed\nstdout:\n %s \nstderr:\n %s" % (std_out, std_err), url)
 
         if status == 0:
-            logger.info("youtube-dl starts")
+            cmd_name = "youtube-dl"
+            cmd = youtube_dl_download
+            # TODO: different ydl_opts for different sites
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '128',
+                    },
+                    # {
+                    #     'key': 'EmbedThumbnail',
+                    # },
+                    # {
+                    #     'key': 'FFmpegMetadata',
+                    # },
+                ],
+            }
             queue = Queue()
-            ydl_proc = Process(target=youtube_dl_download, args=(url, ydl_opts, queue,))
-            ydl_proc.start()
+            cmd_args = (
+                url,  # URL of video
+                ydl_opts,
+                queue,
+            )
+
+            logger.info("%s starts: %s", cmd_name, url)
+            cmd_proc = Process(target=cmd, args=cmd_args)
+            cmd_proc.start()
             try:
-                ydl_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
-                ydl_proc.join()
-                if ydl_status:
-                    raise Exception(ydl_status)
-                    # raise ydl_status
-                text = "youtube-dl succeeded"
-                logger.info(text)
+                cmd_status = queue.get(block=True, timeout=self.DL_TIMEOUT)
+                cmd_proc.join()
+                if cmd_status:
+                    raise Exception(cmd_status)
+                    # raise cmd_status
+                logger.info("%s succeeded: %s", cmd_name, url)
                 status = 1
             except Empty:
-                ydl_proc.join(1)
-                if ydl_proc.is_alive():
-                    ydl_proc.terminate()
-                text = "youtube-dl took too much time and dropped"
-                logger.warning(text)
+                cmd_proc.join(1)
+                if cmd_proc.is_alive():
+                    cmd_proc.terminate()
+                logger.warning("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
             except Exception as exc:
-                text = "youtube-dl failed"
-                logger.exception(text)
-                self.send_alert(bot, text + "\n" + str(exc), url)
+                logger.exception("%s failed: %s", cmd_name, url)
+                # self.send_alert(bot, "youtube-dl failed\n" + str(exc), url)
                 status = -2
             gc.collect()
 
@@ -680,13 +665,9 @@ class SCDLBot:
                 pass
 
         # downloader = URLopener()
-        #     try:
-        #         file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
-        #         patoolib.extract_archive(file_name, outdir=DL_DIR)
-        #         os.remove(file_name)
-        #     except Exception as exc:
-        #         return str(exc)
-        #     #     return str(sys.exc_info()[0:1])
+        # file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
+        # patoolib.extract_archive(file_name, outdir=DL_DIR)
+        # os.remove(file_name)
 
     def split_audio_file(self, file=""):
         file_root, file_ext = os.path.splitext(file)
@@ -734,7 +715,7 @@ class SCDLBot:
         sent_audio_ids = []
         for index, file in enumerate(file_parts):
             file_name = os.path.split(file)[-1]
-            logger.info("Sending: %s...", file)
+            logger.info("Sending: %s", file)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             # file = translit(file, 'ru', reversed=True)
             caption_ = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
