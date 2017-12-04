@@ -321,12 +321,13 @@ class SCDLBot:
 
     def button_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
-        chat_type = update.message.chat.type
+        chat_type = update.callback_query.message.chat_type
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
                 user_id = update.message.from_user.id
+                logger.debug(user_id)
                 chat_member_status = update.message.chat.get_member(user_id).status
                 if chat_member_status != ChatMember.ADMINISTRATOR and user_id not in self.ALERT_CHAT_IDS:
                     update.callback_query.answer(text="You are not an admin of this chat")
