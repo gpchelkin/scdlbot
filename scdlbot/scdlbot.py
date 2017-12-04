@@ -280,9 +280,10 @@ class SCDLBot:
         urls = self.prepare_urls(msg_or_text=update.message,
                                  get_direct_urls=(mode == "link"))  # text=" ".join(args)
         logger.debug(urls)
-        if not urls and apologize:
-            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                             text=self.NO_URLS_TEXT, parse_mode='Markdown')
+        if not urls:
+            if apologize:
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             if mode == "dl":
                 botan_event_name = "dl_cmd" if command_passed else "dl_msg"
@@ -327,8 +328,8 @@ class SCDLBot:
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
                 user_id = update.callback_query.from_user.id
-                logger.debug(user_id)
                 chat_member_status = update.callback_query.message.chat.get_member(user_id).status
+                logger.debug(user_id + chat_member_status)
                 if chat_member_status != ChatMember.ADMINISTRATOR and user_id not in self.ALERT_CHAT_IDS:
                     update.callback_query.answer(text="You are not an admin of this chat")
                     return

@@ -2,6 +2,12 @@
 History
 =======
 
+0.9.7 (2017-02-04)
+------------------
+* new telegram logging
+* only admins can change settings
+* close button in settings
+
 0.9.6 (2017-02-03)
 ------------------
 * separate file for utils, botan track refactored
