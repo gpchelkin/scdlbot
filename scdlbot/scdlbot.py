@@ -323,6 +323,7 @@ class SCDLBot:
     def button_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
         chat_type = update.callback_query.message.chat.type
+        self.init_chat(chat_id, chat_type)
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
