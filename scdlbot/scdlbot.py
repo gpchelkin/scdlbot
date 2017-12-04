@@ -127,6 +127,7 @@ class SCDLBot:
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
             self.updater.start_polling()
+        logger.error("Bot started")
         self.updater.idle()
 
     def unknown_command_callback(self, bot, update):
