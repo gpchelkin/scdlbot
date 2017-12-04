@@ -321,7 +321,7 @@ class SCDLBot:
 
     def button_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
-        chat_type = update.callback_query.message.chat_type
+        chat_type = update.callback_query.message.chat.type
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
@@ -334,12 +334,9 @@ class SCDLBot:
                     return
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
-                # self.log_and_botan_track(("settings_flood"), orig_msg)
             else:
                 if action in ["dl", "link", "ask"]:
-                    # update.callback_query.answer(text="Default set")
                     self.chat_storage[str(chat_id)]["settings"]["mode"] = action
-                    # self.log_and_botan_track(("settings_dl"), orig_msg)
                 elif action in ["flood"]:
                     current_setting = self.chat_storage[str(chat_id)]["settings"][action]
                     self.chat_storage[str(chat_id)]["settings"][action] = "no" if current_setting == "yes" else "yes"
