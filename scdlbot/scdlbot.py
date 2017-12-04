@@ -18,7 +18,7 @@ from boltons.urlutils import find_all_links, URL
 from plumbum import ProcessExecutionError
 from pydub import AudioSegment
 from pyshorteners import Shortener
-from telegram import Message, Chat, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
+from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
     InlineQueryResultAudio
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
@@ -59,7 +59,7 @@ class SCDLBot:
         self.chat_storage = shelve.open(chat_storage_file, writeback=True)
         for chat_id in no_flood_chat_ids:
             self.init_chat(str(chat_id), Chat.PRIVATE if chat_id > 0 else Chat.SUPERGROUP, flood="no")
-        # self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
+        self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.botan_token = botan_token if botan_token else None
@@ -321,9 +321,16 @@ class SCDLBot:
 
     def button_query_callback(self, bot, update):
         chat_id = update.callback_query.message.chat_id
+        chat_type = update.message.chat.type
         btn_msg_id = update.callback_query.message.message_id
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
+            if chat_type != Chat.PRIVATE:
+                user_id = update.message.from_user.id
+                chat_member_status = update.message.chat.get_member(user_id).status
+                if chat_member_status != ChatMember.ADMINISTRATOR and user_id not in self.ALERT_CHAT_IDS:
+                    update.callback_query.answer(text="You are not an admin of this chat")
+                    return
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
                 # self.log_and_botan_track(("settings_flood"), orig_msg)
