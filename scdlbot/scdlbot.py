@@ -524,7 +524,7 @@ class SCDLBot:
                     cmd = bandcamp_dl_bin
                     cmd_input = "yes"
 
-                logger.info("%s starts: %s", url)
+                logger.info("%s starts: %s", cmd_name, url)
                 cmd_proc = cmd[cmd_args].popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
@@ -538,7 +538,7 @@ class SCDLBot:
                     logger.warning("%s took too much time and dropped: %s", url)
                     status = -1
                 except ProcessExecutionError:
-                    logger.error("%s failed: %s", cmd_name, url)
+                    logger.error("%s failed: %s" % (cmd_name, url))
 
         if status == 0:
             cmd_name = "youtube-dl"
@@ -587,7 +587,7 @@ class SCDLBot:
                 logger.warning("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
             except ProcessExecutionError:
-                logger.error("%s failed: %s", cmd_name, url)
+                logger.error("%s failed: %s" % (cmd_name, url))
                 status = -2
             gc.collect()
 
