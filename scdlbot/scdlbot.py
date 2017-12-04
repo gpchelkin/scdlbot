@@ -538,7 +538,7 @@ class SCDLBot:
                     logger.warning("%s took too much time and dropped: %s", url)
                     status = -1
                 except ProcessExecutionError:
-                    logger.exception("%s failed: %s", cmd_name, url)
+                    logger.error("%s failed: %s", cmd_name, url)
 
         if status == 0:
             cmd_name = "youtube-dl"
@@ -587,7 +587,7 @@ class SCDLBot:
                 logger.warning("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
             except ProcessExecutionError:
-                logger.exception("%s failed: %s", cmd_name, url)
+                logger.error("%s failed: %s", cmd_name, url)
                 status = -2
             gc.collect()
 
