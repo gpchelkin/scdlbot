@@ -331,7 +331,7 @@ class SCDLBot:
                 user_id = update.callback_query.from_user.id
                 chat_member_status = update.callback_query.message.chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR, ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
-                    update.callback_query.answer(text="You are not chat admin")
+                    update.callback_query.answer(text="You're not an admin of this chat.")
                     return
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
