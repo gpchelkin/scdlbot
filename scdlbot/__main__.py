@@ -36,7 +36,7 @@ telegram_handler.setLevel(telegram_logging_level)
 logging_handlers.append(telegram_handler)
 
 syslog_formatter = logging.Formatter('%(asctime)s ' + os.getenv("HOSTNAME", "test-host") + ' %(name)s: %(message)s',
-                                     datefmt='%b %d %H:%M:%S')
+                                     datefmt='%Y-%m-%d %H:%M:%S')
 
 SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
 if SYSLOG_ADDRESS:
