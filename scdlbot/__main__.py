@@ -11,12 +11,13 @@ from scdlbot.scdlbot import SCDLBot
 
 # import loggly.handlers
 
+common_logging_level = logging.DEBUG
 
 SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 if SYSLOG_DEBUG:
-    common_logging_level = logging.DEBUG
+    syslog_logging_level = logging.DEBUG
 else:
-    common_logging_level = logging.INFO
+    syslog_logging_level = logging.INFO
 
 telegram_logging_level = logging.WARNING
 
@@ -42,18 +43,18 @@ if SYSLOG_ADDRESS:
     syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
     syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
     syslog_handler.setFormatter(syslog_formatter)
-    syslog_handler.setLevel(common_logging_level)
+    syslog_handler.setLevel(syslog_logging_level)
     logging_handlers.append(syslog_handler)
 
 LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
 if LOGENTRIES_TOKEN:
     logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
     logentries_handler.setFormatter(syslog_formatter)
-    logentries_handler.setLevel(common_logging_level)
+    logentries_handler.setLevel(syslog_logging_level)
     logging_handlers.append(logentries_handler)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    datefmt='%b %d %H:%M:%S',
+                    datefmt='%Y-%m-%d %H:%M:%S',
                     level=common_logging_level,
                     handlers=logging_handlers)
 
