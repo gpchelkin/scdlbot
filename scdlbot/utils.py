@@ -48,8 +48,8 @@ def botan_track(token, message, event_name):
     except AttributeError:
         logger.warning('No chat_id in message')
         return False
-    num_retries = 3
-    ssl_verify = True  # TODO: re-enable
+    num_retries = 2
+    ssl_verify = True
     for i in range(num_retries):
         try:
             r = requests.post(
