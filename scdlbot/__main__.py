@@ -11,51 +11,44 @@ from scdlbot.scdlbot import SCDLBot
 
 # import loggly.handlers
 
-common_logging_level = logging.DEBUG
-
-SYSLOG_DEBUG = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
-if SYSLOG_DEBUG:
-    syslog_logging_level = logging.DEBUG
-else:
-    syslog_logging_level = logging.INFO
-
-telegram_logging_level = logging.WARNING
-
 logging_handlers = []
 
 console_formatter = logging.Formatter('[%(name)s] %(levelname)s: %(message)s')
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
-console_handler.setLevel(common_logging_level)
+console_handler.setLevel(logging.DEBUG)
 logging_handlers.append(console_handler)
 
 tg_bot_token = os.environ['TG_BOT_TOKEN']
 alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
 telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=str(alert_chat_ids[0]))
-telegram_handler.setLevel(telegram_logging_level)
+telegram_handler.setLevel(logging.WARNING)
 logging_handlers.append(telegram_handler)
 
-syslog_formatter = logging.Formatter('%(asctime)s ' + os.getenv("HOSTNAME", "test-host") + ' %(name)s: %(message)s',
-                                     datefmt='%Y-%m-%d %H:%M:%S')
+syslog_debug = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
+syslog_logging_level = logging.DEBUG if syslog_debug else logging.INFO
+syslog_hostname = os.getenv("HOSTNAME", "test-host")
+syslog_formatter = logging.Formatter('%(asctime)s ' + syslog_hostname + ' %(name)s: %(message)s',
+                                     datefmt='%b %d %H:%M:%S')
 
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS', '')
-if SYSLOG_ADDRESS:
-    syslog_hostname, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_handler = SysLogHandler(address=(syslog_hostname, int(syslog_udp_port)))
+syslog_address = os.getenv('SYSLOG_ADDRESS', '')
+if syslog_address:
+    syslog_host, syslog_udp_port = syslog_address.split(":")
+    syslog_handler = SysLogHandler(address=(syslog_host, int(syslog_udp_port)))
     syslog_handler.setFormatter(syslog_formatter)
     syslog_handler.setLevel(syslog_logging_level)
     logging_handlers.append(syslog_handler)
 
-LOGENTRIES_TOKEN = os.getenv('LOGENTRIES_TOKEN', '')
-if LOGENTRIES_TOKEN:
-    logentries_handler = LogentriesHandler(LOGENTRIES_TOKEN)
+logentries_token = os.getenv('LOGENTRIES_TOKEN', '')
+if logentries_token:
+    logentries_handler = LogentriesHandler(logentries_token)
     logentries_handler.setFormatter(syslog_formatter)
     logentries_handler.setLevel(syslog_logging_level)
     logging_handlers.append(logentries_handler)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
-                    level=common_logging_level,
+                    level=logging.DEBUG,
                     handlers=logging_handlers)
 
 
