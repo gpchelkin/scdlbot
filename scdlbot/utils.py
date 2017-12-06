@@ -60,11 +60,10 @@ def botan_track(token, message, event_name):
             )
             return r.json()
         except Timeout:
-            # set up for a retry, or continue in a retry loop
-            logger.exception("botan_track")
-        except (RequestException, ValueError):
-            # catastrophic error
-            logger.exception("botan_track")
+            logger.exception("botan_track timeout")
         except SSLError:
             ssl_verify = False
+        except (Exception, RequestException, ValueError):
+            # catastrophic error
+            logger.exception("botan_track catastrophic error")
     return False
