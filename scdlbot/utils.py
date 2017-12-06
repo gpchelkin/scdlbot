@@ -65,5 +65,5 @@ def botan_track(token, message, event_name):
             ssl_verify = False
         except (Exception, RequestException, ValueError):
             # catastrophic error
-            logger.exception("botan_track catastrophic error")
+            logger.exception("botan_track 🙀astrophic error")
     return False
