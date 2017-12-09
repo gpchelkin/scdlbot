@@ -1,6 +1,6 @@
-import logging
 # from botanio import botan
 import json
+import logging
 import os
 
 import pkg_resources
@@ -46,7 +46,7 @@ def botan_track(token, message, event_name):
         # uid = message.chat_id
         uid = message.from_user.id
     except AttributeError:
-        logger.warning('No chat_id in message')
+        logger.warning('Botan no chat_id in message')
         return False
     num_retries = 2
     ssl_verify = True
@@ -61,10 +61,10 @@ def botan_track(token, message, event_name):
             )
             return r.json()
         except Timeout:
-            logger.exception("botan_track timeout")
+            logger.exception("Botan timeout on event: %s" % event_name)
         except SSLError:
             ssl_verify = False
         except (Exception, RequestException, ValueError):
             # catastrophic error
-            logger.exception("botan_track 🙀astrophic error")
+            logger.exception("Botan 🙀astrophic error on event: %s" % event_name)
     return False
