@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.8 (2017-02-05)
+------------------
+* b0tan logging improvement
+* requirements updated
+
 0.9.7.2 (2017-02-05)
 ------------------
 * console debug logging
