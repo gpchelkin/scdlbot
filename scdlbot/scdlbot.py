@@ -335,14 +335,15 @@ class SCDLBot:
     def button_query_callback(self, bot, update):
         btn_msg = update.callback_query.message
         self.init_chat(btn_msg)
+        user_id = update.callback_query.from_user.id
         btn_msg_id = btn_msg.message_id
-        chat_id = btn_msg.chat_id
-        chat_type = btn_msg.chat.type
+        chat = btn_msg.chat
+        chat_id = chat.id
+        chat_type = chat.type
         orig_msg_id, action = update.callback_query.data.split()
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
-                user_id = update.callback_query.from_user.id
-                chat_member_status = update.callback_query.message.chat.get_member(user_id).status
+                chat_member_status = chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR, ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
                     self.log_and_botan_track("settings_fail")
                     update.callback_query.answer(text="You're not an admin of this chat.")
@@ -351,16 +352,24 @@ class SCDLBot:
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
             else:
+                setting_changed = False
                 if action in ["dl", "link", "ask"]:
-                    self.chat_storage[str(chat_id)]["settings"]["mode"] = action
+                    current_setting = self.chat_storage[str(chat_id)]["settings"]["mode"]
+                    if action != current_setting:
+                        setting_changed = True
+                        self.chat_storage[str(chat_id)]["settings"]["mode"] = action
                 elif action in ["flood"]:
-                    current_setting = self.chat_storage[str(chat_id)]["settings"][action]
+                    current_setting = self.chat_storage[str(chat_id)]["settings"]["flood"]
+                    setting_changed = True
                     self.chat_storage[str(chat_id)]["settings"][action] = "no" if current_setting == "yes" else "yes"
-                self.chat_storage.sync()
-                update.callback_query.answer(text="Settings changed")
-                update.callback_query.edit_message_reply_markup(parse_mode='Markdown',
-                                                                reply_markup=self.get_settings_inline_keyboard(
-                                                                    chat_id))
+                if setting_changed:
+                    self.chat_storage.sync()
+                    update.callback_query.answer(text="Settings changed")
+                    update.callback_query.edit_message_reply_markup(parse_mode='Markdown',
+                                                                    reply_markup=self.get_settings_inline_keyboard(
+                                                                        chat_id))
+                else:
+                    update.callback_query.answer(text="Settings unchanged")
         elif orig_msg_id in self.chat_storage[str(chat_id)]:
             msg_from_storage = self.chat_storage[str(chat_id)].pop(orig_msg_id)
             orig_msg = msg_from_storage["message"]
