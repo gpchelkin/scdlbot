@@ -59,7 +59,7 @@ class SCDLBot:
         # self.chat_storage = {}
         self.chat_storage = shelve.open(chat_storage_file, writeback=True)
         for chat_id in no_flood_chat_ids:
-            self.init_chat(str(chat_id), Chat.PRIVATE if chat_id > 0 else Chat.SUPERGROUP, flood="no")
+            self.init_chat(chat_id=chat_id, chat_type=Chat.PRIVATE if chat_id > 0 else Chat.SUPERGROUP, flood="no")
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
