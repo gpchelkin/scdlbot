@@ -42,7 +42,8 @@ class SCDLBot:
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
             self.MAX_TG_FILE_SIZE = 19000000
-        self.MAX_TG_FILE_SIZE = 47000000
+        else:
+            self.MAX_TG_FILE_SIZE = 47000000
         self.SITES = {
             "sc": "soundcloud",
             "scapi": "api.soundcloud",
