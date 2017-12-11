@@ -2,7 +2,7 @@
 History
 =======
 
-0.9.8 (2017-12-12)
+0.9.9 (2017-12-12)
 ------------------
 * serve audios with nginx and send URLs instead of files https://core.telegram.org/bots/api#sending-files
 
