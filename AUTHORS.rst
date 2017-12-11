@@ -11,3 +11,4 @@ Contributors
 ------------
 
 * Leonid Runyshkin @leovp <runyshkin@gmail.com>
+* Vadim Larionov @vadimlarionov <larionov.vadim@my.com>

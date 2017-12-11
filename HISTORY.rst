@@ -2,40 +2,44 @@
 History
 =======
 
-0.9.8 (2017-02-05)
+0.9.8 (2017-12-12)
+------------------
+* serve audios with nginx and send URLs instead of files https://core.telegram.org/bots/api#sending-files
+
+0.9.8 (2017-12-05)
 ------------------
 * b0tan logging improvement
 * requirements updated
 
-0.9.7.2 (2017-02-05)
+0.9.7.2 (2017-12-05)
 ------------------
 * console debug logging
 
-0.9.7.1 (2017-02-05)
+0.9.7.1 (2017-12-05)
 ------------------
 * easter egg added
 
-0.9.7 (2017-02-04)
+0.9.7 (2017-12-04)
 ------------------
 * new telegram logging
 * only admins can change settings
 * close button in settings
 
-0.9.6 (2017-02-03)
+0.9.6 (2017-12-03)
 ------------------
 * separate file for utils, botan track refactored
 * parse message for markdown text links too
 * temporary disable SSL verification for botan (cert expired)
 
-0.9.5.2 (2017-02-03)
+0.9.5.2 (2017-12-03)
 ------------------
 * hot fix
 
-0.9.5.1 (2017-02-02)
+0.9.5.1 (2017-12-02)
 ------------------
 * fix logging
 
-0.9.5 (2017-02-02)
+0.9.5 (2017-12-02)
 ------------------
 * settings command
 * persistent storage for settings

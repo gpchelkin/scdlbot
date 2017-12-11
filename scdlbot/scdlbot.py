@@ -756,9 +756,9 @@ class SCDLBot:
             for i in range(3):
                 try:
                     audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                    logger.debug(audio)
                     if not self.SERVE_AUDIO:
                         audio = open(file, 'rb')
-                    logger.warning(audio)
                     audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                audio=audio, caption=caption_)
                     sent_audio_ids.append(audio_msg.audio.file_id)

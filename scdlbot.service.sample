@@ -11,6 +11,8 @@ Description=scdlbot
 After=syslog.target
 
 [Service]
+User=www-data
+Group=www-data
 Type=simple
 EnvironmentFile=/home/gpchelkin/scdlbot/.env
 #ExecStart=/usr/local/bin/scdlbot
