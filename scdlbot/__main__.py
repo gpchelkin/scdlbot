@@ -61,6 +61,7 @@ def main():
     dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
     chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
+    serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))
     app_url = os.getenv('APP_URL', '')
     webhook_port = int(os.getenv('PORT', '5000'))
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80000000'))
@@ -69,8 +70,8 @@ def main():
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
-                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file)
-    scdlbot.start(use_webhook, app_url, webhook_port, cert_file, cert_key_file, url_path=tg_bot_token)
+                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url, serve_audio)
+    scdlbot.start(use_webhook, webhook_port, cert_file, cert_key_file, url_path=tg_bot_token)
 
 
 if __name__ == '__main__':

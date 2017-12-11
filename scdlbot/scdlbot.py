@@ -13,6 +13,7 @@ from queue import Empty
 from subprocess import PIPE, TimeoutExpired
 from urllib.parse import urljoin
 from uuid import uuid4
+import pathlib
 
 import mutagen.id3
 from boltons.urlutils import find_all_links, URL
@@ -37,14 +38,18 @@ class SCDLBot:
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=300,
-                 max_convert_file_size=80000000, chat_storage_file="/tmp/scdlbotdata"):
-        self.MAX_TG_FILE_SIZE = 45000000
+                 max_convert_file_size=80000000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
+        self.SERVE_AUDIO = serve_audio
+        if self.SERVE_AUDIO:
+            self.MAX_TG_FILE_SIZE = 19000000
+        self.MAX_TG_FILE_SIZE = 47000000
         self.SITES = {
             "sc": "soundcloud",
             "scapi": "api.soundcloud",
             "bc": "bandcamp",
             "yt": "youtu",
         }
+        self.APP_URL = app_url
         self.DL_TIMEOUT = dl_timeout
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
         self.HELP_TEXT = get_response_text('help.tg.md')
@@ -113,7 +118,7 @@ class SCDLBot:
         self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
         self.RANT_TEXT_PUBLIC = "[Press here and start to read help in my PM to learn how to use me](t.me/" + self.bot_username + "?start=1)"
 
-    def start(self, use_webhook=False, app_url=None, webhook_port=None, cert_file=None, cert_key_file=None,
+    def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
               webhook_host="0.0.0.0",
               url_path="scdlbot"):
         if use_webhook:
@@ -124,7 +129,7 @@ class SCDLBot:
             # cert=cert_file if cert_file else None,
             # key=cert_key_file if cert_key_file else None,
             # webhook_url=urljoin(app_url, url_path))
-            self.updater.bot.set_webhook(url=urljoin(app_url, url_path),
+            self.updater.bot.set_webhook(url=urljoin(self.APP_URL, url_path),
                                          certificate=open(cert_file, 'rb') if cert_file else None)
         else:
             self.updater.start_polling()
@@ -682,7 +687,8 @@ class SCDLBot:
                                      parse_mode='Markdown')
                     logger.warning("Some parts of %s failed to send", file_name)
 
-        shutil.rmtree(download_dir, ignore_errors=True)
+        if not self.SERVE_AUDIO:
+            shutil.rmtree(download_dir, ignore_errors=True)
         if wait_message_id:  # TODO: delete only once or append errors
             try:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
@@ -739,6 +745,7 @@ class SCDLBot:
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
         sent_audio_ids = []
         for index, file in enumerate(file_parts):
+            path = pathlib.Path(file)
             file_name = os.path.split(file)[-1]
             # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file_name)
@@ -748,8 +755,11 @@ class SCDLBot:
                 caption_ = caption + caption_
             for i in range(3):
                 try:
+                    audio = urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR)))
+                    if not self.SERVE_AUDIO:
+                        audio = open(file, 'rb')
                     audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               audio=open(file, 'rb'), caption=caption_)
+                                               audio=audio, caption=caption_)
                     sent_audio_ids.append(audio_msg.audio.file_id)
                     logger.info("Sending succeeded: %s", file_name)
                     break
