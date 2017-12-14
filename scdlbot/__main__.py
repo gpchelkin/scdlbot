@@ -58,7 +58,7 @@ def main():
     store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
     no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '300'))
-    dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdl'))
+    dl_dir = os.path.expanduser(os.getenv('DL_DIR', '/tmp/scdlbot'))
     chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))

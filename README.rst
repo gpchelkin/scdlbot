@@ -171,7 +171,7 @@ Optional
 -  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
    default: empty (binaries are availaible in PATH)
--  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdl
+-  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdlbot
 -  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading if it takes longer than allowed, default: 300
 -  ``MAX_CONVERT_FILE_SIZE``: Don't try to split and send files over this number of bytes, default: 80000000
 -  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``

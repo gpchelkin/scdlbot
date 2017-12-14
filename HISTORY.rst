@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.10 (2017-12-14)
+------------------
+* convert non-mp3 files to mp3
+* don't apologize for pictures
+* don't allow sc/you links
+* some renaming, move get_direct_urls to utils
+
 0.9.9 (2017-12-12)
 ------------------
 * serve audios with nginx and send URLs instead of files https://core.telegram.org/bots/api#sending-files

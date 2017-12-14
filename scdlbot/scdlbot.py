@@ -37,7 +37,7 @@ class SCDLBot:
 
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
-                 alert_chat_ids=None, dl_dir="/tmp/scdl", dl_timeout=300,
+                 alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
                  max_convert_file_size=80000000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:

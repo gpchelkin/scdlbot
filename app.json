@@ -49,7 +49,7 @@
         },
         "DL_DIR": {
             "description": "Parent directory for downloads directories",
-            "value": "/tmp/scdl",
+            "value": "/tmp/scdlbot",
             "required": false
         },
         "DL_TIMEOUT": {
