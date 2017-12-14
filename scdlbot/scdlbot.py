@@ -59,6 +59,7 @@ class SCDLBot:
         self.WAIT_TEXT = get_response_text('wait.txt')
         self.NO_AUDIO_TEXT = get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = get_response_text('no_urls.txt')
+        self.OLG_MSG_TEXT = get_response_text('old_msg.txt')
         self.REGION_RESTRICTION_TEXT = get_response_text('region_restriction.txt')
         self.DIRECT_RESTRICTION_TEXT = get_response_text('direct_restriction.txt')
         self.LIVE_RESTRICTION_TEXT = get_response_text('live_restriction.txt')
@@ -298,7 +299,7 @@ class SCDLBot:
         if apologize:
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         urls = self.prepare_urls(msg_or_text=update.message,
-                                 direct_urls=(mode == "link"))  # text=" ".join(args)
+                                 direct_urls=(mode == "link"))
         logger.debug(urls)
         if not urls:
             if apologize:
@@ -352,7 +353,7 @@ class SCDLBot:
                 chat_member_status = chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR, ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
                     self.log_and_botan_track("settings_fail")
-                    update.callback_query.answer(text="You're not an admin of this chat.")
+                    update.callback_query.answer(text="You're not chat admin")
                     return
             self.log_and_botan_track("settings_" + action, btn_msg)
             if action == "close":
@@ -375,7 +376,7 @@ class SCDLBot:
                                                                     reply_markup=self.get_settings_inline_keyboard(
                                                                         chat_id))
                 else:
-                    update.callback_query.answer(text="Settings unchanged")
+                    update.callback_query.answer(text="Settings not changed")
         elif orig_msg_id in self.chat_storage[str(chat_id)]:
             msg_from_storage = self.chat_storage[str(chat_id)].pop(orig_msg_id)
             orig_msg = msg_from_storage["message"]
@@ -400,10 +401,9 @@ class SCDLBot:
                                  text=link_text if link_text else self.NO_URLS_TEXT)
                 bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif action == "nodl":
-                # update.callback_query.answer(text="Cancelled!", show_alert=True)
                 bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
         else:
-            update.callback_query.answer(text="Sorry, very old message that I don't remember.")
+            update.callback_query.answer(text=self.OLG_MSG_TEXT)
             bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
     def inline_query_callback(self, bot, update):
@@ -427,7 +427,7 @@ class SCDLBot:
         try:
             ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
         except ProcessExecutionError as exc:
-            # TODO: case when one page has multiple videos some available some not
+            # TODO: look at case: one page has multiple videos, some available, some not
             if "returning it as such" in exc.stderr:
                 raise URLDirectError
             elif "proxy server" in exc.stderr:
@@ -462,8 +462,9 @@ class SCDLBot:
             url_parts_num = len([part for part in url.path_parts if part])
             try:
                 if (
-                    # SoundCloud: tracks, sets and widget pages
-                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text)) or
+                    # SoundCloud: tracks, sets and widget pages, no /you/ pages
+                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
+                    not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
                     (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
                     # YouTube: videos and playlists
@@ -570,27 +571,23 @@ class SCDLBot:
         if status == 0:
             cmd_name = "youtube-dl"
             cmd = youtube_dl_func
-            # TODO: different ydl_opts for different sites
+            # TODO: set different ydl_opts for different sites
             ydl_opts = {
                 'format': 'bestaudio/best',
-                'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),  # %(autonumber)s - %(title)s-%(id)s.%(ext)s
+                'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
+            # default: %(autonumber)s - %(title)s-%(id)s.%(ext)s
                 'postprocessors': [
                     {
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': 'mp3',
                         'preferredquality': '128',
                     },
-                    # {
-                    #     'key': 'EmbedThumbnail',
-                    # },
-                    # {
-                    #     'key': 'FFmpegMetadata',
-                    # },
+                    # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
             queue = Queue()
             cmd_args = (
-                url,  # URL of video
+                url,
                 ydl_opts,
                 queue,
             )
@@ -604,7 +601,7 @@ class SCDLBot:
                 cmd_proc.join()
                 if cmd_retcode:
                     raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
-                    # raise cmd_status  #TODO: pass and re-raise original Exception
+                    # raise cmd_status  #TODO: pass and re-raise original Exception?
                 logger.info("%s succeeded: %s", cmd_name, url)
                 status = 1
             except Empty:
@@ -644,8 +641,8 @@ class SCDLBot:
                     file_parts = self.split_audio_file(file)
                 except FileNotSupportedError as exc:
                     file_parts = []
-                    if not (exc.file_format == "m3u"):
-                        logger.info("Unsupported file format: %s", file_name)
+                    if not (exc.file_format in ["m3u", "jpg", "jpeg", "png"]):
+                        logger.warning("Unsupported file format: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
                                              file_name),
@@ -664,7 +661,12 @@ class SCDLBot:
                                      text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
                                          file_name),
                                      parse_mode='Markdown')
-
+                except FileNotConvertedError as exc:
+                    logger.exception("pydub failed: %s" % file_name)
+                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
+                                         file_name),
+                                     parse_mode='Markdown')
                 try:
                     caption = "Downloaded from {} with @{}\n".format(URL(url).host, self.bot_username)
                     if "qP303vxTLS8" in url:
@@ -690,7 +692,7 @@ class SCDLBot:
 
         if not self.SERVE_AUDIO:
             shutil.rmtree(download_dir, ignore_errors=True)
-        if wait_message_id:  # TODO: delete only once or append errors
+        if wait_message_id:  # TODO: delete only once
             try:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
@@ -703,16 +705,29 @@ class SCDLBot:
 
     def split_audio_file(self, file=""):
         file_root, file_ext = os.path.splitext(file)
-        file_format = file_ext.replace(".", "")
-        if not (file_format == "mp3" or file_format == "m4a" or file_format == "mp4"):
+        file_format = file_ext.replace(".", "").lower()
+        if file_format not in ["mp3", "m4a", "mp4"]:
             raise FileNotSupportedError(file_format)
         file_size = os.path.getsize(file)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
             raise FileTooLargeError(file_size)
+        file_parts = []
         if file_size <= self.MAX_TG_FILE_SIZE:
-            return [file]
+            if file_format == "mp3":
+                file_parts.append(file)
+            else:
+                logger.info("Converting: %s", file)
+                try:
+                    sound = AudioSegment.from_file(file, file_format)
+                    file_converted = file.replace(file_ext, ".mp3")
+                    sound.export(file_converted, format="mp3")
+                    del sound
+                    gc.collect()
+                    file_parts.append(file_converted)
+                except (OSError, MemoryError) as exc:
+                    gc.collect()
+                    raise FileNotConvertedError
         else:
-            file_parts = []
             logger.info("Splitting: %s", file)
             try:
                 id3 = mutagen.id3.ID3(file, translate=False)
@@ -741,7 +756,7 @@ class SCDLBot:
             except (OSError, MemoryError) as exc:
                 gc.collect()
                 raise FileConvertedPartiallyError(file_parts)
-            return file_parts
+        return file_parts
 
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
         sent_audio_ids = []
