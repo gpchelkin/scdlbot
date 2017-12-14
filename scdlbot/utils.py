@@ -44,8 +44,9 @@ def get_direct_urls(url):
     else:
         return std_out
 
-def md_italic(text):
-    return "".join(["_", text, "_"])
+
+def get_italic(text):
+    return "_{}_".format(text)
 
 def youtube_dl_func(url, ydl_opts, queue=None):
     ydl = youtube_dl.YoutubeDL(ydl_opts)

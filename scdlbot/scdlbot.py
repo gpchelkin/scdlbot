@@ -303,14 +303,14 @@ class SCDLBot:
             self.log_and_botan_track(botan_event_name, update.message)
             if mode == "dl":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=md_italic(self.WAIT_TEXT))
+                                                parse_mode='Markdown', text=get_italic(self.WAIT_TEXT))
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif mode == "link":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=md_italic(self.WAIT_TEXT))
+                                                parse_mode='Markdown', text=get_italic(self.WAIT_TEXT))
 
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -378,7 +378,7 @@ class SCDLBot:
             if action == "dl":
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                       text=md_italic(self.WAIT_TEXT))
+                                                                       text=get_italic(self.WAIT_TEXT))
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
@@ -386,7 +386,7 @@ class SCDLBot:
             elif action == "link":
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                       text=md_italic(self.WAIT_TEXT))
+                                                                       text=get_italic(self.WAIT_TEXT))
                 urls = self.prepare_urls(urls.keys(), direct_urls=True)
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
