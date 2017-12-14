@@ -27,7 +27,7 @@ def get_response_text(file_name):
     return pkg_resources.resource_string(__name__, path).decode("UTF-8")
 
 
-def get_direct_urls(self, url):
+def get_direct_urls(url):
     logger.debug("Entered get_direct_urls")
     try:
         ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
