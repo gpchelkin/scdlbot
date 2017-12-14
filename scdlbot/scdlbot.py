@@ -118,7 +118,8 @@ class SCDLBot:
 
         self.bot_username = self.updater.bot.get_me().username
         self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
-        self.RANT_TEXT_PUBLIC = "[Press here and start to read help in my PM to learn how to use me](t.me/" + self.bot_username + "?start=1)"
+        self.RANT_TEXT_PUBLIC = "[Start me in PM to read help and learn how to use me](t.me/{}?start=1)".format(
+            self.bot_username)
 
     def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
               webhook_host="0.0.0.0",
@@ -203,14 +204,6 @@ class SCDLBot:
         else:
             return False
 
-    # def send_alert(self, bot, text, url=""):
-    #     for alert_chat_id in self.ALERT_CHAT_IDS:
-    #         try:
-    #             bot.send_message(chat_id=alert_chat_id,
-    #                              text="BOT ADMIN ALERT\nURL or file failed:\n" + url + "\n" + text)
-    #         except:
-    #             pass
-
     def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
         rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                     text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
@@ -230,7 +223,7 @@ class SCDLBot:
         event_name = "help"
         entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
         for entity_value in entities.values():
-            event_name = entity_value.replace("/", "").replace("@" + self.bot_username, "")
+            event_name = entity_value.replace("/", "").replace("@{}".format(self.bot_username), "")
             break
         self.log_and_botan_track(event_name, update.message)
         chat_id = update.message.chat_id
@@ -284,7 +277,7 @@ class SCDLBot:
             # try to determine mode from command
             mode = None
             for entity_value in entities.values():
-                mode = entity_value.replace("/", "").replace("@" + self.bot_username, "")
+                mode = entity_value.replace("/", "").replace("@{}".format(self.bot_username), "")
                 break
             if not mode:
                 mode = "dl"
@@ -306,7 +299,7 @@ class SCDLBot:
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
-            botan_event_name = (mode + "_cmd") if command_passed else (mode + "_msg")
+            botan_event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
             self.log_and_botan_track(botan_event_name, update.message)
             if mode == "dl":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -355,7 +348,7 @@ class SCDLBot:
                     self.log_and_botan_track("settings_fail")
                     update.callback_query.answer(text="You're not chat admin")
                     return
-            self.log_and_botan_track("settings_" + action, btn_msg)
+            self.log_and_botan_track("settings_{}".format(action), btn_msg)
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
             else:
@@ -381,7 +374,7 @@ class SCDLBot:
             msg_from_storage = self.chat_storage[str(chat_id)].pop(orig_msg_id)
             orig_msg = msg_from_storage["message"]
             urls = msg_from_storage["urls"]
-            self.log_and_botan_track(action + "_msg", orig_msg)
+            self.log_and_botan_track("{}_msg".format(action), orig_msg)
             if action == "dl":
                 update.callback_query.answer(text=self.WAIT_TEXT)
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
@@ -422,22 +415,6 @@ class SCDLBot:
         except:
             pass
 
-    def get_direct_urls(self, url):
-        logger.debug("Entered get_direct_urls")
-        try:
-            ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
-        except ProcessExecutionError as exc:
-            # TODO: look at case: one page has multiple videos, some available, some not
-            if "returning it as such" in exc.stderr:
-                raise URLDirectError
-            elif "proxy server" in exc.stderr:
-                raise URLCountryError
-            else:
-                raise exc
-        if "yt_live_broadcast" in std_out:
-            raise URLLiveError
-        else:
-            return std_out
 
     def prepare_urls(self, msg_or_text, direct_urls=False):
         if isinstance(msg_or_text, Message):
@@ -447,7 +424,7 @@ class SCDLBot:
                 url_str = url_entities[entity]
                 logger.debug("Entity URL Parsed: %s", url_str)
                 if "://" not in url_str:
-                    url_str = "http://" + url_str
+                    url_str = "http://{}".format(url_str)
                 urls.append(URL(url_str))
             text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
             for entity in text_link_entities:
@@ -472,11 +449,11 @@ class SCDLBot:
                         "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
                 ):
                     if direct_urls or self.SITES["yt"] in url.host:
-                        urls_dict[url_text] = self.get_direct_urls(url_text)
+                        urls_dict[url_text] = get_direct_urls(url_text)
                     else:
                         urls_dict[url_text] = "http"
                 elif not any((site in url.host for site in self.SITES.values())):
-                    urls_dict[url_text] = self.get_direct_urls(url_text)
+                    urls_dict[url_text] = get_direct_urls(url_text)
             except ProcessExecutionError:
                 logger.debug("youtube-dl get url failed: %s", url_text)
             except URLError as exc:
@@ -637,10 +614,10 @@ class SCDLBot:
                     file_list.append(os.path.join(d, file))
             for file in sorted(file_list):
                 file_name = os.path.split(file)[-1]
+                file_parts = []
                 try:
                     file_parts = self.split_audio_file(file)
                 except FileNotSupportedError as exc:
-                    file_parts = []
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png"]):
                         logger.warning("Unsupported file format: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -648,7 +625,6 @@ class SCDLBot:
                                              file_name),
                                          parse_mode='Markdown')
                 except FileTooLargeError as exc:
-                    file_parts = []
                     logger.info("Large file for convert: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
@@ -656,15 +632,15 @@ class SCDLBot:
                                      parse_mode='Markdown')
                 except FileConvertedPartiallyError as exc:
                     file_parts = exc.file_parts
-                    logger.exception("pydub failed: %s" % file_name)
+                    logger.exception("Pydub failed: %s" % file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
+                                     text="*Sorry*, not enough memory to convert file `{}`..".format(
                                          file_name),
                                      parse_mode='Markdown')
                 except FileNotConvertedError as exc:
-                    logger.exception("pydub failed: %s" % file_name)
+                    logger.exception("Pydub failed: %s" % file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, not enough memory to convert file `{}`, you may try again later..".format(
+                                     text="*Sorry*, not enough memory to convert file `{}`..".format(
                                          file_name),
                                      parse_mode='Markdown')
                 try:
@@ -685,10 +661,10 @@ class SCDLBot:
                 except FileSentPartiallyError as exc:
                     sent_audio_ids = exc.sent_audio_ids
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, could not send file `{}` or some of it's parts, you may try again later..".format(
+                                     text="*Sorry*, could not send file `{}` or some of it's parts..".format(
                                          file_name),
                                      parse_mode='Markdown')
-                    logger.warning("Some parts of %s failed to send", file_name)
+                    logger.warning("Sending some parts failed: %s" % file_name)
 
         if not self.SERVE_AUDIO:
             shutil.rmtree(download_dir, ignore_errors=True)
@@ -738,7 +714,7 @@ class SCDLBot:
                 sound = AudioSegment.from_file(file, file_format)
                 part_size = len(sound) / parts_number
                 for i in range(parts_number):
-                    file_part = file.replace(file_ext, ".part" + str(i + 1) + file_ext)
+                    file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
                     part = sound[part_size * i:part_size * (i + 1)]
                     part.export(file_part, format="mp3")
                     del part

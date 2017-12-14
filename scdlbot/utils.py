@@ -6,8 +6,10 @@ import os
 import pkg_resources
 import requests
 import youtube_dl
-from plumbum import local
+from plumbum import local, ProcessExecutionError
 from requests.exceptions import Timeout, RequestException, SSLError
+
+from scdlbot.exceptions import *
 
 bin_path = os.getenv('BIN_PATH', '')
 scdl_bin = local[os.path.join(bin_path, 'scdl')]
@@ -23,6 +25,24 @@ def get_response_text(file_name):
     # https://stackoverflow.com/a/20885799/2490759
     path = '/'.join(('texts', file_name))
     return pkg_resources.resource_string(__name__, path).decode("UTF-8")
+
+
+def get_direct_urls(self, url):
+    logger.debug("Entered get_direct_urls")
+    try:
+        ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
+    except ProcessExecutionError as exc:
+        # TODO: look at case: one page has multiple videos, some available, some not
+        if "returning it as such" in exc.stderr:
+            raise URLDirectError
+        elif "proxy server" in exc.stderr:
+            raise URLCountryError
+        else:
+            raise exc
+    if "yt_live_broadcast" in std_out:
+        raise URLLiveError
+    else:
+        return std_out
 
 def md_italic(text):
     return "".join(["_", text, "_"])
