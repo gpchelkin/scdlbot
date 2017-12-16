@@ -187,7 +187,6 @@ class SCDLBot:
         self.chat_storage.sync()
         # logger.debug("Current chat_storage: %r", self.chat_storage)
 
-    @run_async
     def cleanup_chat(self, chat_id):
         for msg_id in self.chat_storage[str(chat_id)]:
             if msg_id != "settings":
