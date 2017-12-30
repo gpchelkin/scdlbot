@@ -1,7 +1,7 @@
 python-telegram-bot==9.0.0
 python-telegram-handler==2.0.2
 boltons==17.2.0
-plumbum==1.6.4
+plumbum==1.6.5
 #transliterate==1.9
 scdl==1.6.10
 bandcamp-downloader==0.0.9.dev0
