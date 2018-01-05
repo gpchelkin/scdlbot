@@ -76,7 +76,7 @@ def botan_track(token, message, event_name):
             r = requests.post(
                 BOTAN_TRACK_URL,
                 params={"token": token, "uid": uid, "name": event_name},
-                json=json.loads(message.to_json()),
+                json=json.loads(message.to_json()),  # TODO: make easier
                 verify=ssl_verify,
                 timeout=2,
             )

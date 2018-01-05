@@ -198,8 +198,10 @@ class SCDLBot:
     @run_async
     def log_and_botan_track(self, event_name, message=None):
         logger.info("Event: %s", event_name)
-        if self.botan_token and message:
-            return botan_track(self.botan_token, message, event_name)
+        if message:
+            # TODO: add to local db
+            if self.botan_token:
+                return botan_track(self.botan_token, message, event_name)
         else:
             return False
 
@@ -511,6 +513,8 @@ class SCDLBot:
                         "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                         "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
                         "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                        "--no-playlist-folder",
+                    # Download playlist tracks into directory, instead of making a playlist subfolder
                     )
                     cmd = scdl_bin
                     cmd_input = None
