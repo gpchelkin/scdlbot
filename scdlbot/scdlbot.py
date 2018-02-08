@@ -4,6 +4,7 @@
 
 import configparser
 import gc
+import pathlib
 import random
 import shelve
 import shutil
@@ -13,11 +14,9 @@ from queue import Empty
 from subprocess import PIPE, TimeoutExpired
 from urllib.parse import urljoin
 from uuid import uuid4
-import pathlib
 
 import mutagen.id3
 from boltons.urlutils import find_all_links, URL
-from plumbum import ProcessExecutionError
 from pydub import AudioSegment
 from pyshorteners import Shortener
 from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
@@ -27,7 +26,6 @@ from telegram.error import (TelegramError, Unauthorized, BadRequest,
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
 from telegram.ext.dispatcher import run_async
 
-from scdlbot.exceptions import *
 from scdlbot.utils import *
 
 logger = logging.getLogger(__name__)
@@ -751,11 +749,19 @@ class SCDLBot:
             for i in range(3):
                 try:
                     audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                    duration = None
+                    performer = None
+                    title = None
                     logger.debug(audio)
                     if not self.SERVE_AUDIO:
                         audio = open(file, 'rb')
-                    audio_msg = bot.send_audio(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               audio=audio, caption=caption_)
+                    audio_msg = bot.send_audio(chat_id=chat_id,
+                                               reply_to_message_id=reply_to_message_id,
+                                               audio=audio,
+                                               duration=duration,
+                                               performer=performer,
+                                               title=title,
+                                               caption=caption_)
                     sent_audio_ids.append(audio_msg.audio.file_id)
                     logger.info("Sending succeeded: %s", file_name)
                     break
