@@ -1,5 +1,4 @@
 # from botanio import botan
-import json
 import logging
 import os
 
@@ -76,7 +75,7 @@ def botan_track(token, message, event_name):
             r = requests.post(
                 BOTAN_TRACK_URL,
                 params={"token": token, "uid": uid, "name": event_name},
-                json=json.loads(message.to_json()),  # TODO: make easier
+                data=message.to_json(),
                 verify=ssl_verify,
                 timeout=2,
             )
