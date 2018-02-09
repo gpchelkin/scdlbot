@@ -750,8 +750,7 @@ class SCDLBot:
                 caption_full = caption + caption_full
             for i in range(3):
                 try:
-                    audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                    mp3 = MP3(audio)
+                    mp3 = MP3(file)
                     duration = round(mp3.info.length)
                     performer = None
                     title = None
@@ -760,6 +759,7 @@ class SCDLBot:
                         title = mp3['title']
                     except:
                         pass
+                    audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
                     logger.debug(audio)
                     if not self.SERVE_AUDIO:
                         audio = open(file, 'rb')
