@@ -15,8 +15,9 @@ from subprocess import PIPE, TimeoutExpired
 from urllib.parse import urljoin
 from uuid import uuid4
 
-import mutagen.id3
 from boltons.urlutils import find_all_links, URL
+from mutagen.id3 import ID3
+from mutagen.mp3 import EasyMP3 as MP3
 from pydub import AudioSegment
 from pyshorteners import Shortener
 from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
@@ -706,10 +707,11 @@ class SCDLBot:
                     raise FileNotConvertedError
         else:
             logger.info("Splitting: %s", file)
+            id3 = None
             try:
-                id3 = mutagen.id3.ID3(file, translate=False)
+                id3 = ID3(file, translate=False)
             except:
-                id3 = None
+                pass
             parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
             try:
                 sound = AudioSegment.from_file(file, file_format)
@@ -743,15 +745,21 @@ class SCDLBot:
             # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-            caption_ = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
+            caption_full = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
             if caption:
-                caption_ = caption + caption_
+                caption_full = caption + caption_full
             for i in range(3):
                 try:
                     audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                    duration = None
+                    mp3 = MP3(audio)
+                    duration = round(mp3.info.length)
                     performer = None
                     title = None
+                    try:
+                        performer = mp3['artist']
+                        title = mp3['title']
+                    except:
+                        pass
                     logger.debug(audio)
                     if not self.SERVE_AUDIO:
                         audio = open(file, 'rb')
@@ -761,7 +769,7 @@ class SCDLBot:
                                                duration=duration,
                                                performer=performer,
                                                title=title,
-                                               caption=caption_)
+                                               caption=caption_full)
                     sent_audio_ids.append(audio_msg.audio.file_id)
                     logger.info("Sending succeeded: %s", file_name)
                     break
