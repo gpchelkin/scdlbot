@@ -755,8 +755,8 @@ class SCDLBot:
                     performer = None
                     title = None
                     try:
-                        performer = mp3['artist']
-                        title = mp3['title']
+                        performer = ", ".join(mp3['artist'])
+                        title = ", ".join(mp3['title'])
                     except:
                         pass
                     audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
