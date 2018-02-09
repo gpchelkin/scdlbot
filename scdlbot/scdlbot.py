@@ -513,7 +513,8 @@ class SCDLBot:
                         "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
                         "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
                         "--no-playlist-folder",
-                    # Download playlist tracks into directory, instead of making a playlist subfolder
+                        # Download playlist tracks into directory, instead of making a playlist subfolder
+                        "--extract-artist",  # Set artist tag from title instead of username
                     )
                     cmd = scdl_bin
                     cmd_input = None
