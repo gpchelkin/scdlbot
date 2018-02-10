@@ -621,7 +621,7 @@ class SCDLBot:
                 try:
                     file_parts = self.split_audio_file(file)
                 except FileNotSupportedError as exc:
-                    if not (exc.file_format in ["m3u", "jpg", "jpeg", "png"]):
+                    if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.warning("Unsupported file format: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
