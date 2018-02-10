@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.11 (2018-02-10)
+------------------
+* send tags and time length to Telegram
+* extract-artist feature
+* wait a beet
+* requirements updated
+
 0.9.10 (2017-12-14)
 ------------------
 * convert non-mp3 files to mp3
