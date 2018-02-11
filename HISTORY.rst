@@ -5,6 +5,7 @@ History
 0.9.13 (2018-02-11)
 ------------------
 * short original links in captions
+* wait a bit added
 
 0.9.12 (2018-02-11)
 ------------------

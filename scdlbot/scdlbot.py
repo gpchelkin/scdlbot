@@ -678,7 +678,7 @@ class SCDLBot:
                             else:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
-                                addition = "Title: " + file_title
+                                addition = file_title
                             if "youtu.be" in url_obj.host:
                                 short_url = url.replace("http://", "").replace("https://", "")
 
