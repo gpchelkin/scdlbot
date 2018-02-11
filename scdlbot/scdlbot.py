@@ -662,8 +662,9 @@ class SCDLBot:
                         url_obj = URL(url)
                         if self.SITES["yt"] in url_obj.host:
                             source = "YouTube"
+                            addition = " | "
                             if "qP303vxTLS8" in url:
-                                addition = " | " + random.choice([
+                                addition = addition + random.choice([
                                     "Скачал музла, машина эмпэтри дала!",
                                     "У тебя талант, братан! Ка-какой? Качать онлайн!",
                                     "Слушаю и не плачУ, то, что скачал вчера",
@@ -674,7 +675,7 @@ class SCDLBot:
                             else:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
-                                addition = "Title: " + file_title
+                                addition = addition + "Title: " + file_title
                         elif self.SITES["sc"] in url_obj.host:
                             source = "SoundCloud"
                         elif self.SITES["bc"] in url_obj.host:
