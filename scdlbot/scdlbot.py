@@ -674,14 +674,14 @@ class SCDLBot:
                             else:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
-                                addition = "Video Title: " + file_title
+                                addition = "Title: " + file_title
                         elif self.SITES["sc"] in url_obj.host:
                             source = "SoundCloud"
                         elif self.SITES["bc"] in url_obj.host:
                             source = "Bandcamp"
                         else:
                             source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        caption = "@{} got this from {}\n\n{}".format(self.bot_username, source, addition)
+                        caption = "@{} got it from {}\n\n{}".format(self.bot_username, source, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
