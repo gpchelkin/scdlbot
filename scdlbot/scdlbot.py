@@ -663,7 +663,7 @@ class SCDLBot:
                         if self.SITES["yt"] in url_obj.host:
                             source = "YouTube"
                             if "qP303vxTLS8" in url:
-                                addition = random.choice([
+                                addition = " | " + random.choice([
                                     "Скачал музла, машина эмпэтри дала!",
                                     "У тебя талант, братан! Ка-какой? Качать онлайн!",
                                     "Слушаю и не плачУ, то, что скачал вчера",
@@ -681,7 +681,7 @@ class SCDLBot:
                             source = "Bandcamp"
                         else:
                             source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        caption = "@{} got it from {} | {}".format(self.bot_username, source, addition)
+                        caption = "@{} got it from {}{}".format(self.bot_username, source, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
