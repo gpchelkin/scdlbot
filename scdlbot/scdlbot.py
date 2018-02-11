@@ -659,7 +659,8 @@ class SCDLBot:
                     flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
                     if flood == "yes":
                         addition = ""
-                        if self.SITES["yt"] in url.host:
+                        url_obj = URL(url)
+                        if self.SITES["yt"] in url_obj.host:
                             source = "YouTube"
                             if "qP303vxTLS8" in url:
                                 addition = random.choice([
@@ -674,12 +675,12 @@ class SCDLBot:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
                                 addition = "Video Title: " + file_title
-                        elif self.SITES["sc"] in url.host:
+                        elif self.SITES["sc"] in url_obj.host:
                             source = "SoundCloud"
-                        elif self.SITES["bc"] in url.host:
+                        elif self.SITES["bc"] in url_obj.host:
                             source = "Bandcamp"
                         else:
-                            source = URL(url).host.replace(".com", "").replace("www.", "").replace("m.", "")
+                            source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
                         caption = "@{} got this from {}\n\n{}".format(self.bot_username, source, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
