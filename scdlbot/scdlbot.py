@@ -55,7 +55,8 @@ class SCDLBot:
         self.HELP_TEXT = get_response_text('help.tg.md')
         self.SETTINGS_TEXT = get_response_text('settings.tg.md')
         self.DL_TIMEOUT_TEXT = get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
-        self.WAIT_TEXT = get_response_text('wait.txt')
+        self.WAIT_BEAT_TEXT = get_response_text('wait_beat.txt')
+        self.WAIT_BEET_TEXT = get_response_text('wait_beet.txt')
         self.NO_AUDIO_TEXT = get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = get_response_text('no_urls.txt')
         self.OLG_MSG_TEXT = get_response_text('old_msg.txt')
@@ -119,6 +120,12 @@ class SCDLBot:
         self.RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
         self.RANT_TEXT_PUBLIC = "[Start me in PM to read help and learn how to use me](t.me/{}?start=1)".format(
             self.bot_username)
+
+    def get_wait_text(self):
+        if random.choice([True, False]):
+            return self.WAIT_BEAT_TEXT
+        else:
+            return self.WAIT_BEET_TEXT
 
     def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
               webhook_host="0.0.0.0",
@@ -247,7 +254,7 @@ class SCDLBot:
                                            callback_data=" ".join(["settings", "link"]))
         button_ask = InlineKeyboardButton(text=" ".join([emoji_yes if mode == "ask" else emoji_no, "Ask"]),
                                           callback_data=" ".join(["settings", "ask"]))
-        button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Flood"]),
+        button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Source"]),
                                             callback_data=" ".join(["settings", "flood"]))
         button_close = InlineKeyboardButton(text=" ".join([emoji_no, "Close settings"]),
                                             callback_data=" ".join(["settings", "close"]))
@@ -303,14 +310,14 @@ class SCDLBot:
             self.log_and_botan_track(botan_event_name, update.message)
             if mode == "dl":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=get_italic(self.WAIT_TEXT))
+                                                parse_mode='Markdown', text=get_italic(self.get_wait_text()))
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id)
             elif mode == "link":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=get_italic(self.WAIT_TEXT))
+                                                parse_mode='Markdown', text=get_italic(self.get_wait_text()))
 
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -376,17 +383,17 @@ class SCDLBot:
             urls = msg_from_storage["urls"]
             self.log_and_botan_track("{}_msg".format(action), orig_msg)
             if action == "dl":
-                update.callback_query.answer(text=self.WAIT_TEXT)
+                update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                       text=get_italic(self.WAIT_TEXT))
+                                                                       text=get_italic(self.get_wait_text()))
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
                                                wait_message_id=wait_message.message_id)
             elif action == "link":
-                update.callback_query.answer(text=self.WAIT_TEXT)
+                update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                       text=get_italic(self.WAIT_TEXT))
+                                                                       text=get_italic(self.get_wait_text()))
                 urls = self.prepare_urls(urls.keys(), direct_urls=True)
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,

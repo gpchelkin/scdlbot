@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.12 (2018-02-11)
+------------------
+* flood is now source
+* wait a beet/beat random
+* provide youtube video titles in mp3 description here
+* 200 char caption limit check
+
 0.9.11 (2018-02-10)
 ------------------
 * send tags and time length to Telegram
