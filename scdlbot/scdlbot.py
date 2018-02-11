@@ -56,6 +56,7 @@ class SCDLBot:
         self.HELP_TEXT = get_response_text('help.tg.md')
         self.SETTINGS_TEXT = get_response_text('settings.tg.md')
         self.DL_TIMEOUT_TEXT = get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
+        self.WAIT_BIT_TEXT = get_response_text('wait_bit.txt')
         self.WAIT_BEAT_TEXT = get_response_text('wait_beat.txt')
         self.WAIT_BEET_TEXT = get_response_text('wait_beet.txt')
         self.NO_AUDIO_TEXT = get_response_text('no_audio.txt')
@@ -123,10 +124,13 @@ class SCDLBot:
             self.bot_username)
 
     def get_wait_text(self):
-        if random.choice([True, False]):
+        rand = random.choice(["bit", "beat", "beet"])
+        if rand == "beat":
             return self.WAIT_BEAT_TEXT
-        else:
+        elif rand == "beet":
             return self.WAIT_BEET_TEXT
+        else:
+            return self.WAIT_BIT_TEXT
 
     def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
               webhook_host="0.0.0.0",
@@ -683,6 +687,7 @@ class SCDLBot:
                         if self.shortener:
                             try:
                                 short_url = self.shortener.short(url)
+                                short_url.replace("http://", "").replace("https://", "")
                             except:
                                 short_url = ""
                         caption = "@{} got it from {} | {} {}".format(self.bot_username, source, addition, short_url)
