@@ -772,7 +772,7 @@ class SCDLBot:
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             caption_part = ""
             if len(file_parts) > 1:
-                caption_part = "Part {} of {}\n".format(str(index + 1), str(len(file_parts)))
+                caption_part = "Part {} of {}\n\n".format(str(index + 1), str(len(file_parts)))
             if caption:
                 caption_full = caption_part + caption
             else:
