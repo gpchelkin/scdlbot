@@ -259,7 +259,7 @@ class SCDLBot:
                                            callback_data=" ".join(["settings", "link"]))
         button_ask = InlineKeyboardButton(text=" ".join([emoji_yes if mode == "ask" else emoji_no, "Ask"]),
                                           callback_data=" ".join(["settings", "ask"]))
-        button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Source"]),
+        button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Captions"]),
                                             callback_data=" ".join(["settings", "flood"]))
         button_close = InlineKeyboardButton(text=" ".join([emoji_no, "Close settings"]),
                                             callback_data=" ".join(["settings", "close"]))

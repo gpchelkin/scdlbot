@@ -5,8 +5,8 @@ _Send or forward_ a text message containing links and I will:
 • In *Download* mode: download every link I support (or use `/dl <links>`)
 • In *Links* mode: show direct download URLs for every link (or use `/link <links>`)
 • In *Ask* mode: scan for supported links and ask you to choose download or links
-• Use /settings to select mode for messages without command, sane defaults are *Download* for *PM* and *Ask* for groups.
-• Use /settings to toggle *Source*: send audios *with source caption* and *as replies*.
+• Use /settings to select working mode for messages *without command*.
+• Use /settings to toggle *Captions*.
 • [Privacy mode](https://core.telegram.org/bots#privacy-mode) is _disabled_, so I scan every group message.
 • Supported links and resources:
 *SoundCloud*: tracks/playlists/pages with private widgets

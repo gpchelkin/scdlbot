@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.14 (2018-02-11)
+------------------
+* source is now captions
+* more precise help and settings
+
 0.9.13 (2018-02-11)
 ------------------
 * short original links in captions

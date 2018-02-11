@@ -1,2 +1,3 @@
-Select default mode for messages without command.
-Source: send audios *with spam caption* and *as replies*.
+Select working mode for messages *without command*.
+Sane defaults are *Download* for *PM* and *Ask* for groups.
+Toggle *Captions* off: send audios *without source captions* and *not as replies*.
