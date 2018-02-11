@@ -694,7 +694,7 @@ class SCDLBot:
                                 short_url = short_url.replace("http://", "").replace("https://", "")
                             except:
                                 pass
-                        caption = "@{} got it from {} | {} {}".format(self.bot_username, source, addition, short_url)
+                        caption = "@{} got it from {} | {} {}".format(self.bot_username, source, short_url, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
