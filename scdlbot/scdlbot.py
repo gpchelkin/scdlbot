@@ -681,7 +681,7 @@ class SCDLBot:
                             source = "Bandcamp"
                         else:
                             source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        caption = "@{} got it from {}\n\n{}".format(self.bot_username, source, addition)
+                        caption = "@{} got it from {} | {}".format(self.bot_username, source, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
@@ -772,7 +772,7 @@ class SCDLBot:
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
             caption_part = ""
             if len(file_parts) > 1:
-                caption_part = "Part {} of {}\n\n".format(str(index + 1), str(len(file_parts)))
+                caption_part = "Part {} of {} | ".format(str(index + 1), str(len(file_parts)))
             if caption:
                 caption_full = caption_part + caption
             else:
