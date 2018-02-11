@@ -484,7 +484,6 @@ class SCDLBot:
                     if self.shortener:
                         try:
                             direct_url = self.shortener.short(direct_url)
-                            # botan.shorten_url(original_url, botan_token, uid)
                         except:
                             pass
                     link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
@@ -662,9 +661,8 @@ class SCDLBot:
                         url_obj = URL(url)
                         if self.SITES["yt"] in url_obj.host:
                             source = "YouTube"
-                            addition = " | "
                             if "qP303vxTLS8" in url:
-                                addition = addition + random.choice([
+                                addition = random.choice([
                                     "Скачал музла, машина эмпэтри дала!",
                                     "У тебя талант, братан! Ка-какой? Качать онлайн!",
                                     "Слушаю и не плачУ, то, что скачал вчера",
@@ -675,14 +673,19 @@ class SCDLBot:
                             else:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
-                                addition = addition + "Title: " + file_title
+                                addition = "Title: " + file_title
                         elif self.SITES["sc"] in url_obj.host:
                             source = "SoundCloud"
                         elif self.SITES["bc"] in url_obj.host:
                             source = "Bandcamp"
                         else:
                             source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        caption = "@{} got it from {}{}".format(self.bot_username, source, addition)
+                        if self.shortener:
+                            try:
+                                short_url = self.shortener.short(url)
+                            except:
+                                short_url = ""
+                        caption = "@{} got it from {} | {} {}".format(self.bot_username, source, addition, short_url)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
