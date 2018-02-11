@@ -6,8 +6,8 @@ History
 ------------------
 * flood is now source
 * wait a beet/beat random
-* provide youtube video titles in mp3 description here
-* 200 char caption limit check
+* provide youtube video titles in caption
+* 200 char caption text wrap
 
 0.9.11 (2018-02-10)
 ------------------

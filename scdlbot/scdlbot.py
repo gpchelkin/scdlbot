@@ -8,6 +8,7 @@ import pathlib
 import random
 import shelve
 import shutil
+import textwrap
 from datetime import datetime
 from multiprocessing import Process, Queue
 from queue import Empty
@@ -654,20 +655,35 @@ class SCDLBot:
                                          file_name),
                                      parse_mode='Markdown')
                 try:
-                    caption = "Downloaded from {} with @{}\n".format(URL(url).host, self.bot_username)
-                    if "qP303vxTLS8" in url:
-                        caption += "\n" + random.choice([
-                            "Скачал музла, машина эмпэтри дала!",
-                            "У тебя талант, братан! Ка-какой? Качать онлайн!",
-                            "Слушаю и не плачУ, то, что скачал вчера",
-                            "Всё по чесноку, если скачал, отгружу музла!",
-                            "Дёрнул за канат, и телега поймала трэкан!",
-                            "Сегодня я качаю, и трэки не влазят мне в RAM!",
-                        ])
+                    caption = None
                     flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
+                    if flood == "yes":
+                        addition = ""
+                        if self.SITES["yt"] in url.host:
+                            source = "YouTube"
+                            if "qP303vxTLS8" in url:
+                                addition = random.choice([
+                                    "Скачал музла, машина эмпэтри дала!",
+                                    "У тебя талант, братан! Ка-какой? Качать онлайн!",
+                                    "Слушаю и не плачУ, то, что скачал вчера",
+                                    "Всё по чесноку, если скачал, отгружу музла!",
+                                    "Дёрнул за канат, и телега поймала трэкан!",
+                                    "Сегодня я качаю, и трэки не влазят мне в RAM!",
+                                ])
+                            else:
+                                file_root, file_ext = os.path.splitext(file_name)
+                                file_title = file_root.replace(file_ext, "")
+                                addition = "Video Title: " + file_title
+                        elif self.SITES["sc"] in url.host:
+                            source = "SoundCloud"
+                        elif self.SITES["bc"] in url.host:
+                            source = "Bandcamp"
+                        else:
+                            source = URL(url).host.replace(".com", "").replace("www.", "").replace("m.", "")
+                        caption = "@{} got this from {}\n\n{}".format(self.bot_username, source, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
-                                                                caption if flood == "yes" else None)
+                                                                caption)
                 except FileSentPartiallyError as exc:
                     sent_audio_ids = exc.sent_audio_ids
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -753,9 +769,14 @@ class SCDLBot:
             # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-            caption_full = " ".join(["Part", str(index + 1), "of", str(len(file_parts))]) if len(file_parts) > 1 else ""
+            caption_part = ""
+            if len(file_parts) > 1:
+                caption_part = "Part {} of {}\n".format(str(index + 1), str(len(file_parts)))
             if caption:
-                caption_full = caption + caption_full
+                caption_full = caption_part + caption
+            else:
+                caption_full = caption_part
+            caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
                     mp3 = MP3(file)
