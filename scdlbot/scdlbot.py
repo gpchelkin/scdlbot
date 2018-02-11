@@ -687,7 +687,7 @@ class SCDLBot:
                         if self.shortener:
                             try:
                                 short_url = self.shortener.short(url)
-                                short_url.replace("http://", "").replace("https://", "")
+                                short_url = short_url.replace("http://", "").replace("https://", "")
                             except:
                                 short_url = ""
                         caption = "@{} got it from {} | {} {}".format(self.bot_username, source, addition, short_url)
