@@ -123,23 +123,12 @@ class SCDLBot:
         self.RANT_TEXT_PUBLIC = "[Start me in PM to read help and learn how to use me](t.me/{}?start=1)".format(
             self.bot_username)
 
-    def get_wait_text(self):
-        rand = random.choice(["bit", "beat", "beet"])
-        if rand == "beat":
-            return self.WAIT_BEAT_TEXT
-        elif rand == "beet":
-            return self.WAIT_BEET_TEXT
-        else:
-            return self.WAIT_BIT_TEXT
-
     def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
-              webhook_host="0.0.0.0",
-              url_path="scdlbot"):
+              url_path="scdlbot", webhook_host="0.0.0.0"):
         if use_webhook:
-            url_path = url_path.replace(":", "")
             self.updater.start_webhook(listen=webhook_host,
                                        port=webhook_port,
-                                       url_path=url_path, )
+                                       url_path=url_path)
             # cert=cert_file if cert_file else None,
             # key=cert_key_file if cert_key_file else None,
             # webhook_url=urljoin(app_url, url_path))
@@ -247,6 +236,15 @@ class SCDLBot:
         else:
             bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
+
+    def get_wait_text(self):
+        rand = random.choice(["bit", "beat", "beet"])
+        if rand == "beat":
+            return self.WAIT_BEAT_TEXT
+        elif rand == "beet":
+            return self.WAIT_BEET_TEXT
+        else:
+            return self.WAIT_BIT_TEXT
 
     def get_settings_inline_keyboard(self, chat_id):
         mode = self.chat_storage[str(chat_id)]["settings"]["mode"]
