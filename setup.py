@@ -50,9 +50,9 @@ requirements = [
     "patool",
     "pyshorteners",
     "Celery",
-    "botanio",
+    #    "botanio",
     "logentries",
-    "loggly-python-handler",
+    #    "loggly-python-handler",
     "python-telegram-handler"
 ]
 
