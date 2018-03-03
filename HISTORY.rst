@@ -2,6 +2,10 @@
 History
 =======
 
+0.9.15 (2018-03-03)
+------------------
+* markdown in audio captions
+
 0.9.14 (2018-02-11)
 ------------------
 * source is now captions

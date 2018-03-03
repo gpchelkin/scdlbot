@@ -676,7 +676,7 @@ class SCDLBot:
                             else:
                                 file_root, file_ext = os.path.splitext(file_name)
                                 file_title = file_root.replace(file_ext, "")
-                                addition = file_title
+                                addition = ": " + file_title
                             if "youtu.be" in url_obj.host:
                                 short_url = url.replace("http://", "").replace("https://", "")
 
@@ -692,7 +692,7 @@ class SCDLBot:
                                 short_url = short_url.replace("http://", "").replace("https://", "")
                             except:
                                 pass
-                        caption = "@{} got it from {} | {} {}".format(self.bot_username, source, short_url, addition)
+                        caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username, source, short_url, addition)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
@@ -781,13 +781,19 @@ class SCDLBot:
             # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-            caption_part = ""
+            caption_part = None
             if len(file_parts) > 1:
-                caption_part = "Part {} of {} | ".format(str(index + 1), str(len(file_parts)))
+                caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
             if caption:
-                caption_full = caption_part + caption
+                if caption_part:
+                    caption_full = caption_part + " | " + caption
+                else:
+                    caption_full = caption
             else:
-                caption_full = caption_part
+                if caption_part:
+                    caption_full = caption_part
+                else:
+                    caption_full = ""
             caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
@@ -810,7 +816,8 @@ class SCDLBot:
                                                duration=duration,
                                                performer=performer,
                                                title=title,
-                                               caption=caption_full)
+                                               caption=caption_full,
+                                               parse_mode='Markdown')
                     sent_audio_ids.append(audio_msg.audio.file_id)
                     logger.info("Sending succeeded: %s", file_name)
                     break
