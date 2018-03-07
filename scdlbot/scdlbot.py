@@ -684,15 +684,17 @@ class SCDLBot:
                         elif self.SITES["bc"] in url_obj.host:
                             source = "Bandcamp"
                         else:
-                            source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
+                            source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "").replace("_",
+                                                                                                                    "\_")
                         if self.shortener and not short_url:
                             try:
                                 short_url = self.shortener.short(url)
                                 short_url = short_url.replace("http://", "").replace("https://", "")
                             except:
                                 pass
-                        caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username, source, short_url, addition)
-                        logger.info(caption)
+                        caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"), source,
+                                                                         short_url, addition)
+                        # logger.info(caption)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
