@@ -692,6 +692,7 @@ class SCDLBot:
                             except:
                                 pass
                         caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username, source, short_url, addition)
+                        logger.info(caption)
                     sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                 reply_to_message_id if flood == "yes" else None,
                                                                 caption)
