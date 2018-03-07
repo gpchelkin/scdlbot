@@ -8,7 +8,6 @@ import pathlib
 import random
 import shelve
 import shutil
-import textwrap
 from datetime import datetime
 from multiprocessing import Process, Queue
 from queue import Empty
@@ -794,7 +793,7 @@ class SCDLBot:
                     caption_full = caption_part
                 else:
                     caption_full = ""
-            caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
+            # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
                     mp3 = MP3(file)
