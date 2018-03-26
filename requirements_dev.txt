@@ -1,11 +1,11 @@
-pip==9.0.2
+pip==9.0.3
 wheel==0.30.0
 watchdog==0.8.3
 flake8==3.5.0
 tox==2.9.1
 coverage==4.5.1
-Sphinx==1.7.1
-cryptography==2.1.4
+Sphinx==1.7.2
+cryptography==2.2.1
 PyYAML==3.12
-pytest==3.4.2
-pytest-runner==4.0
+pytest==3.5.0
+pytest-runner==4.2
