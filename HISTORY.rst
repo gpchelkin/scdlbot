@@ -2,6 +2,10 @@
 History
 =======
 
+0.9.17 (2018-05-12)
+------------------
+* upgrade requirements
+
 0.9.16 (2018-03-08)
 ------------------
 * markdown in audio captions HOTFIX
