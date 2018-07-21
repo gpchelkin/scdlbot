@@ -5,7 +5,7 @@ flake8==3.5.0
 tox==3.1.2
 coverage==4.5.1
 Sphinx==1.7.6
-cryptography==2.2.2
+cryptography==2.3
 PyYAML==3.13
 pytest==3.6.3
 pytest-runner==4.2
