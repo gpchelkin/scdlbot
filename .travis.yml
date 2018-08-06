@@ -17,12 +17,13 @@ deploy:
       TEFPclVZcEVrMWRvTm1ySlFSTVFRTXRraXdSODJDcGYrdGhpbGJua2lEVUQ3Zy91bks4S1FuRXZh
       MWNweXZkN1M2enJHUnorMFBQYUVSQjJKaHZZRjE0TU15TmxYTWdrNWd2cHIvOTBVM0xQeE5oQXM9
   true:
-    python: 3.6
+    python: 3.7
     repo: gpchelkin/scdlbot
     tags: true
 install: pip install -U tox-travis
 language: python
 python:
+- 3.7
 - 3.6
 - 3.5
 script: tox
