@@ -2,6 +2,10 @@
 History
 =======
 
+0.9.18 (2018-09-01)
+------------------
+* upgrade requirements
+
 0.9.17 (2018-05-12)
 ------------------
 * upgrade requirements
