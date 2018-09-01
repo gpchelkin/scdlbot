@@ -1,6 +1,6 @@
 pip==18.0
 wheel==0.31.1
-watchdog==0.8.3
+watchdog==0.9.0
 flake8==3.5.0
 tox==3.2.1
 coverage==4.5.1
