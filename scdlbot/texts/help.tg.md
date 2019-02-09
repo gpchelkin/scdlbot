@@ -11,14 +11,15 @@ _Send or forward_ a text message containing links and I will:
 • Supported links and resources:
 *SoundCloud*: tracks/playlists/pages with private widgets
 *Bandcamp*: tracks/albums/custom links
-*YouTube*: videos/playlists/not lives
-*Mixcloud, Vimeo and* [everything from this list](https://rg3.github.io/youtube-dl/supportedsites.html) (no VK music)
+*YouTube*: videos/playlists/_not_ lives
+*Yandex.Music*: tracks/albums
+*Mixcloud, Vimeo and* [almost everything from this list](https://rg3.github.io/youtube-dl/supportedsites.html), but no VK music
 
 *Example message:*
-`Hey, bruh, check it out! https://m.soundcloud.com/richarddjames/umil-25-01 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
+`Hey, check this out! https://m.soundcloud.com/falling-ethics/jk-flesh-static-demon-fexelvn004 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
 
-*Credits | Emoji-links:*
-[🌟 @GitHub](https://github.com/gpchelkin/scdlbot) | [⌨️⚠](https://github.com/gpchelkin/scdlbot/issues)
-👨🏻‍💻 @gpchelkin | [🐝👍](http://pchelk.in/)
-👩🏻‍🎨 @lowonbudget | [🎨🖼️](https://www.behance.net/lowonbudget)
-🎶 @electrocircle | [⚡⚫](https://t.me/Eklight)
+*Credits | Links:*
+[Star 🌟 @GitHub](https://github.com/gpchelkin/scdlbot) | [⌨️ Issues ⚠](https://github.com/gpchelkin/scdlbot/issues)
+👨🏻‍💻 @gpchelkin | [🐝 Homepage 👍](https://pchelk.in/)
+👩🏻‍🎨 `@lowonbudget` | [🎨🖼️](https://www.behance.net/lowonbudget)
+🎶 `@electrocircle` | [⚡ Channel ⚫](https://t.me/Eklight)

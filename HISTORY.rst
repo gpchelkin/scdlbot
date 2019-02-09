@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.19 (2019-02-09)
+------------------
+* edited help message
+* upgrade requirements
+
 0.9.18 (2018-09-01)
 ------------------
 * upgrade requirements
