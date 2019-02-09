@@ -1,1 +1,1 @@
-Download MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork. Author: @gpchelkin
+Download MP3s of tracks/sets from SoundCloud, Bandcamp, YouTube with tags. Developer: @gpchelkin, Backup: @scdltestbot
