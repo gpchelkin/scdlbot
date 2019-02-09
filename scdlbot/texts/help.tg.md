@@ -18,8 +18,7 @@ _Send or forward_ a text message containing links and I will:
 *Example message:*
 `Hey, check this out! https://m.soundcloud.com/falling-ethics/jk-flesh-static-demon-fexelvn004 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
 
-[🌟 Star me on GitHub!](https://github.com/gpchelkin/scdlbot)
-[⚠️ Report an issue](https://github.com/gpchelkin/scdlbot/issues)
-👨🏻‍💻 Developed by @gpchelkin | [🐝Homepage👍](https://pchelk.in/)
-👩🏻‍🎨 Logo by *@lowonbudget* | [🎨Behance🖼️](https://www.behance.net/lowonbudget)
-🎶 Inspired by *@electrocircle* | [⚡Channel⚫](https://t.me/Eklight)
+[🌟 Star me on GitHub!](https://github.com/gpchelkin/scdlbot) | [⚠️ Report an issue](https://github.com/gpchelkin/scdlbot/issues)
+👨🏻‍💻 Developed by @gpchelkin | [🐝 Homepage](https://pchelk.in/)
+👩🏻‍🎨 Logo by *@lowonbudget* | [🖼️ Behance](https://www.behance.net/lowonbudget)
+🎶 Inspired by *@electrocircle* | [⚡⚫ Channel](https://t.me/Eklight)
