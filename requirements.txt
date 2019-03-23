@@ -10,7 +10,7 @@ pydub==0.23.1
 mutagen==1.42.0
 patool==1.12
 pyshorteners==0.6.1
-Celery==4.2.1
+Celery==4.2.2
 #botanio==1.0.0
 logentries==0.17
 #loggly-python-handler==1.0.0
