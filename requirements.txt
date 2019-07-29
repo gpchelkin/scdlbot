@@ -1,6 +1,6 @@
 python-telegram-bot==10.1.0
 python-telegram-handler==2.0.2
-boltons==18.0.1
+boltons==19.1.0
 plumbum==1.6.7
 #transliterate==1.9
 scdl==1.6.12
