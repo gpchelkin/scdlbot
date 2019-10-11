@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.20 (2019-10-11)
+------------------
+* upgrade requirements
+* add python 3.7 support
+* remove pyup
+* fix travis pypi access
+
 0.9.19 (2019-02-09)
 ------------------
 * edited help message

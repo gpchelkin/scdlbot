@@ -1,30 +1,17 @@
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
-  user: gpchelkin
+  user: __token__
   password:
-    secure: !!binary |
-      Q2J2dExBU2l6bDFlam9oL3ZSNng4V2JHOFMwamVLMHZFcnp6WjhUZnA5QmFSa0kvemt5cUVlemUr
-      L29aeFZCSWNGQ0JJWlNlVnVzQi9ObkVLMkVKaHNUczgvTWROR0M4d29sZE9YamVhbVM3TTRxNHRV
-      bUg1L1lHMGZBN09IR1d2ZS9Rajh3MTRIc2Q1a3QwTW9yWlFaaUE3bDY3aHhGVVY3dmQ0QXlvNTdG
-      UGQ2VlRSU2djMXVDK0FHaDlCWVVBSVFYZkd1Z2pvNHM3MHMxVGZJZHkwSWh0aWhmRjgxL3lSeGov
-      bFdGZUh5dFN0eG1QYWhLNFdqWmhkQnluVXhyRmV3L205V3JwSEN0TytBc3VnS3psaUU1UCs3REEv
-      dXVZOEw0RWMwOUZmNnNtdlNPaFNWUFR5ckNLMU96MWR1elVNSTltN3lCM0hBNjNzS1lHM2pjYWxs
-      K21Jakc5U1BDRlZtNGg2bG1RQWthVklLNFVkUnhva2tFQ2YrQ3kzRmdkemlhR2JCQ0pyQ1VNcjY5
-      Y2xESXY1Y1YzZTdYOGZDTXdEeUxUSGNuVlBrRFYwclY1V2ZYQUhYOUdIbWRyWEtYanNwWk9aU1cr
-      OXZtVVhWZlVFdGR5RVcxa3ZtYUtGYVMrYjVUeU1IQnFNOGFDNHp1OFFwQWJwVDRXNlJOd1BJMFpF
-      TjVHZ2NySHhYb1NvTWtpc0ZtTkNBdDU2VXlOYXRiemNhcy9JYkpmM3ZvTi9mNUthak01MHluM0hi
-      TEFPclVZcEVrMWRvTm1ySlFSTVFRTXRraXdSODJDcGYrdGhpbGJua2lEVUQ3Zy91bks4S1FuRXZh
-      MWNweXZkN1M2enJHUnorMFBQYUVSQjJKaHZZRjE0TU15TmxYTWdrNWd2cHIvOTBVM0xQeE5oQXM9
-  true:
-    python: 3.6
+    secure: hDja5C4KEK0vPNvm4X4tn8d6Z5/6MphECG7HUGhbufsuKQKYkRgVDZcNq3arjNkJermjynlU1AX5Pg/MtXH+NsBwkBMfBvZ5Ow3Y7z9Su6AgMiiC+BmOZTP1csOhmcHKqVQ61nuEWYyZbnPrdL/pc1PcNyQOhUk6Qf1lp/Q83q/HVbaXOb2WB7h0ewRDmmtKrXaZFFjdEkeDPEm6kLcW13jjI0kCS0fPtZ4wrkvEFSzgLiwuaEcBacND/LymwTeiRrfxBEyOvBYOR72s1jO/VIJCF/26jVZa/lPr3Y0UMaDmC3KcOkoppUE8ICl0K65CP27sgvSVOHlAigYxiQzUirof4ebvspu8bSPyRqithPwUGcDn6zy28u8QFxxkTeBV0IuLJqal36swTbJPV4MegYr6iuuYM6RioeVl1DTsomXT2CmyqVdyWsCLj9hG7wTCqPrnKsiskl70AIT0aHTpEnLtq5EVuSdI5p2ISCwzoR+RtTQ1qPfLBYcDIrmIoJWe2+MS3l+UL9W12o4o+JrpEObJ6h3agaE+FXL5B9Xgt3pS6ILmoTEmDp6Dvx56+Z69kUHTMDi0huIGj5o0874dSuqPG5zTkrSHM84XaPiYDr5MFpqg1G5x0rrXpNkPSIcYYIuHx91P3a5soT0kdd6xdq3r+Ju2nx/K9AGwNscO1tQ=
+  on:
+    python: 3.7
     repo: gpchelkin/scdlbot
     tags: true
 install: pip install -U tox-travis
 language: python
 python:
+- 3.7
 - 3.6
 - 3.5
 script: tox
-
-# https://docs.travis-ci.com/user/deployment/releases/
