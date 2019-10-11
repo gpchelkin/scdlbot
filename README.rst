@@ -74,7 +74,7 @@ Send ``/start`` or ``/help`` command to bot or refer directly to the `help messa
 Please report all bugs and issues and suggest your improvements to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 
 Supported sites and mainly used packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `Telegram Bot API <https://core.telegram.org/bots/api>`__:
    `python-telegram-bot <https://github.com/python-telegram-bot/python-telegram-bot>`__
@@ -105,14 +105,14 @@ Those should be available in your ``PATH``:
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
 
 Install / Update stable from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (recommended)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     pip3 install scdlbot
 
 Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot>`__
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -187,13 +187,13 @@ Webhooks: These three links should help. In NGINX use TOKEN1 as TG_BOT_TOKEN wit
 - https://certbot.eff.org/#ubuntuxenial-nginx
 
 Telegram Bot Settings
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 Send the commands from respective filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
 
 
 Running Locally or at Dedicated Server
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using `Heroku Local <https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool>`__ (preferred)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -62,6 +62,7 @@ setup(
     description="Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
     # long_description=readme + '\n\n' + history,
     long_description=readme,
+    long_description_content_type='text/x-rst',
     author="George Pchelkin",
     author_email='george@pchelk.in',
     url='https://github.com/gpchelkin/scdlbot',
