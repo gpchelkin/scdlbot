@@ -96,7 +96,7 @@ Those should be available in your ``PATH``:
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
 
-Install / Update stable from `PyPI <https://pypi.python.org/pypi/scdlbot>`__ (recommended)
+Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -237,7 +237,7 @@ Manually
 
 You can do the same as the button above but using `Heroku
 CLI <https://cli.heroku.com/>`__, not much of a fun. Assuming you are in
-``scdbot`` repository directory:
+``scdlbot`` repository directory:
 
 ::
 
