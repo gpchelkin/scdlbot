@@ -1,4 +1,4 @@
-python-telegram-bot==10.1.0
+python-telegram-bot==12.1.1
 python-telegram-handler==2.0.2
 boltons==19.1.0
 plumbum==1.6.7
