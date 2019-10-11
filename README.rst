@@ -202,21 +202,22 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     # For webhook:
     heroku local web
 
-Using just Python
+Using Python only
 ^^^^^^^^^^^^^^^^^
 
 ::
 
-    # PyPI or Git source system-wide installs:
+    # For PyPI or Git source system-wide installs:
     export $(cat .env | xargs)
     scdlbot
-    # or just:
+
+    # or in one line:
     env $(cat .env | xargs) scdlbot
 
-    # Non-installed Git source repository directory:
+    # For non-installed Git source repository directory:
     export $(cat .env | xargs)
     python -m scdlbot
-    # or just:
+    # or in one line:
     env $(cat .env | xargs) python -m scdlbot
 
 
