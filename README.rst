@@ -8,7 +8,7 @@ Music Downloader Telegram Bot
         :alt: Telegram Bot
 
 .. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
-        :target: https://scdlbot.readthedocs.io/en/latest/?badge=latest
+        :target: https://scdlbot.readthedocs.io/?badge=latest
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
@@ -18,10 +18,6 @@ Music Downloader Telegram Bot
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
-
-.. image:: https://pyup.io/repos/github/gpchelkin/scdlbot/shield.svg?token=376ffde2-5188-4912-bf3c-5f316e52d43f
-        :target: https://pyup.io/repos/github/gpchelkin/scdlbot/
-        :alt: PyUp Updates
 
 .. image:: https://img.shields.io/travis/gpchelkin/scdlbot.svg
         :target: https://travis-ci.org/gpchelkin/scdlbot
@@ -42,10 +38,6 @@ Music Downloader Telegram Bot
 .. image:: https://api.codacy.com/project/badge/Grade/7dfb6d8e7a094987b303e9283fc7368c
         :target: https://www.codacy.com/app/gpchelkin/scdlbot
         :alt: Codacy Build Status
-
-.. image:: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/badges/quality-score.png?b=master
-        :target: https://scrutinizer-ci.com/g/gpchelkin/scdlbot/?branch=master
-        :alt: Scrutinizer Code Quality
 
 .. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
         :target: https://bettercodehub.com
