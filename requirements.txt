@@ -6,7 +6,7 @@ plumbum==1.6.7
 scdl==1.6.12
 bandcamp-downloader==0.0.8.post12
 #bandcamp-downloader==0.0.9.dev0
-youtube-dl==2019.9.28
+youtube-dl==2019.10.16
 pydub==0.23.1
 mutagen==1.42.0
 patool==1.12
