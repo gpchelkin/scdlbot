@@ -44,7 +44,7 @@ Music Downloader Telegram Bot
 Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
 
 
-* Free software: MIT license
+* Free software: `MIT License <LICENSE>`__
 * Documentation: https://scdlbot.readthedocs.io
 
 
