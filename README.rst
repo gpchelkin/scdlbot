@@ -7,7 +7,7 @@ Music Downloader Telegram Bot
         :target: https://t.me/scdlbot
         :alt: Telegram Bot
 
-.. image:: https://img.shields.io/travis/gpchelkin/scdlbot.svg
+.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
         :target: https://travis-ci.com/gpchelkin/scdlbot
         :alt: Travis CI Build Status
 
