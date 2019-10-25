@@ -23,19 +23,9 @@ Music Downloader Telegram Bot
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
 
-
-
-.. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/gpa.svg
-        :target: https://codeclimate.com/github/gpchelkin/scdlbot
-        :alt: Code Climate GPA
-
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
         :alt: Code Climate Issue Count
-
-.. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/coverage.svg
-        :target: https://codeclimate.com/github/gpchelkin/scdlbot/coverage
-        :alt: Code Climate Test Coverage
 
 .. image:: https://api.codacy.com/project/badge/Grade/7dfb6d8e7a094987b303e9283fc7368c
         :target: https://www.codacy.com/app/gpchelkin/scdlbot
