@@ -23,6 +23,8 @@ Music Downloader Telegram Bot
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
 
+
+
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/gpa.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
         :alt: Code Climate GPA
@@ -39,13 +41,14 @@ Music Downloader Telegram Bot
         :target: https://www.codacy.com/app/gpchelkin/scdlbot
         :alt: Codacy Build Status
 
+.. image:: https://codebeat.co/badges/102be98c-56c1-46af-895d-f1f15b2f2520
+        :target: https://codebeat.co/projects/github-com-gpchelkin-scdlbot-master
+        :alt: Codebeat Quality
+
 .. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
         :target: https://bettercodehub.com
         :alt: Better Code Hub Compliance
 
-.. image:: https://codebeat.co/badges/102be98c-56c1-46af-895d-f1f15b2f2520
-        :target: https://codebeat.co/projects/github-com-gpchelkin-scdlbot-master
-        :alt: Codebeat Quality
 
 
 Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
