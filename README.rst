@@ -16,7 +16,7 @@ Music Downloader Telegram Bot
         :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
-        :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE.txt
+        :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE
         :alt: GitHub License
 
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
