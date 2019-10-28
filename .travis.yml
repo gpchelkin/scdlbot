@@ -5,12 +5,13 @@ deploy:
   password:
     secure: hDja5C4KEK0vPNvm4X4tn8d6Z5/6MphECG7HUGhbufsuKQKYkRgVDZcNq3arjNkJermjynlU1AX5Pg/MtXH+NsBwkBMfBvZ5Ow3Y7z9Su6AgMiiC+BmOZTP1csOhmcHKqVQ61nuEWYyZbnPrdL/pc1PcNyQOhUk6Qf1lp/Q83q/HVbaXOb2WB7h0ewRDmmtKrXaZFFjdEkeDPEm6kLcW13jjI0kCS0fPtZ4wrkvEFSzgLiwuaEcBacND/LymwTeiRrfxBEyOvBYOR72s1jO/VIJCF/26jVZa/lPr3Y0UMaDmC3KcOkoppUE8ICl0K65CP27sgvSVOHlAigYxiQzUirof4ebvspu8bSPyRqithPwUGcDn6zy28u8QFxxkTeBV0IuLJqal36swTbJPV4MegYr6iuuYM6RioeVl1DTsomXT2CmyqVdyWsCLj9hG7wTCqPrnKsiskl70AIT0aHTpEnLtq5EVuSdI5p2ISCwzoR+RtTQ1qPfLBYcDIrmIoJWe2+MS3l+UL9W12o4o+JrpEObJ6h3agaE+FXL5B9Xgt3pS6ILmoTEmDp6Dvx56+Z69kUHTMDi0huIGj5o0874dSuqPG5zTkrSHM84XaPiYDr5MFpqg1G5x0rrXpNkPSIcYYIuHx91P3a5soT0kdd6xdq3r+Ju2nx/K9AGwNscO1tQ=
   on:
-    python: 3.7
+    python: 3.8
     repo: gpchelkin/scdlbot
     tags: true
 install: pip install -U tox-travis
 language: python
 python:
+- 3.8
 - 3.7
 - 3.6
 - 3.5
