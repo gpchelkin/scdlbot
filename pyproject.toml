@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "scdlbot"
+version = "0.9.20"
+description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
+authors = ["George Pchelkin <george@pchelk.in>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.5"
+python-telegram-bot = "10.1.0"
+python-telegram-handler = "2.2"
+boltons = "19.2.0"
+plumbum = "1.6.7"
+scdl = "1.6.12"
+bandcamp-downloader = "0.0.8.post12"
+youtube-dl = "2019.10.22"
+pydub = "0.23.1"
+mutagen = "1.42.0"
+patool = "1.12"
+pyshorteners = "0.6.1"
+Celery = "4.3.0"
+logentries = "0.17"
+
+[tool.poetry.dev-dependencies]
+pip = "19.3.1"
+wheel = "0.33.6"
+watchdog = "0.9.0"
+flake8 = "3.7.9"
+tox = "3.14.0"
+coverage = "4.5.4"
+Sphinx = "1.8.3"
+cryptography = "2.8"
+PyYAML = "5.1.2"
+pytest = "5.2.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
