@@ -31,7 +31,7 @@ Music Downloader Telegram Bot
         :target: https://www.codacy.com/app/gpchelkin/scdlbot
         :alt: Codacy Build Status
 
-.. image:: https://codebeat.co/badges/102be98c-56c1-46af-895d-f1f15b2f2520
+.. image:: https://codebeat.co/badges/57243b9d-2269-4f31-a35b-6aedd11626d2
         :target: https://codebeat.co/projects/github-com-gpchelkin-scdlbot-master
         :alt: Codebeat Quality
 
