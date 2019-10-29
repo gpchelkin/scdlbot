@@ -24,7 +24,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.5"
-python-telegram-bot = "10.1.0"
+python-telegram-bot = "12.2.0"
 python-telegram-handler = "2.2"
 boltons = "19.3.0"
 plumbum = "1.6.7"
