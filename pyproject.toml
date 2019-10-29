@@ -1,9 +1,26 @@
 [tool.poetry]
 name = "scdlbot"
-version = "0.9.20"
+version = "0.9.23"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
-authors = ["George Pchelkin <george@pchelk.in>"]
 license = "MIT"
+authors = ["George Pchelkin <george@pchelk.in>"]
+readme = "README.rst"
+homepage = "https://github.com/gpchelkin/scdlbot"
+repository = "https://github.com/gpchelkin/scdlbot"
+documentation = "https://scdlbot.readthedocs.io"
+keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "audio", "music", "download"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Internet",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+]
+include = ["AUTHORS.rst", "CONTRIBUTING.rst", "HISTORY.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/make.bat", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
+
+[tool.poetry.scripts]
+scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.5"
@@ -20,6 +37,7 @@ patool = "1.12"
 pyshorteners = "0.6.1"
 Celery = "4.3.0"
 logentries = "0.17"
+#transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
 pip = "19.3.1"
@@ -36,3 +54,7 @@ pytest = "5.2.2"
 [build-system]
 requires = ["poetry>=1.0.0b3"]
 build-backend = "poetry.masonry.api"
+
+[tool.dephell.main]
+from = {format = "poetry", path = "pyproject.toml"}
+to = {format = "setuppy", path = "setup.py"}
