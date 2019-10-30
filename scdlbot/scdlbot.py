@@ -32,9 +32,9 @@ from scdlbot.utils import *
 logger = logging.getLogger(__name__)
 
 
-class SCDLBot:
+class ScdlBot:
 
-    def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None,
+    def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, proxy=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
                  max_convert_file_size=80000000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
@@ -73,6 +73,7 @@ class SCDLBot:
         self.DL_DIR = dl_dir
         self.botan_token = botan_token if botan_token else None
         self.shortener = Shortener('Google', api_key=google_shortener_api_key) if google_shortener_api_key else None
+        self.proxy = proxy
 
         config = configparser.ConfigParser()
         config['scdl'] = {}
@@ -551,10 +552,10 @@ class SCDLBot:
                     status = 1
                 except TimeoutExpired:
                     cmd_proc.kill()
-                    logger.info("%s took too much time and dropped: %s", url)
+                    logger.info("%s took too much time and dropped: %s", cmd_name, url)
                     status = -1
                 except ProcessExecutionError:
-                    logger.exception("%s failed: %s" % (cmd_name, url))
+                    logger.exception("%s failed: %s", cmd_name, url)
 
         if status == 0:
             cmd_name = "youtube-dl"
@@ -573,6 +574,8 @@ class SCDLBot:
                     # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
+            if self.proxy:
+                ydl_opts['proxy'] = self.proxy
             queue = Queue()
             cmd_args = (
                 url,
@@ -643,13 +646,13 @@ class SCDLBot:
                                      parse_mode='Markdown')
                 except FileConvertedPartiallyError as exc:
                     file_parts = exc.file_parts
-                    logger.exception("Pydub failed: %s" % file_name)
+                    logger.exception("Pydub failed: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, not enough memory to convert file `{}`..".format(
                                          file_name),
                                      parse_mode='Markdown')
                 except FileNotConvertedError as exc:
-                    logger.exception("Pydub failed: %s" % file_name)
+                    logger.exception("Pydub failed: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      text="*Sorry*, not enough memory to convert file `{}`..".format(
                                          file_name),
@@ -703,7 +706,7 @@ class SCDLBot:
                                      text="*Sorry*, could not send file `{}` or some of it's parts..".format(
                                          file_name),
                                      parse_mode='Markdown')
-                    logger.warning("Sending some parts failed: %s" % file_name)
+                    logger.warning("Sending some parts failed: %s", file_name)
 
         if not self.SERVE_AUDIO:
             shutil.rmtree(download_dir, ignore_errors=True)
@@ -824,7 +827,7 @@ class SCDLBot:
                     break
                 except TelegramError:
                     if i == 2:
-                        logger.exception("Sending failed because of TelegramError: %s" % file_name)
+                        logger.exception("Sending failed because of TelegramError: %s", file_name)
         if len(sent_audio_ids) != len(file_parts):
             raise FileSentPartiallyError(sent_audio_ids)
         return sent_audio_ids

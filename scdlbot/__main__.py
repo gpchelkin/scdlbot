@@ -7,7 +7,7 @@ from logging.handlers import SysLogHandler
 from logentries import LogentriesHandler
 from telegram_handler import TelegramHandler
 
-from scdlbot.scdlbot import SCDLBot
+from scdlbot.scdlbot import ScdlBot
 
 # import loggly.handlers
 
@@ -70,8 +70,9 @@ def main():
     app_url = os.getenv('APP_URL', '')
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80000000'))
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
+    proxy = os.getenv('PROXY', '')
 
-    scdlbot = SCDLBot(tg_bot_token, botan_token, google_shortener_api_key,
+    scdlbot = ScdlBot(tg_bot_token, botan_token, google_shortener_api_key, proxy,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
                       dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url, serve_audio)
 
