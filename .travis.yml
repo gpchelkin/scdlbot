@@ -8,7 +8,7 @@ python:
 
 before_install:
 - pip install --upgrade pip
-- pip install poetry
+- pip install poetry==1.0.0b3
 install:
 - poetry install -v
 - pip install --upgrade tox-travis
@@ -16,7 +16,7 @@ script: tox
 
 before_deploy:
 - pip install --upgrade pip
-- pip install poetry
+- pip install poetry==1.0.0b3
 deploy:
   provider: script
   script:
