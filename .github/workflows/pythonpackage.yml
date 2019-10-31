@@ -23,7 +23,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        
+
+    - name: wemake-python-styleguide
+      uses: wemake-services/wemake-python-styleguide@0.12.5
+
     - name: Lint with flake8
       run: |
         pip install flake8
