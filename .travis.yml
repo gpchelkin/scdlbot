@@ -8,11 +8,9 @@ python:
 
 before_install:
 - pip install --upgrade pip
-- pip install poetry==1.0.0b3
-install:
-#we don't need it, tox will do poetry install
+- pip install --upgrade poetry==1.0.0b3 tox tox-travis
+#we don't need it, since tox itself will do poetry install
 #- poetry install -v
-- pip install --upgrade tox tox-travis
 script: tox
 
 before_deploy:
