@@ -10,7 +10,8 @@ before_install:
 - pip install --upgrade pip
 - pip install poetry==1.0.0b3
 install:
-- poetry install -v
+#we don't need it, tox will do poetry install
+#- poetry install -v
 - pip install --upgrade tox-travis
 script: tox
 
