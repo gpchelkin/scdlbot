@@ -43,13 +43,13 @@ Music Downloader Telegram Bot
         :target: https://bettercodehub.com/results/gpchelkin/scdlbot
         :alt: Better Code Hub Compliance
 
-.. image:: https://static.deepsource.io/deepsource-badge-light.svg
-        :target: https://deepsource.io/gh/gpchelkin/scdlbot/
-        :alt: DeepSource
-
 .. image:: https://www.codefactor.io/repository/github/gpchelkin/scdlbot/badge
         :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot
         :alt: CodeFactor
+
+.. image:: https://static.deepsource.io/deepsource-badge-light.svg
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/
+        :alt: DeepSource
 
 Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
 
