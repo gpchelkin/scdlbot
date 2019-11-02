@@ -11,13 +11,17 @@ Music Downloader Telegram Bot
         :target: https://travis-ci.com/gpchelkin/scdlbot
         :alt: Travis CI Build Status
 
-.. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
-        :target: https://scdlbot.readthedocs.io/?badge=latest
-        :alt: Documentation Status
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/Python%20package/badge.svg
+        :target: https://github.com/gpchelkin/scdlbot/actions
+        :alt: GitHub Actions Status
 
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
         :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE
         :alt: GitHub License
+
+.. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
+        :target: https://scdlbot.readthedocs.io/
+        :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
         :target: https://pypi.org/project/scdlbot
@@ -36,10 +40,16 @@ Music Downloader Telegram Bot
         :alt: Codebeat Quality
 
 .. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
-        :target: https://bettercodehub.com
+        :target: https://bettercodehub.com/results/gpchelkin/scdlbot
         :alt: Better Code Hub Compliance
 
+.. image:: https://static.deepsource.io/deepsource-badge-light.svg
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/
+        :alt: DeepSource
 
+.. image:: https://www.codefactor.io/repository/github/gpchelkin/scdlbot/badge
+        :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot
+        :alt: CodeFactor
 
 Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
 
