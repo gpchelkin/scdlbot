@@ -12,7 +12,7 @@ before_install:
 install:
 #we don't need it, tox will do poetry install
 #- poetry install -v
-- pip install --upgrade tox-travis
+- pip install --upgrade tox tox-travis
 script: tox
 
 before_deploy:
