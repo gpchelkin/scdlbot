@@ -546,7 +546,8 @@ class ScdlBot:
                 try:
                     cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
                     cmd_retcode = cmd_proc.returncode
-                    if cmd_retcode or "Error resolving url" in cmd_stderr:
+                    # common scdl problems with 0 retcode:
+                    if cmd_retcode or "Error resolving url" in cmd_stderr or "is not streamable" in cmd_stderr:
                         raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
                     logger.info("%s succeeded: %s", cmd_name, url)
                     status = 1

@@ -1,1 +1,1 @@
-*Sorry*, no supported links found in your request. For more information see /help
+*Sorry*, no supported links found in your request. Also recently Google improved security in YouTube and now they are not allowing servers (bots like me) to fetch any kind of info from YouTube repeatedly.. So maybe just wait and try again later. For more information see /help
