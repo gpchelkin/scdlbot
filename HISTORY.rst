@@ -2,6 +2,13 @@
 History
 =======
 
+0.9.21-25 (2019-11-04)
+-----------------------
+* catch scdl 'not streamable' error and add some explanation about youtube '429 too many requests' error
+* upgrade requirements
+* add python 3.8 support
+* various deployment and CI/CD improvements
+
 0.9.20 (2019-10-11)
 -----------------------
 * upgrade requirements
