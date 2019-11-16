@@ -52,7 +52,7 @@ PyYAML = "5.1.2"
 pytest = "5.2.2"
 
 [build-system]
-requires = ["poetry>=1.0.0b4"]
+requires = ["poetry>=1.0.0b5"]
 build-backend = "poetry.masonry.api"
 
 [tool.dephell.main]
