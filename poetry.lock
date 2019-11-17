@@ -496,7 +496,7 @@ description = "Plumbum: shell combinators library"
 name = "plumbum"
 optional = false
 python-versions = "*"
-version = "1.6.7"
+version = "1.6.8"
 
 [[package]]
 category = "dev"
@@ -571,7 +571,7 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=3.5"
-version = "5.2.2"
+version = "5.2.4"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
@@ -812,8 +812,8 @@ category = "dev"
 description = "tox is a generic virtualenv management and test command line tool"
 name = "tox"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.14.0"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+version = "3.14.1"
 
 [package.dependencies]
 filelock = ">=3.0.0,<4"
@@ -822,7 +822,7 @@ pluggy = ">=0.12.0,<1"
 py = ">=1.4.17,<2"
 six = ">=1.0.0,<2"
 toml = ">=0.9.4"
-virtualenv = ">=14.0.0"
+virtualenv = ">=16.0.0"
 
 [package.dependencies.importlib-metadata]
 python = "<3.8"
@@ -830,7 +830,7 @@ version = ">=0.12,<1"
 
 [package.extras]
 docs = ["sphinx (>=2.0.0,<3)", "towncrier (>=18.5.0)", "pygments-github-lexers (>=0.0.5)", "sphinxcontrib-autoprogram (>=0.1.5)"]
-testing = ["freezegun (>=0.3.11,<1)", "pathlib2 (>=2.3.3,<3)", "pytest (>=4.0.0,<6)", "pytest-cov (>=2.5.1,<3)", "pytest-mock (>=1.10.0,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-randomly (>=1.2.3,<2)", "flaky (>=3.4.0,<4)", "psutil (>=5.6.1,<6)"]
+testing = ["freezegun (>=0.3.11,<1)", "pathlib2 (>=2.3.3,<3)", "pytest (>=4.0.0,<6)", "pytest-cov (>=2.5.1,<3)", "pytest-mock (>=1.10.0,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-randomly (>=1.0.0,<4)", "flaky (>=3.4.0,<4)", "psutil (>=5.6.1,<6)"]
 
 [[package]]
 category = "main"
@@ -923,7 +923,7 @@ description = "YouTube video downloader"
 name = "youtube-dl"
 optional = false
 python-versions = "*"
-version = "2019.10.29"
+version = "2019.11.5"
 
 [[package]]
 category = "main"
@@ -941,7 +941,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "c45a106acddb311e3d036edd9784cfd6afb577aacb60003ca788cc4dc03b2a90"
+content-hash = "afd98160286d9fcd32926f471336868b799d8b5f02a70a41790859d9dfbaca7e"
 python-versions = "^3.5"
 
 [metadata.files]
@@ -1213,8 +1213,8 @@ pluggy = [
     {file = "pluggy-0.13.0.tar.gz", hash = "sha256:fa5fa1622fa6dd5c030e9cad086fa19ef6a0cf6d7a2d12318e10cb49d6d68f34"},
 ]
 plumbum = [
-    {file = "plumbum-1.6.7-py2.py3-none-any.whl", hash = "sha256:df96a5facf621db4a6d682bdc93afa5ed6b107a8667c73c3f0a0f0fab4217c81"},
-    {file = "plumbum-1.6.7.tar.gz", hash = "sha256:d143f079bfb60b11e9bec09a49695ce2e55ce5ca0246877bdb0818ab7c7fc312"},
+    {file = "plumbum-1.6.8-py2.py3-none-any.whl", hash = "sha256:600f99e1736f314b52d823aa5d3b73db9a7a6d5b5dc22303410c1a7d6f3e569c"},
+    {file = "plumbum-1.6.8.tar.gz", hash = "sha256:8571f2f9657e00dc22549d9e92db3fdec5674bf509fe60c5c9b4081fd8f6ab92"},
 ]
 py = [
     {file = "py-1.8.0-py2.py3-none-any.whl", hash = "sha256:64f65755aee5b381cea27766a3a147c3f15b9b6b9ac88676de66ba2ae36793fa"},
@@ -1247,8 +1247,8 @@ pyshorteners = [
     {file = "pyshorteners-0.6.1.tar.gz", hash = "sha256:b499af0d7a3c6fe201d3e76df45b7243417cacb6b280a19220b3290e4271b887"},
 ]
 pytest = [
-    {file = "pytest-5.2.2-py3-none-any.whl", hash = "sha256:58cee9e09242937e136dbb3dab466116ba20d6b7828c7620f23947f37eb4dae4"},
-    {file = "pytest-5.2.2.tar.gz", hash = "sha256:27abc3fef618a01bebb1f0d6d303d2816a99aa87a5968ebc32fe971be91eb1e6"},
+    {file = "pytest-5.2.4-py3-none-any.whl", hash = "sha256:8e256fe71eb74e14a4d20a5987bb5e1488f0511ee800680aaedc62b9358714e8"},
+    {file = "pytest-5.2.4.tar.gz", hash = "sha256:ff0090819f669aaa0284d0f4aad1a6d9d67a6efdc6dd4eb4ac56b704f890a0d6"},
 ]
 python-telegram-bot = [
     {file = "python-telegram-bot-10.1.0.tar.gz", hash = "sha256:ca2f8a44ddef7271477e16f4986647fa90ef4df5b55a7953e53b9c9d2672f639"},
@@ -1332,8 +1332,8 @@ toml = [
     {file = "toml-0.10.0.tar.gz", hash = "sha256:229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c"},
 ]
 tox = [
-    {file = "tox-3.14.0-py2.py3-none-any.whl", hash = "sha256:0bc216b6a2e6afe764476b4a07edf2c1dab99ed82bb146a1130b2e828f5bff5e"},
-    {file = "tox-3.14.0.tar.gz", hash = "sha256:c4f6b319c20ba4913dbfe71ebfd14ff95d1853c4231493608182f66e566ecfe1"},
+    {file = "tox-3.14.1-py2.py3-none-any.whl", hash = "sha256:1d1368ac86e8332f79e2bcef9fefe2b077469f08449eadf0183759b34f3b2070"},
+    {file = "tox-3.14.1.tar.gz", hash = "sha256:bcfa3e40abc1e9b70607b56adfd976fe7dc8286ad56aab44e3151daca7d2d0d0"},
 ]
 unicode-slugify = [
     {file = "unicode-slugify-0.1.3.tar.gz", hash = "sha256:34cf3afefa6480efe705a4fc0eaeeaf7f49754aec322ba3e8b2f27dc1cbcf650"},
@@ -1366,8 +1366,8 @@ wheel = [
     {file = "wheel-0.33.6.tar.gz", hash = "sha256:10c9da68765315ed98850f8e048347c3eb06dd81822dc2ab1d4fde9dc9702646"},
 ]
 youtube-dl = [
-    {file = "youtube_dl-2019.10.29-py2.py3-none-any.whl", hash = "sha256:b14fcb8f67a8bd334aa5de0937433e626729a18df5d538a8b94eaf70101493c5"},
-    {file = "youtube_dl-2019.10.29.tar.gz", hash = "sha256:0b6611807b0bb978a0384ddebf215ea1f974ecf73d80d04e9f614ff30b1443f0"},
+    {file = "youtube_dl-2019.11.5-py2.py3-none-any.whl", hash = "sha256:1314de17f0d41c0f1062c4942406b8e0558d14d44b32f9fce00272760a06455b"},
+    {file = "youtube_dl-2019.11.5.tar.gz", hash = "sha256:25324aab78df9a09b2ee34f642f116933134bc66ea629a778c1fffe05b66f733"},
 ]
 zipp = [
     {file = "zipp-0.6.0-py2.py3-none-any.whl", hash = "sha256:f06903e9f1f43b12d371004b4ac7b06ab39a44adc747266928ae6debfa7b3335"},
