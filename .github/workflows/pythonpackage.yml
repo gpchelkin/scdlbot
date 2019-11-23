@@ -12,17 +12,17 @@ jobs:
         python-version: [3.5, 3.6, 3.7, 3.8]
 
     steps:
-    - uses: actions/checkout@v1.1.0
+    - uses: actions/checkout@v1.2.0
       
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1.1.0
+      uses: actions/setup-python@v1.1.1
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry==1.0.0b5 tox tox-gh-actions
+        pip install poetry==1.0.0b7 tox tox-gh-actions
 
 #    - name: wemake-python-styleguide
 #      uses: wemake-services/wemake-python-styleguide@0.12.5

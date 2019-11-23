@@ -27,7 +27,7 @@ python = "^3.5"
 python-telegram-bot = "10.1.0"
 python-telegram-handler = "2.2"
 boltons = "19.3.0"
-plumbum = "1.6.8"
+plumbum = "1.6.7"
 scdl = "1.6.12"
 bandcamp-downloader = "0.0.8.post12"
 youtube-dl = "2019.11.5"
@@ -52,7 +52,7 @@ PyYAML = "5.1.2"
 pytest = "5.2.4"
 
 [build-system]
-requires = ["poetry>=1.0.0b5"]
+requires = ["poetry>=1.0.0b7"]
 build-backend = "poetry.masonry.api"
 
 [tool.dephell.main]
