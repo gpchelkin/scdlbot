@@ -5,7 +5,7 @@ beautifulsoup4==4.8.1
 billiard==3.6.1.0
 boltons==19.3.0
 celery==4.3.0
-certifi==2019.9.11
+certifi==2019.11.28
 chardet==3.0.4
 clint==0.5.1
 demjson==2.2.4
