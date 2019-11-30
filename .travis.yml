@@ -9,7 +9,7 @@ python:
 install:
 - pip install --upgrade pip
 - pip install --upgrade poetry==1.0.0b8 tox tox-travis
-#we don't need it, since tox itself will do poetry install
+#we don't need it, since tox itself will do poetry install:
 #- poetry install -v
 script: tox
 
