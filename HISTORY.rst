@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.26 (2019-11-30)
+-----------------------
+* upgrade requirements to use scdl from git
+* various deployment and CI/CD improvements
+
 0.9.21-25 (2019-11-04)
 -----------------------
 * catch scdl 'not streamable' error and add some explanation about youtube '429 too many requests' error
