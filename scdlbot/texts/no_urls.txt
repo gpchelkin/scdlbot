@@ -1,1 +1,4 @@
-*Sorry*, no supported links found in your request. Also recently Google improved security in YouTube and now they are not allowing servers (bots like me) to fetch any kind of info from YouTube repeatedly.. So maybe just wait and try again later. For more information see /help
+*Sorry*, no supported links found in your request.
+Or, if it was YouTube link, YouTube just didn't let me download from it too repeatedly..
+Just wait and try again later, or try my test version bot: @scdltestbot or some another bot like @utubebot.
+For more information see /help
