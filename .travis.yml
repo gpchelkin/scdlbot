@@ -6,17 +6,16 @@ python:
 - 3.7
 - 3.8
 
-before_install:
+install:
 - pip install --upgrade pip
 - pip install --upgrade poetry==1.0.0b8 tox tox-travis
 #we don't need it, since tox itself will do poetry install
 #- poetry install -v
-install: echo "Don't pip install requirements.txt"
 script: tox
 
 before_deploy:
 - pip install --upgrade pip
-- pip install poetry==1.0.0b8
+- pip install --upgrade poetry==1.0.0b8
 deploy:
   provider: script
   script:
