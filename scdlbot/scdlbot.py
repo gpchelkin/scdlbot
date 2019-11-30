@@ -520,7 +520,8 @@ class ScdlBot:
                         "--path", download_dir,  # Download the music to a custom path
                         "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                         "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-                        "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                        #TODO doesn't work for now:
+                        #"--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
                         "--no-playlist-folder",
                         # Download playlist tracks into directory, instead of making a playlist subfolder
                         "--extract-artist",  # Set artist tag from title instead of username
