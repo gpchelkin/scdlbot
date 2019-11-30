@@ -30,13 +30,13 @@ boltons = "19.3.0"
 plumbum = "1.6.7"
 scdl = "1.6.12"
 bandcamp-downloader = "0.0.8.post12"
-youtube-dl = "2019.11.5"
+youtube-dl = "2019.11.28"
 pydub = "0.23.1"
-mutagen = "1.42.0"
+mutagen = "1.43.0"
 patool = "1.12"
 pyshorteners = "0.6.1"
 logentries = "0.17"
-Celery = "4.3.0"
+celery = "4.3.0"
 #transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
@@ -49,7 +49,7 @@ coverage = "4.5.4"
 Sphinx = "2.2.1"
 cryptography = "2.8"
 PyYAML = "5.1.2"
-pytest = "5.2.4"
+pytest = "5.3.1"
 
 [build-system]
 requires = ["poetry>=1.0.0b8"]
