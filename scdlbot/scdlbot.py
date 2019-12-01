@@ -520,8 +520,7 @@ class ScdlBot:
                         "--path", download_dir,  # Download the music to a custom path
                         "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                         "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-                        #TODO doesn't work for now:
-                        #"--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                        "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
                         "--no-playlist-folder",
                         # Download playlist tracks into directory, instead of making a playlist subfolder
                         "--extract-artist",  # Set artist tag from title instead of username
@@ -547,8 +546,8 @@ class ScdlBot:
                 try:
                     cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
                     cmd_retcode = cmd_proc.returncode
-                    # common scdl problems with 0 retcode:
-                    if cmd_retcode or "Error resolving url" in cmd_stderr or "is not streamable" in cmd_stderr:
+                    # TODO listed are common scdl problems for one track with 0 retcode, all its output is always in stderr:
+                    if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable", "Failed to get item"]) and ".mp3" not in cmd_stderr):
                         raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
                     logger.info("%s succeeded: %s", cmd_name, url)
                     status = 1

@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.27 (2019-12-01)
+-----------------------
+* return timestamp to scdl using some hacks
+* don't treat one track's fail as playlist's fail for scdl
+
 0.9.26 (2019-11-30)
 -----------------------
 * upgrade requirements to use scdl from git

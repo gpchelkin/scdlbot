@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scdlbot"
-version = "0.9.26"
+version = "0.9.27"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
 license = "MIT"
 authors = ["George Pchelkin <george@pchelk.in>"]
