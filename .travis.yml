@@ -8,7 +8,7 @@ python:
 
 install:
 - pip install --upgrade pip
-- pip install --upgrade poetry==1.0.0b8 tox tox-travis
+- pip install --upgrade poetry==1.0.0b9 tox tox-travis
 script: tox
 deploy:
   provider: script
