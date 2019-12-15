@@ -8,12 +8,13 @@ python:
 
 install:
 - pip install --upgrade pip
-- pip install --upgrade poetry==1.0.0b9 tox tox-travis
+- pip install --upgrade poetry tox tox-travis
 script: tox
 deploy:
   provider: script
   script:
-  - poetry publish --build --username ${PYPI_USER} --password ${PYPI_PASSWORD}
+# POETRY_PYPI_TOKEN_PYPI is already set in Travis CI environment variables
+  - poetry publish --build
   on:
     tags: true
     python: 3.8
