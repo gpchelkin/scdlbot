@@ -676,7 +676,7 @@ requests = "*"
 termcolor = "*"
 
 [package.source]
-reference = "30968bc5a19703fcf3332613f96e497e43bd6771"
+reference = "ea950998f51cb830a20a6d5063fcefb49db919e9"
 type = "git"
 url = "https://github.com/gpchelkin/scdl.git"
 [[package]]
@@ -951,7 +951,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "ae13ce17e2ba5859da0c229a7cecd9e194339a015ef7eaf26bc26b8efbee14d2"
+content-hash = "13c0a15c268b2a9dbf64ecce9afb5fe339ea1b9d766463e76a0ef533cb932a25"
 python-versions = "^3.5"
 
 [metadata.files]

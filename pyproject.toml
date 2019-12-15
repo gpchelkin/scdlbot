@@ -32,7 +32,7 @@ plumbum = "1.6.7"
 #scdl = "1.6.12"
 #For testing:
 #scdl = { git = "https://github.com/flyingrub/scdl.git" }
-scdl = { git = "https://github.com/gpchelkin/scdl.git" }
+scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = "0.0.8.post12"
 youtube-dl = "2019.11.28"
 pydub = "0.23.1"
