@@ -43,7 +43,8 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-### Python template
+
+#### python ####
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -54,7 +55,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -89,7 +89,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -116,35 +116,38 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
-
 # celery beat schedule file
 celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
 
-# dotenv
+# Environments
 .env
-
-# virtualenv
 .venv
+env/
 venv/
 ENV/
+.env-*
+.python-version
 
 # Spyder project settings
 .spyderproject
+.spyproject
 
 # Rope project settings
 .ropeproject
 
-# All Intellij files
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+
+#### jetbrains ####
 .idea
 
-# Different envs
-.env-*
-
+#### scdlbot ####
 /scdlbotdata.dat
 /scdlbotdata.dir
 /scdlbotdata.bak

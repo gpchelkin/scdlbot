@@ -1,20 +1,19 @@
-Welcome to Music Downloader Telegram Bot's documentation!
-==========================================================
+Music Downloader Telegram Bot aka scdlbot documentation
+=======================================================
 
-Contents:
+Contents
+--------
 
 .. toctree::
-   :maxdepth: 2
+  :maxdepth: 2
 
-   readme
-   installation
-   usage
-   contributing
-   authors
-   history
+.. include:: ../README.rst
+.. mdinclude:: ../CONTRIBUTING.md
+.. include:: ../AUTHORS.rst
+.. include:: ../CHANGELOG.rst
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
