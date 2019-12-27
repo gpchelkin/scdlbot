@@ -38,7 +38,7 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6"
 python-telegram-bot = "10.1.0"
 python-telegram-handler = "2.2"
 boltons = "19.3.0"

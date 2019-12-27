@@ -1,10 +1,10 @@
 amqp==2.5.2
 args==0.1.0
 bandcamp-downloader==0.0.8.post12
-beautifulsoup4==4.8.1
+beautifulsoup4==4.8.2
 billiard==3.6.1.0
 boltons==19.3.0
-celery==4.3.0
+celery==4.4.0
 certifi==2019.11.28
 chardet==3.0.4
 clint==0.5.1
@@ -12,7 +12,7 @@ demjson==2.2.4
 docopt==0.6.2
 future==0.18.2
 idna==2.8
-importlib-metadata==0.23; python_version < "3.8"
+importlib-metadata==1.3.0; python_version < "3.8"
 kombu==4.6.7
 logentries==0.17
 mock==3.0.5
@@ -26,7 +26,7 @@ python-telegram-bot==10.1.0
 python-telegram-handler==2.2
 pytz==2019.3
 requests==2.22.0
--e git+https://github.com/gpchelkin/scdl.git@ea950998f51cb830a20a6d5063fcefb49db919e9#egg=scdl
+-e git+https://github.com/flyingrub/scdl.git@16f414d7ccba75f99fad2d110dc1ab1539a197c7#egg=scdl
 six==1.13.0
 soupsieve==1.9.5
 termcolor==1.1.0
@@ -34,5 +34,5 @@ unicode-slugify==0.1.3
 unidecode==1.1.1
 urllib3==1.25.7
 vine==1.3.0
-youtube-dl==2019.11.28
+youtube-dl==2019.12.25
 zipp==0.6.0; python_version < "3.8"
