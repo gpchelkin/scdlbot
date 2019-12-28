@@ -5,8 +5,6 @@ Contents
 
 .. toctree::
   :maxdepth: 1
-  :caption: Stuff
-  :hidden:
 
   pages/contributing.rst
   pages/authors.rst
