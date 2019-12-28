@@ -21,9 +21,11 @@ jobs:
 
     - name: Install tox and poetry
       run: |
-        "pip freeze | xargs pip uninstall -y"
+# pipes do not work in GitHub Actions
+#        "pip freeze | xargs pip uninstall -y"
         pip install --upgrade pip tox tox-gh-actions
-        "curl -sSL 'https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py' | python"
+        wget "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py"
+        python "get-poetry.py"
         source "$HOME/.poetry/env"
 
 #    - name: wemake-python-styleguide
