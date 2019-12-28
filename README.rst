@@ -1,6 +1,5 @@
-=============================
-Music Downloader Telegram Bot
-=============================
+Music Downloader Telegram Bot aka scdlbot
+=========================================
 
 
 .. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
@@ -51,7 +50,8 @@ Music Downloader Telegram Bot
         :target: https://deepsource.io/gh/gpchelkin/scdlbot/
         :alt: DeepSource
 
-Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.
+Telegram Bot for downloading MP3 rips of tracks/sets from
+SoundCloud, Bandcamp, YouTube with tags and artwork.
 
 
 * Free software: `MIT License <LICENSE>`__
@@ -64,12 +64,14 @@ Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, 
 Bot Usage
 ---------
 
-Send ``/start`` or ``/help`` command to bot or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
+Send ``/start`` or ``/help`` command to bot
+or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
 
-Please report all bugs and issues and suggest your improvements to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
+Please report all bugs and issues and suggest your improvements
+to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 
 Supported sites and mainly used packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  `Telegram Bot API <https://core.telegram.org/bots/api>`__:
    `python-telegram-bot <https://github.com/python-telegram-bot/python-telegram-bot>`__
@@ -85,10 +87,10 @@ Development
 -----------
 
 Installation
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 Requirements
-^^^^^^^^^^^^
+""""""""""""
 
 Those should be available in your ``PATH``:
 
@@ -100,14 +102,14 @@ Those should be available in your ``PATH``:
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
 
 Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
     pip3 install scdlbot
 
 Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot>`__
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
@@ -126,9 +128,10 @@ Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot
     python3 setup.py install
 
 Configuration
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
-Download or copy config file sample and set up config environment variables in it:
+Download or copy config file sample and set up
+config environment variables in it:
 
 ::
 
@@ -142,13 +145,13 @@ Download or copy config file sample and set up config environment variables in i
     nano .env
 
 Required
-^^^^^^^^
+""""""""
 
 -  ``TG_BOT_TOKEN``: Telegram Bot API Token, `obtain
    here <https://t.me/BotFather>`__
 
 Optional
-^^^^^^^^
+""""""""
 
 -  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
    here <https://flyingrub.github.io/scdl/>`__
@@ -167,31 +170,36 @@ Optional
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
    default: empty (binaries are availaible in PATH)
 -  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdlbot
--  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading if it takes longer than allowed, default: 300
--  ``MAX_CONVERT_FILE_SIZE``: Don't try to split and send files over this number of bytes, default: 80000000
--  ``SYSLOG_ADDRESS``: Syslog server, for example ``logsX.papertrailapp.com:ABCDE``
+-  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading
+   if it takes longer than allowed, default: 300
+-  ``MAX_CONVERT_FILE_SIZE``: Don't try to split and send files
+   over this number of bytes, default: 80000000
+-  ``SYSLOG_ADDRESS``: Syslog server, for example
+   ``logsX.papertrailapp.com:ABCDE``
 -  ``SYSLOG_DEBUG``: Enable verbose debug logging: 1
 -  ``HOSTNAME``: Hostname to show up in Syslog messages
 -  ``GOOGL_API_KEY``: `Goo.gl URL shortener <https://goo.gl>`__
    `API key <https://developers.google.com/url-shortener/v1/getting_started#APIKey>`__
 
-Webhooks: These three links should help. In NGINX use TOKEN1 as TG_BOT_TOKEN without ":" symbol, and port in proxy_pass according to PORT environment variable.
+Webhooks: These three links should help. In NGINX use TOKEN1 as
+TG_BOT_TOKEN without ":" symbol, and port in proxy_pass
+according to PORT environment variable.
 
 - https://nginx.org/en/linux_packages.html#mainline
 - https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-nginx-with-one-domainport-for-all-bots
 - https://certbot.eff.org/#ubuntuxenial-nginx
 
 Telegram Bot Settings
-^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 Send the commands from respective filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
 
 
 Running Locally or at Dedicated Server
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Using `Heroku Local <https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool>`__ (preferred)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
 
@@ -206,7 +214,7 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     heroku local web
 
 Using Python only
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 ::
 
@@ -225,11 +233,12 @@ Using Python only
 
 
 Deploying to `Heroku <https://heroku.com/>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |Deploy|
 
-Register on Heroku, press the button above and configure variables for deploying.
+Register on Heroku, press the button above and
+configure variables for deploying.
 When app is deployed you **must** set only one dyno working on
 "Resources" tab in your app settings depending on `which way of getting
 updates <https://core.telegram.org/bots/api#getting-updates>`__ you have
@@ -237,7 +246,7 @@ chosen and set in config variables: ``worker`` for polling or ``web``
 for webhook.
 
 Manually
-^^^^^^^^
+""""""""
 
 You can do the same as the button above but using `Heroku
 CLI <https://cli.heroku.com/>`__, not much of a fun. Assuming you are in
@@ -283,10 +292,11 @@ Some useful commands:
     heroku run "ffprobe -version"
 
 Deploying to `Dokku <https://github.com/dokku/dokku>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use Dokku (your own Heroku) installed on your own server. App is tested and fully
-ready for deployment with polling (no webhook yet).
+Use Dokku (your own Heroku) installed on your own server.
+App is tested and fully ready for deployment with polling
+(no webhook yet).
 https://github.com/dokku/dokku-letsencrypt
 
 ::

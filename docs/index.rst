@@ -1,4 +1,4 @@
-Music Downloader Telegram Bot aka scdlbot documentation
+Music Downloader Telegram Bot aka scdlbot Documentation
 =======================================================
 
 Contents
