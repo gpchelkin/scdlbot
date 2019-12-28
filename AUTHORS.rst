@@ -9,5 +9,5 @@ Development Lead
 Contributors
 ------------
 
-* Leonid Runyshkin @leovp <runyshkin@gmail.com>
+* Leonid Runyshkin @leovp
 * Vadim Larionov @vadimlarionov <larionov.vadim@my.com>

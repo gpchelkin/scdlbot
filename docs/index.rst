@@ -1,16 +1,17 @@
-Music Downloader Telegram Bot aka scdlbot Documentation
-=======================================================
+.. include:: ../README.rst
 
 Contents
 --------
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
+  :caption: Stuff
+  :hidden:
 
-.. include:: ../README.rst
-.. mdinclude:: ../CONTRIBUTING.md
-.. include:: ../AUTHORS.rst
-.. include:: ../CHANGELOG.rst
+  pages/contributing.rst
+  pages/authors.rst
+  pages/changelog.rst
+
 
 Indices and tables
 ------------------
