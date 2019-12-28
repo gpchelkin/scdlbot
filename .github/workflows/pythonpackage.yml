@@ -19,7 +19,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-#TODO  pipes do not work in GitHub Actions
+#TODO pipes do not work in GitHub Actions
 #        "pip freeze | xargs pip uninstall -y"
 
     - name: Install tox and poetry
@@ -30,4 +30,6 @@ jobs:
         source "$HOME/.poetry/env"
 
     - name: Test with tox
-      run: tox
+      run: |
+        source "$HOME/.poetry/env"
+        tox
