@@ -19,17 +19,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+#TODO  pipes do not work in GitHub Actions
+#        "pip freeze | xargs pip uninstall -y"
+
     - name: Install tox and poetry
       run: |
-# pipes do not work in GitHub Actions
-#        "pip freeze | xargs pip uninstall -y"
         pip install --upgrade pip tox tox-gh-actions
         wget "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py"
         python "get-poetry.py"
         source "$HOME/.poetry/env"
 
-#    - name: wemake-python-styleguide
-#      uses: wemake-services/wemake-python-styleguide@0.12.5
-        
     - name: Test with tox
       run: tox
