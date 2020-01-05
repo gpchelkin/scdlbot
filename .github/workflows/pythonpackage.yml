@@ -27,7 +27,6 @@ jobs:
         pip install --upgrade pip tox tox-gh-actions
         wget "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py"
         python "get-poetry.py"
-        source "$HOME/.poetry/env"
 
     - name: Test with tox
       run: |

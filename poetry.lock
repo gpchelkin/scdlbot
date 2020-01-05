@@ -1285,6 +1285,7 @@ termcolor = "*"
 reference = "16f414d7ccba75f99fad2d110dc1ab1539a197c7"
 type = "git"
 url = "https://github.com/flyingrub/scdl.git"
+
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -1641,7 +1642,7 @@ description = "YouTube video downloader"
 name = "youtube-dl"
 optional = false
 python-versions = "*"
-version = "2019.12.25"
+version = "2020.1.1"
 
 [[package]]
 category = "main"
@@ -1660,7 +1661,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "1124e1e9587506b7656be60451a4f8df582857fe00e648e7cb36e5e3961de79a"
+content-hash = "1086440f8417761bf82f5770cf9fbe9d73ee49c6badd6343ed442f48ef344444"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2298,8 +2299,8 @@ wemake-python-styleguide = [
     {file = "wemake_python_styleguide-0.13.3-py3-none-any.whl", hash = "sha256:4705b9f963053628ed6800a922622f9b0491a9e23986707b612f033009e48c7c"},
 ]
 youtube-dl = [
-    {file = "youtube_dl-2019.12.25-py2.py3-none-any.whl", hash = "sha256:54067a50647e2ba159544bf50f8c5f749cada39c7815ab097a89c11b820a0712"},
-    {file = "youtube_dl-2019.12.25.tar.gz", hash = "sha256:5f73e8c66c07d632b0fc69f715247fe76f38a28c0c5f13bd0651ecd193c2f1c6"},
+    {file = "youtube_dl-2020.1.1-py2.py3-none-any.whl", hash = "sha256:3538410130b3adb4690955b2454bfe212d94babefd822aadae4a2b263c421be4"},
+    {file = "youtube_dl-2020.1.1.tar.gz", hash = "sha256:0f8e62b5a3a5bb8bdf3d7ae3ec96c233f5110fa0ee1c9df51299b6636ebd4ff4"},
 ]
 zipp = [
     {file = "zipp-0.6.0-py2.py3-none-any.whl", hash = "sha256:f06903e9f1f43b12d371004b4ac7b06ab39a44adc747266928ae6debfa7b3335"},
