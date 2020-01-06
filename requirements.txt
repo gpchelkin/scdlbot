@@ -21,7 +21,6 @@ more-itertools==8.0.2
 mutagen==1.43.0
 patool==1.12
 plumbum==1.6.7
-pydub==0.23.1
 pyshorteners==0.6.1
 python-telegram-bot==10.1.0
 python-telegram-handler==2.2

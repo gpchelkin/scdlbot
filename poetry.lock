@@ -1042,14 +1042,6 @@ version = "5.0.1"
 snowballstemmer = "*"
 
 [[package]]
-category = "main"
-description = "Manipulate audio with an simple and easy high level interface"
-name = "pydub"
-optional = false
-python-versions = "*"
-version = "0.23.1"
-
-[[package]]
 category = "dev"
 description = "passive checker of Python programs"
 name = "pyflakes"
@@ -1674,7 +1666,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "c9dc68aa15ba9bfc3f685a394492da4bfb77793ac2257b606b464991c30d0259"
+content-hash = "42e5004a2c0e1d754c5af6e14ee5be5c932b49a9c55601e247f41810dfc4e7de"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2081,10 +2073,6 @@ pycodestyle = [
 pydocstyle = [
     {file = "pydocstyle-5.0.1-py3-none-any.whl", hash = "sha256:4167fe954b8f27ebbbef2fbcf73c6e8ad1e7bb31488fce44a69fdfc4b0cd0fae"},
     {file = "pydocstyle-5.0.1.tar.gz", hash = "sha256:a0de36e549125d0a16a72a8c8c6c9ba267750656e72e466e994c222f1b6e92cb"},
-]
-pydub = [
-    {file = "pydub-0.23.1-py2.py3-none-any.whl", hash = "sha256:d29901a486fb421c5d7b0f3d5d3a60527179204d8ffb20e74e1ae81c17e81b46"},
-    {file = "pydub-0.23.1.tar.gz", hash = "sha256:c362fa02da1eebd1d08bd47aa9b0102582dff7ca2269dbe9e043d228a0c1ea93"},
 ]
 pyflakes = [
     {file = "pyflakes-2.1.1-py2.py3-none-any.whl", hash = "sha256:17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0"},

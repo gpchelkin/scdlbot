@@ -19,7 +19,7 @@ import ffmpeg
 from boltons.urlutils import find_all_links, URL
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
-from pydub import AudioSegment
+#from pydub import AudioSegment
 from pyshorteners import Shortener
 from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
     InlineQueryResultAudio
@@ -729,24 +729,37 @@ class ScdlBot:
         file_size = os.path.getsize(file)
         if file_format not in ["mp3", "m4a", "mp4"]:
             raise FileNotSupportedError(file_format)
+        if file_size > self.MAX_CONVERT_FILE_SIZE:
+            raise FileTooLargeError(file_size)
         if file_format != "mp3":
-            if file_size > self.MAX_CONVERT_FILE_SIZE:
-                raise FileTooLargeError(file_size)
-            else:
-                logger.info("Converting: %s", file)
-                try:
-                    sound = AudioSegment.from_file(file, file_format)
-                    file_converted = file.replace(file_ext, ".mp3")
-                    sound.export(file_converted, format="mp3")
-                    del sound
-                    gc.collect()
-                    file = file_converted
-                    file_root, file_ext = os.path.splitext(file)
-                    file_format = file_ext.replace(".", "").lower()
-                    file_size = os.path.getsize(file)
-                except (OSError, MemoryError) as exc:
-                    gc.collect()
-                    raise FileNotConvertedError
+            logger.info("Converting: %s", file)
+            ### NEW METHOD:
+            try:
+                file_converted = file.replace(file_ext, ".mp3")
+                ffinput = ffmpeg.input(file)
+                ffmpeg.output(ffinput, file_converted, audio_bitrate="128k", vn=None).run()
+                file = file_converted
+                file_root, file_ext = os.path.splitext(file)
+                file_format = file_ext.replace(".", "").lower()
+                file_size = os.path.getsize(file)
+            except Exception as exc:
+                # TODO exceptions
+                raise FileNotConvertedError
+
+            ### OLD METHOD:
+            # try:
+            #     sound = AudioSegment.from_file(file, file_format)
+            #     file_converted = file.replace(file_ext, ".mp3")
+            #     sound.export(file_converted, format="mp3")
+            #     del sound
+            #     gc.collect()
+            #     file = file_converted
+            #     file_root, file_ext = os.path.splitext(file)
+            #     file_format = file_ext.replace(".", "").lower()
+            #     file_size = os.path.getsize(file)
+            # except (OSError, MemoryError) as exc:
+            #     gc.collect()
+            #     raise FileNotConvertedError
 
         file_parts = []
         if file_size <= self.MAX_TG_FILE_SIZE:
