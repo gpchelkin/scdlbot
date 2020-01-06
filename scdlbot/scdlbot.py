@@ -15,6 +15,7 @@ from subprocess import PIPE, TimeoutExpired
 from urllib.parse import urljoin
 from uuid import uuid4
 
+import ffmpeg
 from boltons.urlutils import find_all_links, URL
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
@@ -37,12 +38,12 @@ class ScdlBot:
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, proxy=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
-                 max_convert_file_size=80000000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
+                 max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
-            self.MAX_TG_FILE_SIZE = 19000000
+            self.MAX_TG_FILE_SIZE = 19_000_000
         else:
-            self.MAX_TG_FILE_SIZE = 47000000
+            self.MAX_TG_FILE_SIZE = 45_000_000
         self.SITES = {
             "sc": "soundcloud",
             "scapi": "api.soundcloud",
@@ -631,7 +632,7 @@ class ScdlBot:
                 file_name = os.path.split(file)[-1]
                 file_parts = []
                 try:
-                    file_parts = self.split_audio_file(file)
+                    file_parts = self.convert_and_split_audio_file(file)
                 except FileNotSupportedError as exc:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.warning("Unsupported file format: %s", file_name)
@@ -645,7 +646,7 @@ class ScdlBot:
                                      text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
                                          file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
                                      parse_mode='Markdown')
-                except FileConvertedPartiallyError as exc:
+                except FileSplittedPartiallyError as exc:
                     file_parts = exc.file_parts
                     logger.exception("Pydub failed: %s", file_name)
                     bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -722,18 +723,15 @@ class ScdlBot:
         # patoolib.extract_archive(file_name, outdir=DL_DIR)
         # os.remove(file_name)
 
-    def split_audio_file(self, file=""):
+    def convert_and_split_audio_file(self, file=""):
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "").lower()
+        file_size = os.path.getsize(file)
         if file_format not in ["mp3", "m4a", "mp4"]:
             raise FileNotSupportedError(file_format)
-        file_size = os.path.getsize(file)
-        if file_size > self.MAX_CONVERT_FILE_SIZE:
-            raise FileTooLargeError(file_size)
-        file_parts = []
-        if file_size <= self.MAX_TG_FILE_SIZE:
-            if file_format == "mp3":
-                file_parts.append(file)
+        if file_format != "mp3":
+            if file_size > self.MAX_CONVERT_FILE_SIZE:
+                raise FileTooLargeError(file_size)
             else:
                 logger.info("Converting: %s", file)
                 try:
@@ -742,10 +740,17 @@ class ScdlBot:
                     sound.export(file_converted, format="mp3")
                     del sound
                     gc.collect()
-                    file_parts.append(file_converted)
+                    file = file_converted
+                    file_root, file_ext = os.path.splitext(file)
+                    file_format = file_ext.replace(".", "").lower()
+                    file_size = os.path.getsize(file)
                 except (OSError, MemoryError) as exc:
                     gc.collect()
                     raise FileNotConvertedError
+
+        file_parts = []
+        if file_size <= self.MAX_TG_FILE_SIZE:
+            file_parts.append(file)
         else:
             logger.info("Splitting: %s", file)
             id3 = None
@@ -753,29 +758,59 @@ class ScdlBot:
                 id3 = ID3(file, translate=False)
             except:
                 pass
+
             parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
+
+            ### NEW METHOD:
+            # https://github.com/c0decracker/video-splitter
+            # https://superuser.com/a/1354956/464797
+
             try:
-                sound = AudioSegment.from_file(file, file_format)
-                part_size = len(sound) / parts_number
+                # file_duration = float(ffmpeg.probe(file)['format']['duration'])
+                part_size = file_size // parts_number
+                cur_position = 0
                 for i in range(parts_number):
                     file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
-                    part = sound[part_size * i:part_size * (i + 1)]
-                    part.export(file_part, format="mp3")
-                    del part
-                    gc.collect()
+                    ffinput = ffmpeg.input(file)
+                    if i == (parts_number - 1):
+                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position).run()
+                    else:
+                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size).run()
+                        part_duration = float(ffmpeg.probe(file_part)['format']['duration'])
+                        cur_position += part_duration
                     if id3:
                         try:
                             id3.save(file_part, v1=2, v2_version=4)
                         except:
                             pass
                     file_parts.append(file_part)
-                # https://github.com/jiaaro/pydub/issues/135
-                # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
-                del sound
-                gc.collect()
-            except (OSError, MemoryError) as exc:
-                gc.collect()
-                raise FileConvertedPartiallyError(file_parts)
+            except Exception as exc:
+                # TODO exceptions
+                raise FileSplittedPartiallyError(file_parts)
+
+            ### OLD METHOD:
+            # try:
+            #     sound = AudioSegment.from_file(file, file_format)
+            #     part_size = len(sound) // parts_number
+            #     for i in range(parts_number):
+            #         file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
+            #         part = sound[part_size * i:part_size * (i + 1)]
+            #         part.export(file_part, format="mp3")
+            #         del part
+            #         gc.collect()
+            #         if id3:
+            #             try:
+            #                 id3.save(file_part, v1=2, v2_version=4)
+            #             except:
+            #                 pass
+            #         file_parts.append(file_part)
+            #     # https://github.com/jiaaro/pydub/issues/135
+            #     # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
+            #     del sound
+            #     gc.collect()
+            # except (OSError, MemoryError) as exc:
+            #     gc.collect()
+            #     raise FileSplittedPartiallyError(file_parts)
         return file_parts
 
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):

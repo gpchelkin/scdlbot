@@ -24,7 +24,7 @@ class FileTooLargeError(Error):
     def __init__(self, file_size):
         self.file_size = file_size
 
-class FileConvertedPartiallyError(Error):
+class FileSplittedPartiallyError(Error):
     """Exception raised for errors in the input.
 
     Attributes:
