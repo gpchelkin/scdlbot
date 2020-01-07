@@ -1,6 +1,12 @@
 Version history
 ===============
 
+0.10.0 (2020-01-07)
+-----------------------
+* use ffmpeg-python for converting instead of RAM-heavy pydub, remove pydub requirement
+* update docs and requirements
+* many cosmetic and CI fixes
+
 0.9.27 (2019-12-01)
 -----------------------
 * return timestamp to scdl using some hacks

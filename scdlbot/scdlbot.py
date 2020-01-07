@@ -19,7 +19,7 @@ import ffmpeg
 from boltons.urlutils import find_all_links, URL
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
-#from pydub import AudioSegment
+# from pydub import AudioSegment
 from pyshorteners import Shortener
 from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
     InlineQueryResultAudio
@@ -38,7 +38,8 @@ class ScdlBot:
     def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, proxy=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
-                 max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None, serve_audio=False):
+                 max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None,
+                 serve_audio=False):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
             self.MAX_TG_FILE_SIZE = 19_000_000
@@ -355,7 +356,8 @@ class ScdlBot:
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
                 chat_member_status = chat.get_member(user_id).status
-                if chat_member_status not in [ChatMember.ADMINISTRATOR, ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
+                if chat_member_status not in [ChatMember.ADMINISTRATOR,
+                                              ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
                     self.log_and_botan_track("settings_fail")
                     update.callback_query.answer(text="You're not chat admin")
                     return
@@ -426,7 +428,6 @@ class ScdlBot:
         except:
             pass
 
-
     def prepare_urls(self, msg_or_text, direct_urls=False):
         if isinstance(msg_or_text, Message):
             urls = []
@@ -452,7 +453,7 @@ class ScdlBot:
                 if (
                     # SoundCloud: tracks, sets and widget pages, no /you/ pages
                     (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
-                    not "you" in url.path_parts)) or
+                        not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
                     (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
                     # YouTube: videos and playlists
@@ -521,7 +522,8 @@ class ScdlBot:
                         "--path", download_dir,  # Download the music to a custom path
                         "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
                         "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-                        "--addtimestamp",  # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                        "--addtimestamp",
+                        # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
                         "--no-playlist-folder",
                         # Download playlist tracks into directory, instead of making a playlist subfolder
                         "--extract-artist",  # Set artist tag from title instead of username
@@ -548,7 +550,8 @@ class ScdlBot:
                     cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
                     cmd_retcode = cmd_proc.returncode
                     # TODO listed are common scdl problems for one track with 0 retcode, all its output is always in stderr:
-                    if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable", "Failed to get item"]) and ".mp3" not in cmd_stderr):
+                    if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable",
+                                                                         "Failed to get item"]) and ".mp3" not in cmd_stderr):
                         raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
                     logger.info("%s succeeded: %s", cmd_name, url)
                     status = 1
@@ -566,7 +569,7 @@ class ScdlBot:
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
-            # default: %(autonumber)s - %(title)s-%(id)s.%(ext)s
+                # default: %(autonumber)s - %(title)s-%(id)s.%(ext)s
                 'postprocessors': [
                     {
                         'key': 'FFmpegExtractAudio',
@@ -733,7 +736,7 @@ class ScdlBot:
             raise FileTooLargeError(file_size)
         if file_format != "mp3":
             logger.info("Converting: %s", file)
-            ### NEW METHOD:
+            # NEW METHOD:
             try:
                 file_converted = file.replace(file_ext, ".mp3")
                 ffinput = ffmpeg.input(file)
@@ -742,11 +745,11 @@ class ScdlBot:
                 file_root, file_ext = os.path.splitext(file)
                 file_format = file_ext.replace(".", "").lower()
                 file_size = os.path.getsize(file)
-            except Exception as exc:
+            except Exception:
                 # TODO exceptions
                 raise FileNotConvertedError
 
-            ### OLD METHOD:
+            # OLD METHOD:
             # try:
             #     sound = AudioSegment.from_file(file, file_format)
             #     file_converted = file.replace(file_ext, ".mp3")
@@ -774,7 +777,7 @@ class ScdlBot:
 
             parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
 
-            ### NEW METHOD:
+            # NEW METHOD:
             # https://github.com/c0decracker/video-splitter
             # https://superuser.com/a/1354956/464797
 
@@ -797,11 +800,11 @@ class ScdlBot:
                         except:
                             pass
                     file_parts.append(file_part)
-            except Exception as exc:
+            except Exception:
                 # TODO exceptions
                 raise FileSplittedPartiallyError(file_parts)
 
-            ### OLD METHOD:
+            # OLD METHOD:
             # try:
             #     sound = AudioSegment.from_file(file, file_format)
             #     part_size = len(sound) // parts_number

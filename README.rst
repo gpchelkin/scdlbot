@@ -96,7 +96,7 @@ Those should be available in your ``PATH``:
 
 -  `Python 3.6+ <https://www.python.org/>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ recommended)
--  `FFmpeg 3.4 <https://ffmpeg.org/download.html>`__ if not running on Heroku
+-  `FFmpeg 4.0+ <https://ffmpeg.org/download.html>`__ if not running on Heroku
    (fresh builds for `Windows <https://ffmpeg.zeranoe.com/builds/>`__
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
 -  `Heroku CLI <https://cli.heroku.com/>`__ is recommended

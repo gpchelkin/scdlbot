@@ -151,3 +151,5 @@ ENV/
 /scdlbotdata.dat
 /scdlbotdata.dir
 /scdlbotdata.bak
+*.mp3
+*.mp4
