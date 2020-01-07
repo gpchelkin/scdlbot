@@ -631,87 +631,93 @@ class ScdlBot:
             for d, dirs, files in os.walk(download_dir):
                 for file in files:
                     file_list.append(os.path.join(d, file))
-            for file in sorted(file_list):
-                file_name = os.path.split(file)[-1]
-                file_parts = []
-                try:
-                    file_parts = self.convert_and_split_audio_file(file)
-                except FileNotSupportedError as exc:
-                    if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
-                        logger.warning("Unsupported file format: %s", file_name)
+            if not file_list:
+                logger.info("No files in dir: %s", download_dir)
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 text="*Sorry*, I couldn't download any files from provided links",
+                                 parse_mode='Markdown')
+            else:
+                for file in sorted(file_list):
+                    file_name = os.path.split(file)[-1]
+                    file_parts = []
+                    try:
+                        file_parts = self.convert_and_split_audio_file(file)
+                    except FileNotSupportedError as exc:
+                        if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
+                            logger.warning("Unsupported file format: %s", file_name)
+                            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                             text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
+                                                 file_name),
+                                             parse_mode='Markdown')
+                    except FileTooLargeError as exc:
+                        logger.info("Large file for convert: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                         text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(
+                                         text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
+                                             file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
+                                         parse_mode='Markdown')
+                    except FileSplittedPartiallyError as exc:
+                        file_parts = exc.file_parts
+                        logger.exception("Splitting failed: %s", file_name)
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         text="*Sorry*, not enough memory to convert file `{}`..".format(
                                              file_name),
                                          parse_mode='Markdown')
-                except FileTooLargeError as exc:
-                    logger.info("Large file for convert: %s", file_name)
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
-                                         file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
-                                     parse_mode='Markdown')
-                except FileSplittedPartiallyError as exc:
-                    file_parts = exc.file_parts
-                    logger.exception("Pydub failed: %s", file_name)
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, not enough memory to convert file `{}`..".format(
-                                         file_name),
-                                     parse_mode='Markdown')
-                except FileNotConvertedError as exc:
-                    logger.exception("Pydub failed: %s", file_name)
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, not enough memory to convert file `{}`..".format(
-                                         file_name),
-                                     parse_mode='Markdown')
-                try:
-                    caption = None
-                    flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
-                    if flood == "yes":
-                        addition = ""
-                        short_url = ""
-                        url_obj = URL(url)
-                        if self.SITES["yt"] in url_obj.host:
-                            source = "YouTube"
-                            if "qP303vxTLS8" in url:
-                                addition = random.choice([
-                                    "Скачал музла, машина эмпэтри дала!",
-                                    "У тебя талант, братан! Ка-какой? Качать онлайн!",
-                                    "Слушаю и не плачУ, то, что скачал вчера",
-                                    "Всё по чесноку, если скачал, отгружу музла!",
-                                    "Дёрнул за канат, и телега поймала трэкан!",
-                                    "Сегодня я качаю, и трэки не влазят мне в RAM!",
-                                ])
-                            else:
-                                file_root, file_ext = os.path.splitext(file_name)
-                                file_title = file_root.replace(file_ext, "")
-                                addition = ": " + file_title
-                            if "youtu.be" in url_obj.host:
-                                short_url = url.replace("http://", "").replace("https://", "")
+                    except FileNotConvertedError as exc:
+                        logger.exception("Splitting failed: %s", file_name)
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         text="*Sorry*, not enough memory to convert file `{}`..".format(
+                                             file_name),
+                                         parse_mode='Markdown')
+                    try:
+                        caption = None
+                        flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
+                        if flood == "yes":
+                            addition = ""
+                            short_url = ""
+                            url_obj = URL(url)
+                            if self.SITES["yt"] in url_obj.host:
+                                source = "YouTube"
+                                if "qP303vxTLS8" in url:
+                                    addition = random.choice([
+                                        "Скачал музла, машина эмпэтри дала!",
+                                        "У тебя талант, братан! Ка-какой? Качать онлайн!",
+                                        "Слушаю и не плачУ, то, что скачал вчера",
+                                        "Всё по чесноку, если скачал, отгружу музла!",
+                                        "Дёрнул за канат, и телега поймала трэкан!",
+                                        "Сегодня я качаю, и трэки не влазят мне в RAM!",
+                                    ])
+                                else:
+                                    file_root, file_ext = os.path.splitext(file_name)
+                                    file_title = file_root.replace(file_ext, "")
+                                    addition = ": " + file_title
+                                if "youtu.be" in url_obj.host:
+                                    short_url = url.replace("http://", "").replace("https://", "")
 
-                        elif self.SITES["sc"] in url_obj.host:
-                            source = "SoundCloud"
-                        elif self.SITES["bc"] in url_obj.host:
-                            source = "Bandcamp"
-                        else:
-                            source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        if self.shortener and not short_url:
-                            try:
-                                short_url = self.shortener.short(url)
-                                short_url = short_url.replace("http://", "").replace("https://", "")
-                            except:
-                                pass
-                        caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"), source,
-                                                                         short_url, addition.replace("_", "\_"))
-                        # logger.info(caption)
-                    sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
-                                                                reply_to_message_id if flood == "yes" else None,
-                                                                caption)
-                except FileSentPartiallyError as exc:
-                    sent_audio_ids = exc.sent_audio_ids
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     text="*Sorry*, could not send file `{}` or some of it's parts..".format(
-                                         file_name),
-                                     parse_mode='Markdown')
-                    logger.warning("Sending some parts failed: %s", file_name)
+                            elif self.SITES["sc"] in url_obj.host:
+                                source = "SoundCloud"
+                            elif self.SITES["bc"] in url_obj.host:
+                                source = "Bandcamp"
+                            else:
+                                source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
+                            if self.shortener and not short_url:
+                                try:
+                                    short_url = self.shortener.short(url)
+                                    short_url = short_url.replace("http://", "").replace("https://", "")
+                                except:
+                                    pass
+                            caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"), source,
+                                                                             short_url, addition.replace("_", "\_"))
+                            # logger.info(caption)
+                        sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
+                                                                    reply_to_message_id if flood == "yes" else None,
+                                                                    caption)
+                    except FileSentPartiallyError as exc:
+                        sent_audio_ids = exc.sent_audio_ids
+                        bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                         text="*Sorry*, could not send file `{}` or some of it's parts..".format(
+                                             file_name),
+                                         parse_mode='Markdown')
+                        logger.warning("Sending some parts failed: %s", file_name)
 
         if not self.SERVE_AUDIO:
             shutil.rmtree(download_dir, ignore_errors=True)
@@ -866,6 +872,9 @@ class ScdlBot:
                     logger.debug(audio)
                     if not self.SERVE_AUDIO:
                         audio = open(file, 'rb')
+                    if i > 0:
+                        # maybe: Reply message not found
+                        reply_to_message_id = None
                     audio_msg = bot.send_audio(chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
                                                audio=audio,
