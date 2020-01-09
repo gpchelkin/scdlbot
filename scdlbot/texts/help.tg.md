@@ -13,7 +13,7 @@ _Send or forward_ a text message containing links and I will:
 *Bandcamp*: tracks/albums/custom links
 *YouTube*: videos/playlists/_not_ lives
 *Yandex.Music*: tracks/albums
-*Mixcloud, Vimeo and* [almost everything from this list](https://rg3.github.io/youtube-dl/supportedsites.html), but no VK music
+*Mixcloud, Vimeo and* [almost everything from this list](https://ytdl-org.github.io/youtube-dl/supportedsites.html), but no VK music
 
 *Example message:*
 `Hey, check this out! https://m.soundcloud.com/falling-ethics/jk-flesh-static-demon-fexelvn004 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
