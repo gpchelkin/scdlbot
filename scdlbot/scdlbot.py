@@ -39,7 +39,7 @@ class ScdlBot:
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
                  max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None,
-                 serve_audio=False, cookies_file=None):
+                 serve_audio=False, cookies_file=None, source_ips=None):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
             self.MAX_TG_FILE_SIZE = 19_000_000
@@ -79,6 +79,11 @@ class ScdlBot:
         self.proxy = proxy
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
+        self.source_ips = source_ips
+        if self.source_ips:
+            self.source_ip = random.choice(self.source_ips)
+        else:
+            self.source_ip = None
 
         config = configparser.ConfigParser()
         config['scdl'] = {}
@@ -453,6 +458,8 @@ class ScdlBot:
             url_text = url.to_text(True)
             url_parts_num = len([part for part in url.path_parts if part])
             try:
+                if self.source_ips:
+                    self.source_ip = random.choice(self.source_ips)
                 if (
                     # SoundCloud: tracks, sets and widget pages, no /you/ pages
                     (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
@@ -464,11 +471,13 @@ class ScdlBot:
                         "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
                 ):
                     if direct_urls or self.SITES["yt"] in url.host:
-                        urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE)
+                        urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
+                                                              self.source_ip)
                     else:
                         urls_dict[url_text] = "http"
                 elif not any((site in url.host for site in self.SITES.values())):
-                    urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE)
+                    urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
+                                                          self.source_ip)
             except ProcessExecutionError:
                 logger.debug("youtube-dl get url failed: %s", url_text)
             except URLError as exc:
@@ -584,6 +593,8 @@ class ScdlBot:
             }
             if self.proxy:
                 ydl_opts['proxy'] = self.proxy
+            if self.source_ips:
+                ydl_opts['source_address'] = self.source_ip
             # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/YoutubeDL.py#L210
             if self.cookies_file:
                 if "http" in self.cookies_file:

@@ -72,11 +72,12 @@ def main():
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     proxy = os.getenv('PROXY', '')
     cookies_file = os.getenv('COOKIES_FILE', '')
+    source_ips = os.getenv('SOURCE_IPS', '').split(',')
 
     scdlbot = ScdlBot(tg_bot_token, botan_token, google_shortener_api_key, proxy,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
                       dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url,
-                      serve_audio, cookies_file)
+                      serve_audio, cookies_file, source_ips)
 
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     webhook_port = int(os.getenv('PORT', '5000'))
