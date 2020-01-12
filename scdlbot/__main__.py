@@ -72,7 +72,9 @@ def main():
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     proxy = os.getenv('PROXY', '')
     cookies_file = os.getenv('COOKIES_FILE', '')
-    source_ips = os.getenv('SOURCE_IPS', '').split(',')
+    source_ips = os.getenv('SOURCE_IPS', None)
+    if source_ips:
+        source_ips = source_ips.split(',')
 
     scdlbot = ScdlBot(tg_bot_token, botan_token, google_shortener_api_key, proxy,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
