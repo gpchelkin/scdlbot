@@ -1,6 +1,10 @@
 Version history
 ===============
 
+0.12.1 (2020-01-13)
+-----------------------
+* hotfix for env parsing
+
 0.12.0 (2020-01-13)
 -----------------------
 * add support for source IPs randomization for downloading from youtube
