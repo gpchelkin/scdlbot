@@ -20,16 +20,29 @@ BOTAN_SHORTENER_URL = 'https://api.botan.io/s/'
 
 logger = logging.getLogger(__name__)
 
+
 def get_response_text(file_name):
     # https://stackoverflow.com/a/20885799/2490759
     path = '/'.join(('texts', file_name))
     return pkg_resources.resource_string(__name__, path).decode("UTF-8")
 
 
-def get_direct_urls(url):
+def get_direct_urls(url, cookies_file=None, cookies_download_file=None):
     logger.debug("Entered get_direct_urls")
+    youtube_dl_args = []
+
+    # https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl
+    if cookies_file:
+        if "http" in cookies_file:
+            r = requests.get(cookies_file, allow_redirects=True)
+            open(cookies_download_file, 'wb').write(r.content)
+            youtube_dl_args.extend(["--cookies", cookies_download_file])
+        else:
+            youtube_dl_args.extend(["--cookies", cookies_file])
+
+    youtube_dl_args.extend(["--get-url", url])
     try:
-        ret_code, std_out, std_err = youtube_dl_bin["--get-url", url].run()
+        ret_code, std_out, std_err = youtube_dl_bin[youtube_dl_args].run()
     except ProcessExecutionError as exc:
         # TODO: look at case: one page has multiple videos, some available, some not
         if "returning it as such" in exc.stderr:
@@ -47,6 +60,7 @@ def get_direct_urls(url):
 def get_italic(text):
     return "_{}_".format(text)
 
+
 def youtube_dl_func(url, ydl_opts, queue=None):
     ydl = youtube_dl.YoutubeDL(ydl_opts)
     try:
@@ -60,6 +74,7 @@ def youtube_dl_func(url, ydl_opts, queue=None):
         queue.put(ydl_status)
     else:
         return ydl_status
+
 
 def botan_track(token, message, event_name):
     try:

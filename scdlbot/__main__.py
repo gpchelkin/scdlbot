@@ -13,22 +13,22 @@ from scdlbot.scdlbot import ScdlBot
 
 logging_handlers = []
 
-pydub_logger = logging.getLogger("pydub.converter")
-pydub_logger.setLevel(logging.DEBUG)
+# pydub_logger = logging.getLogger("pydub.converter")
+# pydub_logger.setLevel(logging.DEBUG)
 
 console_formatter = logging.Formatter('[%(name)s] %(levelname)s: %(message)s')
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
 console_handler.setLevel(logging.DEBUG)
 logging_handlers.append(console_handler)
-pydub_logger.addHandler(console_handler)
+# pydub_logger.addHandler(console_handler)
 
 tg_bot_token = os.environ['TG_BOT_TOKEN']
 alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
 telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=str(alert_chat_ids[0]))
 telegram_handler.setLevel(logging.WARNING)
 logging_handlers.append(telegram_handler)
-pydub_logger.addHandler(telegram_handler)
+# pydub_logger.addHandler(telegram_handler)
 
 syslog_debug = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 syslog_logging_level = logging.DEBUG if syslog_debug else logging.INFO
@@ -43,7 +43,7 @@ if syslog_address:
     syslog_handler.setFormatter(syslog_formatter)
     syslog_handler.setLevel(syslog_logging_level)
     logging_handlers.append(syslog_handler)
-    pydub_logger.addHandler(syslog_handler)
+    # pydub_logger.addHandler(syslog_handler)
 
 logentries_token = os.getenv('LOGENTRIES_TOKEN', '')
 if logentries_token:
@@ -71,10 +71,12 @@ def main():
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80000000'))
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     proxy = os.getenv('PROXY', '')
+    cookies_file = os.getenv('COOKIES_FILE', '')
 
     scdlbot = ScdlBot(tg_bot_token, botan_token, google_shortener_api_key, proxy,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
-                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url, serve_audio)
+                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url,
+                      serve_audio, cookies_file)
 
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
     webhook_port = int(os.getenv('PORT', '5000'))

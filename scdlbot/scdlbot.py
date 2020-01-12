@@ -39,7 +39,7 @@ class ScdlBot:
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
                  max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None,
-                 serve_audio=False):
+                 serve_audio=False, cookies_file=None):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
             self.MAX_TG_FILE_SIZE = 19_000_000
@@ -73,9 +73,12 @@ class ScdlBot:
         self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
+        self.COOKIES_DOWNLOAD_FILE = "/tmp/scdlbot_cookies.txt"
         self.botan_token = botan_token if botan_token else None
         self.shortener = Shortener('Google', api_key=google_shortener_api_key) if google_shortener_api_key else None
         self.proxy = proxy
+        # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
+        self.cookies_file = cookies_file
 
         config = configparser.ConfigParser()
         config['scdl'] = {}
@@ -461,11 +464,11 @@ class ScdlBot:
                         "youtu.be" in url.host or "watch" in url.path or "playlist" in url.path))
                 ):
                     if direct_urls or self.SITES["yt"] in url.host:
-                        urls_dict[url_text] = get_direct_urls(url_text)
+                        urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE)
                     else:
                         urls_dict[url_text] = "http"
                 elif not any((site in url.host for site in self.SITES.values())):
-                    urls_dict[url_text] = get_direct_urls(url_text)
+                    urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE)
             except ProcessExecutionError:
                 logger.debug("youtube-dl get url failed: %s", url_text)
             except URLError as exc:
@@ -581,13 +584,14 @@ class ScdlBot:
             }
             if self.proxy:
                 ydl_opts['proxy'] = self.proxy
+            # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/YoutubeDL.py#L210
+            if self.cookies_file:
+                if "http" in self.cookies_file:
+                    ydl_opts['cookiefile'] = self.COOKIES_DOWNLOAD_FILE
+                else:
+                    ydl_opts['cookiefile'] = self.cookies_file
             queue = Queue()
-            cmd_args = (
-                url,
-                ydl_opts,
-                queue,
-            )
-
+            cmd_args = (url, ydl_opts, queue,)
             logger.info("%s starts: %s", cmd_name, url)
             cmd_proc = Process(target=cmd, args=cmd_args)
             cmd_proc.start()
@@ -653,7 +657,8 @@ class ScdlBot:
                         logger.info("Large file for convert: %s", file_name)
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                          text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
-                                             file_name, exc.file_size // 1000000, self.MAX_CONVERT_FILE_SIZE // 1000000),
+                                             file_name, exc.file_size // 1000000,
+                                                        self.MAX_CONVERT_FILE_SIZE // 1000000),
                                          parse_mode='Markdown')
                     except FileSplittedPartiallyError as exc:
                         file_parts = exc.file_parts
@@ -705,7 +710,8 @@ class ScdlBot:
                                     short_url = short_url.replace("http://", "").replace("https://", "")
                                 except:
                                     pass
-                            caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"), source,
+                            caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"),
+                                                                             source,
                                                                              short_url, addition.replace("_", "\_"))
                             # logger.info(caption)
                         sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
