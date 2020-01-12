@@ -1,6 +1,10 @@
 Version history
 ===============
 
+0.11.0 (2020-01-12)
+-----------------------
+* add support for cookie file for youtube-dl - it helps with downloading yandex.music from different countries
+
 0.10.0 (2020-01-07)
 -----------------------
 * use ffmpeg-python for converting instead of RAM-heavy pydub, remove pydub requirement

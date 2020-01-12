@@ -148,8 +148,9 @@ ENV/
 .idea
 
 #### scdlbot ####
-/scdlbotdata.dat
-/scdlbotdata.dir
-/scdlbotdata.bak
+scdlbotdata
+scdlbotdata.dat
+scdlbotdata.dir
+scdlbotdata.bak
 *.mp3
 *.mp4
