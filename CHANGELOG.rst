@@ -1,6 +1,10 @@
 Version history
 ===============
 
+0.12.0 (2020-01-13)
+-----------------------
+* add support for source IPs randomization for downloading from youtube
+
 0.11.0 (2020-01-12)
 -----------------------
 * add support for cookie file for youtube-dl - it helps with downloading yandex.music from different countries
