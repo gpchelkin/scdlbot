@@ -1,6 +1,10 @@
 Version history
 ===============
 
+0.12.2 (2020-01-14)
+-----------------------
+* refined source IP handling
+
 0.12.1 (2020-01-13)
 -----------------------
 * hotfix for env parsing
