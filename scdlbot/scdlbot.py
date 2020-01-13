@@ -57,9 +57,8 @@ class ScdlBot:
         self.HELP_TEXT = get_response_text('help.tg.md')
         self.SETTINGS_TEXT = get_response_text('settings.tg.md')
         self.DL_TIMEOUT_TEXT = get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
-        self.WAIT_BIT_TEXT = get_response_text('wait_bit.txt')
-        self.WAIT_BEAT_TEXT = get_response_text('wait_beat.txt')
-        self.WAIT_BEET_TEXT = get_response_text('wait_beet.txt')
+        self.WAIT_BIT_TEXT = [get_response_text('wait_bit.txt'), get_response_text('wait_beat.txt'),
+                              get_response_text('wait_beet.txt')]
         self.NO_AUDIO_TEXT = get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = get_response_text('no_urls.txt')
         self.OLG_MSG_TEXT = get_response_text('old_msg.txt')
@@ -80,10 +79,6 @@ class ScdlBot:
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
         self.source_ips = source_ips
-        if self.source_ips:
-            self.source_ip = random.choice(self.source_ips)
-        else:
-            self.source_ip = None
 
         config = configparser.ConfigParser()
         config['scdl'] = {}
@@ -206,7 +201,7 @@ class ScdlBot:
         self.chat_storage.sync()
 
     @run_async
-    def log_and_botan_track(self, event_name, message=None):
+    def log_and_track(self, event_name, message=None):
         logger.info("Event: %s", event_name)
         if message:
             # TODO: add to local db
@@ -236,7 +231,7 @@ class ScdlBot:
         for entity_value in entities.values():
             event_name = entity_value.replace("/", "").replace("@{}".format(self.bot_username), "")
             break
-        self.log_and_botan_track(event_name, update.message)
+        self.log_and_track(event_name, update.message)
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
@@ -248,13 +243,7 @@ class ScdlBot:
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def get_wait_text(self):
-        rand = random.choice(["bit", "beat", "beet"])
-        if rand == "beat":
-            return self.WAIT_BEAT_TEXT
-        elif rand == "beet":
-            return self.WAIT_BEET_TEXT
-        else:
-            return self.WAIT_BIT_TEXT
+        return random.choice(self.WAIT_BIT_TEXT)
 
     def get_settings_inline_keyboard(self, chat_id):
         mode = self.chat_storage[str(chat_id)]["settings"]["mode"]
@@ -276,7 +265,7 @@ class ScdlBot:
 
     def settings_command_callback(self, bot, update):
         self.init_chat(update.message)
-        self.log_and_botan_track("settings")
+        self.log_and_track("settings")
         chat_id = update.message.chat_id
         bot.send_message(chat_id=chat_id, parse_mode='Markdown',
                          reply_markup=self.get_settings_inline_keyboard(chat_id),
@@ -311,23 +300,29 @@ class ScdlBot:
         apologize = chat_type == Chat.PRIVATE or command_passed
         if apologize:
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        source_ip = None
+        if self.source_ips:
+            source_ip = random.choice(self.source_ips)
+        # TODO find working IP?
         urls = self.prepare_urls(msg_or_text=update.message,
-                                 direct_urls=(mode == "link"))
+                                 direct_urls=(mode == "link"),
+                                 source_ip=source_ip)
         logger.debug(urls)
         if not urls:
             if apologize:
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
-            botan_event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
-            self.log_and_botan_track(botan_event_name, update.message)
+            event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
+            self.log_and_track(event_name, update.message)
             if mode == "dl":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
-                                               wait_message_id=wait_message.message_id)
+                                               wait_message_id=wait_message.message_id,
+                                               source_ip=source_ip)
             elif mode == "link":
                 wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
@@ -341,7 +336,8 @@ class ScdlBot:
                 # ask: always in PM and only if good urls exist in non-PM
                 if chat_type == Chat.PRIVATE or "http" in " ".join(urls.values()):
                     orig_msg_id = str(reply_to_message_id)
-                    self.chat_storage[str(chat_id)][orig_msg_id] = {"message": update.message, "urls": urls}
+                    self.chat_storage[str(chat_id)][orig_msg_id] = {"message": update.message, "urls": urls,
+                                                                    "source_ip": source_ip}
                     question = "🎶 links found, what to do?"
                     button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
                     button_link = InlineKeyboardButton(text="❇️ Links",
@@ -366,10 +362,10 @@ class ScdlBot:
                 chat_member_status = chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR,
                                               ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
-                    self.log_and_botan_track("settings_fail")
+                    self.log_and_track("settings_fail")
                     update.callback_query.answer(text="You're not chat admin")
                     return
-            self.log_and_botan_track("settings_{}".format(action), btn_msg)
+            self.log_and_track("settings_{}".format(action), btn_msg)
             if action == "close":
                 bot.delete_message(chat_id, btn_msg_id)
             else:
@@ -391,11 +387,13 @@ class ScdlBot:
                                                                         chat_id))
                 else:
                     update.callback_query.answer(text="Settings not changed")
+
         elif orig_msg_id in self.chat_storage[str(chat_id)]:
             msg_from_storage = self.chat_storage[str(chat_id)].pop(orig_msg_id)
             orig_msg = msg_from_storage["message"]
             urls = msg_from_storage["urls"]
-            self.log_and_botan_track("{}_msg".format(action), orig_msg)
+            source_ip = msg_from_storage["source_ip"]
+            self.log_and_track("{}_msg".format(action), orig_msg)
             if action == "dl":
                 update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
@@ -403,12 +401,13 @@ class ScdlBot:
                 for url in urls:
                     self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
-                                               wait_message_id=wait_message.message_id)
+                                               wait_message_id=wait_message.message_id,
+                                               source_ip=source_ip)
             elif action == "link":
                 update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=get_italic(self.get_wait_text()))
-                urls = self.prepare_urls(urls.keys(), direct_urls=True)
+                urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip)
                 link_text = self.get_link_text(urls)
                 bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
@@ -421,7 +420,7 @@ class ScdlBot:
             bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
     def inline_query_callback(self, bot, update):
-        self.log_and_botan_track("link_inline")
+        self.log_and_track("link_inline")
         inline_query_id = update.inline_query.id
         text = update.inline_query.query
         results = []
@@ -436,7 +435,7 @@ class ScdlBot:
         except:
             pass
 
-    def prepare_urls(self, msg_or_text, direct_urls=False):
+    def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None):
         if isinstance(msg_or_text, Message):
             urls = []
             url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
@@ -458,8 +457,6 @@ class ScdlBot:
             url_text = url.to_text(True)
             url_parts_num = len([part for part in url.path_parts if part])
             try:
-                if self.source_ips:
-                    self.source_ip = random.choice(self.source_ips)
                 if (
                     # SoundCloud: tracks, sets and widget pages, no /you/ pages
                     (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
@@ -472,14 +469,14 @@ class ScdlBot:
                 ):
                     if direct_urls or self.SITES["yt"] in url.host:
                         urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
-                                                              self.source_ip)
+                                                              source_ip)
                     else:
                         urls_dict[url_text] = "http"
                 elif not any((site in url.host for site in self.SITES.values())):
                     urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
-                                                          self.source_ip)
+                                                          source_ip)
             except ProcessExecutionError:
-                logger.debug("youtube-dl get url failed: %s", url_text)
+                logger.debug("youtube-dl get-url failed: %s", url_text)
             except URLError as exc:
                 urls_dict[url_text] = exc.status
         return urls_dict
@@ -507,7 +504,7 @@ class ScdlBot:
 
     @run_async
     def download_url_and_send(self, bot, url, direct_urls, chat_id, reply_to_message_id=None,
-                              wait_message_id=None):
+                              wait_message_id=None, source_ip=None):
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
         download_dir = os.path.join(self.DL_DIR, str(uuid4()))
         shutil.rmtree(download_dir, ignore_errors=True)
@@ -593,8 +590,8 @@ class ScdlBot:
             }
             if self.proxy:
                 ydl_opts['proxy'] = self.proxy
-            if self.source_ips:
-                ydl_opts['source_address'] = self.source_ip
+            if source_ip:
+                ydl_opts['source_address'] = source_ip
             # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/YoutubeDL.py#L210
             if self.cookies_file:
                 if "http" in self.cookies_file:
@@ -759,7 +756,6 @@ class ScdlBot:
             raise FileTooLargeError(file_size)
         if file_format != "mp3":
             logger.info("Converting: %s", file)
-            # NEW METHOD:
             try:
                 file_converted = file.replace(file_ext, ".mp3")
                 ffinput = ffmpeg.input(file)
@@ -771,21 +767,6 @@ class ScdlBot:
             except Exception:
                 # TODO exceptions
                 raise FileNotConvertedError
-
-            # OLD METHOD:
-            # try:
-            #     sound = AudioSegment.from_file(file, file_format)
-            #     file_converted = file.replace(file_ext, ".mp3")
-            #     sound.export(file_converted, format="mp3")
-            #     del sound
-            #     gc.collect()
-            #     file = file_converted
-            #     file_root, file_ext = os.path.splitext(file)
-            #     file_format = file_ext.replace(".", "").lower()
-            #     file_size = os.path.getsize(file)
-            # except (OSError, MemoryError) as exc:
-            #     gc.collect()
-            #     raise FileNotConvertedError
 
         file_parts = []
         if file_size <= self.MAX_TG_FILE_SIZE:
@@ -800,10 +781,8 @@ class ScdlBot:
 
             parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
 
-            # NEW METHOD:
             # https://github.com/c0decracker/video-splitter
             # https://superuser.com/a/1354956/464797
-
             try:
                 # file_duration = float(ffmpeg.probe(file)['format']['duration'])
                 part_size = file_size // parts_number
@@ -826,30 +805,6 @@ class ScdlBot:
             except Exception:
                 # TODO exceptions
                 raise FileSplittedPartiallyError(file_parts)
-
-            # OLD METHOD:
-            # try:
-            #     sound = AudioSegment.from_file(file, file_format)
-            #     part_size = len(sound) // parts_number
-            #     for i in range(parts_number):
-            #         file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
-            #         part = sound[part_size * i:part_size * (i + 1)]
-            #         part.export(file_part, format="mp3")
-            #         del part
-            #         gc.collect()
-            #         if id3:
-            #             try:
-            #                 id3.save(file_part, v1=2, v2_version=4)
-            #             except:
-            #                 pass
-            #         file_parts.append(file_part)
-            #     # https://github.com/jiaaro/pydub/issues/135
-            #     # https://github.com/jiaaro/pydub/issues/89#issuecomment-75245610
-            #     del sound
-            #     gc.collect()
-            # except (OSError, MemoryError) as exc:
-            #     gc.collect()
-            #     raise FileSplittedPartiallyError(file_parts)
         return file_parts
 
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
