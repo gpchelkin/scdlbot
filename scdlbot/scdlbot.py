@@ -619,7 +619,7 @@ class ScdlBot:
                 logger.info("%s took too much time and dropped: %s", cmd_name, url)
                 status = -1
             except ProcessExecutionError:
-                logger.exception("%s failed: %s" % (cmd_name, url))
+                logger.exception("%s failed: %s", cmd_name, url)
                 status = -2
             gc.collect()
 

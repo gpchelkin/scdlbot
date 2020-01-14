@@ -99,10 +99,10 @@ def botan_track(token, message, event_name):
             )
             return r.json()
         except Timeout:
-            logger.exception("Botan timeout on event: %s" % event_name)
+            logger.exception("Botan timeout on event: %s", event_name)
         except SSLError:
             ssl_verify = False
         except (Exception, RequestException, ValueError):
             # catastrophic error
-            logger.exception("Botan 🙀astrophic error on event: %s" % event_name)
+            logger.exception("Botan 🙀astrophic error on event: %s", event_name)
     return False
