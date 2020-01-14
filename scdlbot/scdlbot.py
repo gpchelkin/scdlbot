@@ -11,7 +11,7 @@ import shutil
 from datetime import datetime
 from multiprocessing import Process, Queue
 from queue import Empty
-from subprocess import PIPE, TimeoutExpired
+from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
 from urllib.parse import urljoin
 from uuid import uuid4
 
