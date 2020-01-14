@@ -50,14 +50,12 @@ def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_i
         # TODO: look at case: one page has multiple videos, some available, some not
         if "returning it as such" in exc.stderr:
             raise URLDirectError
-        elif "proxy server" in exc.stderr:
+        if "proxy server" in exc.stderr:
             raise URLCountryError
-        else:
-            raise exc
+        raise exc
     if "yt_live_broadcast" in std_out:
         raise URLLiveError
-    else:
-        return std_out
+    return std_out
 
 
 def get_italic(text):

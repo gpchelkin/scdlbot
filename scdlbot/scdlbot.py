@@ -148,7 +148,7 @@ class ScdlBot:
         pass
         # bot.send_message(chat_id=update.message.chat_id, text="Unknown command")
 
-    def error_callback(self, bot, update, error):
+    def error_callback(self, bot, update, error):  # skipcq: PYL-R0201
         try:
             raise error
         except Unauthorized:
