@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgpchelkin%2Fscdlbot.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgpchelkin%2Fscdlbot?ref=badge_shield)
+
 Music Downloader Telegram Bot aka scdlbot
 =========================================
 
@@ -317,3 +319,6 @@ https://github.com/dokku/dokku-letsencrypt
 
 .. |Deploy| image:: https://www.herokucdn.com/deploy/button.svg
     :target: https://heroku.com/deploy
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgpchelkin%2Fscdlbot.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgpchelkin%2Fscdlbot?ref=badge_large)
