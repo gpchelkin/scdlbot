@@ -46,7 +46,7 @@ Music Downloader Telegram Bot aka scdlbot
         :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot
         :alt: CodeFactor
 
-.. image:: https://static.deepsource.io/deepsource-badge-light.svg
+.. image:: https://static.deepsource.io/deepsource-badge-light-mini.svg
         :target: https://deepsource.io/gh/gpchelkin/scdlbot/
         :alt: DeepSource
 
