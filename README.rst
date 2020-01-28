@@ -187,7 +187,7 @@ according to PORT environment variable.
 
 - https://nginx.org/en/linux_packages.html#mainline
 - https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-nginx-with-one-domainport-for-all-bots
-- https://certbot.eff.org/#ubuntuxenial-nginx
+- https://certbot.eff.org/lets-encrypt/ubuntubionic-nginx
 
 Telegram Bot Settings
 """""""""""""""""""""
