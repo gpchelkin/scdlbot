@@ -21,10 +21,10 @@ from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
 from pyshorteners import Shortener
 from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
-    InlineQueryResultAudio
+    InlineQueryResultAudio, Update
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler, CallbackContext
 from telegram.ext.dispatcher import run_async
 
 from scdlbot.utils import *
@@ -90,7 +90,7 @@ class ScdlBot:
         with open(config_path, 'w') as config_file:
             config.write(config_file)
 
-        self.updater = Updater(token=tg_bot_token)
+        self.updater = Updater(token=tg_bot_token, use_context=True)
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.help_command_callback)
@@ -143,31 +143,31 @@ class ScdlBot:
         logger.warning("Bot started")
         self.updater.idle()
 
-    def unknown_command_callback(self, bot, update):
+    def unknown_command_callback(self, update: Update, context: CallbackContext):
         pass
         # bot.send_message(chat_id=update.message.chat_id, text="Unknown command")
 
-    def error_callback(self, bot, update, error):  # skipcq: PYL-R0201
+    def error_callback(self, update: Update, context: CallbackContext):  # skipcq: PYL-R0201
         try:
-            raise error
+            raise context.error
         except Unauthorized:
             # remove update.message.chat_id from conversation list
-            logger.debug('Update {} caused Unauthorized error: {}'.format(update, error))
+            logger.debug('Update {} caused Unauthorized error: {}'.format(update, context.error))
         except BadRequest:
             # handle malformed requests - read more below!
-            logger.debug('Update {} caused BadRequest error: {}'.format(update, error))
+            logger.debug('Update {} caused BadRequest error: {}'.format(update, context.error))
         except TimedOut:
             # handle slow connection problems
-            logger.debug('Update {} caused TimedOut error: {}'.format(update, error))
+            logger.debug('Update {} caused TimedOut error: {}'.format(update, context.error))
         except NetworkError:
             # handle other connection problems
-            logger.debug('Update {} caused NetworkError: {}'.format(update, error))
+            logger.debug('Update {} caused NetworkError: {}'.format(update, context.error))
         except ChatMigrated as e:
             # the chat_id of a group has changed, use e.new_chat_id instead
-            logger.debug('Update {} caused ChatMigrated error: {}'.format(update, error))
+            logger.debug('Update {} caused ChatMigrated error: {}'.format(update, context.error))
         except TelegramError:
             # handle all other telegram related errors
-            logger.debug('Update {} caused TelegramError: {}'.format(update, error))
+            logger.debug('Update {} caused TelegramError: {}'.format(update, context.error))
 
     def init_chat(self, message=None, chat_id=None, chat_type=None, flood="yes"):
         if message:
@@ -223,7 +223,7 @@ class ScdlBot:
             self.chat_storage[str(chat_id)]["settings"]["rant_msg_ids"].append(rant_msg.message_id)
             self.chat_storage.sync()
 
-    def help_command_callback(self, bot, update):
+    def help_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
         event_name = "help"
         entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
@@ -236,9 +236,9 @@ class ScdlBot:
         reply_to_message_id = update.message.message_id
         flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
         if chat_type != Chat.PRIVATE and flood == "no":
-            self.rant_and_cleanup(bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
+            self.rant_and_cleanup(context.bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
         else:
-            bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
+            context.bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
                              parse_mode='Markdown', disable_web_page_preview=True)
 
     def get_wait_text(self):
@@ -262,15 +262,15 @@ class ScdlBot:
         inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_ask], [button_flood, button_close]])
         return inline_keyboard
 
-    def settings_command_callback(self, bot, update):
+    def settings_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
         self.log_and_track("settings")
         chat_id = update.message.chat_id
-        bot.send_message(chat_id=chat_id, parse_mode='Markdown',
+        context.bot.send_message(chat_id=chat_id, parse_mode='Markdown',
                          reply_markup=self.get_settings_inline_keyboard(chat_id),
                          text=self.SETTINGS_TEXT)
 
-    def common_command_callback(self, bot, update, args=None):
+    def common_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
@@ -289,16 +289,16 @@ class ScdlBot:
                 break
             if not mode:
                 mode = "dl"
-        if command_passed and not args:
+        if command_passed and not context.args:
             rant_text = self.RANT_TEXT_PRIVATE if chat_type == Chat.PRIVATE else self.RANT_TEXT_PUBLIC
             rant_text += "\nYou can simply send message with links (to download) OR command as `/{} <links>`.".format(
                 mode)
-            self.rant_and_cleanup(bot, chat_id, rant_text, reply_to_message_id=reply_to_message_id)
+            self.rant_and_cleanup(context.bot, chat_id, rant_text, reply_to_message_id=reply_to_message_id)
             return
         # apologize and send TYPING: always in PM and only when it's command in non-PM
         apologize = chat_type == Chat.PRIVATE or command_passed
         if apologize:
-            bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+            context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         source_ip = None
         if self.source_ips:
             source_ip = random.choice(self.source_ips)
@@ -309,28 +309,28 @@ class ScdlBot:
         logger.debug(urls)
         if not urls:
             if apologize:
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
             self.log_and_track(event_name, update.message)
             if mode == "dl":
-                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
                 for url in urls:
-                    self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
+                    self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id,
                                                source_ip=source_ip)
             elif mode == "link":
-                wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
 
                 link_text = self.get_link_text(urls)
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
-                bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
+                context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif mode == "ask":
                 # ask: always in PM and only if good urls exist in non-PM
                 if chat_type == Chat.PRIVATE or "http" in " ".join(urls.values()):
@@ -343,11 +343,11 @@ class ScdlBot:
                                                        callback_data=" ".join([orig_msg_id, "link"]))
                     button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
                     inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
-                    bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                    context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                      reply_markup=inline_keyboard, text=question)
                 self.cleanup_chat(chat_id)
 
-    def button_query_callback(self, bot, update):
+    def button_query_callback(self, update: Update, context: CallbackContext):
         btn_msg = update.callback_query.message
         self.init_chat(btn_msg)
         user_id = update.callback_query.from_user.id
@@ -366,7 +366,7 @@ class ScdlBot:
                     return
             self.log_and_track("settings_{}".format(action), btn_msg)
             if action == "close":
-                bot.delete_message(chat_id, btn_msg_id)
+                context.bot.delete_message(chat_id, btn_msg_id)
             else:
                 setting_changed = False
                 if action in ["dl", "link", "ask"]:
@@ -398,7 +398,7 @@ class ScdlBot:
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=get_italic(self.get_wait_text()))
                 for url in urls:
-                    self.download_url_and_send(bot, url, urls[url], chat_id=chat_id,
+                    self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
                                                wait_message_id=wait_message.message_id,
                                                source_ip=source_ip)
@@ -408,17 +408,17 @@ class ScdlBot:
                                                                        text=get_italic(self.get_wait_text()))
                 urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip)
                 link_text = self.get_link_text(urls)
-                bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
+                context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
-                bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
+                context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif action == "nodl":
-                bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+                context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
         else:
             update.callback_query.answer(text=self.OLG_MSG_TEXT)
-            bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+            context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
-    def inline_query_callback(self, bot, update):
+    def inline_query_callback(self, update: Update, context: CallbackContext):
         self.log_and_track("link_inline")
         inline_query_id = update.inline_query.id
         text = update.inline_query.query
@@ -430,7 +430,7 @@ class ScdlBot:
                 results.append(
                     InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD"))
         try:
-            bot.answer_inline_query(inline_query_id, results)
+            context.bot.answer_inline_query(inline_query_id, results)
         except:
             pass
 
