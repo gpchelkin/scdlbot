@@ -437,15 +437,27 @@ class ScdlBot:
     def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None):
         if isinstance(msg_or_text, Message):
             urls = []
-            url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL]) + msg_or_text.parse_caption_entities(types=[MessageEntity.URL])
-            for entity in url_entities:
-                url_str = url_entities[entity]
+            url_entities_all = []
+            url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
+            url_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.URL])
+            if url_entities:
+                url_entities_all += url_entities
+            if url_caption_entities:
+                url_entities_all += url_caption_entities
+            for entity in url_entities_all:
+                url_str = url_entities_all[entity]
                 logger.debug("Entity URL Parsed: %s", url_str)
                 if "://" not in url_str:
                     url_str = "http://{}".format(url_str)
                 urls.append(URL(url_str))
-            text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK]) + msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
-            for entity in text_link_entities:
+            text_link_entities_all = []
+            text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
+            text_link_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
+            if text_link_entities:
+                text_link_entities_all += text_link_entities
+            if text_link_caption_entities:
+                text_link_entities_all += text_link_caption_entities
+            for entity in text_link_entities_all:
                 url_str = entity.url
                 logger.debug("Entity Text Link Parsed: %s", url_str)
                 urls.append(URL(url_str))
