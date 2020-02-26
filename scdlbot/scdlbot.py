@@ -100,16 +100,15 @@ class ScdlBot:
         settings_command_handler = CommandHandler('settings', self.settings_command_callback)
         dispatcher.add_handler(settings_command_handler)
 
-        dl_command_handler = CommandHandler('dl', self.common_command_callback, filters=~ Filters.forwarded,
-                                            pass_args=True)
+        dl_command_handler = CommandHandler('dl', self.common_command_callback, filters=~Filters.update.edited_message & ~Filters.forwarded)
         dispatcher.add_handler(dl_command_handler)
-        link_command_handler = CommandHandler('link', self.common_command_callback, filters=~ Filters.forwarded,
-                                              pass_args=True)
+        link_command_handler = CommandHandler('link', self.common_command_callback, filters=~Filters.update.edited_message & ~Filters.forwarded)
         dispatcher.add_handler(link_command_handler)
-        message_with_links_handler = MessageHandler((Filters.text & (Filters.entity(MessageEntity.URL) |
-                                                                     Filters.entity(MessageEntity.TEXT_LINK))) |
-                                                    (Filters.caption & (Filters.caption_entity(MessageEntity.URL) |
-                                                                        Filters.caption_entity(MessageEntity.TEXT_LINK))),
+        message_with_links_handler = MessageHandler(~Filters.update.edited_message &
+                                                    ((Filters.text & (Filters.entity(MessageEntity.URL) |
+                                                                      Filters.entity(MessageEntity.TEXT_LINK))) |
+                                                     (Filters.caption & (Filters.caption_entity(MessageEntity.URL) |
+                                                                         Filters.caption_entity(MessageEntity.TEXT_LINK)))),
                                                     self.common_command_callback)
         dispatcher.add_handler(message_with_links_handler)
 
