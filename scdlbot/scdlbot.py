@@ -275,8 +275,8 @@ class ScdlBot:
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
-        entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
-        if not entities:
+        command_entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
+        if not command_entities:
             command_passed = False
             # if no command then it is just a message and use default mode
             mode = self.chat_storage[str(chat_id)]["settings"]["mode"]
@@ -284,7 +284,7 @@ class ScdlBot:
             command_passed = True
             # try to determine mode from command
             mode = None
-            for entity_value in entities.values():
+            for entity_value in command_entities.values():
                 mode = entity_value.replace("/", "").replace("@{}".format(self.bot_username), "")
                 break
             if not mode:
@@ -437,14 +437,14 @@ class ScdlBot:
     def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None):
         if isinstance(msg_or_text, Message):
             urls = []
-            url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
+            url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL]) + msg_or_text.parse_caption_entities(types=[MessageEntity.URL])
             for entity in url_entities:
                 url_str = url_entities[entity]
                 logger.debug("Entity URL Parsed: %s", url_str)
                 if "://" not in url_str:
                     url_str = "http://{}".format(url_str)
                 urls.append(URL(url_str))
-            text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
+            text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK]) + msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
             for entity in text_link_entities:
                 url_str = entity.url
                 logger.debug("Entity Text Link Parsed: %s", url_str)
