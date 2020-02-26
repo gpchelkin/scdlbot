@@ -1299,7 +1299,7 @@ requests = "*"
 termcolor = "*"
 
 [package.source]
-reference = "8f524faa0ed393b358ec38c3c5218018d95b2353"
+reference = "29fb8c3f56a1042b96d4d4a15965925c543a8066"
 type = "git"
 url = "https://github.com/flyingrub/scdl.git"
 [[package]]

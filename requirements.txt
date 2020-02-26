@@ -24,7 +24,7 @@ python-telegram-bot==10.1.0
 python-telegram-handler==2.2
 pytz==2019.3
 requests==2.23.0
--e git+https://github.com/flyingrub/scdl.git@8f524faa0ed393b358ec38c3c5218018d95b2353#egg=scdl
+-e git+https://github.com/flyingrub/scdl.git@29fb8c3f56a1042b96d4d4a15965925c543a8066#egg=scdl
 six==1.14.0
 soupsieve==2.0
 termcolor==1.1.0
