@@ -19,18 +19,21 @@ import ffmpeg
 from boltons.urlutils import find_all_links, URL
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
+from prometheus_client import Summary
 from pyshorteners import Shortener
-from telegram import Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton, \
-    InlineQueryResultAudio, Update
+from telegram import (Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup,
+                      InlineKeyboardButton, InlineQueryResultAudio, Update)
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler,
+                          CallbackQueryHandler, CallbackContext)
 from telegram.ext.dispatcher import run_async
 
 from scdlbot.utils import *
 
 logger = logging.getLogger(__name__)
 
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 
 class ScdlBot:
 
@@ -128,8 +131,8 @@ class ScdlBot:
         self.RANT_TEXT_PUBLIC = "[Start me in PM to read help and learn how to use me](t.me/{}?start=1)".format(
             self.bot_username)
 
-    def start(self, use_webhook=False, webhook_port=None, cert_file=None, cert_key_file=None,
-              url_path="scdlbot", webhook_host="0.0.0.0"):
+    def start(self, use_webhook=False, webhook_host="127.0.0.1", webhook_port=None, cert_file=None, cert_key_file=None,
+              url_path="scdlbot"):
         if use_webhook:
             self.updater.start_webhook(listen=webhook_host,
                                        port=webhook_port,
@@ -506,6 +509,7 @@ class ScdlBot:
                     link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
         return link_text
 
+    @REQUEST_TIME.time()
     @run_async
     def download_url_and_send(self, bot, url, direct_urls, chat_id, reply_to_message_id=None,
                               wait_message_id=None, source_ip=None):

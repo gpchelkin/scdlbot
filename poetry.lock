@@ -1063,6 +1063,17 @@ python-versions = "*"
 version = "1.6.7"
 
 [[package]]
+category = "main"
+description = "Python client for the Prometheus monitoring system."
+name = "prometheus-client"
+optional = false
+python-versions = "*"
+version = "0.7.1"
+
+[package.extras]
+twisted = ["twisted"]
+
+[[package]]
 category = "dev"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
 name = "py"
@@ -1746,7 +1757,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "e6ea2e42de40eb172cc5aa12c2be28c5a80ddb845ed4c6660ac10fb20394e7a1"
+content-hash = "d492383be9bb2a21fe5bfc6dd85008b42f27294f1cde9214e8fefcf8b4ab3f71"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2206,6 +2217,9 @@ pluggy = [
 plumbum = [
     {file = "plumbum-1.6.7-py2.py3-none-any.whl", hash = "sha256:df96a5facf621db4a6d682bdc93afa5ed6b107a8667c73c3f0a0f0fab4217c81"},
     {file = "plumbum-1.6.7.tar.gz", hash = "sha256:d143f079bfb60b11e9bec09a49695ce2e55ce5ca0246877bdb0818ab7c7fc312"},
+]
+prometheus-client = [
+    {file = "prometheus_client-0.7.1.tar.gz", hash = "sha256:71cd24a2b3eb335cb800c7159f423df1bd4dcd5171b234be15e3f31ec9f622da"},
 ]
 py = [
     {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},

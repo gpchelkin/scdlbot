@@ -22,6 +22,7 @@ mock==4.0.1
 mutagen==1.44.0
 patool==1.12
 plumbum==1.6.7
+prometheus-client==0.7.1
 pycparser==2.19
 pyshorteners==0.6.1
 python-telegram-bot==12.4.2

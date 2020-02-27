@@ -4,6 +4,7 @@ import logging
 import os
 from logging.handlers import SysLogHandler
 
+from prometheus_client import start_http_server
 from telegram_handler import TelegramHandler
 
 from scdlbot.scdlbot import ScdlBot
@@ -52,7 +53,7 @@ def main():
     chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))
     serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))
     app_url = os.getenv('APP_URL', '')
-    max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80000000'))
+    max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80_000_000'))
     google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     proxy = os.getenv('PROXY', '')
     cookies_file = os.getenv('COOKIES_FILE', '')
@@ -66,12 +67,16 @@ def main():
                       serve_audio, cookies_file, source_ips)
 
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))
+    webhook_host = os.getenv('HOST', '127.0.0.1')
     webhook_port = int(os.getenv('PORT', '5000'))
     cert_file = os.getenv('CERT_FILE', '')
     cert_key_file = os.getenv('CERT_KEY_FILE', '')
     url_path = os.getenv('URL_PATH', tg_bot_token.replace(":", ""))
-
-    scdlbot.start(use_webhook, webhook_port, cert_file, cert_key_file, url_path)
+    # expose prometheus/openmetrics metrics:
+    metrics_host = os.getenv('METRICS_HOST', '127.0.0.1')
+    metrics_port = int(os.getenv('METRICS_PORT', '8000'))
+    start_http_server(metrics_port, addr=metrics_host)
+    scdlbot.start(use_webhook, webhook_host, webhook_port, cert_file, cert_key_file, url_path)
 
 
 if __name__ == '__main__':
