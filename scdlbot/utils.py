@@ -5,9 +5,10 @@ import pkg_resources
 import requests
 import youtube_dl
 from plumbum import local, ProcessExecutionError
-from requests.exceptions import Timeout, RequestException, SSLError
 
 from scdlbot.exceptions import *
+
+# from requests.exceptions import Timeout, RequestException, SSLError
 
 bin_path = os.getenv('BIN_PATH', '')
 scdl_bin = local[os.path.join(bin_path, 'scdl')]
@@ -109,9 +110,10 @@ def shorten_url(url):
     except:
         return url
 
-def log_and_track(self, event_name, message=None):
+
+def log_and_track(event_name, message=None):
     logger.info("Event: %s", event_name)
     if message:
         pass
-        #if self.botan_token:
-            #return botan_track(self.botan_token, message, event_name)
+        # if self.botan_token:
+        #     return botan_track(self.botan_token, message, event_name)
