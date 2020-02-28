@@ -83,11 +83,11 @@ Supported sites and mainly used packages
    `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__:
    `youtube-dl <https://ytdl-org.github.io/youtube-dl>`__
 
-Development
------------
+Run your own scdlbot
+--------------------
 
-Installation
-^^^^^^^^^^^^
+Installation & Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Requirements
 """"""""""""
@@ -122,8 +122,8 @@ Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot
     pip3 install --requirement requirements.txt
 
 
-Configuration
-^^^^^^^^^^^^^
+Configure Bot
+"""""""""""""
 
 Download or copy configuration file sample and set up
 config environment variables in it:
