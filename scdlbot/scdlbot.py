@@ -2,7 +2,6 @@
 
 """Main module."""
 
-import configparser
 import gc
 import pathlib
 import random
@@ -79,16 +78,16 @@ class ScdlBot:
         self.cookies_file = cookies_file
         self.source_ips = source_ips
 
-        #if sc_auth_token:
-            #config = configparser.ConfigParser()
-            #config['scdl'] = {}
-            #config['scdl']['path'] = self.DL_DIR
-            #config['scdl']['auth_token'] = sc_auth_token
-            #config_dir = os.path.join(os.path.expanduser('~'), '.config', 'scdl')
-            #config_path = os.path.join(config_dir, 'scdl.cfg')
-            #os.makedirs(config_dir, exist_ok=True)
-            #with open(config_path, 'w') as config_file:
-                #config.write(config_file)
+        # if sc_auth_token:
+        #     config = configparser.ConfigParser()
+        #     config['scdl'] = {}
+        #     config['scdl']['path'] = self.DL_DIR
+        #     config['scdl']['auth_token'] = sc_auth_token
+        #     config_dir = os.path.join(os.path.expanduser('~'), '.config', 'scdl')
+        #     config_path = os.path.join(config_dir, 'scdl.cfg')
+        #     os.makedirs(config_dir, exist_ok=True)
+        #     with open(config_path, 'w') as config_file:
+        #         config.write(config_file)
 
         self.updater = Updater(token=tg_bot_token, use_context=True)
         dispatcher = self.updater.dispatcher
@@ -200,16 +199,6 @@ class ScdlBot:
                     self.chat_storage[str(chat_id)].pop(msg_id)
         self.chat_storage.sync()
 
-    @run_async
-    def log_and_track(self, event_name, message=None):
-        logger.info("Event: %s", event_name)
-        if message:
-            pass
-            #if self.botan_token:
-                #return botan_track(self.botan_token, message, event_name)
-        else:
-            return False
-
     def rant_and_cleanup(self, bot, chat_id, rant_text, reply_to_message_id=None):
         rant_msg = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                     text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
@@ -231,7 +220,7 @@ class ScdlBot:
         for entity_value in entities.values():
             event_name = entity_value.replace("/", "").replace("@{}".format(self.bot_username), "")
             break
-        self.log_and_track(event_name, update.message)
+        log_and_track(event_name, update.message)
         chat_id = update.message.chat_id
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
@@ -265,7 +254,7 @@ class ScdlBot:
 
     def settings_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
-        self.log_and_track("settings")
+        log_and_track("settings")
         chat_id = update.message.chat_id
         context.bot.send_message(chat_id=chat_id, parse_mode='Markdown',
                          reply_markup=self.get_settings_inline_keyboard(chat_id),
@@ -314,7 +303,7 @@ class ScdlBot:
                                  text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
-            self.log_and_track(event_name, update.message)
+            log_and_track(event_name, update.message)
             if mode == "dl":
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
@@ -362,10 +351,10 @@ class ScdlBot:
                 chat_member_status = chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR,
                                               ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
-                    self.log_and_track("settings_fail")
+                    log_and_track("settings_fail")
                     update.callback_query.answer(text="You're not chat admin")
                     return
-            self.log_and_track("settings_{}".format(action), btn_msg)
+            log_and_track("settings_{}".format(action), btn_msg)
             if action == "close":
                 context.bot.delete_message(chat_id, btn_msg_id)
             else:
@@ -393,7 +382,7 @@ class ScdlBot:
             orig_msg = msg_from_storage["message"]
             urls = msg_from_storage["urls"]
             source_ip = msg_from_storage["source_ip"]
-            self.log_and_track("{}_msg".format(action), orig_msg)
+            log_and_track("{}_msg".format(action), orig_msg)
             if action == "dl":
                 update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
@@ -420,7 +409,7 @@ class ScdlBot:
             context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
     def inline_query_callback(self, update: Update, context: CallbackContext):
-        self.log_and_track("link_inline")
+        log_and_track("link_inline")
         inline_query_id = update.inline_query.id
         text = update.inline_query.query
         results = []

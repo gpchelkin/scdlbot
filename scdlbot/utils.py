@@ -75,36 +75,43 @@ def youtube_dl_func(url, ydl_opts, queue=None):
         return ydl_status
 
 
-def botan_track(token, message, event_name):
-    try:
-        # uid = message.chat_id
-        uid = message.from_user.id
-    except AttributeError:
-        logger.warning('Botan no chat_id in message')
-        return False
-    num_retries = 2
-    ssl_verify = True
-    for i in range(num_retries):
-        try:
-            r = requests.post(
-                BOTAN_TRACK_URL,
-                params={"token": token, "uid": uid, "name": event_name},
-                data=message.to_json(),
-                verify=ssl_verify,
-                timeout=2,
-            )
-            return r.json()
-        except Timeout:
-            logger.exception("Botan timeout on event: %s", event_name)
-        except SSLError:
-            ssl_verify = False
-        except (Exception, RequestException, ValueError):
-            # catastrophic error
-            logger.exception("Botan 🙀astrophic error on event: %s", event_name)
-    return False
+# def botan_track(token, message, event_name):
+#     try:
+#         # uid = message.chat_id
+#         uid = message.from_user.id
+#     except AttributeError:
+#         logger.warning('Botan no chat_id in message')
+#         return False
+#     num_retries = 2
+#     ssl_verify = True
+#     for i in range(num_retries):
+#         try:
+#             r = requests.post(
+#                 BOTAN_TRACK_URL,
+#                 params={"token": token, "uid": uid, "name": event_name},
+#                 data=message.to_json(),
+#                 verify=ssl_verify,
+#                 timeout=2,
+#             )
+#             return r.json()
+#         except Timeout:
+#             logger.exception("Botan timeout on event: %s", event_name)
+#         except SSLError:
+#             ssl_verify = False
+#         except (Exception, RequestException, ValueError):
+#             # catastrophic error
+#             logger.exception("Botan 🙀astrophic error on event: %s", event_name)
+#     return False
 
 def shorten_url(url):
     try:
         return requests.get('https://clck.ru/--?url=' + url).text.replace("https://", "")
     except:
         return url
+
+def log_and_track(self, event_name, message=None):
+    logger.info("Event: %s", event_name)
+    if message:
+        pass
+        #if self.botan_token:
+            #return botan_track(self.botan_token, message, event_name)
