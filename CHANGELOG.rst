@@ -1,6 +1,14 @@
 Version history
 ===============
 
+0.13.0 (2020-02-28)
+-----------------------
+* upgrade to python-telegram-bot version 12
+* support photo captions with links
+* disable support for edited messages
+* replace goo.gl with yandex' clck.ru, shortening works properly again
+* refactor a little, remove deprecated configs, start fixing docs
+
 0.12.2 (2020-01-14)
 -----------------------
 * refined source IP handling
