@@ -49,8 +49,6 @@ def main():
     metrics_port = int(os.getenv('METRICS_PORT', '8000'))
     start_http_server(metrics_port, addr=metrics_host)
 
-    botan_token = os.getenv('BOTAN_TOKEN', '')
-    sc_auth_token = os.environ['SC_AUTH_TOKEN']
     store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
     no_flood_chat_ids = list(map(int, os.getenv('NO_FLOOD_CHAT_IDS', '0').split(',')))
     dl_timeout = int(os.getenv('DL_TIMEOUT', '300'))
@@ -65,9 +63,10 @@ def main():
     if source_ips:
         source_ips = source_ips.split(',')
 
-    scdlbot = ScdlBot(tg_bot_token, botan_token, proxy,
-                      sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
-                      dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url,
+    scdlbot = ScdlBot(tg_bot_token, proxy,
+                      store_chat_id, no_flood_chat_ids, alert_chat_ids,
+                      dl_dir, dl_timeout, max_convert_file_size,
+                      chat_storage_file, app_url,
                       serve_audio, cookies_file, source_ips)
 
     use_webhook = bool(int(os.getenv('USE_WEBHOOK', '0')))

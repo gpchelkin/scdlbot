@@ -79,9 +79,9 @@ Supported sites and mainly used packages
    `scdl <https://github.com/flyingrub/scdl>`__
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
--  `YouTube <https://www.youtube.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, everything else from the `list <https://rg3.github.io/youtube-dl/supportedsites.html>`__:
-   `youtube-dl <https://rg3.github.io/youtube-dl>`__
+-  `YouTube <https://www.youtube.com/>`__, `Yandex.Music <https://music.yandex.com/>`__,
+   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__:
+   `youtube-dl <https://ytdl-org.github.io/youtube-dl>`__
 
 Development
 -----------
@@ -95,11 +95,11 @@ Requirements
 Those should be available in your ``PATH``:
 
 -  `Python 3.6+ <https://www.python.org/>`__
-   (`pyenv <https://github.com/pyenv/pyenv>`__ recommended)
+   (`pyenv <https://github.com/pyenv/pyenv>`__ and `poetry <https://python-poetry.org/>`__ are recommended)
 -  `FFmpeg 4.0+ <https://ffmpeg.org/download.html>`__ if not running on Heroku
    (fresh builds for `Windows <https://ffmpeg.zeranoe.com/builds/>`__
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
--  `Heroku CLI <https://cli.heroku.com/>`__ is recommended
+-  `Heroku CLI <https://cli.heroku.com/>`__ is recommended if you want to deploy to Heroku
 
 Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -121,77 +121,30 @@ Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot
     git pull
     pip3 install --requirement requirements.txt
 
-    # System-wide install link to current sources, recommended:
-    python3 setup.py develop
-
-    # System-wide install copy of current sources, not recommended:
-    python3 setup.py install
 
 Configuration
 ^^^^^^^^^^^^^
 
-Download or copy config file sample and set up
+Download or copy configuration file sample and set up
 config environment variables in it:
 
 ::
 
-    # PyPI-installed: download sample config:
+    # If you installed from PyPI - download sample config:
     curl -o .env https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
 
-    # Git source-installed: copy sample config:
+    # If you installed from Git source - copy sample config:
     cp .env.sample .env
 
-    # Use your favourite editor:
+    # Use your favourite editor. Sample is self-documented:
     nano .env
-
-Required
-""""""""
-
--  ``TG_BOT_TOKEN``: Telegram Bot API Token, `obtain
-   here <https://t.me/BotFather>`__
-
-Optional
-""""""""
-
--  ``SC_AUTH_TOKEN``: SoundCloud Auth Token, `obtain
-   here <https://flyingrub.github.io/scdl/>`__
--  ``STORE_CHAT_ID``: Chat ID for storing audios of inline mode
--  ``USE_WEBHOOK``: use webhook for bot updates: ``1``, use polling
-   (default): ``0``, `more info <https://core.telegram.org/bots/api#getting-updates>`__
--  ``APP_URL``: app URL like
-   ``https://<appname>.herokuapp.com/``, required for webhook
--  ``PORT``: port for webhook to listen to; Heroku sets this automatically
-   for web dynos
--  ``BOTAN_TOKEN``: `Botan.io <http://botan.io/>`__
-   `token <http://appmetrica.yandex.com/>`__
--  ``NO_FLOOD_CHAT_IDS``: Comma-separated chat IDs with no replying
-   and caption spam
--  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
-   binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
-   default: empty (binaries are available in PATH)
--  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdlbot
--  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading
-   if it takes longer than allowed, default: 300
--  ``MAX_CONVERT_FILE_SIZE``: Don't try to split and send files
-   over this number of bytes, default: 80000000
--  ``SYSLOG_ADDRESS``: Syslog server, for example
-   ``logsX.papertrailapp.com:ABCDE``
--  ``SYSLOG_DEBUG``: Enable verbose debug logging: 1
--  ``HOSTNAME``: Hostname to show in Syslog messages
-
-Webhooks: These three links should help. In NGINX use TOKEN1 as
-TG_BOT_TOKEN without ":" symbol, and port in proxy_pass
-according to PORT environment variable.
-
-- https://nginx.org/en/linux_packages.html#mainline
-- https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#using-nginx-with-one-domainport-for-all-bots
-- https://certbot.eff.org/lets-encrypt/ubuntubionic-nginx
 
 Telegram Bot Settings
 """""""""""""""""""""
 
-Send the commands from respective filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently. Also disable privacy mode if you want to.
-
+Send the commands from respective filenames in ``telegram_settings`` dir to `@BotFather <https://t.me/BotFather>`__, choose your bot and copy corresponding values in order to use the bot conveniently.
+Disable privacy mode if you want bot to read and check every message in group for links.
+Otherwise, it would work only for commands.
 
 Running Locally or at Dedicated Server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -217,16 +170,15 @@ Using Python only
 ::
 
     # For PyPI or Git source system-wide installs:
-    export $(cat .env | xargs)
+    export $(cat .env | egrep -v '^#' | xargs)
     scdlbot
-
-    # or in one line:
-    env $(cat .env | xargs) scdlbot
+    # or just:
+    env $(cat .env | egrep -v '^#' | xargs) scdlbot
 
     # For non-installed Git source repository directory:
-    export $(cat .env | xargs)
+    export $(cat .env | egrep -v '^#' | xargs)
     python -m scdlbot
-    # or in one line:
+    # or just:
     env $(cat .env | xargs) python -m scdlbot
 
 

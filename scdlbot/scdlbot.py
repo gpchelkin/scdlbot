@@ -36,10 +36,10 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 
 class ScdlBot:
 
-    def __init__(self, tg_bot_token, botan_token=None, proxy=None,
-                 sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
-                 alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
-                 max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None,
+    def __init__(self, tg_bot_token, proxy=None,
+                 store_chat_id=None, no_flood_chat_ids=None, alert_chat_ids=None,
+                 dl_dir="/tmp/scdlbot", dl_timeout=300, max_convert_file_size=80_000_000,
+                 chat_storage_file="/tmp/scdlbotdata", app_url=None,
                  serve_audio=False, cookies_file=None, source_ips=None):
         self.SERVE_AUDIO = serve_audio
         if self.SERVE_AUDIO:
@@ -74,22 +74,21 @@ class ScdlBot:
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.COOKIES_DOWNLOAD_FILE = "/tmp/scdlbot_cookies.txt"
-        self.botan_token = botan_token if botan_token else None
         self.proxy = proxy
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
         self.source_ips = source_ips
 
-        config = configparser.ConfigParser()
-        config['scdl'] = {}
-        config['scdl']['path'] = self.DL_DIR
-        if sc_auth_token:
-            config['scdl']['auth_token'] = sc_auth_token
-        config_dir = os.path.join(os.path.expanduser('~'), '.config', 'scdl')
-        config_path = os.path.join(config_dir, 'scdl.cfg')
-        os.makedirs(config_dir, exist_ok=True)
-        with open(config_path, 'w') as config_file:
-            config.write(config_file)
+        #if sc_auth_token:
+            #config = configparser.ConfigParser()
+            #config['scdl'] = {}
+            #config['scdl']['path'] = self.DL_DIR
+            #config['scdl']['auth_token'] = sc_auth_token
+            #config_dir = os.path.join(os.path.expanduser('~'), '.config', 'scdl')
+            #config_path = os.path.join(config_dir, 'scdl.cfg')
+            #os.makedirs(config_dir, exist_ok=True)
+            #with open(config_path, 'w') as config_file:
+                #config.write(config_file)
 
         self.updater = Updater(token=tg_bot_token, use_context=True)
         dispatcher = self.updater.dispatcher
@@ -205,9 +204,9 @@ class ScdlBot:
     def log_and_track(self, event_name, message=None):
         logger.info("Event: %s", event_name)
         if message:
-            # TODO: add to local db
-            if self.botan_token:
-                return botan_track(self.botan_token, message, event_name)
+            pass
+            #if self.botan_token:
+                #return botan_track(self.botan_token, message, event_name)
         else:
             return False
 
@@ -789,9 +788,9 @@ class ScdlBot:
 
     def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
         sent_audio_ids = []
-        for index, file in enumerate(file_parts):
-            path = pathlib.Path(file)
-            file_name = os.path.split(file)[-1]
+        for index, file_part in enumerate(file_parts):
+            path = pathlib.Path(file_part)
+            file_name = os.path.split(file_part)[-1]
             # file_name = translit(file_name, 'ru', reversed=True)
             logger.info("Sending: %s", file_name)
             bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
@@ -811,7 +810,7 @@ class ScdlBot:
             # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
-                    mp3 = MP3(file)
+                    mp3 = MP3(file_part)
                     duration = round(mp3.info.length)
                     performer = None
                     title = None
@@ -820,10 +819,11 @@ class ScdlBot:
                         title = ", ".join(mp3['title'])
                     except:
                         pass
-                    audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                    logger.debug(audio)
-                    if not self.SERVE_AUDIO:
-                        audio = open(file, 'rb')
+                    if self.SERVE_AUDIO:
+                        audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                        logger.debug(audio)
+                    else:
+                        audio = open(file_part, 'rb')
                     if i > 0:
                         # maybe: Reply message not found
                         reply_to_message_id = None
