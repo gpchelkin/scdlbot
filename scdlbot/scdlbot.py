@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 
+
 class ScdlBot:
 
     def __init__(self, tg_bot_token, proxy=None,
@@ -99,15 +100,18 @@ class ScdlBot:
         settings_command_handler = CommandHandler('settings', self.settings_command_callback)
         dispatcher.add_handler(settings_command_handler)
 
-        dl_command_handler = CommandHandler('dl', self.common_command_callback, filters=~Filters.update.edited_message & ~Filters.forwarded)
+        dl_command_handler = CommandHandler('dl', self.common_command_callback,
+                                            filters=~Filters.update.edited_message & ~Filters.forwarded)
         dispatcher.add_handler(dl_command_handler)
-        link_command_handler = CommandHandler('link', self.common_command_callback, filters=~Filters.update.edited_message & ~Filters.forwarded)
+        link_command_handler = CommandHandler('link', self.common_command_callback,
+                                              filters=~Filters.update.edited_message & ~Filters.forwarded)
         dispatcher.add_handler(link_command_handler)
         message_with_links_handler = MessageHandler(~Filters.update.edited_message &
                                                     ((Filters.text & (Filters.entity(MessageEntity.URL) |
                                                                       Filters.entity(MessageEntity.TEXT_LINK))) |
                                                      (Filters.caption & (Filters.caption_entity(MessageEntity.URL) |
-                                                                         Filters.caption_entity(MessageEntity.TEXT_LINK)))),
+                                                                         Filters.caption_entity(
+                                                                             MessageEntity.TEXT_LINK)))),
                                                     self.common_command_callback)
         dispatcher.add_handler(message_with_links_handler)
 
@@ -229,7 +233,7 @@ class ScdlBot:
             self.rant_and_cleanup(context.bot, chat_id, self.RANT_TEXT_PUBLIC, reply_to_message_id=reply_to_message_id)
         else:
             context.bot.send_message(chat_id=chat_id, text=self.HELP_TEXT,
-                             parse_mode='Markdown', disable_web_page_preview=True)
+                                     parse_mode='Markdown', disable_web_page_preview=True)
 
     def get_wait_text(self):
         return random.choice(self.WAIT_BIT_TEXT)
@@ -257,8 +261,8 @@ class ScdlBot:
         log_and_track("settings")
         chat_id = update.message.chat_id
         context.bot.send_message(chat_id=chat_id, parse_mode='Markdown',
-                         reply_markup=self.get_settings_inline_keyboard(chat_id),
-                         text=self.SETTINGS_TEXT)
+                                 reply_markup=self.get_settings_inline_keyboard(chat_id),
+                                 text=self.SETTINGS_TEXT)
 
     def common_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
@@ -300,13 +304,13 @@ class ScdlBot:
         if not urls:
             if apologize:
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 text=self.NO_URLS_TEXT, parse_mode='Markdown')
+                                         text=self.NO_URLS_TEXT, parse_mode='Markdown')
         else:
             event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
             log_and_track(event_name, update.message)
             if mode == "dl":
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=get_italic(self.get_wait_text()))
+                                                        parse_mode='Markdown', text=get_italic(self.get_wait_text()))
                 for url in urls:
                     self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
@@ -314,12 +318,12 @@ class ScdlBot:
                                                source_ip=source_ip)
             elif mode == "link":
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                parse_mode='Markdown', text=get_italic(self.get_wait_text()))
+                                                        parse_mode='Markdown', text=get_italic(self.get_wait_text()))
 
                 link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                 parse_mode='Markdown', disable_web_page_preview=True,
-                                 text=link_text if link_text else self.NO_URLS_TEXT)
+                                         parse_mode='Markdown', disable_web_page_preview=True,
+                                         text=link_text if link_text else self.NO_URLS_TEXT)
                 context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif mode == "ask":
                 # ask: always in PM and only if good urls exist in non-PM
@@ -334,7 +338,7 @@ class ScdlBot:
                     button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
                     inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
                     context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                     reply_markup=inline_keyboard, text=question)
+                                             reply_markup=inline_keyboard, text=question)
                 self.cleanup_chat(chat_id)
 
     def button_query_callback(self, update: Update, context: CallbackContext):
@@ -399,8 +403,8 @@ class ScdlBot:
                 urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip)
                 link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
-                                 parse_mode='Markdown', disable_web_page_preview=True,
-                                 text=link_text if link_text else self.NO_URLS_TEXT)
+                                         parse_mode='Markdown', disable_web_page_preview=True,
+                                         text=link_text if link_text else self.NO_URLS_TEXT)
                 context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
             elif action == "nodl":
                 context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
@@ -677,7 +681,7 @@ class ScdlBot:
                                 url = shorten_url(url)
                             caption = "@{} _got it from_ [{}]({}){}".format(self.bot_username.replace("_", "\_"),
                                                                             source, url, addition.replace("_", "\_"))
-                            #logger.info(caption)
+                            # logger.info(caption)
                         sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                     reply_to_message_id if flood == "yes" else None,
                                                                     caption)

@@ -124,7 +124,7 @@ def get_link_text(urls):
     for i, url in enumerate(urls):
         link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
         direct_urls = urls[url].splitlines()
-        for j, direct_url in enumerate(direct_urls):
+        for direct_url in direct_urls:
             if "http" in direct_url:
                 content_type = ""
                 if "googlevideo" in direct_url:

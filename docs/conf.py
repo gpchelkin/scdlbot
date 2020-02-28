@@ -31,14 +31,13 @@ def _get_project_meta():
 
 pkg_meta = _get_project_meta()
 project = pkg_meta['name']
-copyright = '2019, gpchelkin'  # noqa: A001  skipcq: PYL-W0622
+copyright = '2019, gpchelkin'  # noqa: A001  # skipcq: PYL-W0622
 author = 'gpchelkin'
 
 # The short X.Y version
 version = pkg_meta['version']
 # The full version, including alpha/beta/rc tags
 release = version
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -111,7 +110,6 @@ add_module_names = False
 autodoc_default_options = {
     'show-inheritance': True,
 }
-
 
 # -- Options for HTML output -------------------------------------------------
 
