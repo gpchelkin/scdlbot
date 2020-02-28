@@ -117,3 +117,21 @@ def log_and_track(event_name, message=None):
         pass
         # if self.botan_token:
         #     return botan_track(self.botan_token, message, event_name)
+
+
+def get_link_text(urls):
+    link_text = ""
+    for i, url in enumerate(urls):
+        link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
+        direct_urls = urls[url].splitlines()
+        for j, direct_url in enumerate(direct_urls):
+            if "http" in direct_url:
+                content_type = ""
+                if "googlevideo" in direct_url:
+                    if "audio" in direct_url:
+                        content_type = "Audio"
+                    else:
+                        content_type = "Video"
+                # direct_url = shorten_url(direct_url)
+                link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
+    return link_text

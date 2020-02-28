@@ -316,7 +316,7 @@ class ScdlBot:
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                 parse_mode='Markdown', text=get_italic(self.get_wait_text()))
 
-                link_text = self.get_link_text(urls)
+                link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
@@ -397,7 +397,7 @@ class ScdlBot:
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=get_italic(self.get_wait_text()))
                 urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip)
-                link_text = self.get_link_text(urls)
+                link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                  parse_mode='Markdown', disable_web_page_preview=True,
                                  text=link_text if link_text else self.NO_URLS_TEXT)
@@ -473,23 +473,6 @@ class ScdlBot:
             except URLError as exc:
                 urls_dict[url_text] = exc.status
         return urls_dict
-
-    def get_link_text(self, urls):
-        link_text = ""
-        for i, url in enumerate(urls):
-            link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
-            direct_urls = urls[url].splitlines()
-            for j, direct_url in enumerate(direct_urls):
-                if "http" in direct_url:
-                    content_type = ""
-                    if "googlevideo" in direct_url:
-                        if "audio" in direct_url:
-                            content_type = "Audio"
-                        else:
-                            content_type = "Video"
-                    #direct_url = shorten_url(direct_url)
-                    link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
-        return link_text
 
     @REQUEST_TIME.time()
     @run_async
