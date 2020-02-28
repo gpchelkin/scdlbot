@@ -106,7 +106,7 @@ Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recomm
 
 ::
 
-    pip3 install scdlbot
+    pip3 install scdlbot --upgrade
 
 ...or get unstable from `Git source repository <https://github.com/gpchelkin/scdlbot>`__
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -159,9 +159,9 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling mode (``USE_WEBHOOK=0``):
+    # For long polling mode (USE_WEBHOOK=0):
     heroku local worker
-    # For webhook mode (``USE_WEBHOOK=1``):
+    # For webhook mode (USE_WEBHOOK=1):
     heroku local web
 
 Using only Python
