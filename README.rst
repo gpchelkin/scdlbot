@@ -168,7 +168,7 @@ Optional
    and caption spam
 -  ``BIN_PATH``: Custom directory where ``scdl`` and ``bandcamp-dl``
    binaries are available, e.g. ``~/.pyenv/shims/`` if you use pyenv,
-   default: empty (binaries are availaible in PATH)
+   default: empty (binaries are available in PATH)
 -  ``DL_DIR``: Parent directory for downloads directories, default: /tmp/scdlbot
 -  ``DL_TIMEOUT``: Download timeout in seconds, stop downloading
    if it takes longer than allowed, default: 300
@@ -177,9 +177,7 @@ Optional
 -  ``SYSLOG_ADDRESS``: Syslog server, for example
    ``logsX.papertrailapp.com:ABCDE``
 -  ``SYSLOG_DEBUG``: Enable verbose debug logging: 1
--  ``HOSTNAME``: Hostname to show up in Syslog messages
--  ``GOOGL_API_KEY``: `Goo.gl URL shortener <https://goo.gl>`__
-   `API key <https://developers.google.com/url-shortener/v1/getting_started#APIKey>`__
+-  ``HOSTNAME``: Hostname to show in Syslog messages
 
 Webhooks: These three links should help. In NGINX use TOKEN1 as
 TG_BOT_TOKEN without ":" symbol, and port in proxy_pass
@@ -255,17 +253,17 @@ CLI <https://cli.heroku.com/>`__, not much of a fun. Assuming you are in
 ::
 
     heroku login
-    # Create app with Python3 buildpack and set it for upcoming builds:
+    # Create app with Python 3 buildpack and set it for upcoming builds:
     heroku create --buildpack heroku/python
     heroku buildpacks:set heroku/python
-    # Add FFmpeg buildpack needed for youtube-dl:
+    # Add FFmpeg buildpack needed for youtube-dl & scdl:
     heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
     # Deploy app to Heroku:
     git push heroku master
-    # Set config vars automatically from your .env file
+    # Set config vars automatically from your local .env file
     heroku plugins:install heroku-config
     heroku config:push
-    # Or set them one by one:
+    # Or set them manually:
     heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" STORE_CHAT_ID="<STORE_CHAT_ID>" ...
 
 If you use webhook, start web dyno and stop worker dyno:

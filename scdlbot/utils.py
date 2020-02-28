@@ -16,7 +16,6 @@ bandcamp_dl_bin = local[os.path.join(bin_path, 'bandcamp-dl')]
 youtube_dl_bin = local[os.path.join(bin_path, 'youtube-dl')]
 
 BOTAN_TRACK_URL = 'https://api.botan.io/track'
-BOTAN_SHORTENER_URL = 'https://api.botan.io/s/'
 
 logger = logging.getLogger(__name__)
 
@@ -104,3 +103,9 @@ def botan_track(token, message, event_name):
             # catastrophic error
             logger.exception("Botan 🙀astrophic error on event: %s", event_name)
     return False
+
+def shorten_url(url):
+    try:
+        return requests.get('https://clck.ru/--?url=' + url).text.replace("https://", "")
+    except:
+        return url

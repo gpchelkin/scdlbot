@@ -2,7 +2,7 @@ amqp==2.5.2
 args==0.1.0
 bandcamp-downloader==0.0.8.post12
 beautifulsoup4==4.8.2
-billiard==3.6.2.0
+billiard==3.6.3.0
 boltons==20.0.0
 celery==4.4.0
 certifi==2019.11.28
@@ -24,7 +24,6 @@ patool==1.12
 plumbum==1.6.7
 prometheus-client==0.7.1
 pycparser==2.19
-pyshorteners==0.6.1
 python-telegram-bot==12.4.2
 python-telegram-handler==2.2
 pytz==2019.3

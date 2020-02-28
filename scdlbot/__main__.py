@@ -44,6 +44,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 
 def main():
+    # expose prometheus/openmetrics metrics:
+    metrics_host = os.getenv('METRICS_HOST', '127.0.0.1')
+    metrics_port = int(os.getenv('METRICS_PORT', '8000'))
+    start_http_server(metrics_port, addr=metrics_host)
+
     botan_token = os.getenv('BOTAN_TOKEN', '')
     sc_auth_token = os.environ['SC_AUTH_TOKEN']
     store_chat_id = int(os.getenv('STORE_CHAT_ID', '0'))
@@ -54,14 +59,13 @@ def main():
     serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))
     app_url = os.getenv('APP_URL', '')
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80_000_000'))
-    google_shortener_api_key = os.getenv('GOOGL_API_KEY', '')
     proxy = os.getenv('PROXY', '')
     cookies_file = os.getenv('COOKIES_FILE', '')
     source_ips = os.getenv('SOURCE_IPS', None)
     if source_ips:
         source_ips = source_ips.split(',')
 
-    scdlbot = ScdlBot(tg_bot_token, botan_token, google_shortener_api_key, proxy,
+    scdlbot = ScdlBot(tg_bot_token, botan_token, proxy,
                       sc_auth_token, store_chat_id, no_flood_chat_ids, alert_chat_ids,
                       dl_dir, dl_timeout, max_convert_file_size, chat_storage_file, app_url,
                       serve_audio, cookies_file, source_ips)
@@ -72,10 +76,6 @@ def main():
     cert_file = os.getenv('CERT_FILE', '')
     cert_key_file = os.getenv('CERT_KEY_FILE', '')
     url_path = os.getenv('URL_PATH', tg_bot_token.replace(":", ""))
-    # expose prometheus/openmetrics metrics:
-    metrics_host = os.getenv('METRICS_HOST', '127.0.0.1')
-    metrics_port = int(os.getenv('METRICS_PORT', '8000'))
-    start_http_server(metrics_port, addr=metrics_host)
     scdlbot.start(use_webhook, webhook_host, webhook_port, cert_file, cert_key_file, url_path)
 
 

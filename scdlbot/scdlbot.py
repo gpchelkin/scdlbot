@@ -20,7 +20,6 @@ from boltons.urlutils import find_all_links, URL
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
-from pyshorteners import Shortener
 from telegram import (Message, Chat, ChatMember, MessageEntity, ChatAction, InlineKeyboardMarkup,
                       InlineKeyboardButton, InlineQueryResultAudio, Update)
 from telegram.error import (TelegramError, Unauthorized, BadRequest,
@@ -37,7 +36,7 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 
 class ScdlBot:
 
-    def __init__(self, tg_bot_token, botan_token=None, google_shortener_api_key=None, proxy=None,
+    def __init__(self, tg_bot_token, botan_token=None, proxy=None,
                  sc_auth_token=None, store_chat_id=None, no_flood_chat_ids=None,
                  alert_chat_ids=None, dl_dir="/tmp/scdlbot", dl_timeout=300,
                  max_convert_file_size=80_000_000, chat_storage_file="/tmp/scdlbotdata", app_url=None,
@@ -76,7 +75,6 @@ class ScdlBot:
         self.DL_DIR = dl_dir
         self.COOKIES_DOWNLOAD_FILE = "/tmp/scdlbot_cookies.txt"
         self.botan_token = botan_token if botan_token else None
-        self.shortener = Shortener('Google', api_key=google_shortener_api_key) if google_shortener_api_key else None
         self.proxy = proxy
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
@@ -501,11 +499,7 @@ class ScdlBot:
                             content_type = "Audio"
                         else:
                             content_type = "Video"
-                    if self.shortener:
-                        try:
-                            direct_url = self.shortener.short(direct_url)
-                        except:
-                            pass
+                    #direct_url = shorten_url(direct_url)
                     link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
         return link_text
 
@@ -694,42 +688,25 @@ class ScdlBot:
                         flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
                         if flood == "yes":
                             addition = ""
-                            short_url = ""
                             url_obj = URL(url)
                             if self.SITES["yt"] in url_obj.host:
                                 source = "YouTube"
-                                if "qP303vxTLS8" in url:
-                                    addition = random.choice([
-                                        "Скачал музла, машина эмпэтри дала!",
-                                        "У тебя талант, братан! Ка-какой? Качать онлайн!",
-                                        "Слушаю и не плачУ, то, что скачал вчера",
-                                        "Всё по чесноку, если скачал, отгружу музла!",
-                                        "Дёрнул за канат, и телега поймала трэкан!",
-                                        "Сегодня я качаю, и трэки не влазят мне в RAM!",
-                                    ])
-                                else:
-                                    file_root, file_ext = os.path.splitext(file_name)
-                                    file_title = file_root.replace(file_ext, "")
-                                    addition = ": " + file_title
-                                if "youtu.be" in url_obj.host:
-                                    short_url = url.replace("http://", "").replace("https://", "")
-
+                                file_root, file_ext = os.path.splitext(file_name)
+                                file_title = file_root.replace(file_ext, "")
+                                addition = ": " + file_title
                             elif self.SITES["sc"] in url_obj.host:
                                 source = "SoundCloud"
                             elif self.SITES["bc"] in url_obj.host:
                                 source = "Bandcamp"
                             else:
                                 source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                            if self.shortener and not short_url:
-                                try:
-                                    short_url = self.shortener.short(url)
-                                    short_url = short_url.replace("http://", "").replace("https://", "")
-                                except:
-                                    pass
-                            caption = "@{} _got it from_ [{}]({}) {}".format(self.bot_username.replace("_", "\_"),
-                                                                             source,
-                                                                             short_url, addition.replace("_", "\_"))
-                            # logger.info(caption)
+                            if "youtu.be" in url_obj.host:
+                                url = url.replace("http://", "").replace("https://", "")
+                            else:
+                                url = shorten_url(url)
+                            caption = "@{} _got it from_ [{}]({}){}".format(self.bot_username.replace("_", "\_"),
+                                                                            source, url, addition.replace("_", "\_"))
+                            #logger.info(caption)
                         sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
                                                                     reply_to_message_id if flood == "yes" else None,
                                                                     caption)
@@ -748,11 +725,6 @@ class ScdlBot:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
                 pass
-
-        # downloader = URLopener()
-        # file_name, headers = downloader.retrieve(url.to_text(full_quote=True))
-        # patoolib.extract_archive(file_name, outdir=DL_DIR)
-        # os.remove(file_name)
 
     def convert_and_split_audio_file(self, file=""):
         file_root, file_ext = os.path.splitext(file)
