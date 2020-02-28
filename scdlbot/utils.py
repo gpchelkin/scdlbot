@@ -4,6 +4,7 @@ import os
 import pkg_resources
 import requests
 import youtube_dl
+from boltons.urlutils import URL
 from plumbum import local, ProcessExecutionError
 
 from scdlbot.exceptions import *
