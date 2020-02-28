@@ -108,8 +108,8 @@ Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recomm
 
     pip3 install scdlbot
 
-Install / Update unstable from `Git source <https://github.com/gpchelkin/scdlbot>`__
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+...or get unstable from `Git source repository <https://github.com/gpchelkin/scdlbot>`__
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
@@ -130,13 +130,13 @@ config environment variables in it:
 
 ::
 
-    # If you installed from PyPI - download sample config:
+    # If you've installed from PyPI - download sample config somewhere:
     curl -o .env https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
 
-    # If you installed from Git source - copy sample config:
+    # If you've got Git source - just copy sample config:
     cp .env.sample .env
 
-    # Use your favourite editor. Sample is self-documented:
+    # Use your favourite editor. Sample config is self-documented:
     nano .env
 
 Telegram Bot Settings
@@ -156,31 +156,26 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
 
 ::
 
-    # PyPI-installed: download Procfile:
+    # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling:
+    # For long polling mode (``USE_WEBHOOK=0``):
     heroku local worker
-    # For webhook:
+    # For webhook mode (``USE_WEBHOOK=1``):
     heroku local web
 
-Using Python only
+Using only Python
 """""""""""""""""
 
 ::
 
-    # For PyPI or Git source system-wide installs:
     export $(cat .env | egrep -v '^#' | xargs)
-    scdlbot
-    # or just:
-    env $(cat .env | egrep -v '^#' | xargs) scdlbot
+    python3 -m scdlbot
+    # or in one line:
+    env $(cat .env | egrep -v '^#' | xargs) python3 -m scdlbot
 
-    # For non-installed Git source repository directory:
-    export $(cat .env | egrep -v '^#' | xargs)
-    python -m scdlbot
-    # or just:
-    env $(cat .env | xargs) python -m scdlbot
-
+    # If you've installed package from PyPI into the system,
+    # you can also replace 'python3 -m scdlbot' with pure 'scdlbot'
 
 Deploying to `Heroku <https://heroku.com/>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
