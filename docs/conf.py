@@ -31,7 +31,7 @@ def _get_project_meta():
 
 pkg_meta = _get_project_meta()
 project = pkg_meta['name']
-copyright = '2019, gpchelkin'  # noqa: A001  # skipcq: PYL-W0622
+copyright = '2020, gpchelkin'  # noqa: A001  # skipcq: PYL-W0622
 author = 'gpchelkin'
 
 # The short X.Y version
