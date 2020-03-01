@@ -196,7 +196,8 @@ class ScdlBot:
         # logger.debug("Current chat_storage: %r", self.chat_storage)
 
     def cleanup_chat(self, chat_id):
-        for msg_id in self.chat_storage[str(chat_id)]:
+        chat_msgs = self.chat_storage[str(chat_id)].copy()
+        for msg_id in chat_msgs:
             if msg_id != "settings":
                 timedelta = datetime.now() - self.chat_storage[str(chat_id)][msg_id]["message"].date
                 if timedelta.days > 0:
@@ -208,7 +209,8 @@ class ScdlBot:
                                     text=rant_text, parse_mode='Markdown', disable_web_page_preview=True)
         flood = self.chat_storage[str(chat_id)]["settings"]["flood"]
         if flood == "no":
-            for rant_msg_id in self.chat_storage[str(chat_id)]["settings"]["rant_msg_ids"]:
+            rant_msgs = self.chat_storage[str(chat_id)]["settings"]["rant_msg_ids"].copy()
+            for rant_msg_id in rant_msgs:
                 try:
                     bot.delete_message(chat_id=chat_id, message_id=rant_msg_id)
                 except:
