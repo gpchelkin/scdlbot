@@ -36,7 +36,7 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 
 class ScdlBot:
 
-    def __init__(self, tg_bot_token, proxy=None,
+    def __init__(self, tg_bot_token, proxies=None,
                  store_chat_id=None, no_flood_chat_ids=None, alert_chat_ids=None,
                  dl_dir="/tmp/scdlbot", dl_timeout=300, max_convert_file_size=80_000_000,
                  chat_storage_file="/tmp/scdlbotdata", app_url=None,
@@ -74,10 +74,10 @@ class ScdlBot:
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.COOKIES_DOWNLOAD_FILE = "/tmp/scdlbot_cookies.txt"
-        self.proxy = proxy
+        self.proxies = proxies
+        self.source_ips = source_ips
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
-        self.source_ips = source_ips
 
         # if sc_auth_token:
         #     config = configparser.ConfigParser()
@@ -296,12 +296,15 @@ class ScdlBot:
         if apologize:
             context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         source_ip = None
+        proxy = None
         if self.source_ips:
             source_ip = random.choice(self.source_ips)
+        if self.proxies:
+            proxy = random.choice(self.proxies)
         # TODO find working IP?
         urls = self.prepare_urls(msg_or_text=update.message,
                                  direct_urls=(mode == "link"),
-                                 source_ip=source_ip)
+                                 source_ip=source_ip, proxy=proxy)
         logger.debug(urls)
         if not urls:
             if apologize:
@@ -317,7 +320,7 @@ class ScdlBot:
                     self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=reply_to_message_id,
                                                wait_message_id=wait_message.message_id,
-                                               source_ip=source_ip)
+                                               source_ip=source_ip, proxy=proxy)
             elif mode == "link":
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                         parse_mode='Markdown', text=get_italic(self.get_wait_text()))
@@ -332,7 +335,7 @@ class ScdlBot:
                 if chat_type == Chat.PRIVATE or "http" in " ".join(urls.values()):
                     orig_msg_id = str(reply_to_message_id)
                     self.chat_storage[str(chat_id)][orig_msg_id] = {"message": update.message, "urls": urls,
-                                                                    "source_ip": source_ip}
+                                                                    "source_ip": source_ip, "proxy": proxy}
                     question = "🎶 links found, what to do?"
                     button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
                     button_link = InlineKeyboardButton(text="❇️ Links",
@@ -388,6 +391,7 @@ class ScdlBot:
             orig_msg = msg_from_storage["message"]
             urls = msg_from_storage["urls"]
             source_ip = msg_from_storage["source_ip"]
+            proxy = msg_from_storage["proxy"]
             log_and_track("{}_msg".format(action), orig_msg)
             if action == "dl":
                 update.callback_query.answer(text=self.get_wait_text())
@@ -397,12 +401,12 @@ class ScdlBot:
                     self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
                                                reply_to_message_id=orig_msg_id,
                                                wait_message_id=wait_message.message_id,
-                                               source_ip=source_ip)
+                                               source_ip=source_ip, proxy=proxy)
             elif action == "link":
                 update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=get_italic(self.get_wait_text()))
-                urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip)
+                urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip, proxy=proxy)
                 link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                          parse_mode='Markdown', disable_web_page_preview=True,
@@ -430,7 +434,7 @@ class ScdlBot:
         except:
             pass
 
-    def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None):
+    def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None, proxy=None):
         if isinstance(msg_or_text, Message):
             urls = []
             url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
@@ -468,12 +472,12 @@ class ScdlBot:
                 ):
                     if direct_urls or self.SITES["yt"] in url.host:
                         urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
-                                                              source_ip)
+                                                              source_ip, proxy)
                     else:
                         urls_dict[url_text] = "http"
                 elif not any((site in url.host for site in self.SITES.values())):
                     urls_dict[url_text] = get_direct_urls(url_text, self.cookies_file, self.COOKIES_DOWNLOAD_FILE,
-                                                          source_ip)
+                                                          source_ip, proxy)
             except ProcessExecutionError:
                 logger.debug("youtube-dl get-url failed: %s", url_text)
             except URLError as exc:
@@ -483,7 +487,7 @@ class ScdlBot:
     @REQUEST_TIME.time()
     @run_async
     def download_url_and_send(self, bot, url, direct_urls, chat_id, reply_to_message_id=None,
-                              wait_message_id=None, source_ip=None):
+                              wait_message_id=None, source_ip=None, proxy=None):
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
         download_dir = os.path.join(self.DL_DIR, str(uuid4()))
         shutil.rmtree(download_dir, ignore_errors=True)
@@ -567,8 +571,8 @@ class ScdlBot:
                     # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
-            if self.proxy:
-                ydl_opts['proxy'] = self.proxy
+            if proxy:
+                ydl_opts['proxy'] = proxy
             if source_ip:
                 ydl_opts['source_address'] = source_ip
             # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/YoutubeDL.py#L210

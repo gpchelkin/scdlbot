@@ -27,7 +27,7 @@ def get_response_text(file_name):
     return pkg_resources.resource_string(__name__, path).decode("UTF-8")
 
 
-def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_ip=None):
+def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_ip=None, proxy=None):
     logger.debug("Entered get_direct_urls")
     youtube_dl_args = []
 
@@ -42,6 +42,9 @@ def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_i
 
     if source_ip:
         youtube_dl_args.extend(["--source-address", source_ip])
+
+    if proxy:
+        youtube_dl_args.extend(["--proxy", proxy])
 
     youtube_dl_args.extend(["--get-url", url])
     try:

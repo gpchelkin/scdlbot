@@ -57,13 +57,15 @@ def main():
     serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))
     app_url = os.getenv('APP_URL', '')
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80_000_000'))
-    proxy = os.getenv('PROXY', '')
-    cookies_file = os.getenv('COOKIES_FILE', '')
+    proxies = os.getenv('PROXIES', None)
+    if proxies:
+        proxies = proxies.split(',')
     source_ips = os.getenv('SOURCE_IPS', None)
     if source_ips:
         source_ips = source_ips.split(',')
+    cookies_file = os.getenv('COOKIES_FILE', '')
 
-    scdlbot = ScdlBot(tg_bot_token, proxy,
+    scdlbot = ScdlBot(tg_bot_token, proxies,
                       store_chat_id, no_flood_chat_ids, alert_chat_ids,
                       dl_dir, dl_timeout, max_convert_file_size,
                       chat_storage_file, app_url,
