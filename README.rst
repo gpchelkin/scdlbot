@@ -61,11 +61,11 @@ SoundCloud, Bandcamp, YouTube with tags and artwork.
 .. contents:: :depth: 2
 
 
-Bot Usage
+scdlbot Usage in Telegram
 ---------
 
 Send ``/start`` or ``/help`` command to bot
-or refer directly to the `help message <scdlbot/messages/help.tg.md>`__.
+or refer directly to the `help message <scdlbot/texts/help.tg.md>`__.
 
 Please report all bugs and issues and suggest your improvements
 to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.

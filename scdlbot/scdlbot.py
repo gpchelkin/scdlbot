@@ -681,10 +681,10 @@ class ScdlBot:
                                 source = "Bandcamp"
                             else:
                                 source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                           # if "youtu.be" in url_obj.host:
-                           #     url = url.replace("http://", "").replace("https://", "")
-                           # else:
-                           #     url = shorten_url(url)
+                            # if "youtu.be" in url_obj.host:
+                            #     url = url.replace("http://", "").replace("https://", "")
+                            # else:
+                            #     url = shorten_url(url)
                             caption = "@{} _got it from_ [{}]({}){}".format(self.bot_username.replace("_", "\_"),
                                                                             source, url, addition.replace("_", "\_"))
                             # logger.info(caption)
