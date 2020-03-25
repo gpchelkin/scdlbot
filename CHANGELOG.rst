@@ -1,7 +1,7 @@
 Version history
 ===============
 
-0.13.1 (2020-03-25)
+0.13.2 (2020-03-25)
 -----------------------
 * use scdl fork with soundcloud api v2 support
 * add support for m.soundcloud links for new scdl fork
