@@ -46,7 +46,9 @@ plumbum = "1.6.7"
 # For build and publish:
 #scdl = "1.6.12"
 # For testing:
-scdl = { git = "https://github.com/flyingrub/scdl.git" }
+# jackno for sc api v2
+scdl = { git = "https://github.com/jackno/scdl.git" }
+#scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = "0.0.8.post12"
 youtube_dl = "2020.2.16"
@@ -55,25 +57,25 @@ mutagen = "1.44.0"
 patool = "1.12"
 requests = "2.23.0"
 #pyshorteners = "0.6.1"
-celery = "4.4.0"
+celery = "^4.4.2"
 prometheus_client = "0.7.1"
 #transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.750"
+mypy = "^0.770"
 
-wemake-python-styleguide = "^0.13.3"
+wemake-python-styleguide = "^0.14.0"
 flake8-pytest = "^1.3"
-flake8-pytest-style = "^0.1.3"
-nitpick = "^0.21.3"
+flake8-pytest-style = "^0.6.0"
+nitpick = "^0.21.4"
 
-safety = "^1.8"
+safety = "^1.8.7"
 
-pytest = "^5.3"
+pytest = "^5.4.1"
 pytest-cov = "^2.7"
 pytest-randomly = "^3.1"
 
-sphinx = "^2.2"
+sphinx = "^2.4.4"
 sphinx-autodoc-typehints = "<1.11"
 doc8 = "^0.8"
 m2r = "^0.2"
