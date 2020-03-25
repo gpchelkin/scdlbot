@@ -458,6 +458,8 @@ class ScdlBot:
         urls_dict = {}
         for url in urls:
             url_text = url.to_text(True)
+            #FIXME crutch:
+            url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
             url_parts_num = len([part for part in url.path_parts if part])
             try:
                 if (
