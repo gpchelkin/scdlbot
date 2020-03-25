@@ -1,6 +1,12 @@
 Version history
 ===============
 
+0.13.1 (2020-03-25)
+-----------------------
+* use scdl fork with soundcloud api v2 support
+* add support for m.soundcloud links for new scdl fork
+* bump requirements
+
 0.13.0 (2020-02-28)
 -----------------------
 * upgrade to python-telegram-bot version 12
