@@ -21,7 +21,7 @@ kombu==4.6.8
 mock==4.0.2
 mutagen==1.44.0
 patool==1.12
--e git+https://github.com/tomerfiliba/plumbum.git@8084a0ff5bb0678f353b610ceb11805f4db9b0d4#egg=plumbum
+plumbum==1.6.9
 prometheus-client==0.7.1
 pycparser==2.20
 python-telegram-bot==12.4.2

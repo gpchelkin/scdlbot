@@ -42,9 +42,7 @@ python = "^3.6"
 python-telegram-bot = "12.4.2"
 python-telegram-handler = "2.2"
 boltons = "20.0.0"
-#poetry can't get plumbum 1.6.9
-#plumbum = "1.6.8"
-plumbum = { git = "https://github.com/tomerfiliba/plumbum.git", tag = "v1.6.9" }
+plumbum = "1.6.9"
 # For build and publish:
 #scdl = "1.6.12"
 # For testing:
