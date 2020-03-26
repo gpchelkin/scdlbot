@@ -42,12 +42,14 @@ python = "^3.6"
 python-telegram-bot = "12.4.2"
 python-telegram-handler = "2.2"
 boltons = "20.0.0"
-plumbum = "1.6.7"
+#poetry can't get plumbum 1.6.9
+#plumbum = "1.6.8"
+plumbum = { git = "https://github.com/tomerfiliba/plumbum.git", tag = "v1.6.9" }
 # For build and publish:
-scdl = "1.6.12"
+#scdl = "1.6.12"
 # For testing:
 # jackno for sc api v2
-#scdl = { git = "https://github.com/jackno/scdl.git" }
+scdl = { git = "https://github.com/jackno/scdl.git" }
 #scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = "0.0.8.post12"
@@ -57,7 +59,7 @@ mutagen = "1.44.0"
 patool = "1.12"
 requests = "2.23.0"
 #pyshorteners = "0.6.1"
-celery = "^4.4.2"
+celery = "4.4.2"
 prometheus_client = "0.7.1"
 #transliterate = "1.10.2"
 

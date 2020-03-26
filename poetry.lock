@@ -587,7 +587,7 @@ description = "Flake8 lint for quotes."
 name = "flake8-quotes"
 optional = false
 python-versions = "*"
-version = "2.1.1"
+version = "2.1.2"
 
 [package.dependencies]
 flake8 = "*"
@@ -668,7 +668,7 @@ marker = "python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-version = "1.5.0"
+version = "1.5.2"
 
 [package.dependencies]
 zipp = ">=0.5"
@@ -981,9 +981,13 @@ category = "main"
 description = "Plumbum: shell combinators library"
 name = "plumbum"
 optional = false
-python-versions = "*"
-version = "1.6.7"
+python-versions = ">=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
+version = "1.6.9"
 
+[package.source]
+reference = "8084a0ff5bb0678f353b610ceb11805f4db9b0d4"
+type = "git"
+url = "https://github.com/tomerfiliba/plumbum.git"
 [[package]]
 category = "main"
 description = "Python client for the Prometheus monitoring system."
@@ -1255,6 +1259,10 @@ mutagen = "*"
 requests = "*"
 termcolor = "*"
 
+[package.source]
+reference = "d63566f322390b98c05e8f170f883db09ab8fdf0"
+type = "git"
+url = "https://github.com/jackno/scdl.git"
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -1657,7 +1665,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "9c692c1b319de0aaaaad09036c0eeb5945c6e0a6c6bf6106f7b68aa6bb7be97c"
+content-hash = "efdf75bab68286cba3c8a22b75851020d9bf7dfb0b7186ff8e1ac03516bc137b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1925,7 +1933,7 @@ flake8-pytest-style = [
     {file = "flake8_pytest_style-0.6.0-py3-none-any.whl", hash = "sha256:1314b3995d9aff89038a8860f487671fb835269f9486368478dbb1267f05868a"},
 ]
 flake8-quotes = [
-    {file = "flake8-quotes-2.1.1.tar.gz", hash = "sha256:11a15d30c92ca5f04c2791bd7019cf62b6f9d3053eb050d02a135557eb118bfc"},
+    {file = "flake8-quotes-2.1.2.tar.gz", hash = "sha256:c844c9592940c8926c60f00bc620808912ff2acd34923ab5338f3a5ca618a331"},
 ]
 flake8-rst-docstrings = [
     {file = "flake8-rst-docstrings-0.0.12.tar.gz", hash = "sha256:01d38327801781b26c3dfeb71ae37e5a02c5ca1b774a686f63feab8824ca6f9c"},
@@ -1954,8 +1962,8 @@ imagesize = [
     {file = "imagesize-1.2.0.tar.gz", hash = "sha256:b1f6b5a4eab1f73479a50fb79fcf729514a900c341d8503d62a62dbc4127a2b1"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-1.5.0-py2.py3-none-any.whl", hash = "sha256:b97607a1a18a5100839aec1dc26a1ea17ee0d93b20b0f008d80a5a050afb200b"},
-    {file = "importlib_metadata-1.5.0.tar.gz", hash = "sha256:06f5b3a99029c7134207dd882428a66992a9de2bef7c2b699b5641f9886c3302"},
+    {file = "importlib_metadata-1.5.2-py2.py3-none-any.whl", hash = "sha256:298a914c82144c6b3b06c568a8973b89ad2176685f43cd1ea9ba968307300fa9"},
+    {file = "importlib_metadata-1.5.2.tar.gz", hash = "sha256:dfc83688553a91a786c6c91eeb5f3b1d31f24d71877bbd94ecbf5484e57690a2"},
 ]
 importlib-resources = [
     {file = "importlib_resources-1.4.0-py2.py3-none-any.whl", hash = "sha256:dd98ceeef3f5ad2ef4cc287b8586da4ebad15877f351e9688987ad663a0a29b8"},
@@ -2086,10 +2094,7 @@ pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
-plumbum = [
-    {file = "plumbum-1.6.7-py2.py3-none-any.whl", hash = "sha256:df96a5facf621db4a6d682bdc93afa5ed6b107a8667c73c3f0a0f0fab4217c81"},
-    {file = "plumbum-1.6.7.tar.gz", hash = "sha256:d143f079bfb60b11e9bec09a49695ce2e55ce5ca0246877bdb0818ab7c7fc312"},
-]
+plumbum = []
 prometheus-client = [
     {file = "prometheus_client-0.7.1.tar.gz", hash = "sha256:71cd24a2b3eb335cb800c7159f423df1bd4dcd5171b234be15e3f31ec9f622da"},
 ]
@@ -2196,9 +2201,7 @@ safety = [
     {file = "safety-1.8.7-py2.py3-none-any.whl", hash = "sha256:05f77773bbab834502328b29ed013677aa53ed0c22b6e330aef7d2a7e1dfd838"},
     {file = "safety-1.8.7.tar.gz", hash = "sha256:3016631e0dd17193d6cf12e8ed1af92df399585e8ee0e4b1300d9e7e32b54903"},
 ]
-scdl = [
-    {file = "scdl-1.6.12.tar.gz", hash = "sha256:cf135dba69c77ab5b67e3f9cc75586bb1ffe73cd78d1f30833b154b6f00c323a"},
-]
+scdl = []
 six = [
     {file = "six-1.14.0-py2.py3-none-any.whl", hash = "sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c"},
     {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},
