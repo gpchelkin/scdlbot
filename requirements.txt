@@ -24,7 +24,7 @@ patool==1.12
 plumbum==1.6.9
 prometheus-client==0.7.1
 pycparser==2.20
-python-telegram-bot==12.4.2
+python-telegram-bot==12.5
 python-telegram-handler==2.2
 pytz==2019.3
 requests==2.23.0
