@@ -1130,7 +1130,7 @@ description = "We have made you a wrapper you can't refuse"
 name = "python-telegram-bot"
 optional = false
 python-versions = "*"
-version = "12.5"
+version = "12.5.1"
 
 [package.dependencies]
 certifi = "*"
@@ -1662,7 +1662,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "b8cdef583991f8d50654e696103f1c98bd48c82d1af50e93897b660aa2083c4b"
+content-hash = "a4f487e5a1d3d27221a3b384ac9056754b723d0b6129006731ec06b1a03f9639"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2142,8 +2142,8 @@ python-slugify = [
     {file = "python-slugify-4.0.0.tar.gz", hash = "sha256:a8fc3433821140e8f409a9831d13ae5deccd0b033d4744d94b31fea141bdd84c"},
 ]
 python-telegram-bot = [
-    {file = "python-telegram-bot-12.5.tar.gz", hash = "sha256:f330c8ce72e167e048a92cd9996d8752b77d260f938664c2aec1ca753fe1118c"},
-    {file = "python_telegram_bot-12.5-py2.py3-none-any.whl", hash = "sha256:4796f794cd55d2d77dbd242cd2e4081c0664384ec4fbdb046501f9d32619560a"},
+    {file = "python-telegram-bot-12.5.1.tar.gz", hash = "sha256:6d69fb04dc8d83e01cb25a0d83aaa2a1a4b7d5b14cd38b9f8922a567b4a4a510"},
+    {file = "python_telegram_bot-12.5.1-py2.py3-none-any.whl", hash = "sha256:af36fbf051415ded8b2633f27b71d292efcd85d58a647a1f138db191380144ff"},
 ]
 python-telegram-handler = [
     {file = "python-telegram-handler-2.2.tar.gz", hash = "sha256:0da65e9c9011b4269a339eb2cea778c82e4f3d5d92bda9a27f0fe3bb318e76f3"},
