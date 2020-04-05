@@ -140,7 +140,7 @@ description = "When they're not builtins, they're boltons."
 name = "boltons"
 optional = false
 python-versions = "*"
-version = "20.0.0"
+version = "20.1.0"
 
 [[package]]
 category = "main"
@@ -196,7 +196,7 @@ description = "Python package for providing Mozilla's CA Bundle."
 name = "certifi"
 optional = false
 python-versions = "*"
-version = "2019.11.28"
+version = "2020.4.5"
 
 [[package]]
 category = "main"
@@ -261,8 +261,8 @@ category = "main"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 name = "cryptography"
 optional = false
-python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
-version = "2.8"
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+version = "2.9"
 
 [package.dependencies]
 cffi = ">=1.8,<1.11.3 || >1.11.3"
@@ -1522,7 +1522,7 @@ description = "Backported and Experimental Type Hints for Python 3.5+"
 name = "typing-extensions"
 optional = false
 python-versions = "*"
-version = "3.7.4.1"
+version = "3.7.4.2"
 
 [[package]]
 category = "main"
@@ -1571,7 +1571,7 @@ description = "Virtual Python Environment builder"
 name = "virtualenv"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "20.0.15"
+version = "20.0.16"
 
 [package.dependencies]
 appdirs = ">=1.4.3,<2"
@@ -1662,7 +1662,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "a4f487e5a1d3d27221a3b384ac9056754b723d0b6129006731ec06b1a03f9639"
+content-hash = "73ecbd22f7c1073de9b4291fb7ce29b4624213201c0d43933c6019b4cf2a53fe"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1715,16 +1715,16 @@ billiard = [
     {file = "billiard-3.6.3.0.tar.gz", hash = "sha256:d91725ce6425f33a97dfa72fb6bfef0e47d4652acd98a032bd1a7fbf06d5fa6a"},
 ]
 boltons = [
-    {file = "boltons-20.0.0-py2.py3-none-any.whl", hash = "sha256:83cff3975ea301144dc985395a7ea847c71d9641334b852595897a92a85e51af"},
-    {file = "boltons-20.0.0.tar.gz", hash = "sha256:e44ddbd10af0904147c194d2c9bd2affa6a3e5b2ebfb9d5547900d8931203953"},
+    {file = "boltons-20.1.0-py2.py3-none-any.whl", hash = "sha256:b3fc2b711f50cd975e726324d98e0bd5a324dd7e3b81d5e6a1b03c542d0c66c4"},
+    {file = "boltons-20.1.0.tar.gz", hash = "sha256:6e890b173c5f2dcb4ec62320b3799342ecb1a6a0b2253014455387665d62c213"},
 ]
 celery = [
     {file = "celery-4.4.2-py2.py3-none-any.whl", hash = "sha256:5b4b37e276033fe47575107a2775469f0b721646a08c96ec2c61531e4fe45f2a"},
     {file = "celery-4.4.2.tar.gz", hash = "sha256:108a0bf9018a871620936c33a3ee9f6336a89f8ef0a0f567a9001f4aa361415f"},
 ]
 certifi = [
-    {file = "certifi-2019.11.28-py2.py3-none-any.whl", hash = "sha256:017c25db2a153ce562900032d5bc68e9f191e44e9a0f762f373977de9df1fbb3"},
-    {file = "certifi-2019.11.28.tar.gz", hash = "sha256:25b64c7da4cd7479594d035c08c2d809eb4aab3a26e5a990ea98cc450c320f1f"},
+    {file = "certifi-2020.4.5-py2.py3-none-any.whl", hash = "sha256:e68768546aa055623812ada64aec5e1f02ca20a9e7f3d3432dd8b0f35a6e7951"},
+    {file = "certifi-2020.4.5.tar.gz", hash = "sha256:b0e07438175de96ab74de9ab5dc40985ef8b44a41e9636a2000099dc3b670ddd"},
 ]
 cffi = [
     {file = "cffi-1.14.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:1cae98a7054b5c9391eb3249b86e0e99ab1e02bb0cc0575da191aedadbdf4384"},
@@ -1805,27 +1805,25 @@ coverage = [
     {file = "coverage-5.0.4.tar.gz", hash = "sha256:1b60a95fc995649464e0cd48cecc8288bac5f4198f21d04b8229dc4097d76823"},
 ]
 cryptography = [
-    {file = "cryptography-2.8-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:fb81c17e0ebe3358486cd8cc3ad78adbae58af12fc2bf2bc0bb84e8090fa5ce8"},
-    {file = "cryptography-2.8-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:44ff04138935882fef7c686878e1c8fd80a723161ad6a98da31e14b7553170c2"},
-    {file = "cryptography-2.8-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:369d2346db5934345787451504853ad9d342d7f721ae82d098083e1f49a582ad"},
-    {file = "cryptography-2.8-cp27-cp27m-win32.whl", hash = "sha256:df6b4dca2e11865e6cfbfb708e800efb18370f5a46fd601d3755bc7f85b3a8a2"},
-    {file = "cryptography-2.8-cp27-cp27m-win_amd64.whl", hash = "sha256:7f09806ed4fbea8f51585231ba742b58cbcfbfe823ea197d8c89a5e433c7e912"},
-    {file = "cryptography-2.8-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:58363dbd966afb4f89b3b11dfb8ff200058fbc3b947507675c19ceb46104b48d"},
-    {file = "cryptography-2.8-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:6ec280fb24d27e3d97aa731e16207d58bd8ae94ef6eab97249a2afe4ba643d42"},
-    {file = "cryptography-2.8-cp34-abi3-macosx_10_6_intel.whl", hash = "sha256:b43f53f29816ba1db8525f006fa6f49292e9b029554b3eb56a189a70f2a40879"},
-    {file = "cryptography-2.8-cp34-abi3-manylinux1_x86_64.whl", hash = "sha256:7270a6c29199adc1297776937a05b59720e8a782531f1f122f2eb8467f9aab4d"},
-    {file = "cryptography-2.8-cp34-abi3-manylinux2010_x86_64.whl", hash = "sha256:de96157ec73458a7f14e3d26f17f8128c959084931e8997b9e655a39c8fde9f9"},
-    {file = "cryptography-2.8-cp34-cp34m-win32.whl", hash = "sha256:02079a6addc7b5140ba0825f542c0869ff4df9a69c360e339ecead5baefa843c"},
-    {file = "cryptography-2.8-cp34-cp34m-win_amd64.whl", hash = "sha256:b0de590a8b0979649ebeef8bb9f54394d3a41f66c5584fff4220901739b6b2f0"},
-    {file = "cryptography-2.8-cp35-cp35m-win32.whl", hash = "sha256:ecadccc7ba52193963c0475ac9f6fa28ac01e01349a2ca48509667ef41ffd2cf"},
-    {file = "cryptography-2.8-cp35-cp35m-win_amd64.whl", hash = "sha256:90df0cc93e1f8d2fba8365fb59a858f51a11a394d64dbf3ef844f783844cc793"},
-    {file = "cryptography-2.8-cp36-cp36m-win32.whl", hash = "sha256:1df22371fbf2004c6f64e927668734070a8953362cd8370ddd336774d6743595"},
-    {file = "cryptography-2.8-cp36-cp36m-win_amd64.whl", hash = "sha256:a518c153a2b5ed6b8cc03f7ae79d5ffad7315ad4569b2d5333a13c38d64bd8d7"},
-    {file = "cryptography-2.8-cp37-cp37m-win32.whl", hash = "sha256:4b1030728872c59687badcca1e225a9103440e467c17d6d1730ab3d2d64bfeff"},
-    {file = "cryptography-2.8-cp37-cp37m-win_amd64.whl", hash = "sha256:d31402aad60ed889c7e57934a03477b572a03af7794fa8fb1780f21ea8f6551f"},
-    {file = "cryptography-2.8-cp38-cp38-win32.whl", hash = "sha256:73fd30c57fa2d0a1d7a49c561c40c2f79c7d6c374cc7750e9ac7c99176f6428e"},
-    {file = "cryptography-2.8-cp38-cp38-win_amd64.whl", hash = "sha256:971221ed40f058f5662a604bd1ae6e4521d84e6cad0b7b170564cc34169c8f13"},
-    {file = "cryptography-2.8.tar.gz", hash = "sha256:3cda1f0ed8747339bbdf71b9f38ca74c7b592f24f65cdb3ab3765e4b02871651"},
+    {file = "cryptography-2.9-cp27-cp27m-macosx_10_9_intel.whl", hash = "sha256:ef9a55013676907df6c9d7dd943eb1770d014f68beaa7e73250fb43c759f4585"},
+    {file = "cryptography-2.9-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:2a2ad24d43398d89f92209289f15265107928f22a8d10385f70def7a698d6a02"},
+    {file = "cryptography-2.9-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:95e1296e0157361fe2f5f0ed307fd31f94b0ca13372e3673fa95095a627636a1"},
+    {file = "cryptography-2.9-cp27-cp27m-win32.whl", hash = "sha256:192ca04a36852a994ef21df13cca4d822adbbdc9d5009c0f96f1d2929e375d4f"},
+    {file = "cryptography-2.9-cp27-cp27m-win_amd64.whl", hash = "sha256:ed1d0760c7e46436ec90834d6f10477ff09475c692ed1695329d324b2c5cd547"},
+    {file = "cryptography-2.9-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:19ae795137682a9778892fb4390c07811828b173741bce91e30f899424b3934d"},
+    {file = "cryptography-2.9-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:d1bf5a1a0d60c7f9a78e448adcb99aa101f3f9588b16708044638881be15d6bc"},
+    {file = "cryptography-2.9-cp35-abi3-macosx_10_9_intel.whl", hash = "sha256:1b9b535d6b55936a79dbe4990b64bb16048f48747c76c29713fea8c50eca2acf"},
+    {file = "cryptography-2.9-cp35-abi3-manylinux1_x86_64.whl", hash = "sha256:7a279f33a081d436e90e91d1a7c338553c04e464de1c9302311a5e7e4b746088"},
+    {file = "cryptography-2.9-cp35-abi3-manylinux2010_x86_64.whl", hash = "sha256:49870684da168b90110bbaf86140d4681032c5e6a2461adc7afdd93be5634216"},
+    {file = "cryptography-2.9-cp35-cp35m-win32.whl", hash = "sha256:6b91cab3841b4c7cb70e4db1697c69f036c8bc0a253edc0baa6783154f1301e4"},
+    {file = "cryptography-2.9-cp35-cp35m-win_amd64.whl", hash = "sha256:587f98ce27ac4547177a0c6fe0986b8736058daffe9160dcf5f1bd411b7fbaa1"},
+    {file = "cryptography-2.9-cp36-cp36m-win32.whl", hash = "sha256:cc20316e3f5a6b582fc3b029d8dc03aabeb645acfcb7fc1d9848841a33265748"},
+    {file = "cryptography-2.9-cp36-cp36m-win_amd64.whl", hash = "sha256:3be7a5722d5bfe69894d3f7bbed15547b17619f3a88a318aab2e37f457524164"},
+    {file = "cryptography-2.9-cp37-cp37m-win32.whl", hash = "sha256:7598974f6879a338c785c513e7c5a4329fbc58b9f6b9a6305035fca5b1076552"},
+    {file = "cryptography-2.9-cp37-cp37m-win_amd64.whl", hash = "sha256:5aca6f00b2f42546b9bdf11a69f248d1881212ce5b9e2618b04935b87f6f82a1"},
+    {file = "cryptography-2.9-cp38-cp38-win32.whl", hash = "sha256:9fc9da390e98cb6975eadf251b6e5fa088820141061bf041cd5c72deba1dc526"},
+    {file = "cryptography-2.9-cp38-cp38-win_amd64.whl", hash = "sha256:6b744039b55988519cc183149cceb573189b3e46e16ccf6f8c46798bb767c9dc"},
+    {file = "cryptography-2.9.tar.gz", hash = "sha256:0cacd3ef5c604b8e5f59bf2582c076c98a37fe206b31430d0cd08138aff0986e"},
 ]
 darglint = [
     {file = "darglint-1.2.0-py3-none-any.whl", hash = "sha256:748f53c0c73ce7cf0b97f77aea8da38145122db32969150001918700ff9689c7"},
@@ -2317,9 +2315,9 @@ typed-ast = [
     {file = "typed_ast-1.4.1.tar.gz", hash = "sha256:8c8aaad94455178e3187ab22c8b01a3837f8ee50e09cf31f1ba129eb293ec30b"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-3.7.4.1-py2-none-any.whl", hash = "sha256:910f4656f54de5993ad9304959ce9bb903f90aadc7c67a0bef07e678014e892d"},
-    {file = "typing_extensions-3.7.4.1-py3-none-any.whl", hash = "sha256:cf8b63fedea4d89bab840ecbb93e75578af28f76f66c35889bd7065f5af88575"},
-    {file = "typing_extensions-3.7.4.1.tar.gz", hash = "sha256:091ecc894d5e908ac75209f10d5b4f118fbdb2eb1ede6a63544054bb1edb41f2"},
+    {file = "typing_extensions-3.7.4.2-py2-none-any.whl", hash = "sha256:f8d2bd89d25bc39dabe7d23df520442fa1d8969b82544370e03d88b5a591c392"},
+    {file = "typing_extensions-3.7.4.2-py3-none-any.whl", hash = "sha256:6e95524d8a547a91e08f404ae485bbb71962de46967e1b71a0cb89af24e761c5"},
+    {file = "typing_extensions-3.7.4.2.tar.gz", hash = "sha256:79ee589a3caca649a9bfd2a8de4709837400dfa00b6cc81962a1e6a1815969ae"},
 ]
 unicode-slugify = [
     {file = "unicode-slugify-0.1.3.tar.gz", hash = "sha256:34cf3afefa6480efe705a4fc0eaeeaf7f49754aec322ba3e8b2f27dc1cbcf650"},
@@ -2337,8 +2335,8 @@ vine = [
     {file = "vine-1.3.0.tar.gz", hash = "sha256:133ee6d7a9016f177ddeaf191c1f58421a1dcc6ee9a42c58b34bed40e1d2cd87"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.0.15-py2.py3-none-any.whl", hash = "sha256:4e399f48c6b71228bf79f5febd27e3bbb753d9d5905776a86667bc61ab628a25"},
-    {file = "virtualenv-20.0.15.tar.gz", hash = "sha256:9e81279f4a9d16d1c0654a127c2c86e5bca2073585341691882c1e66e31ef8a5"},
+    {file = "virtualenv-20.0.16-py2.py3-none-any.whl", hash = "sha256:94f647e12d1e6ced2541b93215e51752aecbd1bbb18eb1816e2867f7532b1fe1"},
+    {file = "virtualenv-20.0.16.tar.gz", hash = "sha256:6ea131d41c477f6c4b7863948a9a54f7fa196854dbef73efbdff32b509f4d8bf"},
 ]
 virtualenv-clone = [
     {file = "virtualenv-clone-0.5.4.tar.gz", hash = "sha256:665e48dd54c84b98b71a657acb49104c54e7652bce9c1c4f6c6976ed4c827a29"},
