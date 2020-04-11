@@ -1,11 +1,11 @@
 amqp==2.5.2
 args==0.1.0
 bandcamp-downloader==0.0.8.post12
-beautifulsoup4==4.8.2
+beautifulsoup4==4.9.0
 billiard==3.6.3.0
 boltons==20.1.0
 celery==4.4.2
-certifi==2020.4.5
+certifi==2020.4.5.1
 cffi==1.14.0
 chardet==3.0.4
 clint==0.5.1
@@ -24,13 +24,13 @@ patool==1.12
 plumbum==1.6.9
 prometheus-client==0.7.1
 pycparser==2.20
-python-telegram-bot==12.5.1
+python-telegram-bot==12.6.1
 python-telegram-handler==2.2
 pytz==2019.3
 requests==2.23.0
 -e git+https://github.com/jackno/scdl.git@d63566f322390b98c05e8f170f883db09ab8fdf0#egg=scdl
 six==1.14.0
-soupsieve==2.0
+soupsieve==1.9.5
 termcolor==1.1.0
 tornado==6.0.4
 unicode-slugify==0.1.3
