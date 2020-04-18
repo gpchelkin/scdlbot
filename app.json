@@ -1,105 +1,104 @@
 {
-    "name": "scdlbot",
-    "description": "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork.",
-    "repository": "https://github.com/gpchelkin/scdlbot",
-    "logo": "https://raw.githubusercontent.com/gpchelkin/scdlbot/master/telegram_settings/setuserpic.jpg",
-    "keywords": ["python", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud",
-        "audio", "music", "download", "bot", "telegram", "bot"],
-    "buildpacks": [
-        {
-          "url": "https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg"
-        },
-        {
-          "url": "heroku/python"
-        }
-    ],
-    "env": {
-        "TG_BOT_TOKEN": {
-            "description": "Telegram Bot API Token",
-            "required": true
-        },
-        "STORE_CHAT_ID": {
-            "description": "Chat ID for storing audios for inline mode",
-            "required": false
-        },
-        "SC_AUTH_TOKEN": {
-            "description": "A secret key for verifying the integrity of signed cookies",
-            "required": false
-        },
-        "USE_WEBHOOK": {
-            "description": "Use webhook for bot updates: 1, use polling: 0",
-            "value": "0",
-            "required": false
-        },
-        "BOTAN_TOKEN": {
-            "description": "Botan.io Token",
-            "required": false
-        },
-        "APP_URL": {
-            "description": "Heroku App URL like `https://<appname>.herokuapp.com/`, required for webhook",
-            "required": false
-        },
-        "NO_FLOOD_CHAT_IDS": {
-            "description": "Comma-separated chat IDs with no replying and caption hashtags",
-            "required": false
-        },
-        "BIN_PATH": {
-            "description": "Custom directory where scdl and bandcamp-dl binaries are available",
-            "required": false
-        },
-        "DL_DIR": {
-            "description": "Parent directory for downloads directories",
-            "value": "/tmp/scdlbot",
-            "required": false
-        },
-        "DL_TIMEOUT": {
-            "description": "Download timeout in seconds, stop downloading if it takes longer than allowed",
-            "value": "300",
-            "required": false
-        },
-        "CHAT_STORAGE": {
-            "description": "Chat storage",
-            "value": "/tmp/scdlbotdata",
-            "required": false
-        },
-        "MAX_CONVERT_FILE_SIZE": {
-            "description": "Don't try to split and send files over this number of bytes",
-            "value": "80000000",
-            "required": false
-        },
-        "SYSLOG_ADDRESS": {
-            "description": "",
-            "value": "",
-            "required": false
-        },
-        "SYSLOG_DEBUG": {
-            "description": "Enable verbose debug logging: 1",
-            "value": "0",
-            "required": false
-        },
-        "HOSTNAME": {
-            "description": "",
-            "value": "heroku",
-            "required": false
-        },
-        "CERT_FILE": {
-            "description": "",
-            "value": "",
-            "required": false
-        },
-        "GOOGL_API_KEY": {
-            "description": "",
-            "value": "",
-            "required": false
-        }
-
+  "name": "scdlbot",
+  "description": "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork",
+  "repository": "https://github.com/gpchelkin/scdlbot",
+  "logo": "https://raw.githubusercontent.com/gpchelkin/scdlbot/master/telegram_settings/setuserpic.jpg",
+  "keywords": [
+    "python",
+    "telegram",
+    "bot",
+    "soundcloud",
+    "bandcamp",
+    "youtube",
+    "mixcloud",
+    "yandex",
+    "audio",
+    "music",
+    "download"
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest"
     },
-    "formation": {
-        "web": {
-            "quantity": 0
-        },
-        "worker": {
-            "quantity": 1
-        }
+    {
+      "url": "heroku/python"
     }
+  ],
+  "env": {
+    "TG_BOT_TOKEN": {
+      "description": "Telegram Bot API Token",
+      "required": true
+    },
+    "DL_DIR": {
+      "description": "Parent directory for downloads directories",
+      "value": "/tmp/scdlbot",
+      "required": false
+    },
+    "DL_TIMEOUT": {
+      "description": "Download timeout in seconds, stop downloading if it takes longer than allowed",
+      "value": "300",
+      "required": false
+    },
+    "NO_FLOOD_CHAT_IDS": {
+      "description": "Comma-separated chat IDs with no replying and caption hashtags",
+      "required": false
+    },
+    "ALERT_CHAT_IDS": {
+      "description": "Comma-separated chat IDs with no replying and caption hashtags",
+      "required": false
+    },
+    "BIN_PATH": {
+      "description": "Custom directory where scdl and bandcamp-dl binaries are available",
+      "required": false
+    },
+    "CHAT_STORAGE": {
+      "description": "Chat storage",
+      "value": "/tmp/scdlbotdata",
+      "required": false
+    },
+    "STORE_CHAT_ID": {
+      "description": "Chat ID for storing audios for inline mode",
+      "required": false
+    },
+    "COOKIES_FILE": {
+      "description": "HTTP or local path with cookies file for Yandex.Music",
+      "required": false
+    },
+    "MAX_CONVERT_FILE_SIZE": {
+      "description": "Don't try to split and send files over this number of bytes",
+      "value": "80_000_000",
+      "required": false
+    },
+    "HOSTNAME": {
+      "description": "Hostname to show in Syslog messages",
+      "value": "heroku",
+      "required": false
+    },
+    "SYSLOG_ADDRESS": {
+      "description": "Syslog server, for example: logsX.papertrailapp.com:55555",
+      "required": false
+    },
+    "SYSLOG_DEBUG": {
+      "description": "Set to 1 to enable verbose debug logging",
+      "value": "0",
+      "required": false
+    },
+    "USE_WEBHOOK": {
+      "description": "Use webhook for bot updates: 1, use polling (default): 0",
+      "value": "0",
+      "required": false
+    },
+    "APP_URL": {
+      "description": "Your host URL like https://scdlbot.herokuapp.com/, required for webhook mode",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 0
+    },
+    "worker": {
+      "quantity": 1
+    }
+  }
 }
