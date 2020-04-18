@@ -1,6 +1,11 @@
 Version history
 ===============
 
+0.13.3 (2020-04-18)
+-----------------------
+* many cosmetic refinements
+* update requirements
+
 0.13.2 (2020-03-25)
 -----------------------
 * use scdl fork with soundcloud api v2 support
