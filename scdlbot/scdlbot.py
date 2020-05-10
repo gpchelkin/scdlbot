@@ -15,7 +15,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import ffmpeg
-from boltons.urlutils import find_all_links, URL
+from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
@@ -573,6 +573,8 @@ class ScdlBot:
                     # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
+            if 'tiktok.com' in url:
+                ydl_opts['postprocessors'] = []
             if proxy:
                 ydl_opts['proxy'] = proxy
             if source_ip:
@@ -713,11 +715,13 @@ class ScdlBot:
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "").lower()
         file_size = os.path.getsize(file)
-        if file_format not in ["mp3", "m4a", "mp4"]:
+        # FIXME unknown_video is for tiktok
+        if file_format not in ["mp3", "m4a", "mp4", "unknown_video"]:
             raise FileNotSupportedError(file_format)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
             raise FileTooLargeError(file_size)
-        if file_format != "mp3":
+        # FIXME unknown_video is for tiktok
+        if file_format not in ["mp3", "unknown_video"]:
             logger.info("Converting: %s", file)
             try:
                 file_converted = file.replace(file_ext, ".mp3")
@@ -794,34 +798,47 @@ class ScdlBot:
             # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
-                    mp3 = MP3(file_part)
-                    duration = round(mp3.info.length)
-                    performer = None
-                    title = None
-                    try:
-                        performer = ", ".join(mp3['artist'])
-                        title = ", ".join(mp3['title'])
-                    except:
-                        pass
-                    if self.SERVE_AUDIO:
-                        audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                        logger.debug(audio)
-                    else:
-                        audio = open(file_part, 'rb')
-                    if i > 0:
-                        # maybe: Reply message not found
-                        reply_to_message_id = None
-                    audio_msg = bot.send_audio(chat_id=chat_id,
-                                               reply_to_message_id=reply_to_message_id,
-                                               audio=audio,
-                                               duration=duration,
-                                               performer=performer,
-                                               title=title,
-                                               caption=caption_full,
-                                               parse_mode='Markdown')
-                    sent_audio_ids.append(audio_msg.audio.file_id)
-                    logger.info("Sending succeeded: %s", file_name)
-                    break
+                    if file_part.endswith('.mp3'):
+                        mp3 = MP3(file_part)
+                        duration = round(mp3.info.length)
+                        performer = None
+                        title = None
+                        try:
+                            performer = ", ".join(mp3['artist'])
+                            title = ", ".join(mp3['title'])
+                        except:
+                            pass
+                        if self.SERVE_AUDIO:
+                            audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                            logger.debug(audio)
+                        else:
+                            audio = open(file_part, 'rb')
+                        if i > 0:
+                            # maybe: Reply message not found
+                            reply_to_message_id = None
+                        audio_msg = bot.send_audio(chat_id=chat_id,
+                                                   reply_to_message_id=reply_to_message_id,
+                                                   audio=audio,
+                                                   duration=duration,
+                                                   performer=performer,
+                                                   title=title,
+                                                   caption=caption_full,
+                                                   parse_mode='Markdown')
+                        sent_audio_ids.append(audio_msg.audio.file_id)
+                        logger.info("Sending succeeded: %s", file_name)
+                        break
+                    # FIXME unknown_video is for tiktok
+                    elif file_part.endswith('.unknown_video'):
+                        video = open(file_part, 'rb')
+                        video_msg = bot.send_video(chat_id=chat_id,
+                                                   reply_to_message_id=reply_to_message_id,
+                                                   video=video,
+                                                   # duration=duration,
+                                                   caption=caption_full,
+                                                   parse_mode='Markdown')
+                        sent_audio_ids.append(video_msg.video.file_id)
+                        logger.info("Sending succeeded: %s", file_name)
+                        break
                 except TelegramError:
                     if i == 2:
                         logger.exception("Sending failed because of TelegramError: %s", file_name)
