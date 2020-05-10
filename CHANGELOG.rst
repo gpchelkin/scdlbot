@@ -1,6 +1,11 @@
 Version history
 ===============
 
+0.13.4 (2020-05-10)
+-----------------------
+* support tiktok video download/upload
+* update requirements
+
 0.13.3 (2020-04-18)
 -----------------------
 * many cosmetic refinements
