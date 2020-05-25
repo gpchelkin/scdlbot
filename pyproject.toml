@@ -58,7 +58,7 @@ patool = "1.12"
 requests = "2.23.0"
 #pyshorteners = "0.6.1"
 celery = "4.4.2"
-prometheus_client = "0.7.1"
+prometheus_client = "0.8.0"
 #transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
