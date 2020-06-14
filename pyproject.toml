@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core>=1.0.0a5"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry>=1.0"]
+build-backend = "poetry.masonry.api"
 
 
 [tool.nitpick]
@@ -51,7 +51,7 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/jackno/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = "0.0.8.post12"
-youtube_dl = "2020.5.29"
+youtube_dl = "2020.6.6"
 ffmpeg-python = "0.2.0"
 mutagen = "1.44.0"
 patool = "1.12"
