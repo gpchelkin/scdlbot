@@ -572,7 +572,7 @@ description = "A flake8 plugin checking common style issues or inconsistencies w
 name = "flake8-pytest-style"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "1.2.0"
+version = "1.2.1"
 
 [package.dependencies]
 flake8-plugin-utils = ">=1.3.0,<2.0.0"
@@ -982,7 +982,7 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 name = "py"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.8.1"
+version = "1.8.2"
 
 [[package]]
 category = "dev"
@@ -1317,7 +1317,7 @@ description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 name = "sphinx-autodoc-typehints"
 optional = false
 python-versions = ">=3.5.2"
-version = "1.10.3"
+version = "1.9.0"
 
 [package.dependencies]
 Sphinx = ">=2.1"
@@ -1633,7 +1633,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "137e715f14a29daeeb6667964596bab9b692074eccf3fbc1bfc9212d7e2ad515"
+content-hash = "021106476edfd1050e98546c5887b0c64eae6ce6dee39faf740e26b16f088c32"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1891,8 +1891,8 @@ flake8-pytest = [
     {file = "flake8_pytest-1.3-py2.py3-none-any.whl", hash = "sha256:61686128a79e1513db575b2bcac351081d5a293811ddce2d5dfc25e8c762d33e"},
 ]
 flake8-pytest-style = [
-    {file = "flake8-pytest-style-1.2.0.tar.gz", hash = "sha256:7c950b812e79805848290eadb4dd9930c5d9d03408db2c3a631f673140e90163"},
-    {file = "flake8_pytest_style-1.2.0-py3-none-any.whl", hash = "sha256:af4d24df0447cc0738afd445d92acc35aefe6ec7527ce330bbe7fe6132c31d39"},
+    {file = "flake8-pytest-style-1.2.1.tar.gz", hash = "sha256:9e5e72bc0cce6bfb65560b369312d0413ea3a2a7065b00f3a01f088f58d0f122"},
+    {file = "flake8_pytest_style-1.2.1-py3-none-any.whl", hash = "sha256:28a060362e1fae609c4274636fa39f3e5db38a5584d7aa8b19dc35b405d68946"},
 ]
 flake8-quotes = [
     {file = "flake8-quotes-2.1.2.tar.gz", hash = "sha256:c844c9592940c8926c60f00bc620808912ff2acd34923ab5338f3a5ca618a331"},
@@ -2060,8 +2060,8 @@ prometheus-client = [
     {file = "prometheus_client-0.8.0.tar.gz", hash = "sha256:c6e6b706833a6bd1fd51711299edee907857be10ece535126a158f911ee80915"},
 ]
 py = [
-    {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
-    {file = "py-1.8.1.tar.gz", hash = "sha256:5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa"},
+    {file = "py-1.8.2-py2.py3-none-any.whl", hash = "sha256:a673fa23d7000440cc885c17dbd34fafcb7d7a6e230b29f6766400de36a33c44"},
+    {file = "py-1.8.2.tar.gz", hash = "sha256:f3b3a4c36512a4c4f024041ab51866f11761cc169670204b235f6b20523d4e6b"},
 ]
 pycodestyle = [
     {file = "pycodestyle-2.6.0-py2.py3-none-any.whl", hash = "sha256:2295e7b2f6b5bd100585ebcb1f616591b652db8a741695b3d8f5d28bdc934367"},
@@ -2188,8 +2188,8 @@ sphinx = [
     {file = "Sphinx-2.4.4.tar.gz", hash = "sha256:b4c750d546ab6d7e05bdff6ac24db8ae3e8b8253a3569b754e445110a0a12b66"},
 ]
 sphinx-autodoc-typehints = [
-    {file = "sphinx-autodoc-typehints-1.10.3.tar.gz", hash = "sha256:a6b3180167479aca2c4d1ed3b5cb044a70a76cccd6b38662d39288ebd9f0dff0"},
-    {file = "sphinx_autodoc_typehints-1.10.3-py3-none-any.whl", hash = "sha256:27c9e6ef4f4451766ab8d08b2d8520933b97beb21c913f3df9ab2e59b56e6c6c"},
+    {file = "sphinx-autodoc-typehints-1.9.0.tar.gz", hash = "sha256:0dfd26be5b81049ce81b644913a06a12795ded2791adc0a4e13420eb9a832852"},
+    {file = "sphinx_autodoc_typehints-1.9.0-py3-none-any.whl", hash = "sha256:81bfdf4fbb9e248f10a6bc3f931bf80e85e95a185530e1a862db9269efd72cf9"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
