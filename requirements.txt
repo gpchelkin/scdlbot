@@ -5,7 +5,7 @@ beautifulsoup4==4.9.1
 billiard==3.6.3.0
 boltons==20.1.0
 celery==4.4.5
-certifi==2020.4.5.2
+certifi==2020.6.20
 cffi==1.14.0
 chardet==3.0.4
 clint==0.5.1
@@ -27,7 +27,7 @@ pycparser==2.20
 python-telegram-bot==12.7
 python-telegram-handler==2.2
 pytz==2020.1
-requests==2.23.0
+requests==2.24.0
 -e git+https://github.com/flyingrub/scdl.git@73bf81221a594faf0b2a9acc2df6c39a14ee1a24#egg=scdl
 six==1.15.0
 soupsieve==1.9.6
@@ -37,5 +37,5 @@ unicode-slugify==0.1.3
 unidecode==1.1.1
 urllib3==1.25.9
 vine==1.3.0
-youtube-dl==2020.6.6
+youtube-dl==2020.6.16.1
 zipp==3.1.0; python_version < "3.8"
