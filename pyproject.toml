@@ -39,9 +39,9 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-python-telegram-bot = "12.7"
+python-telegram-bot = "12.8"
 python-telegram-handler = "2.2"
-boltons = "20.1.0"
+boltons = "20.2.0"
 plumbum = "1.6.9"
 # To build and publish:
 #scdl = "1.6.12"
@@ -62,7 +62,7 @@ prometheus_client = "0.8.0"
 #transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.780"
+mypy = "^0.781"
 
 wemake-python-styleguide = "^0.14"
 flake8-pytest = "^1.3"

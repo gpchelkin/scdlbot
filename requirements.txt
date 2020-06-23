@@ -3,7 +3,7 @@ args==0.1.0
 bandcamp-downloader==0.0.8.post12
 beautifulsoup4==4.9.1
 billiard==3.6.3.0
-boltons==20.1.0
+boltons==20.2.0
 celery==4.4.5
 certifi==2020.6.20
 cffi==1.14.0
@@ -24,7 +24,7 @@ patool==1.12
 plumbum==1.6.9
 prometheus-client==0.8.0
 pycparser==2.20
-python-telegram-bot==12.7
+python-telegram-bot==12.8
 python-telegram-handler==2.2
 pytz==2020.1
 requests==2.24.0
