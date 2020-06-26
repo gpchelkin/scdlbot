@@ -62,7 +62,7 @@ prometheus_client = "0.8.0"
 #transliterate = "1.10.2"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.781"
+mypy = "^0.782"
 
 wemake-python-styleguide = "^0.14"
 flake8-pytest = "^1.3"
