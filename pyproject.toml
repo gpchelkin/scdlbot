@@ -81,7 +81,7 @@ doc8 = "^0.8"
 m2r = "^0.2"
 tomlkit = "^0.6"
 
-tox = "^3.15"
+tox = "^3.16"
 
 
 [tool.dephell.main]
