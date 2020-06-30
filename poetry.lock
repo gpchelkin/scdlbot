@@ -1317,7 +1317,7 @@ description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 name = "sphinx-autodoc-typehints"
 optional = false
 python-versions = ">=3.5.2"
-version = "1.9.0"
+version = "1.10.3"
 
 [package.dependencies]
 Sphinx = ">=2.1"
@@ -1633,7 +1633,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "4c70885eacf3356dbffa9cd9623bdff4298eccd24d07cfd49a9aa7a046e10f13"
+content-hash = "9405072018320c609c4227219b07fd80894d80dddbf514075a58c9f5100f383b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2193,8 +2193,8 @@ sphinx = [
     {file = "Sphinx-2.4.4.tar.gz", hash = "sha256:b4c750d546ab6d7e05bdff6ac24db8ae3e8b8253a3569b754e445110a0a12b66"},
 ]
 sphinx-autodoc-typehints = [
-    {file = "sphinx-autodoc-typehints-1.9.0.tar.gz", hash = "sha256:0dfd26be5b81049ce81b644913a06a12795ded2791adc0a4e13420eb9a832852"},
-    {file = "sphinx_autodoc_typehints-1.9.0-py3-none-any.whl", hash = "sha256:81bfdf4fbb9e248f10a6bc3f931bf80e85e95a185530e1a862db9269efd72cf9"},
+    {file = "sphinx-autodoc-typehints-1.10.3.tar.gz", hash = "sha256:a6b3180167479aca2c4d1ed3b5cb044a70a76cccd6b38662d39288ebd9f0dff0"},
+    {file = "sphinx_autodoc_typehints-1.10.3-py3-none-any.whl", hash = "sha256:27c9e6ef4f4451766ab8d08b2d8520933b97beb21c913f3df9ab2e59b56e6c6c"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
