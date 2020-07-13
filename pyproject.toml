@@ -53,7 +53,7 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 bandcamp-downloader = "0.0.8.post12"
 youtube_dl = "2020.6.16.1"
 ffmpeg-python = "0.2.0"
-mutagen = "1.44.0"
+mutagen = "1.45.0"
 patool = "1.12"
 requests = "2.24.0"
 #pyshorteners = "0.6.1"
