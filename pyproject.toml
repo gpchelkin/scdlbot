@@ -51,7 +51,7 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/jackno/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = "0.0.8.post12"
-youtube_dl = "2020.6.16.1"
+youtube_dl = "2020.7.28"
 ffmpeg-python = "0.2.0"
 mutagen = "1.45.0"
 patool = "1.12"
