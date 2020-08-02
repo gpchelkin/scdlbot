@@ -9,7 +9,7 @@ style = "https://raw.githubusercontent.com/wemake-services/wemake-python-stylegu
 
 [tool.poetry]
 name = "scdlbot"
-version = "0.13.4"
+version = "0.13.5"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
 license = "MIT"
 
