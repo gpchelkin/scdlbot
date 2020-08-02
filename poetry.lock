@@ -1240,6 +1240,10 @@ mutagen = "*"
 requests = "*"
 termcolor = "*"
 
+[package.source]
+reference = "73bf81221a594faf0b2a9acc2df6c39a14ee1a24"
+type = "git"
+url = "https://github.com/flyingrub/scdl.git"
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -1630,7 +1634,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "0454b857783a3cc85c877789f275dd69d2896a46ce3e47f4b45b132f5b197c74"
+content-hash = "6d7de9d05f1746b49c924df3366b6b7fb893c0183ec218ff4832fd200b25a1ec"
 lock-version = "1.0"
 python-versions = "^3.6"
 
@@ -2174,9 +2178,7 @@ safety = [
     {file = "safety-1.9.0-py2.py3-none-any.whl", hash = "sha256:86c1c4a031fe35bd624fce143fbe642a0234d29f7cbf7a9aa269f244a955b087"},
     {file = "safety-1.9.0.tar.gz", hash = "sha256:23bf20690d4400edc795836b0c983c2b4cbbb922233108ff925b7dd7750f00c9"},
 ]
-scdl = [
-    {file = "scdl-1.6.12.tar.gz", hash = "sha256:cf135dba69c77ab5b67e3f9cc75586bb1ffe73cd78d1f30833b154b6f00c323a"},
-]
+scdl = []
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
