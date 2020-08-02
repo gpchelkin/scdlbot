@@ -44,9 +44,9 @@ python-telegram-handler = "2.2"
 boltons = "20.2.0"
 plumbum = "1.6.9"
 # To build and publish:
-#scdl = "1.6.12"
+scdl = "1.6.12"
 # To operate:
-scdl = { git = "https://github.com/flyingrub/scdl.git" }
+#scdl = { git = "https://github.com/flyingrub/scdl.git" }
 # jackno for soundcloud api v2
 #scdl = { git = "https://github.com/jackno/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }

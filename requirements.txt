@@ -1,10 +1,10 @@
-amqp==2.6.0
+amqp==2.6.1
 args==0.1.0
 bandcamp-downloader==0.0.8.post12
 beautifulsoup4==4.9.1
 billiard==3.6.3.0
 boltons==20.2.0
-celery==4.4.6
+celery==4.4.7
 certifi==2020.6.20
 cffi==1.14.1
 chardet==3.0.4
@@ -19,7 +19,7 @@ idna==2.10
 importlib-metadata==1.7.0; python_version < "3.8"
 kombu==4.6.11
 mock==4.0.2
-mutagen==1.45.0
+mutagen==1.45.1
 patool==1.12
 plumbum==1.6.9
 prometheus-client==0.8.0
@@ -28,7 +28,7 @@ python-telegram-bot==12.8
 python-telegram-handler==2.2
 pytz==2020.1
 requests==2.24.0
--e git+https://github.com/flyingrub/scdl.git@73bf81221a594faf0b2a9acc2df6c39a14ee1a24#egg=scdl
+scdl==1.6.12
 six==1.15.0
 soupsieve==1.9.6
 termcolor==1.1.0
