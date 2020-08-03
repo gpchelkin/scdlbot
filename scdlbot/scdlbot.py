@@ -502,6 +502,8 @@ class ScdlBot:
             status = -4
         elif direct_urls == "live":
             status = -5
+        elif direct_urls == "timeout":
+            status = -6
         else:
             if (self.SITES["sc"] in url and self.SITES["scapi"] not in url) or (self.SITES["bc"] in url):
                 cmd_name = "scdl"
@@ -610,7 +612,7 @@ class ScdlBot:
                 status = -2
             gc.collect()
 
-        if status == -1:
+        if status in [-1, -6]:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text=self.DL_TIMEOUT_TEXT, parse_mode='Markdown')
         elif status == -2:
