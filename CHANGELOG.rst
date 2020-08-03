@@ -1,6 +1,15 @@
 Version history
 ===============
 
+0.13.6 (2020-08-03)
+-----------------------
+* add and handle timeout for youtube-dl get-url and cookies file download
+* update requirements
+
+0.13.5 (2020-08-02)
+-----------------------
+* update requirements
+
 0.13.4 (2020-05-10)
 -----------------------
 * support tiktok video download/upload
