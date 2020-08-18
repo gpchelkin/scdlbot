@@ -41,7 +41,7 @@ scdlbot = "scdlbot.__main__:main"
 python = "^3.6"
 python-telegram-bot = "12.8"
 python-telegram-handler = "2.2"
-boltons = "20.2.0"
+boltons = "20.2.1"
 plumbum = "1.6.9"
 # To build and publish:
 #scdl = "1.6.12"
