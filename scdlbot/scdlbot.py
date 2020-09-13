@@ -11,7 +11,7 @@ from datetime import datetime
 from multiprocessing import Process, Queue
 from queue import Empty
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 import ffmpeg
@@ -575,7 +575,8 @@ class ScdlBot:
                     # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
-            if 'tiktok.com' in url:
+            host = urlparse(url).hostname
+            if host == "tiktok.com" or host.endswith(".tiktok.com"):
                 ydl_opts['postprocessors'] = []
             if proxy:
                 ydl_opts['proxy'] = proxy
