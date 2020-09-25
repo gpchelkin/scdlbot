@@ -57,7 +57,7 @@ mutagen = "1.45.1"
 patool = "1.12"
 requests = "2.24.0"
 #pyshorteners = "0.6.1"
-celery = "^4.4"
+celery = ">=4.4,<6.0"
 prometheus_client = "0.8.0"
 #transliterate = "1.10.2"
 
