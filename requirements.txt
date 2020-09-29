@@ -32,7 +32,7 @@ python-telegram-bot==12.8
 python-telegram-handler==2.2
 pytz==2020.1
 requests==2.24.0
--e git+https://github.com/flyingrub/scdl.git@73bf81221a594faf0b2a9acc2df6c39a14ee1a24#egg=scdl
+-e git+https://github.com/flyingrub/scdl.git@28a35f6cd0fb48a673ff9cef823ad184b9651e78#egg=scdl
 six==1.15.0
 soupsieve==2.0.1; python_version >= "3.0"
 termcolor==1.1.0
@@ -42,5 +42,5 @@ unidecode==1.1.1
 urllib3==1.25.10
 vine==5.0.0
 wcwidth==0.2.5
--e git+https://github.com/gilou/youtube-dl.git@37f625598cb9b02cb06b3f12033cc29699d70818#egg=youtube-dl
+-e git+https://github.com/gilou/youtube-dl.git@75a83afe3b8fd9dfe242ca2de428c313a2bd3e0e#egg=youtube-dl
 zipp==3.2.0; python_version < "3.8"

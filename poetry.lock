@@ -1301,7 +1301,7 @@ requests = "*"
 termcolor = "*"
 
 [package.source]
-reference = "73bf81221a594faf0b2a9acc2df6c39a14ee1a24"
+reference = "28a35f6cd0fb48a673ff9cef823ad184b9651e78"
 type = "git"
 url = "https://github.com/flyingrub/scdl.git"
 [[package]]
@@ -1690,7 +1690,7 @@ python-versions = "*"
 version = "2020.9.20"
 
 [package.source]
-reference = "37f625598cb9b02cb06b3f12033cc29699d70818"
+reference = "75a83afe3b8fd9dfe242ca2de428c313a2bd3e0e"
 type = "git"
 url = "https://github.com/gilou/youtube-dl.git"
 [[package]]
