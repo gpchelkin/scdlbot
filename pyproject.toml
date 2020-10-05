@@ -58,9 +58,9 @@ celery = "^5.0.0"
 #bandcamp-downloader = "0.0.8.post12"
 
 ### To operate:
+# https://github.com/ytdl-org/youtube-dl/pull/26684
 youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 scdl = { git = "https://github.com/flyingrub/scdl.git" }
-#scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "fix_timestamp_and_already_downloaded" }
 bandcamp-downloader = { git = "https://github.com/ppatrzyk/bandcamp-dl.git", branch = "jsdatafix" }
 
 [tool.poetry.dev-dependencies]

@@ -1,7 +1,7 @@
 amqp==5.0.1
 args==0.1.0
 bandcamp-downloader @ git+https://github.com/ppatrzyk/bandcamp-dl.git@jsdatafix
-beautifulsoup4==4.9.2
+beautifulsoup4==4.9.3
 billiard==3.6.3.0
 boltons==20.2.1
 celery==5.0.0
@@ -43,4 +43,4 @@ urllib3==1.25.10
 vine==5.0.0
 wcwidth==0.2.5
 youtube_dl @ git+https://github.com/gilou/youtube-dl.git@bandcamp_update
-zipp==3.2.0
+zipp==3.3.0
