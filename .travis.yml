@@ -1,11 +1,12 @@
 os: linux
+dist: focal
 language: python
 
 python:
 - 3.6
 - 3.7
 - 3.8
-- 3.9
+#- 3.9
 
 env:
   - POETRY_VERSION=1.1.2
