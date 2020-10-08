@@ -1,6 +1,6 @@
 amqp==5.0.1
 args==0.1.0
-bandcamp-downloader @ git+https://github.com/ppatrzyk/bandcamp-dl.git@jsdatafix
+bandcamp-downloader @ git+https://github.com/iheanyi/bandcamp-dl.git@master
 beautifulsoup4==4.9.3
 billiard==3.6.3.0
 boltons==20.2.1

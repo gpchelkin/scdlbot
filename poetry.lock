@@ -97,9 +97,9 @@ dev = ["requests-cache", "pytest"]
 
 [package.source]
 type = "git"
-url = "https://github.com/ppatrzyk/bandcamp-dl.git"
-reference = "jsdatafix"
-resolved_reference = "750ed8954cc6b61c30ca38b25def4a7d1e374c81"
+url = "https://github.com/iheanyi/bandcamp-dl.git"
+reference = "master"
+resolved_reference = "4a5e14b8f1bc749af4c7065102b46e1f1e493af5"
 
 [[package]]
 name = "bandit"
@@ -1663,7 +1663,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "76a2e17485a6bc036c98d8ce1f99aa41c0f289c7945b31c0ba5d93128d8ee153"
+content-hash = "9c113b0556a1ce4feb467b6473f7636df545912ed28304cba6d3a7d03fd22358"
 
 [metadata.files]
 alabaster = [
