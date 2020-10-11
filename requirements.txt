@@ -44,5 +44,5 @@ unidecode==1.1.1
 urllib3==1.25.10
 vine==5.0.0
 wcwidth==0.2.5
-youtube_dl @ git+https://github.com/gilou/youtube-dl.git@bandcamp_update
+youtube_dl @ git+https://github.com/gilou/youtube-dl.git@data_approach
 zipp==3.3.0
