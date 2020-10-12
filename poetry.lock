@@ -1684,7 +1684,7 @@ python-versions = "*"
 type = "git"
 url = "https://github.com/gilou/youtube-dl.git"
 reference = "data_approach"
-resolved_reference = "2f56e2c303b3904983e928058003b5c2c864ac90"
+resolved_reference = "955906045fdd24b21a9b6edd8c410d36394f7241"
 
 [[package]]
 name = "zipp"
