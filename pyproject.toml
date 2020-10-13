@@ -79,7 +79,7 @@ pytest-cov = "^2.10"
 pytest-randomly = "^3.4"
 
 sphinx = "^3.2.0"
-sphinx-autodoc-typehints = "^1.11.0"
+sphinx-autodoc-typehints = "^1.11.1"
 doc8 = "^0.8"
 m2r2 = "^0.2"
 tomlkit = "^0.7"
