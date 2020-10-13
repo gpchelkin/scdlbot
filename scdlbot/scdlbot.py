@@ -25,6 +25,7 @@ from telegram.error import (TelegramError, Unauthorized, BadRequest,
                             TimedOut, ChatMigrated, NetworkError)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler,
                           CallbackQueryHandler, CallbackContext)
+from telegram.ext.dispatcher import run_async
 
 from scdlbot.utils import *
 
@@ -316,10 +317,10 @@ class ScdlBot:
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                         parse_mode='Markdown', text=get_italic(self.get_wait_text()))
                 for url in urls:
-                    context.dispatcher.run_async(self.download_url_and_send, context.bot, url, urls[url], chat_id, update=update,
-                                                 reply_to_message_id=reply_to_message_id,
-                                                 wait_message_id=wait_message.message_id,
-                                                 source_ip=source_ip, proxy=proxy)
+                    self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
+                                               reply_to_message_id=reply_to_message_id,
+                                               wait_message_id=wait_message.message_id,
+                                               source_ip=source_ip, proxy=proxy)
             elif mode == "link":
                 wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                                                         parse_mode='Markdown', text=get_italic(self.get_wait_text()))
@@ -397,10 +398,10 @@ class ScdlBot:
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
                                                                        text=get_italic(self.get_wait_text()))
                 for url in urls:
-                    context.dispatcher.run_async(self.download_url_and_send, context.bot, url, urls[url], chat_id, update=update,
-                                                 reply_to_message_id=orig_msg_id,
-                                                 wait_message_id=wait_message.message_id,
-                                                 source_ip=source_ip, proxy=proxy)
+                    self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
+                                               reply_to_message_id=orig_msg_id,
+                                               wait_message_id=wait_message.message_id,
+                                               source_ip=source_ip, proxy=proxy)
             elif action == "link":
                 update.callback_query.answer(text=self.get_wait_text())
                 wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
@@ -486,6 +487,7 @@ class ScdlBot:
         return urls_dict
 
     @REQUEST_TIME.time()
+    @run_async
     def download_url_and_send(self, bot, url, direct_urls, chat_id, reply_to_message_id=None,
                               wait_message_id=None, source_ip=None, proxy=None):
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_AUDIO)
