@@ -464,7 +464,7 @@ class ScdlBot:
             try:
                 if (
                     # SoundCloud: tracks, sets and widget pages, no /you/ pages
-                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
+                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 4 or self.SITES["scapi"] in url_text) and (
                         not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
                     (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
