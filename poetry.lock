@@ -99,7 +99,7 @@ dev = ["requests-cache", "pytest"]
 type = "git"
 url = "https://github.com/iheanyi/bandcamp-dl.git"
 reference = "master"
-resolved_reference = "4a5e14b8f1bc749af4c7065102b46e1f1e493af5"
+resolved_reference = "0b9ce91621f3c1c0886091c44543db974a02d55d"
 
 [[package]]
 name = "bandit"
@@ -149,7 +149,7 @@ python-versions = "*"
 
 [[package]]
 name = "celery"
-version = "5.0.0"
+version = "5.0.1"
 description = "Distributed Task Queue."
 category = "main"
 optional = false
@@ -958,7 +958,7 @@ python-versions = "*"
 
 [[package]]
 name = "pbr"
-version = "5.5.0"
+version = "5.5.1"
 description = "Python Build Reasonableness"
 category = "dev"
 optional = false
@@ -1557,7 +1557,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "urllib3"
-version = "1.25.10"
+version = "1.25.11"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -1565,7 +1565,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 
 [package.extras]
 brotli = ["brotlipy (>=0.6.0)"]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "pyOpenSSL (>=0.14)", "ipaddress"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
@@ -1578,7 +1578,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "virtualenv"
-version = "20.0.34"
+version = "20.0.35"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -1650,7 +1650,7 @@ resolved_reference = "955906045fdd24b21a9b6edd8c410d36394f7241"
 
 [[package]]
 name = "zipp"
-version = "3.3.0"
+version = "3.3.1"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
 optional = false
@@ -1663,7 +1663,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "ef59ad7421c2ecdce10efda50426bb090baa04d7b2b16d8b2289d2d8c449ddce"
+content-hash = "3f1b9e848d7c8c8e5396450e1cbd94b8f921d307273ace922bd410f3edd6b581"
 
 [metadata.files]
 alabaster = [
@@ -1716,8 +1716,8 @@ boltons = [
     {file = "boltons-20.2.1.tar.gz", hash = "sha256:dd362291a460cc1e0c2e91cc6a60da3036ced77099b623112e8f833e6734bdc5"},
 ]
 celery = [
-    {file = "celery-5.0.0-py3-none-any.whl", hash = "sha256:72138dc3887f68dc58e1a2397e477256f80f1894c69fa4337f8ed70be460375b"},
-    {file = "celery-5.0.0.tar.gz", hash = "sha256:313930fddde703d8e37029a304bf91429cd11aeef63c57de6daca9d958e1f255"},
+    {file = "celery-5.0.1-py3-none-any.whl", hash = "sha256:7aa4ee46ed318bc177900ae7c01500354aee62d723255b0925db0754bcd4d390"},
+    {file = "celery-5.0.1.tar.gz", hash = "sha256:e3e8956d74af986b1e9770e0a294338b259618bf70283d6157416328e50c2bd6"},
 ]
 certifi = [
     {file = "certifi-2020.6.20-py2.py3-none-any.whl", hash = "sha256:8fc0819f1f30ba15bdb34cceffb9ef04d99f420f68eb75d901e9560b8749fc41"},
@@ -2095,8 +2095,8 @@ patool = [
     {file = "patool-1.12.tar.gz", hash = "sha256:e3180cf8bfe13bedbcf6f5628452fca0c2c84a3b5ae8c2d3f55720ea04cb1097"},
 ]
 pbr = [
-    {file = "pbr-5.5.0-py2.py3-none-any.whl", hash = "sha256:5adc0f9fc64319d8df5ca1e4e06eea674c26b80e6f00c530b18ce6a6592ead15"},
-    {file = "pbr-5.5.0.tar.gz", hash = "sha256:14bfd98f51c78a3dd22a1ef45cf194ad79eee4a19e8e1a0d5c7f8e81ffe182ea"},
+    {file = "pbr-5.5.1-py2.py3-none-any.whl", hash = "sha256:b236cde0ac9a6aedd5e3c34517b423cd4fd97ef723849da6b0d2231142d89c00"},
+    {file = "pbr-5.5.1.tar.gz", hash = "sha256:5fad80b613c402d5b7df7bd84812548b2a61e9977387a80a5fc5c396492b13c9"},
 ]
 pep8-naming = [
     {file = "pep8-naming-0.9.1.tar.gz", hash = "sha256:a33d38177056321a167decd6ba70b890856ba5025f0a8eca6a3eda607da93caf"},
@@ -2352,16 +2352,16 @@ unidecode = [
     {file = "Unidecode-1.1.1.tar.gz", hash = "sha256:2b6aab710c2a1647e928e36d69c21e76b453cd455f4e2621000e54b2a9b8cce8"},
 ]
 urllib3 = [
-    {file = "urllib3-1.25.10-py2.py3-none-any.whl", hash = "sha256:e7983572181f5e1522d9c98453462384ee92a0be7fac5f1413a1e35c56cc0461"},
-    {file = "urllib3-1.25.10.tar.gz", hash = "sha256:91056c15fa70756691db97756772bb1eb9678fa585d9184f24534b100dc60f4a"},
+    {file = "urllib3-1.25.11-py2.py3-none-any.whl", hash = "sha256:f5321fbe4bf3fefa0efd0bfe7fb14e90909eb62a48ccda331726b4319897dd5e"},
+    {file = "urllib3-1.25.11.tar.gz", hash = "sha256:8d7eaa5a82a1cac232164990f04874c594c9453ec55eef02eab885aa02fc17a2"},
 ]
 vine = [
     {file = "vine-5.0.0-py2.py3-none-any.whl", hash = "sha256:4c9dceab6f76ed92105027c49c823800dd33cacce13bdedc5b914e3514b7fb30"},
     {file = "vine-5.0.0.tar.gz", hash = "sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.0.34-py2.py3-none-any.whl", hash = "sha256:4ecd607e7809bd7384039065639a8babc9fa562fe1b73b24095ce85b83d55fcf"},
-    {file = "virtualenv-20.0.34.tar.gz", hash = "sha256:4bf0e2bf99d33b123a895a5a244f0d7adb2a92171c6bbb31c3e2db235624abf1"},
+    {file = "virtualenv-20.0.35-py2.py3-none-any.whl", hash = "sha256:0ebc633426d7468664067309842c81edab11ae97fcaf27e8ad7f5748c89b431b"},
+    {file = "virtualenv-20.0.35.tar.gz", hash = "sha256:2a72c80fa2ad8f4e2985c06e6fc12c3d60d060e410572f553c90619b0f6efaf3"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
@@ -2373,6 +2373,6 @@ wemake-python-styleguide = [
 ]
 youtube-dl = []
 zipp = [
-    {file = "zipp-3.3.0-py3-none-any.whl", hash = "sha256:eed8ec0b8d1416b2ca33516a37a08892442f3954dee131e92cfd92d8fe3e7066"},
-    {file = "zipp-3.3.0.tar.gz", hash = "sha256:64ad89efee774d1897a58607895d80789c59778ea02185dd846ac38394a8642b"},
+    {file = "zipp-3.3.1-py3-none-any.whl", hash = "sha256:16522f69653f0d67be90e8baa4a46d66389145b734345d68a257da53df670903"},
+    {file = "zipp-3.3.1.tar.gz", hash = "sha256:c1532a8030c32fd52ff6a288d855fe7adef5823ba1d26a29a68fd6314aa72baa"},
 ]
