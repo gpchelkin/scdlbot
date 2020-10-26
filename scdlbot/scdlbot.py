@@ -578,6 +578,7 @@ class ScdlBot:
             host = urlparse(url).hostname
             if host == "tiktok.com" or host.endswith(".tiktok.com"):
                 ydl_opts['postprocessors'] = []
+                ydl_opts['outtmpl'] = os.path.join(download_dir, 'tiktok.%(ext)s')
             if proxy:
                 ydl_opts['proxy'] = proxy
             if source_ip:
