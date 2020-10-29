@@ -30,12 +30,12 @@ def _get_project_meta():
 
 
 pkg_meta = _get_project_meta()
-project = pkg_meta['name']
+project = str(pkg_meta['name'])
 copyright = '2020, gpchelkin'  # noqa: A001  # skipcq: PYL-W0622
 author = 'gpchelkin'
 
 # The short X.Y version
-version = pkg_meta['version']
+version = str(pkg_meta['version'])
 # The full version, including alpha/beta/rc tags
 release = version
 

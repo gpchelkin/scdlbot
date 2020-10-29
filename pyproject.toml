@@ -1,7 +1,8 @@
 [build-system]
-requires = ["poetry>=1.0"]
-build-backend = "poetry.masonry.api"
-
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+#requires = ["poetry>=1.0"]
+#build-backend = "poetry.masonry.api"
 
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
@@ -9,8 +10,8 @@ style = "https://raw.githubusercontent.com/wemake-services/wemake-python-stylegu
 
 [tool.poetry]
 name = "scdlbot"
-version = "0.13.7"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
+version = "0.13.7"
 license = "MIT"
 
 authors = ["George Pchelkin <george@pchelk.in>"]
