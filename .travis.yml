@@ -16,6 +16,8 @@ install:
   - pip install --upgrade pip tox tox-travis
   - curl -sSL "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py" | python
   - source "$HOME/.poetry/env"
+  - poetry config installer.parallel false
+  - poetry config experimental.new-installer false
 script: tox
 
 #after_success:
