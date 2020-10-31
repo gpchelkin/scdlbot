@@ -1637,19 +1637,12 @@ pygments = ">=2.4,<3.0"
 typing_extensions = ">=3.6,<4.0"
 
 [[package]]
-name = "youtube-dl"
-version = "2020.9.20"
-description = "YouTube video downloader"
+name = "youtube-dlc"
+version = "2020.10.31"
+description = "Media downloader supporting various sites such as youtube"
 category = "main"
 optional = false
-python-versions = "*"
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/gpchelkin/youtube-dl.git"
-reference = "bandcamp_update"
-resolved_reference = "cd837a7784ebd01b753136b294846824f5d3a903"
+python-versions = ">=2.6"
 
 [[package]]
 name = "zipp"
@@ -1666,7 +1659,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "cbe42f2739c6725316af49fe6280579cd209af7f7431832ed6840520d89eb7d8"
+content-hash = "bd249cbd23b182fcbcda81990c6f1434a247d72a54e1242614c0ca72c0fe2409"
 
 [metadata.files]
 alabaster = [
@@ -2406,7 +2399,10 @@ wemake-python-styleguide = [
     {file = "wemake-python-styleguide-0.14.1.tar.gz", hash = "sha256:e13dc580fa56b7b548de8da170bccb8ddff2d4ab026ca987db8a9893bf8a7b5b"},
     {file = "wemake_python_styleguide-0.14.1-py3-none-any.whl", hash = "sha256:73a501e0547275287a2b926515c000cc25026a8bceb9dcc1bf73ef85a223a3c6"},
 ]
-youtube-dl = []
+youtube-dlc = [
+    {file = "youtube_dlc-2020.10.31-py2.py3-none-any.whl", hash = "sha256:44eaad1a0d76b9416a733f2632e2a7098d50741103a110dfb454e11283ad3ae3"},
+    {file = "youtube_dlc-2020.10.31.tar.gz", hash = "sha256:c3878dcf3f574973e7c1b486fca151311bd6b4836c183b808e4b78750a6c343b"},
+]
 zipp = [
     {file = "zipp-3.4.0-py3-none-any.whl", hash = "sha256:102c24ef8f171fd729d46599845e95c7ab894a4cf45f5de11a44cc7444fb1108"},
     {file = "zipp-3.4.0.tar.gz", hash = "sha256:ed5eee1974372595f9e416cc7bbeeb12335201d8081ca8a0743c954d4446e5cb"},

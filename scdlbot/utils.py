@@ -3,7 +3,8 @@ import os
 
 import pkg_resources
 import requests
-import youtube_dl
+#import youtube_dl
+import youtube_dlc as youtube_dl
 from boltons.urlutils import URL
 from plumbum import local, ProcessExecutionError, ProcessTimedOut
 
@@ -14,7 +15,8 @@ from scdlbot.exceptions import *
 bin_path = os.getenv('BIN_PATH', '')
 scdl_bin = local[os.path.join(bin_path, 'scdl')]
 bandcamp_dl_bin = local[os.path.join(bin_path, 'bandcamp-dl')]
-youtube_dl_bin = local[os.path.join(bin_path, 'youtube-dl')]
+#youtube_dl_bin = local[os.path.join(bin_path, 'youtube-dl')]
+youtube_dl_bin = local[os.path.join(bin_path, 'youtube-dlc')]
 
 BOTAN_TRACK_URL = 'https://api.botan.io/track'
 

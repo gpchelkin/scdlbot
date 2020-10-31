@@ -511,7 +511,8 @@ class ScdlBot:
                 cmd = None
                 cmd_input = None
                 if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-                    cmd_name = "scdl"
+                    cmd = scdl_bin
+                    cmd_name = str(cmd)
                     cmd_args = (
                         "-l", url,  # URL of track/playlist/user
                         "-c",  # Continue if a music already exist
@@ -524,10 +525,10 @@ class ScdlBot:
                         # Download playlist tracks into directory, instead of making a playlist subfolder
                         "--extract-artist",  # Set artist tag from title instead of username
                     )
-                    cmd = scdl_bin
                     cmd_input = None
                 elif self.SITES["bc"] in url:
-                    cmd_name = "bandcamp-dl"
+                    cmd = bandcamp_dl_bin
+                    cmd_name = str(cmd)
                     cmd_args = (
                         "--base-dir", download_dir,  # Base location of which all files are downloaded
                         "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
@@ -537,7 +538,6 @@ class ScdlBot:
                         "--no-slugify",  # Disable slugification of track, album, and artist names
                         url,  # URL of album/track
                     )
-                    cmd = bandcamp_dl_bin
                     cmd_input = "yes"
 
                 logger.info("%s starts: %s", cmd_name, url)
@@ -559,8 +559,8 @@ class ScdlBot:
                     logger.exception("%s failed: %s", cmd_name, url)
 
         if status == 0:
-            cmd_name = "youtube-dl"
             cmd = youtube_dl_func
+            cmd_name = "youtube_dl_func"
             # TODO: set different ydl_opts for different sites
             ydl_opts = {
                 'format': 'bestaudio/best',
