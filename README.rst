@@ -81,6 +81,8 @@ to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 Supported sites and mainly used packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+scdlbot is standing on the shoulders of giants:
+
 -  `Telegram Bot API <https://core.telegram.org/bots/api>`__:
    `python-telegram-bot <https://github.com/python-telegram-bot/python-telegram-bot>`__
 -  `SoundCloud <https://soundcloud.com>`__:
@@ -88,8 +90,8 @@ Supported sites and mainly used packages
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
 -  `YouTube <https://www.youtube.com/>`__, `Yandex.Music <https://music.yandex.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__:
-   `youtube-dl <https://ytdl-org.github.io/youtube-dl>`__
+   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://yt-dl.org/supportedsites.html>`__:
+   `youtube-dl <https://yt-dl.org>`__
 
 Run your own scdlbot
 --------------------
