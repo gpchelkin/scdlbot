@@ -456,14 +456,20 @@ class ScdlBot:
         else:
             urls = find_all_links(msg_or_text, default_scheme="http")
         urls_dict = {}
-        for url in urls:
+        for url_item in urls:
+            url = url_item
+            try:
+                # unshorten soundcloud.app.goo.gl (and other?) links:
+                url = URL(requests.head(url_item, allow_redirects=True).url)
+            except:
+                pass
             url_text = url.to_text(True)
             #FIXME crutch:
             url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
             url_parts_num = len([part for part in url.path_parts if part])
             try:
                 if (
-                    # SoundCloud: tracks, sets and widget pages, no /you/ pages
+                    # SoundCloud: tracks, sets and widget pages, no /you/ pages #TODO private sets are 5
                     (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 4 or self.SITES["scapi"] in url_text) and (
                         not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
