@@ -2,17 +2,9 @@ Music Downloader Telegram Bot aka scdlbot
 =========================================
 
 
-.. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
+.. image:: https://img.shields.io/badge/telegram-@scdlbot-blue.svg
         :target: https://t.me/scdlbot
         :alt: Telegram Bot
-
-.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
-        :target: https://travis-ci.com/gpchelkin/scdlbot
-        :alt: Travis CI Build Status
-
-.. image:: https://github.com/gpchelkin/scdlbot/workflows/Python%20package/badge.svg
-        :target: https://github.com/gpchelkin/scdlbot/actions
-        :alt: GitHub Actions Status
 
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
         :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE
@@ -25,6 +17,14 @@ Music Downloader Telegram Bot aka scdlbot
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
+
+.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
+        :target: https://travis-ci.com/gpchelkin/scdlbot
+        :alt: Travis CI Build Status
+
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg
+        :target: https://github.com/gpchelkin/scdlbot/actions
+        :alt: GitHub Actions Status
 
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot

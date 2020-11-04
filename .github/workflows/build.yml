@@ -1,4 +1,4 @@
-name: Python package
+name: build
 
 on: [push]
 
@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2.3.2
-      
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2.1.4
       with:
