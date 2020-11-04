@@ -7,8 +7,8 @@ Music Downloader Telegram Bot aka scdlbot
         :alt: Telegram Bot
 
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
-        :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE
-        :alt: GitHub License
+        :target: https://github.com/gpchelkin/scdlbot/blob/master/LICENSE
+        :alt: MIT License
 
 .. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
         :target: https://scdlbot.readthedocs.io/
@@ -24,7 +24,19 @@ Music Downloader Telegram Bot aka scdlbot
 
 .. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg
         :target: https://github.com/gpchelkin/scdlbot/actions
-        :alt: GitHub Actions Status
+        :alt: GitHub Actions Build Status
+
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/CodeQL/badge.svg
+        :target: https://github.com/gpchelkin/scdlbot/actions
+        :alt: GitHub Actions CodeQL Status
+
+.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=active+issues&show_trend=true
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
+        :alt: DeepSource Active Issues
+
+.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=resolved+issues&show_trend=true
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
+        :alt: DeepSource Resolved Issues
 
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
@@ -45,14 +57,6 @@ Music Downloader Telegram Bot aka scdlbot
 .. image:: https://www.codefactor.io/repository/github/gpchelkin/scdlbot/badge
         :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot
         :alt: CodeFactor
-
-.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=active+issues&show_trend=true
-        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
-        :alt: DeepSource Active Issues
-
-.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=resolved+issues&show_trend=true
-        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
-        :alt: DeepSource Resolved Issues
 
 Telegram Bot for downloading MP3 rips of tracks/sets from
 SoundCloud, Bandcamp, YouTube with tags and artwork.
