@@ -36,16 +36,11 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 
 class ScdlBot:
 
-    def __init__(self, tg_bot_token, proxies=None,
+    def __init__(self, tg_bot_token, tg_bot_api="https://api.telegram.org", proxies=None,
                  store_chat_id=None, no_flood_chat_ids=None, alert_chat_ids=None,
-                 dl_dir="/tmp/scdlbot", dl_timeout=300, max_convert_file_size=80_000_000,
+                 dl_dir="/tmp/scdlbot", dl_timeout=300, max_tg_file_size=45_000_000, max_convert_file_size=80_000_000,
                  chat_storage_file="/tmp/scdlbotdata", app_url=None,
                  serve_audio=False, cookies_file=None, source_ips=None):
-        self.SERVE_AUDIO = serve_audio
-        if self.SERVE_AUDIO:
-            self.MAX_TG_FILE_SIZE = 19_000_000
-        else:
-            self.MAX_TG_FILE_SIZE = 45_000_000
         self.SITES = {
             "sc": "soundcloud",
             "scapi": "api.soundcloud",
@@ -54,7 +49,12 @@ class ScdlBot:
         }
         self.APP_URL = app_url
         self.DL_TIMEOUT = dl_timeout
+        self.TG_BOT_API = tg_bot_api
+        self.MAX_TG_FILE_SIZE = max_tg_file_size
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
+        self.SERVE_AUDIO = serve_audio
+        if self.SERVE_AUDIO:
+            self.MAX_TG_FILE_SIZE = 19_000_000
         self.HELP_TEXT = get_response_text('help.tg.md')
         self.SETTINGS_TEXT = get_response_text('settings.tg.md')
         self.DL_TIMEOUT_TEXT = get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
@@ -90,7 +90,7 @@ class ScdlBot:
         #     with open(config_path, 'w') as config_file:
         #         config.write(config_file)
 
-        self.updater = Updater(token=tg_bot_token, use_context=True)
+        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot")
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.help_command_callback)
@@ -818,7 +818,10 @@ class ScdlBot:
                             title = ", ".join(mp3['title'])
                         except:
                             pass
-                        if self.SERVE_AUDIO:
+                        if "127.0.0.1" in self.TG_BOT_API:
+                            audio = path.absolute().as_uri()
+                            logger.debug(audio)
+                        elif self.SERVE_AUDIO:
                             audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
                             logger.debug(audio)
                         else:

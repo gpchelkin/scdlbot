@@ -56,6 +56,8 @@ def main():
     chat_storage_file = os.path.expanduser(os.getenv('CHAT_STORAGE', '/tmp/scdlbotdata'))
     serve_audio = bool(int(os.getenv('SERVE_AUDIO', '0')))
     app_url = os.getenv('APP_URL', '')
+    tg_bot_api = os.getenv('TG_BOT_API', 'https://api.telegram.org')
+    max_tg_file_size = int(os.getenv('MAX_TG_FILE_SIZE', '45_000_000'))
     max_convert_file_size = int(os.getenv('MAX_CONVERT_FILE_SIZE', '80_000_000'))
     proxies = os.getenv('PROXIES', None)
     if proxies:
@@ -65,9 +67,9 @@ def main():
         source_ips = source_ips.split(',')
     cookies_file = os.getenv('COOKIES_FILE', '')
 
-    scdlbot = ScdlBot(tg_bot_token, proxies,
+    scdlbot = ScdlBot(tg_bot_token, tg_bot_api, proxies,
                       store_chat_id, no_flood_chat_ids, alert_chat_ids,
-                      dl_dir, dl_timeout, max_convert_file_size,
+                      dl_dir, dl_timeout, max_tg_file_size, max_convert_file_size,
                       chat_storage_file, app_url,
                       serve_audio, cookies_file, source_ips)
 
