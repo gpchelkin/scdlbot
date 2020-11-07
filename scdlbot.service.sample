@@ -8,17 +8,19 @@
 
 [Unit]
 Description=scdlbot
-After=syslog.target
+After=network.target
 
 [Service]
 User=www-data
 Group=www-data
 Type=simple
-EnvironmentFile=/home/gpchelkin/scdlbot/.env
-#ExecStart=/usr/local/bin/scdlbot
-ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
-StandardOutput=syslog
-StandardError=syslog
+EnvironmentFile=-/etc/default/scdlbot
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/local/bin/scdlbot
+#ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
+#StandardOutput=syslog
+#StandardError=syslog
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

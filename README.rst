@@ -22,12 +22,12 @@ Music Downloader Telegram Bot aka scdlbot
         :target: https://travis-ci.com/gpchelkin/scdlbot
         :alt: Travis CI Build Status
 
-.. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg
-        :target: https://github.com/gpchelkin/scdlbot/actions
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg?branch=master&event=push
+        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3Abuild
         :alt: GitHub Actions Build Status
 
-.. image:: https://github.com/gpchelkin/scdlbot/workflows/CodeQL/badge.svg
-        :target: https://github.com/gpchelkin/scdlbot/actions
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/CodeQL/badge.svg?branch=master&event=push
+        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3ACodeQL
         :alt: GitHub Actions CodeQL Status
 
 .. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=active+issues&show_trend=true
