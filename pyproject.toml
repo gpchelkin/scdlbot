@@ -56,7 +56,7 @@ celery = "^5.0.1"
 
 ### For publishing to PyPI:
 #youtube_dl = "2020.9.20"
-youtube-dlc = "2020.10.31"
+youtube-dlc = "2020.11.11.post3"
 #scdl = "1.6.12"
 #bandcamp-downloader = "0.0.8.post12"
 

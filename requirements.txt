@@ -1,11 +1,11 @@
-amqp==5.0.1; python_version >= "3.6"
+amqp==5.0.2; python_version >= "3.6"
 args==0.1.0
 bandcamp-downloader @ git+https://github.com/iheanyi/bandcamp-dl.git@master ; python_version >= "3.4" and python_version < "4.0"
 beautifulsoup4==4.9.3; python_version >= "3.4" and python_version < "4.0"
 billiard==3.6.3.0; python_version >= "3.6"
 boltons==20.2.1
 celery==5.0.2; python_version >= "3.6"
-certifi==2020.6.20; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
+certifi==2020.11.8; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 cffi==1.14.3; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 chardet==3.0.4; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
 click-didyoumean==0.0.3; python_version >= "3.6"
@@ -42,5 +42,5 @@ unidecode==1.1.1; python_version >= "3.4" and python_full_version < "3.0.0" and 
 urllib3==1.25.11; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
 vine==5.0.0; python_version >= "3.6"
 wcwidth==0.2.5; python_version >= "3.6"
-youtube-dlc==2020.10.31; python_version >= "2.6"
+youtube-dlc==2020.11.11.post3; python_version >= "2.6"
 zipp==3.4.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_version < "3.8" and python_version >= "3.6" and python_full_version >= "3.5.0"
