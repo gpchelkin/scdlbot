@@ -1638,7 +1638,7 @@ typing_extensions = ">=3.6,<4.0"
 
 [[package]]
 name = "youtube-dl"
-version = "2020.11.17"
+version = "2020.11.18"
 description = "YouTube video downloader"
 category = "main"
 optional = false
@@ -1659,7 +1659,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "1408b4ff4c385a73f8cee1649364a20a134d6fcf40aa171a477f8c8e8b1f1949"
+content-hash = "85112b8d87a7ae1ddf777684ccf814eafa5651f04ba1c8171afc940514fa1a33"
 
 [metadata.files]
 alabaster = [
@@ -2399,8 +2399,8 @@ wemake-python-styleguide = [
     {file = "wemake_python_styleguide-0.14.1-py3-none-any.whl", hash = "sha256:73a501e0547275287a2b926515c000cc25026a8bceb9dcc1bf73ef85a223a3c6"},
 ]
 youtube-dl = [
-    {file = "youtube_dl-2020.11.17-py2.py3-none-any.whl", hash = "sha256:5eb8deea065f7af8a715dc4341c43504dd34052c3ce3f30414221bdcd67fee56"},
-    {file = "youtube_dl-2020.11.17.tar.gz", hash = "sha256:933519ab7d2fa05bd28f8443a2115d21efd0355c051986548af9f233e300db0b"},
+    {file = "youtube_dl-2020.11.18-py2.py3-none-any.whl", hash = "sha256:b1f9544d6f6046e9195280eaed6e25d3e0064906eb123899b4bdb736becf8115"},
+    {file = "youtube_dl-2020.11.18.tar.gz", hash = "sha256:fd879801004d80d875680041d8dcba25bd36cfdaeb0ca704607f16b3709a4f21"},
 ]
 zipp = [
     {file = "zipp-3.4.0-py3-none-any.whl", hash = "sha256:102c24ef8f171fd729d46599845e95c7ab894a4cf45f5de11a44cc7444fb1108"},
