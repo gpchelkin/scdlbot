@@ -42,5 +42,5 @@ unidecode==1.1.1; python_version >= "3.4" and python_full_version < "3.0.0" and 
 urllib3==1.26.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
 vine==5.0.0; python_version >= "3.6"
 wcwidth==0.2.5; python_version >= "3.6"
-youtube-dl==2020.11.18
+youtube-dlc==2020.11.11.post3; python_version >= "2.6"
 zipp==3.4.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_version < "3.8" and python_version >= "3.6" and python_full_version >= "3.5.0"
