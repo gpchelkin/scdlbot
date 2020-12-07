@@ -1660,14 +1660,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "youtube-dlc"
-version = "2020.11.11.post3"
-description = "Media downloader supporting various sites such as youtube"
-category = "main"
-optional = false
-python-versions = ">=2.6"
-
-[[package]]
 name = "zipp"
 version = "3.4.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1682,7 +1674,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "8169bc192ea277ea8e214ea07039f195bafa668fbf663e01d8c9ce09d02c6d3e"
+content-hash = "25e3602667aad6a6f68dc91180da8cec06b52a32978f895a3d74e7dd516702d2"
 
 [metadata.files]
 alabaster = [
@@ -2426,10 +2418,6 @@ wemake-python-styleguide = [
 youtube-dl = [
     {file = "youtube_dl-2020.12.7-py2.py3-none-any.whl", hash = "sha256:36359eb9f312239f0f44287f5414d4b0de195f34c14a788820be769f5dc49277"},
     {file = "youtube_dl-2020.12.7.tar.gz", hash = "sha256:bd127c3251a8e9f7a0eb18e4bbcf98409c0365354f735c985325bc19af669a24"},
-]
-youtube-dlc = [
-    {file = "youtube_dlc-2020.11.11.post3-py2.py3-none-any.whl", hash = "sha256:bbd4f554e9d63b6e8de7cbace0abd0b9707ed32798fbeb2abbb9c17fcb9f7ec3"},
-    {file = "youtube_dlc-2020.11.11.post3.tar.gz", hash = "sha256:5aaa0aa5fbd53d9acdfa95bab3c26802926eb27e425f23dc83d55cb18f11d053"},
 ]
 zipp = [
     {file = "zipp-3.4.0-py3-none-any.whl", hash = "sha256:102c24ef8f171fd729d46599845e95c7ab894a4cf45f5de11a44cc7444fb1108"},
