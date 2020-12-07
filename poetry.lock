@@ -104,16 +104,16 @@ resolved_reference = "0b9ce91621f3c1c0886091c44543db974a02d55d"
 
 [[package]]
 name = "bandit"
-version = "1.6.2"
+version = "1.6.3"
 description = "Security oriented static analyser for python code."
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.5"
 
 [package.dependencies]
 colorama = {version = ">=0.3.9", markers = "platform_system == \"Windows\""}
 GitPython = ">=1.0.1"
-PyYAML = ">=3.13"
+PyYAML = ">=5.3.1"
 six = ">=1.10.0"
 stevedore = ">=1.20.0"
 
@@ -150,7 +150,7 @@ python-versions = "*"
 
 [[package]]
 name = "celery"
-version = "5.0.2"
+version = "5.0.3"
 description = "Distributed Task Queue."
 category = "main"
 optional = false
@@ -158,8 +158,9 @@ python-versions = ">=3.6,"
 
 [package.dependencies]
 billiard = ">=3.6.3.0,<4.0"
-click = ">=7.0"
+click = ">=7.0,<8.0"
 click-didyoumean = ">=0.0.3"
+click-plugins = ">=1.1.1"
 click-repl = ">=0.1.6"
 kombu = ">=5.0.0,<6.0"
 pytz = ">0.0-dev"
@@ -187,6 +188,7 @@ mongodb = ["pymongo[srv] (>=3.3.0)"]
 msgpack = ["msgpack"]
 pymemcache = ["python-memcached"]
 pyro = ["pyro4"]
+pytest = ["pytest-celery"]
 redis = ["redis (>=3.2.0)"]
 s3 = ["boto3 (>=1.9.125)"]
 slmq = ["softlayer-messaging (>=1.0.3)"]
@@ -200,7 +202,7 @@ zstd = ["zstandard"]
 
 [[package]]
 name = "certifi"
-version = "2020.11.8"
+version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
@@ -243,6 +245,20 @@ python-versions = "*"
 
 [package.dependencies]
 click = "*"
+
+[[package]]
+name = "click-plugins"
+version = "1.1.1"
+description = "An extension module for click to enable registering CLI commands via setuptools entry-points."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+click = ">=4.0"
+
+[package.extras]
+dev = ["pytest (>=3.6)", "pytest-cov", "wheel", "coveralls"]
 
 [[package]]
 name = "click-repl"
@@ -691,7 +707,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "importlib-metadata"
-version = "2.1.0"
+version = "2.1.1"
 description = "Read metadata from Python packages"
 category = "main"
 optional = false
@@ -939,7 +955,7 @@ doc = ["sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "packaging"
-version = "20.4"
+version = "20.7"
 description = "Core utilities for Python packages"
 category = "dev"
 optional = false
@@ -947,7 +963,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.dependencies]
 pyparsing = ">=2.0.2"
-six = "*"
 
 [[package]]
 name = "patool"
@@ -1065,7 +1080,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pygments"
-version = "2.7.2"
+version = "2.7.3"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "dev"
 optional = false
@@ -1435,7 +1450,7 @@ test = ["pytest"]
 
 [[package]]
 name = "stevedore"
-version = "3.2.2"
+version = "3.3.0"
 description = "Manage dynamic plugins for Python applications"
 category = "dev"
 optional = false
@@ -1580,7 +1595,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "virtualenv"
-version = "20.2.1"
+version = "20.2.2"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -1637,6 +1652,14 @@ pygments = ">=2.4,<3.0"
 typing_extensions = ">=3.6,<4.0"
 
 [[package]]
+name = "youtube-dl"
+version = "2020.12.7"
+description = "YouTube video downloader"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "youtube-dlc"
 version = "2020.11.11.post3"
 description = "Media downloader supporting various sites such as youtube"
@@ -1659,7 +1682,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "a29236fa78e0ce6e2d31195afe116fe9d623a3f06e6290e14c690698d7ffe6f5"
+content-hash = "8169bc192ea277ea8e214ea07039f195bafa668fbf663e01d8c9ce09d02c6d3e"
 
 [metadata.files]
 alabaster = [
@@ -1695,8 +1718,8 @@ babel = [
 ]
 bandcamp-downloader = []
 bandit = [
-    {file = "bandit-1.6.2-py2.py3-none-any.whl", hash = "sha256:336620e220cf2d3115877685e264477ff9d9abaeb0afe3dc7264f55fa17a3952"},
-    {file = "bandit-1.6.2.tar.gz", hash = "sha256:41e75315853507aa145d62a78a2a6c5e3240fe14ee7c601459d0df9418196065"},
+    {file = "bandit-1.6.3-py2.py3-none-any.whl", hash = "sha256:2ff3fe35fe3212c0be5fc9c4899bd0108e2b5239c5ff62fb174639e4660fe958"},
+    {file = "bandit-1.6.3.tar.gz", hash = "sha256:d02dfe250f4aa2d166c127ad81d192579e2bfcdb8501717c0e2005e35a6bcf60"},
 ]
 beautifulsoup4 = [
     {file = "beautifulsoup4-4.9.3-py2-none-any.whl", hash = "sha256:4c98143716ef1cb40bf7f39a8e3eec8f8b009509e74904ba3a7b315431577e35"},
@@ -1712,12 +1735,12 @@ boltons = [
     {file = "boltons-20.2.1.tar.gz", hash = "sha256:dd362291a460cc1e0c2e91cc6a60da3036ced77099b623112e8f833e6734bdc5"},
 ]
 celery = [
-    {file = "celery-5.0.2-py3-none-any.whl", hash = "sha256:930c3acd55349d028c4e7104a7d377729cbcca19d9fce470c17172d9e7f9a8b6"},
-    {file = "celery-5.0.2.tar.gz", hash = "sha256:012c814967fe89e3f5d2cf49df2dba3de5f29253a7f4f2270e8fce6b901b4ebf"},
+    {file = "celery-5.0.3-py3-none-any.whl", hash = "sha256:2cc87518fdd41375c8f40e2b0b59391568a3fb0a0b5f859f7bedef9b37efbc90"},
+    {file = "celery-5.0.3.tar.gz", hash = "sha256:d7bcb0fca6fc94c41c946e8979c4c276a02cc7532c68757b43b25c2fa9eda68b"},
 ]
 certifi = [
-    {file = "certifi-2020.11.8-py2.py3-none-any.whl", hash = "sha256:1f422849db327d534e3d0c5f02a263458c3955ec0aae4ff09b95f195c59f4edd"},
-    {file = "certifi-2020.11.8.tar.gz", hash = "sha256:f05def092c44fbf25834a51509ef6e631dc19765ab8a57b4e7ab85531f0a9cf4"},
+    {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
+    {file = "certifi-2020.12.5.tar.gz", hash = "sha256:1a4995114262bffbc2413b159f2a1a480c969de6e6eb13ee966d470af86af59c"},
 ]
 cffi = [
     {file = "cffi-1.14.4-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:ebb253464a5d0482b191274f1c8bf00e33f7e0b9c66405fbffc61ed2c839c775"},
@@ -1765,6 +1788,10 @@ click = [
 ]
 click-didyoumean = [
     {file = "click-didyoumean-0.0.3.tar.gz", hash = "sha256:112229485c9704ff51362fe34b2d4f0b12fc71cc20f6d2b3afabed4b8bfa6aeb"},
+]
+click-plugins = [
+    {file = "click-plugins-1.1.1.tar.gz", hash = "sha256:46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"},
+    {file = "click_plugins-1.1.1-py2.py3-none-any.whl", hash = "sha256:5d262006d3222f5057fd81e1623d4443e41dcda5dc815c06b442aa3c02889fc8"},
 ]
 click-repl = [
     {file = "click-repl-0.1.6.tar.gz", hash = "sha256:b9f29d52abc4d6059f8e276132a111ab8d94980afe6a5432b9d996544afa95d5"},
@@ -1969,8 +1996,8 @@ imagesize = [
     {file = "imagesize-1.2.0.tar.gz", hash = "sha256:b1f6b5a4eab1f73479a50fb79fcf729514a900c341d8503d62a62dbc4127a2b1"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-2.1.0-py2.py3-none-any.whl", hash = "sha256:030f3b1bdb823ecbe4a9659e14cc861ce5af403fe99863bae173ec5fe00ab132"},
-    {file = "importlib_metadata-2.1.0.tar.gz", hash = "sha256:caeee3603f5dcf567864d1be9b839b0bcfdf1383e3e7be33ce2dead8144ff19c"},
+    {file = "importlib_metadata-2.1.1-py2.py3-none-any.whl", hash = "sha256:c2d6341ff566f609e89a2acb2db190e5e1d23d5409d6cc8d2fe34d72443876d4"},
+    {file = "importlib_metadata-2.1.1.tar.gz", hash = "sha256:b8de9eff2b35fb037368f28a7df1df4e6436f578fa74423505b6c6a778d5b5dd"},
 ]
 importlib-resources = [
     {file = "importlib_resources-3.3.0-py2.py3-none-any.whl", hash = "sha256:a3d34a8464ce1d5d7c92b0ea4e921e696d86f2aa212e684451cb1482c8d84ed5"},
@@ -2081,8 +2108,8 @@ nitpick = [
     {file = "nitpick-0.23.1.tar.gz", hash = "sha256:f2293781c1357baa8969ada485e1c60503b1097375a73c1f2a3c988552071e6a"},
 ]
 packaging = [
-    {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
-    {file = "packaging-20.4.tar.gz", hash = "sha256:4357f74f47b9c12db93624a82154e9b120fa8293699949152b22065d556079f8"},
+    {file = "packaging-20.7-py2.py3-none-any.whl", hash = "sha256:eb41423378682dadb7166144a4926e443093863024de508ca5c9737d6bc08376"},
+    {file = "packaging-20.7.tar.gz", hash = "sha256:05af3bb85d320377db281cf254ab050e1a7ebcbf5410685a9a407e18a1f81236"},
 ]
 patool = [
     {file = "patool-1.12-py2.py3-none-any.whl", hash = "sha256:3f642549c9a78f5b8bef1af92df385b521d360520d1f34e4dba3fd1dee2a21bc"},
@@ -2133,8 +2160,8 @@ pyflakes = [
     {file = "pyflakes-2.2.0.tar.gz", hash = "sha256:35b2d75ee967ea93b55750aa9edbbf72813e06a66ba54438df2cfac9e3c27fc8"},
 ]
 pygments = [
-    {file = "Pygments-2.7.2-py3-none-any.whl", hash = "sha256:88a0bbcd659fcb9573703957c6b9cff9fab7295e6e76db54c9d00ae42df32773"},
-    {file = "Pygments-2.7.2.tar.gz", hash = "sha256:381985fcc551eb9d37c52088a32914e00517e57f4a21609f48141ba08e193fa0"},
+    {file = "Pygments-2.7.3-py3-none-any.whl", hash = "sha256:f275b6c0909e5dafd2d6269a656aa90fa58ebf4a74f8fcf9053195d226b24a08"},
+    {file = "Pygments-2.7.3.tar.gz", hash = "sha256:ccf3acacf3782cbed4a989426012f1c535c9a90d3a7fc3f16d231b9372d2b716"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
@@ -2272,8 +2299,8 @@ sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib_serializinghtml-1.1.4-py2.py3-none-any.whl", hash = "sha256:f242a81d423f59617a8e5cf16f5d4d74e28ee9a66f9e5b637a18082991db5a9a"},
 ]
 stevedore = [
-    {file = "stevedore-3.2.2-py3-none-any.whl", hash = "sha256:5e1ab03eaae06ef6ce23859402de785f08d97780ed774948ef16c4652c41bc62"},
-    {file = "stevedore-3.2.2.tar.gz", hash = "sha256:f845868b3a3a77a2489d226568abe7328b5c2d4f6a011cc759dfa99144a521f0"},
+    {file = "stevedore-3.3.0-py3-none-any.whl", hash = "sha256:50d7b78fbaf0d04cd62411188fa7eedcb03eb7f4c4b37005615ceebe582aa82a"},
+    {file = "stevedore-3.3.0.tar.gz", hash = "sha256:3a5bbd0652bf552748871eaa73a4a8dc2899786bc497a2aa1fcb4dcdb0debeee"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
@@ -2385,8 +2412,8 @@ vine = [
     {file = "vine-5.0.0.tar.gz", hash = "sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.2.1-py2.py3-none-any.whl", hash = "sha256:07cff122e9d343140366055f31be4dcd61fd598c69d11cd33a9d9c8df4546dd7"},
-    {file = "virtualenv-20.2.1.tar.gz", hash = "sha256:e0aac7525e880a429764cefd3aaaff54afb5d9f25c82627563603f5d7de5a6e5"},
+    {file = "virtualenv-20.2.2-py2.py3-none-any.whl", hash = "sha256:54b05fc737ea9c9ee9f8340f579e5da5b09fb64fd010ab5757eb90268616907c"},
+    {file = "virtualenv-20.2.2.tar.gz", hash = "sha256:b7a8ec323ee02fb2312f098b6b4c9de99559b462775bc8fe3627a73706603c1b"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
@@ -2395,6 +2422,10 @@ wcwidth = [
 wemake-python-styleguide = [
     {file = "wemake-python-styleguide-0.14.1.tar.gz", hash = "sha256:e13dc580fa56b7b548de8da170bccb8ddff2d4ab026ca987db8a9893bf8a7b5b"},
     {file = "wemake_python_styleguide-0.14.1-py3-none-any.whl", hash = "sha256:73a501e0547275287a2b926515c000cc25026a8bceb9dcc1bf73ef85a223a3c6"},
+]
+youtube-dl = [
+    {file = "youtube_dl-2020.12.7-py2.py3-none-any.whl", hash = "sha256:36359eb9f312239f0f44287f5414d4b0de195f34c14a788820be769f5dc49277"},
+    {file = "youtube_dl-2020.12.7.tar.gz", hash = "sha256:bd127c3251a8e9f7a0eb18e4bbcf98409c0365354f735c985325bc19af669a24"},
 ]
 youtube-dlc = [
     {file = "youtube_dlc-2020.11.11.post3-py2.py3-none-any.whl", hash = "sha256:bbd4f554e9d63b6e8de7cbace0abd0b9707ed32798fbeb2abbb9c17fcb9f7ec3"},
