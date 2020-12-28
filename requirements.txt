@@ -31,7 +31,7 @@ prompt-toolkit==3.0.3; python_version >= "3.6"
 pycparser==2.20; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0"
 python-telegram-bot==12.8
 python-telegram-handler==2.2
-pytz==2020.4; python_version >= "3.6"
+pytz==2020.5; python_version >= "3.6"
 requests==2.25.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 scdl @ git+https://github.com/flyingrub/scdl.git@master
 six==1.15.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
@@ -43,5 +43,5 @@ unidecode==1.1.2; python_version >= "3.4" and python_full_version < "3.0.0" and 
 urllib3==1.26.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
 vine==5.0.0; python_version >= "3.6"
 wcwidth==0.2.5; python_version >= "3.6"
-youtube-dl==2020.12.22
+youtube-dl==2020.12.26
 zipp==3.4.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "3.8" or python_version < "3.8" and python_version >= "3.6" and python_full_version >= "3.5.0"
