@@ -1,8 +1,8 @@
 class Error(Exception):
-    """Base class for exceptions in this module."""
+    """Bu modüldeki istisnalar için temel sınıf."""
 
 class FileNotSupportedError(Error):
-    """Exception raised for errors in the input.
+    """Girişteki hatalar için istisna oluşturuldu.
 
     Attributes:
         expression -- input expression in which the error occurred
