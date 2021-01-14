@@ -18,6 +18,8 @@ install:
   - source "$HOME/.poetry/env"
   - poetry config installer.parallel false
   - poetry config experimental.new-installer false
+#  - poetry config virtualenvs.in-project true
+# ~/.config/pypoetry/config.toml
 script: tox
 
 #after_success:
@@ -33,4 +35,3 @@ deploy:
   on:
     tags: true
     python: 3.9
-
