@@ -170,19 +170,19 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
     # For long polling mode (USE_WEBHOOK=0):
-    heroku local worker
+    heroku local -e .env worker
     # For webhook mode (USE_WEBHOOK=1):
-    heroku local web
+    heroku local -e .env web
 
-Using only Python
+Using Python only
 """""""""""""""""
 
 ::
 
-    export $(cat .env | egrep -v '^#' | xargs)
+    export $(grep -v '^#' .env | xargs)
     python3 -m scdlbot
     # or in one line:
-    env $(cat .env | egrep -v '^#' | xargs) python3 -m scdlbot
+    env $(grep -v '^#' .env | xargs) python3 -m scdlbot
 
     # If you've installed package from PyPI into the system,
     # you can also replace 'python3 -m scdlbot' with pure 'scdlbot'
@@ -204,7 +204,7 @@ Manually
 """"""""
 
 You can do the same as the button above but using `Heroku
-CLI <https://cli.heroku.com/>`__, not much of a fun. Assuming you are in
+CLI <https://cli.heroku.com/>`__, not as much of a fun. Assuming you are in
 ``scdlbot`` repository directory:
 
 ::
