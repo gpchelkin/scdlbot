@@ -55,7 +55,7 @@ celery = "^5.0.1"
 #transliterate = "1.10.2"
 
 ### For publishing to PyPI:
-youtube_dl = "2021.1.16"
+youtube_dl = "2021.1.24.1"
 #youtube-dlc = "2020.11.11.post3"
 #scdl = "1.6.12"
 #bandcamp-downloader = "0.0.8.post12"
@@ -70,7 +70,7 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.790"
+mypy = "^0.800"
 
 wemake-python-styleguide = "^0.14"
 flake8-pytest = "^1.3"
