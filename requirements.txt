@@ -13,7 +13,7 @@ click-plugins==1.1.1; python_version >= "3.6"
 click-repl==0.1.6; python_version >= "3.6"
 click==7.1.2; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 clint==0.5.1
-cryptography==3.4.4; python_version >= "3.6"
+cryptography==3.4.5; python_version >= "3.6"
 decorator==4.4.2; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.2.0"
 demjson==2.2.4; python_version >= "3.4" and python_version < "4.0"
 docopt==0.6.2; python_version >= "3.4" and python_version < "4.0"
