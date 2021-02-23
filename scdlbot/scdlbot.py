@@ -106,7 +106,7 @@ class ScdlBot:
         link_command_handler = CommandHandler('link', self.common_command_callback,
                                               filters=~Filters.update.edited_message & ~Filters.forwarded)
         dispatcher.add_handler(link_command_handler)
-        message_with_links_handler = MessageHandler(~Filters.update.edited_message &
+        message_with_links_handler = MessageHandler(~Filters.update.edited_message & ~Filters.command &
                                                     ((Filters.text & (Filters.entity(MessageEntity.URL) |
                                                                       Filters.entity(MessageEntity.TEXT_LINK))) |
                                                      (Filters.caption & (Filters.caption_entity(MessageEntity.URL) |
