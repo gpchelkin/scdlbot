@@ -458,11 +458,12 @@ class ScdlBot:
         urls_dict = {}
         for url_item in urls:
             url = url_item
-            try:
-                # unshorten soundcloud.app.goo.gl (and other?) links:
-                url = URL(requests.head(url_item, allow_redirects=True).url)
-            except:
-                pass
+            # unshorten soundcloud.app.goo.gl and other links, but not tiktok:
+            if "tiktok" not in url_item.host:
+                try:
+                    url = URL(requests.head(url_item, allow_redirects=True).url)
+                except:
+                    pass
             url_text = url.to_text(True)
             #FIXME crutch:
             url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
