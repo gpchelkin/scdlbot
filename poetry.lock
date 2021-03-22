@@ -578,7 +578,7 @@ flake8 = ">=2,<4.0.0"
 
 [[package]]
 name = "flake8-comprehensions"
-version = "3.3.1"
+version = "3.4.0"
 description = "A flake8 plugin to help you write better list/set/dict comprehensions."
 category = "dev"
 optional = false
@@ -603,7 +603,7 @@ six = "*"
 
 [[package]]
 name = "flake8-docstrings"
-version = "1.5.0"
+version = "1.6.0"
 description = "Extension for flake8 which uses pydocstyle to check docstrings"
 category = "dev"
 optional = false
@@ -826,7 +826,7 @@ python-versions = "*"
 
 [[package]]
 name = "isort"
-version = "5.7.0"
+version = "5.8.0"
 description = "A Python utility / library to sort Python imports."
 category = "dev"
 optional = false
@@ -1185,11 +1185,11 @@ typing_extensions = ["typing-extensions (>=3.7.2)"]
 
 [[package]]
 name = "pydocstyle"
-version = "5.1.1"
+version = "6.0.0"
 description = "Python docstring style checker"
 category = "dev"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 snowballstemmer = "*"
@@ -1467,7 +1467,7 @@ python-versions = "*"
 
 [[package]]
 name = "soupsieve"
-version = "2.2"
+version = "2.2.1"
 description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
@@ -1475,7 +1475,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "sphinx"
-version = "3.5.2"
+version = "3.5.3"
 description = "Python documentation generator"
 category = "dev"
 optional = false
@@ -2109,16 +2109,16 @@ flake8-commas = [
     {file = "flake8_commas-2.0.0-py2.py3-none-any.whl", hash = "sha256:ee2141a3495ef9789a3894ed8802d03eff1eaaf98ce6d8653a7c573ef101935e"},
 ]
 flake8-comprehensions = [
-    {file = "flake8-comprehensions-3.3.1.tar.gz", hash = "sha256:e734bf03806bb562886d9bf635d23a65a1a995c251b67d7e007a7b608af9bd22"},
-    {file = "flake8_comprehensions-3.3.1-py3-none-any.whl", hash = "sha256:6d80dfafda0d85633f88ea5bc7de949485f71f1e28db7af7719563fe5f62dcb1"},
+    {file = "flake8-comprehensions-3.4.0.tar.gz", hash = "sha256:c00039be9f3959a26a98da3024f0fe809859bf1753ccb90e228cc40f3ac31ca7"},
+    {file = "flake8_comprehensions-3.4.0-py3-none-any.whl", hash = "sha256:7258a28e229fb9a8d16370b9c47a7d66396ba0201abb06c9d11df41b18ed64c4"},
 ]
 flake8-debugger = [
     {file = "flake8-debugger-4.0.0.tar.gz", hash = "sha256:e43dc777f7db1481db473210101ec2df2bd39a45b149d7218a618e954177eda6"},
     {file = "flake8_debugger-4.0.0-py3-none-any.whl", hash = "sha256:82e64faa72e18d1bdd0000407502ebb8ecffa7bc027c62b9d4110ce27c091032"},
 ]
 flake8-docstrings = [
-    {file = "flake8-docstrings-1.5.0.tar.gz", hash = "sha256:3d5a31c7ec6b7367ea6506a87ec293b94a0a46c0bce2bb4975b7f1d09b6f3717"},
-    {file = "flake8_docstrings-1.5.0-py2.py3-none-any.whl", hash = "sha256:a256ba91bc52307bef1de59e2a009c3cf61c3d0952dbe035d6ff7208940c2edc"},
+    {file = "flake8-docstrings-1.6.0.tar.gz", hash = "sha256:9fe7c6a306064af8e62a055c2f61e9eb1da55f84bb39caef2b84ce53708ac34b"},
+    {file = "flake8_docstrings-1.6.0-py2.py3-none-any.whl", hash = "sha256:99cac583d6c7e32dd28bbfbef120a7c0d1b6dde4adb5a9fd441c4227a6534bde"},
 ]
 flake8-eradicate = [
     {file = "flake8-eradicate-1.0.0.tar.gz", hash = "sha256:fe7167226676823d50cf540532302a6f576c5a398c5260692571a05ef72c5f5b"},
@@ -2207,8 +2207,8 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 isort = [
-    {file = "isort-5.7.0-py3-none-any.whl", hash = "sha256:fff4f0c04e1825522ce6949973e83110a6e907750cd92d128b0d14aaaadbffdc"},
-    {file = "isort-5.7.0.tar.gz", hash = "sha256:c729845434366216d320e936b8ad6f9d681aab72dc7cbc2d51bedc3582f3ad1e"},
+    {file = "isort-5.8.0-py3-none-any.whl", hash = "sha256:2bb1680aad211e3c9944dbce1d4ba09a989f04e238296c87fe2139faa26d655d"},
+    {file = "isort-5.8.0.tar.gz", hash = "sha256:0a943902919f65c5684ac4e0154b1ad4fac6dcaa5d9f3426b732f1c8b5419be6"},
 ]
 jinja2 = [
     {file = "Jinja2-2.11.3-py2.py3-none-any.whl", hash = "sha256:03e47ad063331dd6a3f04a43eddca8a966a26ba0c5b7207a9a9e4e08f1b29419"},
@@ -2413,8 +2413,8 @@ pydantic = [
     {file = "pydantic-1.7.3.tar.gz", hash = "sha256:213125b7e9e64713d16d988d10997dabc6a1f73f3991e1ff8e35ebb1409c7dc9"},
 ]
 pydocstyle = [
-    {file = "pydocstyle-5.1.1-py3-none-any.whl", hash = "sha256:aca749e190a01726a4fb472dd4ef23b5c9da7b9205c0a7857c06533de13fd678"},
-    {file = "pydocstyle-5.1.1.tar.gz", hash = "sha256:19b86fa8617ed916776a11cd8bc0197e5b9856d5433b777f51a3defe13075325"},
+    {file = "pydocstyle-6.0.0-py3-none-any.whl", hash = "sha256:d4449cf16d7e6709f63192146706933c7a334af7c0f083904799ccb851c50f6d"},
+    {file = "pydocstyle-6.0.0.tar.gz", hash = "sha256:164befb520d851dbcf0e029681b91f4f599c62c5cd8933fd54b1bfbd50e89e1f"},
 ]
 pyflakes = [
     {file = "pyflakes-2.3.0-py2.py3-none-any.whl", hash = "sha256:910208209dcea632721cb58363d0f72913d9e8cf64dc6f8ae2e02a3609aba40d"},
@@ -2559,12 +2559,12 @@ sortedcontainers = [
     {file = "sortedcontainers-2.3.0.tar.gz", hash = "sha256:59cc937650cf60d677c16775597c89a960658a09cf7c1a668f86e1e4464b10a1"},
 ]
 soupsieve = [
-    {file = "soupsieve-2.2-py3-none-any.whl", hash = "sha256:d3a5ea5b350423f47d07639f74475afedad48cf41c0ad7a82ca13a3928af34f6"},
-    {file = "soupsieve-2.2.tar.gz", hash = "sha256:407fa1e8eb3458d1b5614df51d9651a1180ea5fedf07feb46e45d7e25e6d6cdd"},
+    {file = "soupsieve-2.2.1-py3-none-any.whl", hash = "sha256:c2c1c2d44f158cdbddab7824a9af8c4f83c76b1e23e049479aa432feb6c4c23b"},
+    {file = "soupsieve-2.2.1.tar.gz", hash = "sha256:052774848f448cf19c7e959adf5566904d525f33a3f8b6ba6f6f8f26ec7de0cc"},
 ]
 sphinx = [
-    {file = "Sphinx-3.5.2-py3-none-any.whl", hash = "sha256:ef64a814576f46ec7de06adf11b433a0d6049be007fefe7fd0d183d28b581fac"},
-    {file = "Sphinx-3.5.2.tar.gz", hash = "sha256:672cfcc24b6b69235c97c750cb190a44ecd72696b4452acaf75c2d9cc78ca5ff"},
+    {file = "Sphinx-3.5.3-py3-none-any.whl", hash = "sha256:3f01732296465648da43dec8fb40dc451ba79eb3e2cc5c6d79005fd98197107d"},
+    {file = "Sphinx-3.5.3.tar.gz", hash = "sha256:ce9c228456131bab09a3d7d10ae58474de562a6f79abb3dc811ae401cf8c1abc"},
 ]
 sphinx-autodoc-typehints = [
     {file = "sphinx-autodoc-typehints-1.11.1.tar.gz", hash = "sha256:244ba6d3e2fdb854622f643c7763d6f95b6886eba24bec28e86edf205e4ddb20"},
