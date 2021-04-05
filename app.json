@@ -56,6 +56,14 @@
       "description": "Chat ID for storing audios for inline mode",
       "required": false
     },
+    "WHITELIST_CHATS": {
+      "description": "A space separated list of chat_ids which should be considered whitelisted - the bot will only join those chats **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
+      "required": false
+    },
+    "BLACKLIST_CHATS": {
+      "description": "A space separated list of chat_ids which should be considered blacklisted - the bot will not join those chats. **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
+      "required": false
+    },
     "COOKIES_FILE": {
       "description": "HTTP or local path with cookies file for Yandex.Music",
       "required": false
@@ -87,7 +95,15 @@
     "APP_URL": {
       "description": "Your host URL like https://scdlbot.herokuapp.com/, required for webhook mode",
       "required": false
-    }
+    },
+    "WHITELIST_DOMS": {
+      "description": "A space separated list of domains which should be considered whitelisted - the bot will only process these domains. Example of domain: example.com if the domain has a subdomain this needs to be included: subdomain.example.com **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
+      "required": false
+    },
+    "BLACKLIST_DOMS": {
+      "description": "A space separated list of domains which should be considered blacklisted - the bot will not process these domains. Example of domain: example.com if the domain has a subdomain this needs to be included: subdomain.example.com **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
+      "required": false
+    },
   },
   "formation": {
     "web": {

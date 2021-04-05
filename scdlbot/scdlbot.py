@@ -530,9 +530,9 @@ class ScdlBot:
         return self.url_allowed(url)
     
     def url_allowed(self, url):
-        # Example export BLACKLIST_DOM = "invidious.tube invidious.kavin.rocks invidious.himiko.cloud invidious.namazso.eu dev.viewtube.io tube.cadence.moe piped.kavin.rocks"
-        whitelist = set(x for x in os.environ.get("WHITELIST_DOM", "").split())
-        blacklist = set(x for x in os.environ.get("BLACKLIST_DOM", "").split())
+        # Example export BLACKLIST_DOMS = "invidious.tube invidious.kavin.rocks invidious.himiko.cloud invidious.namazso.eu dev.viewtube.io tube.cadence.moe piped.kavin.rocks"
+        whitelist = set(x for x in os.environ.get("WHITELIST_DOMS", "").split())
+        blacklist = set(x for x in os.environ.get("BLACKLIST_DOMS", "").split())
         netloc = urlparse(url).netloc
         if whitelist:
             if netloc not in whitelist:
