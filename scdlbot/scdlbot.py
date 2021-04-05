@@ -520,21 +520,20 @@ class ScdlBot:
                     'telesco.pe',
                     'graph.org',
                     'contest.dev']
+        logger.debug("Checking Url Entry: %s", url)
         try:
             netloc = urlparse(url).netloc
         except AttributeError:
             return False
-        logger.debug("Checking Url Entry: %s", netloc)
         if netloc in telegram_domains:
             return False
         return self.url_allowed(url)
     
     def url_allowed(self, url):
-        # Example export WHITELIST_DOM = "invidious.tube kavin.rocks himiko.cloud "
+        # Example export BLACKLIST_DOM = "invidious.tube invidious.kavin.rocks invidious.himiko.cloud invidious.namazso.eu dev.viewtube.io tube.cadence.moe piped.kavin.rocks"
         whitelist = set(x for x in os.environ.get("WHITELIST_DOM", "").split())
         blacklist = set(x for x in os.environ.get("BLACKLIST_DOM", "").split())
         netloc = urlparse(url).netloc
-
         if whitelist:
             if netloc not in whitelist:
                 return False
