@@ -519,8 +519,10 @@ class ScdlBot:
                     'telesco.pe',
                     'graph.org',
                     'contest.dev']
-        netloc = urlparse(url).netloc
-        domain = netloc.split(".", 1)[-1]
+        try:
+            netloc = urlparse(url).netloc
+        except AttributeError:
+            return False
         logger.debug("Checking Url Entry: %s", netloc)
         if netloc in telegram_domains:
             return False
