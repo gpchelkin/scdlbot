@@ -19,9 +19,10 @@ logging_handlers.append(console_handler)
 
 tg_bot_token = os.environ['TG_BOT_TOKEN']
 alert_chat_ids = list(map(int, os.getenv('ALERT_CHAT_IDS', '0').split(',')))
-telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=str(alert_chat_ids[0]))
-telegram_handler.setLevel(logging.WARNING)
-logging_handlers.append(telegram_handler)
+# Disable telegram handler
+#telegram_handler = TelegramHandler(token=tg_bot_token, chat_id=str(alert_chat_ids[0]))
+#telegram_handler.setLevel(logging.WARNING)
+#logging_handlers.append(telegram_handler)
 
 syslog_debug = bool(int(os.getenv('SYSLOG_DEBUG', '0')))
 syslog_logging_level = logging.DEBUG if syslog_debug else logging.INFO
