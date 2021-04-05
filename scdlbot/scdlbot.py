@@ -452,19 +452,26 @@ class ScdlBot:
             url_entities.update(url_caption_entities)
             for entity in url_entities:
                 url_str = url_entities[entity]
-                logger.debug("Entity URL Parsed: %s", url_str)
-                if "://" not in url_str:
-                    url_str = "http://{}".format(url_str)
-                urls.append(URL(url_str))
+                if self.url_valid(url_str):
+                    logger.debug("Entity URL Parsed: %s", url_str)
+                    if "://" not in url_str:
+                        url_str = "http://{}".format(url_str)
+                    urls.append(URL(url_str))
+                else:
+                    logger.debug("Entry URL not valid: %s", url_str)
             text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
             text_link_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
             text_link_entities.update(text_link_caption_entities)
             for entity in text_link_entities:
                 url_str = entity.url
-                logger.debug("Entity Text Link Parsed: %s", url_str)
-                urls.append(URL(url_str))
+                if self.url_valid(url_str):
+                    logger.debug("Entity Text Link Parsed: %s", url_str)
+                    urls.append(URL(url_str))
+                else:
+                    logger.debug("Entry URL not valid: %s", url_str)
         else:
-            urls = find_all_links(msg_or_text, default_scheme="http")
+            all_links = find_all_links(msg_or_text, default_scheme="http")
+            urls = [link for link in all_links if self.url_valid(link)]
         urls_dict = {}
         for url_item in urls:
             url = url_item
@@ -502,6 +509,22 @@ class ScdlBot:
             except URLError as exc:
                 urls_dict[url_text] = exc.status
         return urls_dict
+
+    def url_valid(self, url):
+        telegram_domains = ['t.me',
+                    'telegram.org',
+                    'telegram.dog',
+                    'telegra.ph',
+                    'tdesktop.com',
+                    'telesco.pe',
+                    'graph.org',
+                    'contest.dev']
+        netloc = urlparse(url).netloc
+        domain = netloc.split(".", 1)[-1]
+        logger.debug("Checking Url Entry: %s", netloc)
+        if netloc in telegram_domains:
+            return False
+        return True
 
     @REQUEST_TIME.time()
     @run_async
