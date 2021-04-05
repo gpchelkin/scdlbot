@@ -579,7 +579,7 @@ class ScdlBot:
                         'preferredcodec': 'mp3',
                         'preferredquality': '128',
                     },
-                    # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
+                    {'key': 'FFmpegMetadata',},
                 ],
             }
             host = urlparse(url).hostname
