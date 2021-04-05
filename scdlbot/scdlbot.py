@@ -269,6 +269,9 @@ class ScdlBot:
     def common_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
         chat_id = update.message.chat_id
+        if not self.is_chat_allowed(chat_id):
+            context.bot.send_message(chat_id=chat_id, text="This command isn't allowed in this chat.")
+            return
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
         command_entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
@@ -347,6 +350,7 @@ class ScdlBot:
                 self.cleanup_chat(chat_id)
 
     def button_query_callback(self, update: Update, context: CallbackContext):
+
         btn_msg = update.callback_query.message
         self.init_chat(btn_msg)
         user_id = update.callback_query.from_user.id
@@ -355,6 +359,9 @@ class ScdlBot:
         chat_id = chat.id
         chat_type = chat.type
         orig_msg_id, action = update.callback_query.data.split()
+        if not self.is_chat_allowed(chat_id):
+            update.callback_query.answer(text="This command isn't allowed in this chat.")
+            return
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
                 chat_member_status = chat.get_member(user_id).status
@@ -859,3 +866,23 @@ class ScdlBot:
         if len(sent_audio_ids) != len(file_parts):
             raise FileSentPartiallyError(sent_audio_ids)
         return sent_audio_ids
+
+    def is_chat_allowed(self, chat_id):
+        try:
+            whitelist = set(int(x) for x in os.environ.get("WHITELIST_CHATS", "").split())
+        except ValueError:
+            raise ValueError("Your whitelisted chats does not contain valid integers.")
+        try:
+            blacklist = set(int(x) for x in os.environ.get("BLACK_LIST_CHATS", "").split())
+        except ValueError:
+            raise ValueError("Your blacklisted chats does not contain valid integers.")
+        if whitelist:
+            if chat_id not in whitelist:
+                return False
+        if blacklist:
+            if chat_id in blacklist:
+                return False
+        if whitelist and blacklist:
+            if chat_id in blacklist:
+                return False
+        return True
