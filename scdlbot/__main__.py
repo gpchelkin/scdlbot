@@ -63,7 +63,7 @@ def main():
     cookies_file = os.getenv('COOKIES_FILE', '')
 
     scdlbot = ScdlBot(tg_bot_token, tg_bot_api, proxies,
-                      store_chat_id, no_flood_chat_ids, alert_chat_ids,
+                      store_chat_id, no_flood_chat_ids,
                       dl_dir, dl_timeout, max_tg_file_size, max_convert_file_size,
                       chat_storage_file, app_url,
                       serve_audio, cookies_file, source_ips)
