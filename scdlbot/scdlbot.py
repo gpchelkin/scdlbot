@@ -124,6 +124,9 @@ class ScdlBot:
         unknown_handler = MessageHandler(Filters.command, self.unknown_command_callback)
         dispatcher.add_handler(unknown_handler)
 
+        blacklist_whitelist_handler = MessageHandler(Filters.status_update.new_chat_members, self.blacklist_whitelist)
+        dispatcher.add_handler(blacklist_whitelist_handler)
+
         dispatcher.add_error_handler(self.error_callback)
 
         self.bot_username = self.updater.bot.get_me().username
@@ -728,6 +731,13 @@ class ScdlBot:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
                 pass
+    
+    @run_async
+    def blacklist_whitelist(self, update: Update, context: CallbackContext):
+         chat_id = update.message.chat_id
+         if not self.is_chat_allowed(chat_id):
+             context.bot.leave_chat(chat_id)
+
 
     def convert_and_split_audio_file(self, file=""):
         file_root, file_ext = os.path.splitext(file)
