@@ -3,6 +3,7 @@
 """Main module."""
 
 import gc
+import os
 import pathlib
 import random
 import shelve
@@ -458,7 +459,7 @@ class ScdlBot:
                         url_str = "http://{}".format(url_str)
                     urls.append(URL(url_str))
                 else:
-                    logger.debug("Entry URL not valid: %s", url_str)
+                    logger.debug("Entry URL not valid or blacklisted: %s", url_str)
             text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
             text_link_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
             text_link_entities.update(text_link_caption_entities)
@@ -468,7 +469,7 @@ class ScdlBot:
                     logger.debug("Entity Text Link Parsed: %s", url_str)
                     urls.append(URL(url_str))
                 else:
-                    logger.debug("Entry URL not valid: %s", url_str)
+                    logger.debug("Entry URL not valid or blacklisted: %s", url_str)
         else:
             all_links = find_all_links(msg_or_text, default_scheme="http")
             urls = [link for link in all_links if self.url_valid(link)]
@@ -526,6 +527,23 @@ class ScdlBot:
         logger.debug("Checking Url Entry: %s", netloc)
         if netloc in telegram_domains:
             return False
+        return self.url_allowed(url)
+    
+    def url_allowed(self, url):
+        # Example export WHITELIST_DOM = "invidious.tube kavin.rocks himiko.cloud "
+        whitelist = set(x for x in os.environ.get("WHITELIST_DOM", "").split())
+        blacklist = set(x for x in os.environ.get("BLACKLIST_DOM", "").split())
+        netloc = urlparse(url).netloc
+
+        if whitelist:
+            if netloc not in whitelist:
+                return False
+        if blacklist:
+            if netloc in blacklist:
+                return False
+        if whitelist and blacklist:
+            if netloc in blacklist:
+                return False
         return True
 
     @REQUEST_TIME.time()
@@ -908,7 +926,7 @@ class ScdlBot:
         except ValueError:
             raise ValueError("Your whitelisted chats does not contain valid integers.")
         try:
-            blacklist = set(int(x) for x in os.environ.get("BLACK_LIST_CHATS", "").split())
+            blacklist = set(int(x) for x in os.environ.get("BLACKLIST_CHATS", "").split())
         except ValueError:
             raise ValueError("Your blacklisted chats does not contain valid integers.")
         if whitelist:
