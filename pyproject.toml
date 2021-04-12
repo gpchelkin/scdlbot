@@ -84,7 +84,7 @@ pytest-cov = "^2.11"
 #TODO
 pytest-randomly = "3.5.0"
 
-sphinx = "^3.5.0"
+sphinx = "^3.5.4"
 sphinx-autodoc-typehints = "^1.11.0"
 doc8 = "^0.8"
 m2r2 = "^0.2"
