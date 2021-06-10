@@ -42,20 +42,20 @@ scdlbot = "scdlbot.__main__:main"
 python = "^3.6"
 #python-telegram-bot = "13.1"
 python-telegram-bot = "12.8"
-python-telegram-handler = "2.2"
+python-telegram-handler = "2.2.1"
 boltons = "21.0.0"
 plumbum = "1.7.0"
 ffmpeg-python = "0.2.0"
 mutagen = "1.45.1"
 patool = "1.12"
 requests = "^2.25.0"
-prometheus_client = "^0.10"
-celery = "^5.0.1"
+prometheus_client = "^0.11"
+celery = "^5.1.0"
 #pyshorteners = "0.6.1"
 #transliterate = "1.10.2"
 
 ### For publishing to PyPI:
-youtube_dl = "2021.5.16"
+youtube_dl = "2021.6.6"
 #youtube-dlc = "2020.11.11.post3"
 #scdl = "1.6.12"
 #bandcamp-downloader = "0.0.8.post12"
@@ -70,7 +70,7 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.812"
+mypy = "^0.901"
 
 wemake-python-styleguide = "^0.15"
 flake8-pytest = "^1.3"

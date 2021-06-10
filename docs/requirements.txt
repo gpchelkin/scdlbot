@@ -1,11 +1,11 @@
 # This file is used to setup env
 # to generate documentation.
 
-sphinx==4.0.1
+sphinx==4.0.2
 sphinx-autodoc-typehints==1.12.0
 recommonmark==0.7.1
 m2r2==0.2.7
-tomlkit==0.7.0
+tomlkit==0.7.2
 
 # Dependencies of our project:
 typing-extensions==3.10.0.0
