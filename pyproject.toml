@@ -70,11 +70,11 @@ scdl = { git = "https://github.com/flyingrub/scdl.git" }
 bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.901"
+mypy = "^0.910"
 
 wemake-python-styleguide = "^0.15"
 flake8-pytest = "^1.3"
-flake8-pytest-style = "^1.4"
+flake8-pytest-style = "^1.5"
 nitpick = "^0.26.0"
 
 safety = "^1.10.0"
