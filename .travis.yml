@@ -9,7 +9,7 @@ python:
 - 3.9
 
 env:
-  - POETRY_VERSION=1.1.7
+  - POETRY_VERSION=1.1.8
 
 install:
   - pip freeze | xargs pip uninstall -y
