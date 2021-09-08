@@ -1,1 +1,1 @@
-Download MP3s of tracks/sets from SoundCloud, Bandcamp, YouTube with tags. Developer: @gpchelkin, Backup: @scdltestbot
+Download MP3s of tracks/sets from SoundCloud, Bandcamp, YouTube with tags. Developer: @prateek__090
