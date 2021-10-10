@@ -33,7 +33,7 @@ jobs:
         export PATH="$HOME/.local/bin:$PATH"
         poetry config installer.parallel false
         poetry config experimental.new-installer false
-#       poetry config virtualenvs.in-project true
-# ~/.config/pypoetry/config.toml
+#        poetry config virtualenvs.in-project true
+        cat "$HOME/.config/pypoetry/config.toml"
         export PATH="$(pwd)/.venv/bin:$PATH"
         tox

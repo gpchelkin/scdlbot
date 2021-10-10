@@ -20,7 +20,7 @@ install:
   - poetry config installer.parallel false
   - poetry config experimental.new-installer false
 #  - poetry config virtualenvs.in-project true
-# ~/.config/pypoetry/config.toml
+  - cat "$HOME/.config/pypoetry/config.toml"
 script: tox
 
 #after_success:
