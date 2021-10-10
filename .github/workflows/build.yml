@@ -25,11 +25,13 @@ jobs:
     - name: Install tox and poetry
       run: |
         pip install --upgrade pip tox tox-gh-actions
-        wget "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py"
-        python "get-poetry.py"
+        wget "https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py"
+        python "install-poetry.py"
 
     - name: Test with tox
       run: |
         source "$HOME/.poetry/env"
+        poetry config installer.parallel false
+        poetry config experimental.new-installer false
         export PATH="$(pwd)/.venv/bin:$PATH"
         tox
