@@ -1,8 +1,6 @@
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-#requires = ["poetry>=1.0"]
-#build-backend = "poetry.masonry.api"
 
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
@@ -40,7 +38,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-#python-telegram-bot = "13.1"
+#python-telegram-bot = "13.7"
 python-telegram-bot = "12.8"
 python-telegram-handler = "2.2.1"
 boltons = "21.0.0"
@@ -66,6 +64,7 @@ youtube_dl = "2021.6.6"
 #youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 #youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
+#yt-dlp = "2021.10.10"
 scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
 bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
