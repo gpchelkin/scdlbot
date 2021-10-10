@@ -30,8 +30,9 @@ jobs:
 
     - name: Test with tox
       run: |
-        source "$HOME/.poetry/env"
+        export PATH="$HOME/.local/bin:$PATH"
         poetry config installer.parallel false
         poetry config experimental.new-installer false
         export PATH="$(pwd)/.venv/bin:$PATH"
+        ls -lah "$(pwd)/.venv/bin"
         tox
