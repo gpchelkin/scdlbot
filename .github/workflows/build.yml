@@ -34,5 +34,4 @@ jobs:
         poetry config installer.parallel false
         poetry config experimental.new-installer false
         export PATH="$(pwd)/.venv/bin:$PATH"
-        ls -lah "$(pwd)/.venv/bin"
         tox
