@@ -13,7 +13,9 @@ env:
 
 install:
   - pip freeze | xargs pip uninstall -y
-  - pip install --upgrade pip tox tox-travis
+  - pip install --upgrade pip tox tox-travis setuptools==57.5.0
+# bandcamp-dl uses demjson which uses use_2to3 which will not work with setuptools 58 and higher https://setuptools.pypa.io/en/latest/history.html#v58-0-0
+# https://github.com/nielstron/demjson3
   - curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
   - export PATH="$HOME/.local/bin:$PATH"
   - poetry config installer.parallel false
