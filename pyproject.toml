@@ -67,7 +67,8 @@ youtube_dl = "2021.6.6"
 #youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
 scdl = { git = "https://github.com/flyingrub/scdl.git" }
-bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
+bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"

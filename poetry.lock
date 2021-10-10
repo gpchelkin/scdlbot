@@ -112,7 +112,7 @@ develop = false
 [package.dependencies]
 beautifulsoup4 = "*"
 chardet = "*"
-demjson = "*"
+demjson3 = "*"
 docopt = "*"
 mock = "*"
 mutagen = "*"
@@ -124,9 +124,9 @@ dev = ["requests-cache", "pytest"]
 
 [package.source]
 type = "git"
-url = "https://github.com/iheanyi/bandcamp-dl.git"
-reference = "master"
-resolved_reference = "3019b26c462c00c3672eaa91a83da73f65cd8e6a"
+url = "https://github.com/gpchelkin/bandcamp-dl.git"
+reference = "demjson3"
+resolved_reference = "d9b9cea8d81338972b85fb6fc943176cdacd608f"
 
 [[package]]
 name = "bandit"
@@ -432,8 +432,8 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
-name = "demjson"
-version = "2.2.4"
+name = "demjson3"
+version = "3.0.5"
 description = "encoder, decoder, and lint/validator for JSON (JavaScript Object Notation) compliant with RFC 7159"
 category = "main"
 optional = false
@@ -1892,7 +1892,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "32cf71fd89401e8bef421c2297dea20d9283c6d93a8d60f2d2e4f103ad854bde"
+content-hash = "da31fb895eca7afa3053aa1dffafd57023f4439b6bc1e978e95f39e087fff871"
 
 [metadata.files]
 aiocontextvars = [
@@ -2121,8 +2121,8 @@ decorator = [
     {file = "decorator-5.1.0-py3-none-any.whl", hash = "sha256:7b12e7c3c6ab203a29e157335e9122cb03de9ab7264b137594103fd4a683b374"},
     {file = "decorator-5.1.0.tar.gz", hash = "sha256:e59913af105b9860aa2c8d3272d9de5a56a4e608db9a2f167a8480b323d529a7"},
 ]
-demjson = [
-    {file = "demjson-2.2.4.tar.gz", hash = "sha256:31de2038a0fdd9c4c11f8bf3b13fe77bc2a128307f965c8d5fb4dc6d6f6beb79"},
+demjson3 = [
+    {file = "demjson3-3.0.5.tar.gz", hash = "sha256:ab9aabdd85695f3684fc296f39766a2730f6c8de81d23f7048073dfe2f616d80"},
 ]
 dictdiffer = [
     {file = "dictdiffer-0.9.0-py2.py3-none-any.whl", hash = "sha256:442bfc693cfcadaf46674575d2eba1c53b42f5e404218ca2c2ff549f2df56595"},
