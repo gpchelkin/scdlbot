@@ -7,9 +7,9 @@ boltons==21.0.0
 cached-property==1.5.2; python_version < "3.8" and python_version >= "3.6"
 celery==5.1.2; python_version >= "3.6"
 certifi==2021.10.8; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0"
-cffi==1.14.6; python_version >= "3.6"
+cffi==1.15.0; python_version >= "3.6"
 chardet==4.0.0; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
-charset-normalizer==2.0.6; python_full_version >= "3.6.0" and python_version >= "3"
+charset-normalizer==2.0.7; python_full_version >= "3.6.0" and python_version >= "3"
 click-didyoumean==0.0.3; python_version >= "3.6"
 click-plugins==1.1.1; python_version >= "3.6"
 click-repl==0.2.0; python_version >= "3.6"
@@ -21,29 +21,29 @@ demjson3==3.0.5; python_version >= "3.4" and python_version < "4.0"
 docopt==0.6.2; python_version >= "3.4" and python_version < "4.0"
 ffmpeg-python==0.2.0
 future==0.18.2; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
-idna==3.2; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.5"
+idna==3.3; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.5"
 importlib-metadata==4.8.1; python_version < "3.8" and python_version >= "3.6"
 kombu==5.1.0; python_version >= "3.6"
 mock==4.0.3; python_version >= "3.6" and python_version < "4.0"
 mutagen==1.45.1; python_version >= "3.5" and python_version < "4"
 patool==1.12
 plumbum==1.7.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_version > "3.4")
-prometheus-client==0.11.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
+prometheus-client==0.12.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
 prompt-toolkit==3.0.3; python_version >= "3.6"
-pycparser==2.20; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
+pycparser==2.21; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 pypiwin32==223; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_version > "3.4")
 python-telegram-bot==12.8
 python-telegram-handler==2.2.1
 pytz==2021.3; python_version >= "3.6"
-pywin32==301; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_version > "3.4")
+pywin32==302; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_version > "3.4")
 requests==2.26.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
-scdl @ git+https://github.com/flyingrub/scdl.git@master
+scdl @ git+https://github.com/gpchelkin/scdl.git@add_permalink_url_to_filename
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.3.0" and python_version >= "3.6" and python_version < "4.0"
-soupsieve==2.2.1; python_version >= "3.6" and python_version < "4.0" and python_full_version > "3.0.0"
+soupsieve==2.3; python_version >= "3.6" and python_version < "4.0" and python_full_version > "3.0.0"
 termcolor==1.1.0
 tornado==6.1; python_version >= "3.5"
 typing-extensions==3.10.0.2; python_version < "3.8" and python_version >= "3.6"
-unicode-slugify==0.1.3; python_version >= "3.4" and python_version < "4.0"
+unicode-slugify==0.1.5; python_version >= "3.4" and python_version < "4.0"
 unidecode==1.3.2; python_version >= "3.5" and python_version < "4.0"
 urllib3==1.26.7; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version < "4"
 vine==5.0.0; python_version >= "3.6"
