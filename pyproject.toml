@@ -66,7 +66,9 @@ youtube_dl = "2021.6.6"
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
 #yt-dlp = "2021.10.10"
 #scdl = { git = "https://github.com/flyingrub/scdl.git" }
-scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
+#scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
+scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
+#scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
 #bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
 bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
 
