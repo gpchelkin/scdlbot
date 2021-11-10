@@ -516,6 +516,21 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "fake-useragent"
+version = "0.1.12"
+description = "Up to date simple useragent faker with real world database"
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/Jordan9675/fake-useragent.git"
+reference = "master"
+resolved_reference = "b608f96232874c32cd5e878f12dbe1a5bb5c8eaa"
+
+[[package]]
 name = "ffmpeg-python"
 version = "0.2.0"
 description = "Python bindings for FFmpeg - with complex filtering support"
@@ -1480,15 +1495,16 @@ develop = false
 [package.dependencies]
 clint = "*"
 docopt = "*"
+fake-useragent = "*"
 mutagen = "*"
 requests = "*"
 termcolor = "*"
 
 [package.source]
 type = "git"
-url = "https://github.com/def-hash/scdl.git"
-reference = "user-agent-fix"
-resolved_reference = "97368ec8c775d8641a6b4d9bad27381d2579f83f"
+url = "https://github.com/gpchelkin/scdl.git"
+reference = "add_permalink_url_to_filename"
+resolved_reference = "c9304f8f51e79023b4de0650d41c9b85a6905884"
 
 [[package]]
 name = "six"
@@ -1532,7 +1548,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "sphinx"
-version = "4.2.0"
+version = "4.3.0"
 description = "Python documentation generator"
 category = "dev"
 optional = false
@@ -1893,7 +1909,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "77b6fb4aa30b33bf865e986f5166af34deb7cfa0c199f398717888a4f595cead"
+content-hash = "b4e64ffff4a6881ce8585d598bbc2005ca7bd24500eb6054f090b7842bab069b"
 
 [metadata.files]
 aiocontextvars = [
@@ -2169,6 +2185,7 @@ dparse = [
 eradicate = [
     {file = "eradicate-2.0.0.tar.gz", hash = "sha256:27434596f2c5314cc9b31410c93d8f7e8885747399773cd088d3adea647a60c8"},
 ]
+fake-useragent = []
 ffmpeg-python = [
     {file = "ffmpeg-python-0.2.0.tar.gz", hash = "sha256:65225db34627c578ef0e11c8b1eb528bb35e024752f6f10b78c011f6f64c4127"},
     {file = "ffmpeg_python-0.2.0-py3-none-any.whl", hash = "sha256:ac441a0404e053f8b6a1113a77c0f452f1cfc62f6344a769475ffdc0f56c23c5"},
@@ -2654,8 +2671,8 @@ soupsieve = [
     {file = "soupsieve-2.3.tar.gz", hash = "sha256:e4860f889dfa88774c07da0b276b70c073b6470fa1a4a8350800bb7bce3dcc76"},
 ]
 sphinx = [
-    {file = "Sphinx-4.2.0-py3-none-any.whl", hash = "sha256:98a535c62a4fcfcc362528592f69b26f7caec587d32cd55688db580be0287ae0"},
-    {file = "Sphinx-4.2.0.tar.gz", hash = "sha256:94078db9184491e15bce0a56d9186e0aec95f16ac20b12d00e06d4e36f1058a6"},
+    {file = "Sphinx-4.3.0-py3-none-any.whl", hash = "sha256:7e2b30da5f39170efcd95c6270f07669d623c276521fee27ad6c380f49d2bf5b"},
+    {file = "Sphinx-4.3.0.tar.gz", hash = "sha256:6d051ab6e0d06cba786c4656b0fe67ba259fe058410f49e95bee6e49c4052cbf"},
 ]
 sphinx-autodoc-typehints = [
     {file = "sphinx-autodoc-typehints-1.12.0.tar.gz", hash = "sha256:193617d9dbe0847281b1399d369e74e34cd959c82e02c7efde077fca908a9f52"},
