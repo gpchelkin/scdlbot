@@ -10,7 +10,7 @@ python:
 - '3.10'
 
 env:
-  - POETRY_VERSION=1.1.11
+  - POETRY_VERSION=1.1.12
 
 install:
   - pip freeze | xargs pip uninstall -y
