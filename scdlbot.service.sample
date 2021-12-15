@@ -16,6 +16,7 @@ Group=www-data
 Type=simple
 EnvironmentFile=-/etc/default/scdlbot
 Environment=PYTHONUNBUFFERED=1
+Environment=XDG_CONFIG_HOME=/scdlbothome
 ExecStart=/usr/local/bin/scdlbot
 #ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
 #StandardOutput=syslog
