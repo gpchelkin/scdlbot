@@ -18,17 +18,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "amqp"
-version = "5.0.7"
-description = "Low-level AMQP client for Python (fork of amqplib)."
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-vine = "5.0.0"
-
-[[package]]
 name = "args"
 version = "0.1.0"
 description = "Command Arguments for Humans."
@@ -158,25 +147,9 @@ html5lib = ["html5lib"]
 lxml = ["lxml"]
 
 [[package]]
-name = "billiard"
-version = "3.6.4.0"
-description = "Python multiprocessing fork with improvements and bugfixes"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "boltons"
 version = "21.0.0"
 description = "When they're not builtins, they're boltons."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
-name = "cached-property"
-version = "1.5.2"
-description = "A decorator for caching properties in classes."
 category = "main"
 optional = false
 python-versions = "*"
@@ -193,57 +166,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 redis = ["redis (>=3.3.6,<4.0.0)"]
 memcached = ["python-memcached (>=1.59,<2.0)"]
 msgpack = ["msgpack-python (>=0.5,<0.6)"]
-
-[[package]]
-name = "celery"
-version = "5.1.2"
-description = "Distributed Task Queue."
-category = "main"
-optional = false
-python-versions = ">=3.6,"
-
-[package.dependencies]
-billiard = ">=3.6.4.0,<4.0"
-click = ">=7.0,<8.0"
-click-didyoumean = ">=0.0.3"
-click-plugins = ">=1.1.1"
-click-repl = ">=0.1.6"
-kombu = ">=5.1.0,<6.0"
-pytz = ">0.0-dev"
-vine = ">=5.0.0,<6.0"
-
-[package.extras]
-arangodb = ["pyArango (>=1.3.2)"]
-auth = ["cryptography"]
-azureblockblob = ["azure-storage-blob (==12.6.0)"]
-brotli = ["brotli (>=1.0.0)", "brotlipy (>=0.7.0)"]
-cassandra = ["cassandra-driver (<3.21.0)"]
-consul = ["python-consul2"]
-cosmosdbsql = ["pydocumentdb (==2.3.2)"]
-couchbase = ["couchbase (>=3.0.0)"]
-couchdb = ["pycouchdb"]
-django = ["Django (>=1.11)"]
-dynamodb = ["boto3 (>=1.9.178)"]
-elasticsearch = ["elasticsearch"]
-eventlet = ["eventlet (>=0.26.1)"]
-gevent = ["gevent (>=1.0.0)"]
-librabbitmq = ["librabbitmq (>=1.5.0)"]
-memcache = ["pylibmc"]
-mongodb = ["pymongo[srv] (>=3.3.0)"]
-msgpack = ["msgpack"]
-pymemcache = ["python-memcached"]
-pyro = ["pyro4"]
-pytest = ["pytest-celery"]
-redis = ["redis (>=3.2.0)"]
-s3 = ["boto3 (>=1.9.125)"]
-slmq = ["softlayer-messaging (>=1.0.3)"]
-solar = ["ephem"]
-sqlalchemy = ["sqlalchemy"]
-sqs = ["boto3 (>=1.9.125)", "pycurl (==7.43.0.5)"]
-tblib = ["tblib (>=1.3.0)", "tblib (>=1.5.0)"]
-yaml = ["PyYAML (>=3.10)"]
-zookeeper = ["kazoo (>=1.3.1)"]
-zstd = ["zstandard"]
 
 [[package]]
 name = "certifi"
@@ -285,49 +207,15 @@ unicode_backport = ["unicodedata2"]
 
 [[package]]
 name = "click"
-version = "7.1.2"
+version = "8.0.3"
 description = "Composable command line interface toolkit"
-category = "main"
+category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-
-[[package]]
-name = "click-didyoumean"
-version = "0.0.3"
-description = "Enable git-like did-you-mean feature in click."
-category = "main"
-optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-click = "*"
-
-[[package]]
-name = "click-plugins"
-version = "1.1.1"
-description = "An extension module for click to enable registering CLI commands via setuptools entry-points."
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-click = ">=4.0"
-
-[package.extras]
-dev = ["pytest (>=3.6)", "pytest-cov", "wheel", "coveralls"]
-
-[[package]]
-name = "click-repl"
-version = "0.2.0"
-description = "REPL plugin for Click"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-click = "*"
-prompt-toolkit = "*"
-six = "*"
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "clint"
@@ -837,7 +725,7 @@ test = ["flake8 (>=3.8.4,<3.9.0)", "pycodestyle (>=2.6.0,<2.7.0)", "mypy (>=0.91
 name = "importlib-metadata"
 version = "4.2.0"
 description = "Read metadata from Python packages"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -906,36 +794,6 @@ description = "JSON Matching Expressions"
 category = "dev"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-
-[[package]]
-name = "kombu"
-version = "5.1.0"
-description = "Messaging library for Python."
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-amqp = ">=5.0.6,<6.0.0"
-cached-property = {version = "*", markers = "python_version < \"3.8\""}
-importlib-metadata = {version = ">=0.18", markers = "python_version < \"3.8\""}
-vine = "*"
-
-[package.extras]
-azureservicebus = ["azure-servicebus (>=7.0.0)"]
-azurestoragequeues = ["azure-storage-queue"]
-consul = ["python-consul (>=0.6.0)"]
-librabbitmq = ["librabbitmq (>=1.5.2)"]
-mongodb = ["pymongo (>=3.3.0)"]
-msgpack = ["msgpack"]
-pyro = ["pyro4"]
-qpid = ["qpid-python (>=0.26)", "qpid-tools (>=0.26)"]
-redis = ["redis (>=3.3.11)"]
-slmq = ["softlayer-messaging (>=1.0.3)"]
-sqlalchemy = ["sqlalchemy"]
-sqs = ["boto3 (>=1.4.4)", "pycurl (==7.43.0.2)", "urllib3 (<1.26)"]
-yaml = ["PyYAML (>=3.10)"]
-zookeeper = ["kazoo (>=1.3.1)"]
 
 [[package]]
 name = "loguru"
@@ -1211,17 +1069,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 twisted = ["twisted"]
 
 [[package]]
-name = "prompt-toolkit"
-version = "3.0.3"
-description = "Library for building powerful interactive command lines in Python"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-wcwidth = "*"
-
-[[package]]
 name = "py"
 version = "1.11.0"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
@@ -1420,7 +1267,7 @@ requests = "*"
 name = "pytz"
 version = "2021.3"
 description = "World timezone definitions, modern and historical"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -1811,7 +1658,7 @@ python-versions = "*"
 name = "typing-extensions"
 version = "4.0.1"
 description = "Backported and Experimental Type Hints for Python 3.6+"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -1849,14 +1696,6 @@ secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "cer
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
-name = "vine"
-version = "5.0.0"
-description = "Promises, promises, promises."
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[[package]]
 name = "virtualenv"
 version = "20.10.0"
 description = "Virtual Python Environment builder"
@@ -1876,14 +1715,6 @@ six = ">=1.9.0,<2"
 [package.extras]
 docs = ["proselint (>=0.10.2)", "sphinx (>=3)", "sphinx-argparse (>=0.2.5)", "sphinx-rtd-theme (>=0.4.3)", "towncrier (>=21.3)"]
 testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", "pytest (>=4)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.1)", "pytest-mock (>=2)", "pytest-randomly (>=1)", "pytest-timeout (>=1)", "packaging (>=20.0)"]
-
-[[package]]
-name = "wcwidth"
-version = "0.2.5"
-description = "Measures the displayed width of unicode strings in a terminal"
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "wemake-python-styleguide"
@@ -1938,7 +1769,7 @@ python-versions = "*"
 name = "zipp"
 version = "3.6.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -1949,7 +1780,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "707648f4d762b4cdb4ae0b79639a1022887ff200acd791b9ff10329eebc5ed9e"
+content-hash = "4dc87d68697c9e1498d40e9aeca746b542621e0770eb3b865ced1f61b2fe4931"
 
 [metadata.files]
 aiocontextvars = [
@@ -1959,10 +1790,6 @@ aiocontextvars = [
 alabaster = [
     {file = "alabaster-0.7.12-py2.py3-none-any.whl", hash = "sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359"},
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
-]
-amqp = [
-    {file = "amqp-5.0.7-py3-none-any.whl", hash = "sha256:4d9cb6b5d69183ba279e97382ff68a071864c25b561d206dab73499d3ed26d1c"},
-    {file = "amqp-5.0.7.tar.gz", hash = "sha256:d757b78fd7d3c6bb60e3ee811b68145583643747ed3ec253329f086aa3a72a5d"},
 ]
 args = [
     {file = "args-0.1.0.tar.gz", hash = "sha256:a785b8d837625e9b61c39108532d95b85274acd679693b71ebb5156848fcf814"},
@@ -2001,25 +1828,13 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.10.0-py3-none-any.whl", hash = "sha256:9a315ce70049920ea4572a4055bc4bd700c940521d36fc858205ad4fcde149bf"},
     {file = "beautifulsoup4-4.10.0.tar.gz", hash = "sha256:c23ad23c521d818955a4151a67d81580319d4bf548d3d49f4223ae041ff98891"},
 ]
-billiard = [
-    {file = "billiard-3.6.4.0-py3-none-any.whl", hash = "sha256:87103ea78fa6ab4d5c751c4909bcff74617d985de7fa8b672cf8618afd5a875b"},
-    {file = "billiard-3.6.4.0.tar.gz", hash = "sha256:299de5a8da28a783d51b197d496bef4f1595dd023a93a4f59dde1886ae905547"},
-]
 boltons = [
     {file = "boltons-21.0.0-py2.py3-none-any.whl", hash = "sha256:b9bb7b58b2b420bbe11a6025fdef6d3e5edc9f76a42fb467afe7ca212ef9948b"},
     {file = "boltons-21.0.0.tar.gz", hash = "sha256:65e70a79a731a7fe6e98592ecfb5ccf2115873d01dbc576079874629e5c90f13"},
 ]
-cached-property = [
-    {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
-    {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
-]
 cachy = [
     {file = "cachy-0.3.0-py2.py3-none-any.whl", hash = "sha256:338ca09c8860e76b275aff52374330efedc4d5a5e45dc1c5b539c1ead0786fe7"},
     {file = "cachy-0.3.0.tar.gz", hash = "sha256:186581f4ceb42a0bbe040c407da73c14092379b1e4c0e327fdb72ae4a9b269b1"},
-]
-celery = [
-    {file = "celery-5.1.2-py3-none-any.whl", hash = "sha256:9dab2170b4038f7bf10ef2861dbf486ddf1d20592290a1040f7b7a1259705d42"},
-    {file = "celery-5.1.2.tar.gz", hash = "sha256:8d9a3de9162965e97f8e8cc584c67aad83b3f7a267584fa47701ed11c3e0d4b0"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -2086,19 +1901,8 @@ charset-normalizer = [
     {file = "charset_normalizer-2.0.9-py3-none-any.whl", hash = "sha256:1eecaa09422db5be9e29d7fc65664e6c33bd06f9ced7838578ba40d58bdf3721"},
 ]
 click = [
-    {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
-    {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
-]
-click-didyoumean = [
-    {file = "click-didyoumean-0.0.3.tar.gz", hash = "sha256:112229485c9704ff51362fe34b2d4f0b12fc71cc20f6d2b3afabed4b8bfa6aeb"},
-]
-click-plugins = [
-    {file = "click-plugins-1.1.1.tar.gz", hash = "sha256:46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"},
-    {file = "click_plugins-1.1.1-py2.py3-none-any.whl", hash = "sha256:5d262006d3222f5057fd81e1623d4443e41dcda5dc815c06b442aa3c02889fc8"},
-]
-click-repl = [
-    {file = "click-repl-0.2.0.tar.gz", hash = "sha256:cd12f68d745bf6151210790540b4cb064c7b13e571bc64b6957d98d120dacfd8"},
-    {file = "click_repl-0.2.0-py3-none-any.whl", hash = "sha256:94b3fbbc9406a236f176e0506524b2937e4b23b6f4c0c0b2a0a83f8a64e9194b"},
+    {file = "click-8.0.3-py3-none-any.whl", hash = "sha256:353f466495adaeb40b6b5f592f9f91cb22372351c84caeb068132442a4518ef3"},
+    {file = "click-8.0.3.tar.gz", hash = "sha256:410e932b050f5eed773c4cda94de75971c89cdb3155a72a0831139a79e5ecb5b"},
 ]
 clint = [
     {file = "clint-0.5.1.tar.gz", hash = "sha256:05224c32b1075563d0b16d0015faaf9da43aa214e4a2140e51f08789e7a4c5aa"},
@@ -2380,10 +2184,6 @@ jmespath = [
     {file = "jmespath-0.10.0-py2.py3-none-any.whl", hash = "sha256:cdf6525904cc597730141d61b36f2e4b8ecc257c420fa2f4549bac2c2d0cb72f"},
     {file = "jmespath-0.10.0.tar.gz", hash = "sha256:b85d0567b8666149a93172712e68920734333c0ce7e89b78b3e987f71e5ed4f9"},
 ]
-kombu = [
-    {file = "kombu-5.1.0-py3-none-any.whl", hash = "sha256:e2dedd8a86c9077c350555153825a31e456a0dc20c15d5751f00137ec9c75f0a"},
-    {file = "kombu-5.1.0.tar.gz", hash = "sha256:01481d99f4606f6939cdc9b637264ed353ee9e3e4f62cfb582324142c41a572d"},
-]
 loguru = [
     {file = "loguru-0.5.3-py3-none-any.whl", hash = "sha256:f8087ac396b5ee5f67c963b495d615ebbceac2796379599820e324419d53667c"},
     {file = "loguru-0.5.3.tar.gz", hash = "sha256:b28e72ac7a98be3d28ad28570299a393dfcd32e5e3f6a353dec94675767b6319"},
@@ -2544,10 +2344,6 @@ plumbum = [
 prometheus-client = [
     {file = "prometheus_client-0.12.0-py2.py3-none-any.whl", hash = "sha256:317453ebabff0a1b02df7f708efbab21e3489e7072b61cb6957230dd004a0af0"},
     {file = "prometheus_client-0.12.0.tar.gz", hash = "sha256:1b12ba48cee33b9b0b9de64a1047cbd3c5f2d0ab6ebcead7ddda613a750ec3c5"},
-]
-prompt-toolkit = [
-    {file = "prompt_toolkit-3.0.3-py3-none-any.whl", hash = "sha256:c93e53af97f630f12f5f62a3274e79527936ed466f038953dfa379d4941f651a"},
-    {file = "prompt_toolkit-3.0.3.tar.gz", hash = "sha256:a402e9bf468b63314e37460b68ba68243d55b2f8c4d0192f85a019af3945050e"},
 ]
 py = [
     {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
@@ -2900,17 +2696,9 @@ urllib3 = [
     {file = "urllib3-1.26.7-py2.py3-none-any.whl", hash = "sha256:c4fdf4019605b6e5423637e01bc9fe4daef873709a7973e195ceba0a62bbc844"},
     {file = "urllib3-1.26.7.tar.gz", hash = "sha256:4987c65554f7a2dbf30c18fd48778ef124af6fab771a377103da0585e2336ece"},
 ]
-vine = [
-    {file = "vine-5.0.0-py2.py3-none-any.whl", hash = "sha256:4c9dceab6f76ed92105027c49c823800dd33cacce13bdedc5b914e3514b7fb30"},
-    {file = "vine-5.0.0.tar.gz", hash = "sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e"},
-]
 virtualenv = [
     {file = "virtualenv-20.10.0-py2.py3-none-any.whl", hash = "sha256:4b02e52a624336eece99c96e3ab7111f469c24ba226a53ec474e8e787b365814"},
     {file = "virtualenv-20.10.0.tar.gz", hash = "sha256:576d05b46eace16a9c348085f7d0dc8ef28713a2cabaa1cf0aea41e8f12c9218"},
-]
-wcwidth = [
-    {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
-    {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
 ]
 wemake-python-styleguide = [
     {file = "wemake-python-styleguide-0.16.0.tar.gz", hash = "sha256:3bf0a4962404e6fd6fa479e72e2ba3fb75d5920ea6c44b72b45240c9e519543c"},
