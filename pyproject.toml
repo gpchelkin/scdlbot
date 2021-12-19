@@ -75,7 +75,7 @@ bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", br
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.910"
+mypy = "^0.920"
 
 wemake-python-styleguide = "^0.16"
 flake8-pytest = "^1.3"
