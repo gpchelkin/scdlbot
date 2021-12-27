@@ -37,23 +37,24 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.9"
 #python-telegram-bot = "13.7"
 python-telegram-bot = "12.8"
 python-telegram-handler = "2.2.1"
 boltons = "21.0.0"
-plumbum = "1.7.1"
+plumbum = "1.7.2"
 ffmpeg-python = "0.2.0"
 mutagen = "1.45.1"
 patool = "1.12"
 requests = "^2.26.0"
 prometheus_client = "^0.12"
-celery = "^5.1.0"
+#celery = "^5.2.1"
 #pyshorteners = "0.6.1"
 #transliterate = "1.10.2"
 
 ### For publishing to PyPI:
-youtube_dl = "2021.6.6"
+yt-dlp = "2021.12.25"
+#youtube_dl = "2021.12.17"
 #youtube-dlc = "2020.11.11.post3"
 #scdl = "1.6.12"
 #bandcamp-downloader = "0.0.8.post12"
@@ -64,7 +65,6 @@ youtube_dl = "2021.6.6"
 #youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 #youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-#yt-dlp = "2021.10.10"
 scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 #scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
@@ -75,11 +75,11 @@ bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", br
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.910"
+mypy = "^0.930"
 
-wemake-python-styleguide = "^0.15"
+wemake-python-styleguide = "^0.16"
 flake8-pytest = "^1.3"
-flake8-pytest-style = "^1.5"
+flake8-pytest-style = "^1.6.0"
 nitpick = "^0.29.0"
 
 safety = "^1.10.0"
@@ -90,9 +90,11 @@ pytest-randomly = "^3.10"
 
 sphinx = "^4.3.0"
 sphinx-autodoc-typehints = "^1.12.0"
+recommonmark = "^0.7.1"
 doc8 = "^0.10"
-m2r2 = "^0.3.1"
-tomlkit = "^0.7"
+m2r2 = "^0.3.2"
+tomlkit = "^0.8"
+typing-extensions = "^4.0.1"
 
 tox = "^3.24"
 

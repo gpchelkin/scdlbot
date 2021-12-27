@@ -5,11 +5,15 @@ import pkg_resources
 import requests
 
 try:
-    import youtube_dl
-    youtube_dl_bin_name = 'youtube-dl'
+    import yt_dlp as youtube_dl
+    youtube_dl_bin_name = 'yt-dlp'
 except:
-    import youtube_dlc as youtube_dl
-    youtube_dl_bin_name = 'youtube-dlc'
+    try:
+        import youtube_dl
+        youtube_dl_bin_name = 'youtube-dl'
+    except:
+        import youtube_dlc as youtube_dl
+        youtube_dl_bin_name = 'youtube-dlc'
 
 from boltons.urlutils import URL
 from plumbum import local, ProcessExecutionError, ProcessTimedOut
