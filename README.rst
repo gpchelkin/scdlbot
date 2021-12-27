@@ -169,9 +169,9 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling mode (USE_WEBHOOK=0):
+    # For long polling mode (when USE_WEBHOOK=0):
     heroku local -e .env worker
-    # For webhook mode (USE_WEBHOOK=1):
+    # For webhook mode (when USE_WEBHOOK=1):
     heroku local -e .env web
 
 Using Python only
@@ -185,7 +185,7 @@ Using Python only
     env $(grep -v '^#' .env | xargs) python3 -m scdlbot
 
     # If you've installed package from PyPI into the system,
-    # you can also replace 'python3 -m scdlbot' with pure 'scdlbot'
+    # you can also replace 'python3 -m scdlbot' with only 'scdlbot'
 
 Deploying to `Heroku <https://heroku.com/>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -214,7 +214,7 @@ CLI <https://cli.heroku.com/>`__, not as much of a fun. Assuming you are in
     heroku create --buildpack heroku/python
     heroku buildpacks:set heroku/python
     # Add FFmpeg buildpack needed for youtube-dl & scdl:
-    heroku buildpacks:add --index 1 https://github.com/laddhadhiraj/heroku-buildpack-ffmpeg.git --app scdlbot
+    heroku buildpacks:add --index 1 https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git --app scdlbot
     # Deploy app to Heroku:
     git push heroku master
     # Set config vars automatically from your local .env file
