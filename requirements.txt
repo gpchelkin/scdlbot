@@ -5,12 +5,12 @@ boltons==21.0.0
 certifi==2021.10.8; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 cffi==1.15.0; python_version >= "3.6"
 chardet==4.0.0; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
-charset-normalizer==2.0.9; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
+charset-normalizer==2.0.10; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 clint==0.5.1; python_version >= "3.6"
 cryptography==36.0.1; python_version >= "3.6"
 dacite==1.6.0; python_version >= "3.6"
 dataclasses==0.8; python_version >= "3.6" and python_version < "3.7"
-decorator==5.1.0; python_version >= "3.5"
+decorator==5.1.1; python_version >= "3.5"
 demjson3==3.0.5; python_version >= "3.4" and python_version < "4.0"
 docopt==0.6.2; python_version >= "3.6" and python_version < "4.0"
 ffmpeg-python==0.2.0
@@ -28,7 +28,7 @@ python-dateutil==2.8.2; python_version >= "3.6" and python_full_version < "3.0.0
 python-telegram-bot==12.8
 python-telegram-handler==2.2.1
 pywin32==303; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0")
-requests==2.26.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
+requests==2.27.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
 scdl @ git+https://github.com/flyingrub/scdl.git@master ; python_version >= "3.6"
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.6" and python_version < "4.0" and python_full_version >= "3.3.0"
 soundcloud-v2==1.2.0; python_version >= "3.6"
@@ -37,6 +37,6 @@ termcolor==1.1.0; python_version >= "3.6"
 tornado==6.1; python_version >= "3.5"
 unicode-slugify==0.1.5; python_version >= "3.4" and python_version < "4.0"
 unidecode==1.3.2; python_version >= "3.5" and python_version < "4.0"
-urllib3==1.26.7; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version < "4" and python_version >= "3.6"
+urllib3==1.26.8; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version < "4" and python_version >= "3.6"
 websockets==9.1; python_full_version >= "3.6.1" and python_version >= "3.6"
-yt-dlp==2021.12.25; python_version >= "3.6"
+yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git@master ; python_version >= "3.6"

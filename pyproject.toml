@@ -53,7 +53,7 @@ prometheus_client = "^0.12"
 #transliterate = "1.10.2"
 
 ### For publishing to PyPI:
-yt-dlp = "2021.12.25"
+#yt-dlp = "2021.12.25"
 #youtube_dl = "2021.12.17"
 #youtube-dlc = "2020.11.11.post3"
 #scdl = "1.6.12"
@@ -65,6 +65,7 @@ yt-dlp = "2021.12.25"
 #youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 #youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 scdl = { git = "https://github.com/flyingrub/scdl.git" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 #scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }

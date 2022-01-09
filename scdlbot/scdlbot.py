@@ -726,13 +726,12 @@ class ScdlBot:
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "").lower()
         file_size = os.path.getsize(file)
-        # FIXME unknown_video is for tiktok
-        if file_format not in ["mp3", "m4a", "mp4", "unknown_video"]:
+        if file_format not in ["mp3", "m4a", "mp4"]:
             raise FileNotSupportedError(file_format)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
             raise FileTooLargeError(file_size)
-        # FIXME unknown_video is for tiktok and also tiktok.mp4
-        if file_format not in ["mp3", "unknown_video"] and "tiktok." not in file:
+        # FIXME tiktok.mp4 is for tiktok
+        if file_format not in ["mp3"] and "tiktok." not in file:
             logger.info("Converting: %s", file)
             try:
                 file_converted = file.replace(file_ext, ".mp3")
@@ -841,8 +840,7 @@ class ScdlBot:
                         sent_audio_ids.append(audio_msg.audio.file_id)
                         logger.info("Sending succeeded: %s", file_name)
                         break
-                    # FIXME unknown_video is for tiktok
-                    elif file_part.endswith('.unknown_video') or "tiktok." in file_part:
+                    elif "tiktok." in file_part:
                         video = open(file_part, 'rb')
                         video_msg = bot.send_video(chat_id=chat_id,
                                                    reply_to_message_id=reply_to_message_id,
