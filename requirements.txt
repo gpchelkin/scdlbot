@@ -5,7 +5,7 @@ boltons==21.0.0
 certifi==2021.10.8; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 cffi==1.15.0; python_version >= "3.6"
 chardet==4.0.0; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
-charset-normalizer==2.0.10; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
+charset-normalizer==2.0.11; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 clint==0.5.1; python_version >= "3.6"
 cryptography==36.0.1; python_version >= "3.6"
 dacite==1.6.0; python_version >= "3.6"
@@ -21,9 +21,9 @@ mutagen==1.45.1; python_version >= "3.5" and python_version < "4"
 pathvalidate==2.5.0; python_version >= "3.6"
 patool==1.12
 plumbum==1.7.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
-prometheus-client==0.12.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.4.0")
+prometheus-client==0.13.1; python_version >= "3.6"
 pycparser==2.21; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
-pycryptodomex==3.12.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+pycryptodomex==3.14.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 python-dateutil==2.8.2; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.6"
 python-telegram-bot==12.8
 python-telegram-handler==2.2.1
@@ -31,7 +31,7 @@ pywin32==303; platform_system == "Windows" and platform_python_implementation !=
 requests==2.27.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
 scdl @ git+https://github.com/flyingrub/scdl.git@master ; python_version >= "3.6"
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.6" and python_version < "4.0" and python_full_version >= "3.3.0"
-soundcloud-v2==1.2.0; python_version >= "3.6"
+soundcloud-v2==1.3.0; python_version >= "3.6"
 soupsieve==2.3.1; python_version >= "3.6" and python_version < "4.0" and python_full_version > "3.0.0"
 termcolor==1.1.0; python_version >= "3.6"
 tornado==6.1; python_version >= "3.5"
