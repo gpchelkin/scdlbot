@@ -95,7 +95,7 @@ recommonmark = "^0.7.1"
 doc8 = "^0.10"
 m2r2 = "^0.3.2"
 tomlkit = "^0.9"
-typing-extensions = "^4.0.1"
+typing-extensions = "^4.1.1"
 
 tox = "^3.24"
 
