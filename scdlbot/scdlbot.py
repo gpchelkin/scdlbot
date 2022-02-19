@@ -572,9 +572,15 @@ class ScdlBot:
             host = urlparse(url).hostname
             ydl_opts = {}
             if host == "tiktok.com" or host.endswith(".tiktok.com"):
-                ydl_opts = {'outtmpl': os.path.join(download_dir, 'tiktok.%(ext)s')}
+                ydl_opts = {
+                    'outtmpl': os.path.join(download_dir, 'tiktok.%(ext)s'),
+                    'videoformat': 'mp4',
+                }
             elif "instagr" in host:
-                ydl_opts = {'outtmpl': os.path.join(download_dir, 'inst.%(ext)s')}
+                ydl_opts = {
+                    'outtmpl': os.path.join(download_dir, 'inst.%(ext)s'),
+                    'videoformat': 'mp4',
+                }
             else:
                 ydl_opts = {
                     'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
