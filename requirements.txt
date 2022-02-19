@@ -5,7 +5,7 @@ boltons==21.0.0
 certifi==2021.10.8; python_version >= "3.6" and python_full_version < "3.0.0" and python_version < "4.0" or python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 cffi==1.15.0; python_version >= "3.6"
 chardet==4.0.0; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
-charset-normalizer==2.0.11; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
+charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 clint==0.5.1; python_version >= "3.6"
 cryptography==36.0.1; python_version >= "3.6"
 dacite==1.6.0; python_version >= "3.6"
@@ -23,7 +23,7 @@ patool==1.12
 plumbum==1.7.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 prometheus-client==0.13.1; python_version >= "3.6"
 pycparser==2.21; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
-pycryptodomex==3.14.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
+pycryptodomex==3.14.1; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 python-dateutil==2.8.2; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.6"
 python-telegram-bot==12.8
 python-telegram-handler==2.2.1

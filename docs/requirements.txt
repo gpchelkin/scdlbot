@@ -2,10 +2,10 @@
 # to generate documentation.
 
 sphinx==4.4.0
-sphinx-autodoc-typehints==1.16.0
+sphinx-autodoc-typehints==1.17.0
 recommonmark==0.7.1
 m2r2==0.3.2
-tomlkit==0.9.0
+tomlkit==0.10.0
 
 # Dependencies of our project:
-typing-extensions==4.0.1
+typing-extensions==4.1.1
