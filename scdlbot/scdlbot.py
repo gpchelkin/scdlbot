@@ -458,8 +458,8 @@ class ScdlBot:
         urls_dict = {}
         for url_item in urls:
             url = url_item
-            # unshorten soundcloud.app.goo.gl and other links, but not tiktok:
-            if "tiktok" not in url_item.host:
+            # unshorten soundcloud.app.goo.gl and other links, but not tiktok or instagram:
+            if not ("tiktok" in url_item.host or "instagr" in url_item.host):
                 try:
                     url = URL(requests.head(url_item, allow_redirects=True).url)
                 except:
@@ -569,23 +569,26 @@ class ScdlBot:
             cmd = youtube_dl_func
             cmd_name = "youtube_dl_func"
             # TODO: set different ydl_opts for different sites
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
-                # default: %(autonumber)s - %(title)s-%(id)s.%(ext)s
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '128',
-                    },
-                    # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
-                ],
-            }
             host = urlparse(url).hostname
+            ydl_opts = {}
             if host == "tiktok.com" or host.endswith(".tiktok.com"):
-                ydl_opts['postprocessors'] = []
-                ydl_opts['outtmpl'] = os.path.join(download_dir, 'tiktok.%(ext)s')
+                ydl_opts = {'outtmpl': os.path.join(download_dir, 'tiktok.%(ext)s')}
+            elif "instagr" in host:
+                ydl_opts = {'outtmpl': os.path.join(download_dir, 'inst.%(ext)s')}
+            else:
+                ydl_opts = {
+                    'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
+                    # default: %(autonumber)s - %(title)s-%(id)s.%(ext)s
+                    'format': 'bestaudio/best',
+                    'postprocessors': [
+                        {
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '128',
+                        },
+                        # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
+                    ],
+                }
             if proxy:
                 ydl_opts['proxy'] = proxy
             if source_ip:
@@ -730,8 +733,8 @@ class ScdlBot:
             raise FileNotSupportedError(file_format)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
             raise FileTooLargeError(file_size)
-        # FIXME tiktok.mp4 is for tiktok
-        if file_format not in ["mp3"] and "tiktok." not in file:
+        # FIXME tiktok.mp4 is for tiktok, inst.mp4 for instagram
+        if file_format not in ["mp3"] and not ("tiktok." in file or "inst." in file):
             logger.info("Converting: %s", file)
             try:
                 file_converted = file.replace(file_ext, ".mp3")
@@ -840,12 +843,17 @@ class ScdlBot:
                         sent_audio_ids.append(audio_msg.audio.file_id)
                         logger.info("Sending succeeded: %s", file_name)
                         break
-                    elif "tiktok." in file_part:
+                    elif "tiktok." in file_part or "inst." in file_part:
                         video = open(file_part, 'rb')
+                        duration = float(ffmpeg.probe(file_part)['format']['duration'])
+                        videostream = next(item for item in ffmpeg.probe(file_part)['streams'] if item["codec_type"] == "video")
+                        width = int(videostream['width'])
+                        height = int(videostream['height'])
                         video_msg = bot.send_video(chat_id=chat_id,
                                                    reply_to_message_id=reply_to_message_id,
                                                    video=video,
-                                                   # duration=duration,
+                                                   supports_streaming=True,
+                                                   duration=duration, width=width, height=height,
                                                    caption=caption_full,
                                                    parse_mode='Markdown')
                         sent_audio_ids.append(video_msg.video.file_id)
