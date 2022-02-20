@@ -580,6 +580,10 @@ class ScdlBot:
                 ydl_opts = {
                     'outtmpl': os.path.join(download_dir, 'inst.%(ext)s'),
                     'videoformat': 'mp4',
+                    'postprocessors': [{
+                        'key': 'FFmpegVideoConvertor',
+                        'preferedformat': 'mp4',
+                    }],
                 }
             else:
                 ydl_opts = {
