@@ -97,7 +97,7 @@ m2r2 = "^0.3.2"
 tomlkit = "^0.10"
 typing-extensions = "^4.1.1"
 
-tox = "^3.24"
+tox = "^3.25"
 
 
 [tool.dephell.main]
