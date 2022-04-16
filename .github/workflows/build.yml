@@ -1,19 +1,21 @@
 name: build
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
       matrix:
         python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
 
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -21,9 +23,8 @@ jobs:
 
     - name: Install tox and poetry
       run: |
-        # pipes do not work in GitHub Actions #TODO
-        # pip freeze | xargs pip uninstall -y
-        pip install --upgrade pip setuptools tox tox-gh-actions
+        pip freeze | xargs pip uninstall -y
+        pip install --upgrade pip setuptools wheel tox tox-gh-actions
         export POETRY_VERSION=1.1.13
         wget "https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py"
         python "install-poetry.py"
