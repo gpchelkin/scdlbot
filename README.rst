@@ -104,12 +104,14 @@ Requirements
 
 Those should be available in your ``PATH``:
 
--  `Python 3.6+ <https://www.python.org/>`__
+-  `Python 3.6+ <https://www.python.org>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ and `poetry <https://python-poetry.org/>`__ are recommended)
 -  `FFmpeg 4.0+ <https://ffmpeg.org/download.html>`__ if not running on Heroku
-   (fresh builds for `Windows, macOS <https://ffmpeg.zeranoe.com/builds/>`__
+   (fresh builds for
+   `Windows <https://www.gyan.dev/ffmpeg/builds/#release-builds>`__,
+   `macOS <https://evermeet.cx/ffmpeg/>`__
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
--  `Heroku CLI <https://cli.heroku.com/>`__ is recommended if you want to deploy to Heroku
+-  `Heroku CLI <https://cli.heroku.com>`__ is recommended if you want to deploy to Heroku
 
 Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
