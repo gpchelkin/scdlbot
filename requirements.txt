@@ -9,7 +9,7 @@ cffi==1.15.0; platform_python_implementation != "CPython" and python_version >= 
 chardet==4.0.0; python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.5.0"
 charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.6" and python_version < "4.0"
 clint==0.5.1; python_version >= "3.6"
-cryptography==36.0.2; python_version >= "3.6"
+cryptography==37.0.1; python_version >= "3.6"
 dacite==1.6.0; python_version >= "3.6"
 dataclasses==0.8; python_version >= "3.6" and python_version < "3.7"
 decorator==5.1.1; python_version >= "3.5"
