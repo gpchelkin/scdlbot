@@ -26,8 +26,8 @@ Music Downloader Telegram Bot aka scdlbot
         :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3Abuild
         :alt: GitHub Actions Build Status
 
-.. image:: https://github.com/gpchelkin/scdlbot/workflows/CodeQL/badge.svg?branch=master&event=push
-        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3ACodeQL
+.. image:: https://github.com/gpchelkin/scdlbot/actions/workflows/codeql-analysis.yml/badge.svg?branch=master&event=push
+        :target: https://github.com/gpchelkin/scdlbot/actions/workflows/codeql-analysis.yml
         :alt: GitHub Actions CodeQL Status
 
 .. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=active+issues&show_trend=true
