@@ -44,7 +44,7 @@ sphinx = { version = "^4.5",  optional = true }
 sphinx-autodoc-typehints = { version = "^1.12", optional = true }
 recommonmark = { version = "^0.7", optional = true }
 m2r2 = { version = "^0.3",  optional = true }
-tomlkit = { version = "^0.10", optional = true }
+tomlkit = { version = "^0.11", optional = true }
 typing-extensions = { version = "^4.1", optional = true }
 
 # Requirements of project's code:
@@ -86,7 +86,7 @@ bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", bran
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.950"
+mypy = "^0.960"
 
 wemake-python-styleguide = "^0.16"
 flake8-pytest = "^1.3"
