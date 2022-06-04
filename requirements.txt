@@ -18,7 +18,7 @@ docopt==0.6.2; python_version >= "3.6"
 ffmpeg-python==0.2.0
 future==0.18.2; python_version >= "2.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
 idna==3.3; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6"
-lxml==4.8.0; python_version >= "3.4" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.4"
+lxml==4.9.0; python_version >= "3.4" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.4"
 mock==4.0.3; python_version >= "3.6"
 mutagen==1.45.1; python_version >= "3.5" and python_version < "4"
 pathvalidate==2.5.0; python_version >= "3.6"
@@ -34,7 +34,7 @@ pywin32==304; platform_system == "Windows" and platform_python_implementation !=
 requests==2.27.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
 scdl @ git+https://github.com/flyingrub/scdl.git@master ; python_version >= "3.6"
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.6"
-soundcloud-v2==1.3.0; python_version >= "3.6"
+soundcloud-v2==1.3.1; python_version >= "3.6"
 soupsieve==2.3.2.post1; python_full_version >= "3.6.0" and python_version >= "3.6"
 termcolor==1.1.0; python_version >= "3.6"
 tomlkit==0.11.0; python_version >= "3.6" and python_version < "4.0"
