@@ -7,7 +7,7 @@ brotlicffi==1.0.9.2; platform_python_implementation != "CPython" and python_vers
 certifi==2022.6.15; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6"
 cffi==1.15.1; platform_python_implementation != "CPython" and python_version >= "3.6"
 chardet==5.0.0; python_version >= "3.6"
-charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.6"
+charset-normalizer==2.1.0; python_full_version >= "3.6.0" and python_version >= "3.6"
 clint==0.5.1; python_version >= "3.6"
 cryptography==37.0.3; python_version >= "3.6"
 dacite==1.6.0; python_version >= "3.6"
