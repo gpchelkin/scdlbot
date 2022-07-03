@@ -1795,7 +1795,7 @@ dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
 
 [[package]]
 name = "yt-dlp"
-version = "2022.6.29"
+version = "2022.5.18"
 description = "A youtube-dl fork with additional features and patches"
 category = "main"
 optional = false
@@ -1812,9 +1812,9 @@ websockets = "*"
 
 [package.source]
 type = "git"
-url = "https://github.com/yt-dlp/yt-dlp.git"
-reference = "master"
-resolved_reference = "385f7f38957e21701593ff1229295bf4ca00eba0"
+url = "https://github.com/pritam20ps05/yt-dlp.git"
+reference = "instagram_fix"
+resolved_reference = "7699d34c3e79d4592646e217bb261eb22e73c842"
 
 [[package]]
 name = "zipp"
@@ -1834,7 +1834,7 @@ docs = ["sphinx", "sphinx-autodoc-typehints", "recommonmark", "m2r2", "tomlkit",
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.9"
-content-hash = "9898f44c8bb1231f9300f4eefa8e7b108a2de81be7df88058edee04b707352e7"
+content-hash = "8bf2e06e20b9f39441b324f555183eed7772b11ce91cbec62fe03742fe918855"
 
 [metadata.files]
 aiocontextvars = [
