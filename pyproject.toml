@@ -37,7 +37,7 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.6.9"
+python = "^3.7"
 
 # Docs, optional, use `poetry install -E docs` to install them:
 sphinx = { version = "^5.0",  optional = true }
@@ -75,8 +75,8 @@ prometheus_client = "^0.14.0"
 #youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 #youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 #youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-#yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
-yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+#yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
 #scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 #scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
@@ -95,7 +95,7 @@ flake8-pytest-style = "^1.6.0"
 doc8 = "^0.11"
 nitpick = "^0.30.0"
 
-safety = "^2.0.0"
+safety = "^2.1.0"
 
 pytest = "^7.0.1"
 pytest-cov = "^3.0"
