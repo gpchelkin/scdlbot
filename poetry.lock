@@ -580,7 +580,7 @@ flake8 = "*"
 
 [[package]]
 name = "flake8-pytest"
-version = "1.3"
+version = "1.4"
 description = "pytest assert checker plugin for flake8"
 category = "dev"
 optional = false
@@ -1776,7 +1776,7 @@ docs = ["sphinx", "sphinx-autodoc-typehints", "recommonmark", "m2r2", "tomlkit",
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "3880cb3d112ce817e63f0396d902efd0af77251e4e392a68d0e693bafb0bdf3a"
+content-hash = "42ed258aad810578cc13a69ef4fe5e2f9a86a07d1d82586a46605788624f2788"
 
 [metadata.files]
 alabaster = [
@@ -2182,8 +2182,8 @@ flake8-polyfill = [
     {file = "flake8_polyfill-1.0.2-py2.py3-none-any.whl", hash = "sha256:12be6a34ee3ab795b19ca73505e7b55826d5f6ad7230d31b18e106400169b9e9"},
 ]
 flake8-pytest = [
-    {file = "flake8-pytest-1.3.tar.gz", hash = "sha256:b4d6703f7d7b646af1e2660809e795886dd349df11843613dbe6515efa82c0f3"},
-    {file = "flake8_pytest-1.3-py2.py3-none-any.whl", hash = "sha256:61686128a79e1513db575b2bcac351081d5a293811ddce2d5dfc25e8c762d33e"},
+    {file = "flake8-pytest-1.4.tar.gz", hash = "sha256:19f543b2d1cc89d61b76f19d0a9e58e9a110a035175f701b3425c363a7732c56"},
+    {file = "flake8_pytest-1.4-py2.py3-none-any.whl", hash = "sha256:97328f258ffad9fe18babb3b0714a16b121505ad3ac87d4e33020874555d0784"},
 ]
 flake8-pytest-style = [
     {file = "flake8-pytest-style-1.6.0.tar.gz", hash = "sha256:c1175713e9e11b78cd1a035ed0bca0d1e41d09c4af329a952750b61d4194ddac"},
