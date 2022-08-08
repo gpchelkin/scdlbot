@@ -32,7 +32,7 @@ python-telegram-bot==12.8
 python-telegram-handler==2.2.1
 pywin32==304; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0")
 requests==2.27.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
-scdl @ git+https://github.com/flyingrub/scdl.git@master ; python_version >= "3.6"
+scdl
 six==1.16.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.6"
 soundcloud-v2==1.3.1; python_version >= "3.6"
 soupsieve==2.3.2.post1; python_full_version >= "3.6.0" and python_version >= "3.6"
