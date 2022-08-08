@@ -154,19 +154,6 @@ python-versions = "*"
 cffi = ">=1.0.0"
 
 [[package]]
-name = "cachy"
-version = "0.3.0"
-description = "Cachy provides a simple yet effective caching library."
-category = "dev"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-
-[package.extras]
-msgpack = ["msgpack-python (>=0.5,<0.6)"]
-memcached = ["python-memcached (>=1.59,<2.0)"]
-redis = ["redis (>=3.3.6,<4.0.0)"]
-
-[[package]]
 name = "certifi"
 version = "2022.6.15"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -395,6 +382,14 @@ toml = "*"
 
 [package.extras]
 pipenv = ["pipenv"]
+
+[[package]]
+name = "dpath"
+version = "2.0.6"
+description = "Filesystem-like pathing and searching for dictionaries"
+category = "dev"
+optional = false
+python-versions = ">=3"
 
 [[package]]
 name = "eradicate"
@@ -636,6 +631,30 @@ python-versions = "*"
 flake8 = "*"
 
 [[package]]
+name = "flatten-dict"
+version = "0.4.2"
+description = "A flexible utility for flattening and unflattening dict-like objects in Python."
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[package.dependencies]
+importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
+six = ">=1.12,<2.0"
+
+[[package]]
+name = "furl"
+version = "2.1.3"
+description = "URL manipulation made simple."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+orderedmultidict = ">=1.0.1"
+six = ">=1.8.0"
+
+[[package]]
 name = "future"
 version = "0.18.2"
 description = "Clean single-source support for Python 3 and 2"
@@ -746,6 +765,14 @@ pipfile_deprecated_finder = ["pipreqs", "requirementslib"]
 requirements_deprecated_finder = ["pipreqs", "pip-api"]
 colors = ["colorama (>=0.4.3,<0.5.0)"]
 plugins = ["setuptools"]
+
+[[package]]
+name = "itsdangerous"
+version = "2.1.2"
+description = "Safely pass data to untrusted environments and back."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
 
 [[package]]
 name = "jinja2"
@@ -920,22 +947,24 @@ python-versions = "*"
 
 [[package]]
 name = "nitpick"
-version = "0.30.0"
+version = "0.32.0"
 description = "Enforce the same settings across multiple language-independent projects"
 category = "dev"
 optional = false
-python-versions = ">=3.6.1,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-attrs = "*"
+attrs = ">=20.1.0"
 autorepr = "*"
-cachy = "*"
 click = "*"
 ConfigUpdater = "*"
 dictdiffer = "*"
+dpath = "*"
 flake8 = ">=3.0.0"
+flatten-dict = "*"
+furl = "*"
 identify = "*"
-importlib-resources = {version = "*", markers = "python_version >= \"3.6\" and python_version < \"3.9\""}
+importlib-resources = {version = "*", markers = "python_version >= \"3.7\" and python_version < \"3.9\""}
 jmespath = "*"
 loguru = "*"
 marshmallow = ">=3.0.0b10"
@@ -944,15 +973,28 @@ more-itertools = "*"
 pluggy = "*"
 python-slugify = "*"
 requests = "*"
+requests-cache = "*"
 "ruamel.yaml" = "*"
 sortedcontainers = "*"
+StrEnum = "*"
 toml = "*"
 tomlkit = ">=0.8.0"
 
 [package.extras]
-test = ["freezegun", "pytest-cov", "pytest-datadir", "pytest-socket", "pytest-testmon", "pytest-watch", "pytest", "responses", "testfixtures"]
 lint = ["pylint"]
-doc = ["sphinx", "sphinx-rtd-theme", "sphobjinv"]
+test = ["pytest", "pytest-cov", "testfixtures", "responses", "freezegun", "pytest-testmon", "pytest-watch", "pytest-socket", "pytest-datadir"]
+doc = ["sphinx", "sphinx-rtd-theme", "sphobjinv", "sphinx-gitref"]
+
+[[package]]
+name = "orderedmultidict"
+version = "1.0.1"
+description = "Ordered Multivalue Dictionary"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+six = ">=1.8.0"
 
 [[package]]
 name = "packaging"
@@ -1290,6 +1332,26 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-cache"
+version = "0.6.4"
+description = "Persistent cache for requests library"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+itsdangerous = "*"
+requests = ">=2.0.0"
+url-normalize = ">=1.4"
+
+[package.extras]
+backends = ["boto3", "pymongo", "redis"]
+build = ["coveralls", "twine", "wheel"]
+dev = ["coveralls", "twine", "wheel", "boto3", "pymongo", "redis", "m2r2", "Sphinx (>=3.5.3,<3.6.0)", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme (>=0.5.2,<0.6.0)", "sphinxcontrib-apidoc", "black (==20.8b1)", "flake8", "flake8-comprehensions", "flake8-polyfill", "isort", "pre-commit", "psutil", "pytest (>=5.0)", "pytest-cov (>=2.11)", "pytest-order (>=0.11.0,<0.12.0)", "pytest-xdist", "radon", "requests-mock (>=1.8)", "timeout-decorator"]
+docs = ["m2r2", "Sphinx (>=3.5.3,<3.6.0)", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme (>=0.5.2,<0.6.0)", "sphinxcontrib-apidoc"]
+test = ["black (==20.8b1)", "flake8", "flake8-comprehensions", "flake8-polyfill", "isort", "pre-commit", "psutil", "pytest (>=5.0)", "pytest-cov (>=2.11)", "pytest-order (>=0.11.0,<0.12.0)", "pytest-xdist", "radon", "requests-mock (>=1.8)", "timeout-decorator"]
+
+[[package]]
 name = "restructuredtext-lint"
 version = "1.4.0"
 description = "reStructuredText linter"
@@ -1549,6 +1611,19 @@ importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
 pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
+name = "strenum"
+version = "0.4.8"
+description = "An Enum that inherits from str."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.extras]
+docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
+release = ["twine"]
+test = ["pytest", "pytest-black", "pytest-cov", "pytest-pylint", "pylint"]
+
+[[package]]
 name = "termcolor"
 version = "1.1.0"
 description = "ANSII Color formatting for output in terminal."
@@ -1654,6 +1729,17 @@ description = "ASCII transliterations of Unicode text"
 category = "main"
 optional = false
 python-versions = ">=3.5"
+
+[[package]]
+name = "url-normalize"
+version = "1.4.3"
+description = "URL normalization for Python"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+
+[package.dependencies]
+six = "*"
 
 [[package]]
 name = "urllib3"
@@ -1776,7 +1862,7 @@ docs = ["sphinx", "sphinx-autodoc-typehints", "recommonmark", "m2r2", "tomlkit",
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "3880cb3d112ce817e63f0396d902efd0af77251e4e392a68d0e693bafb0bdf3a"
+content-hash = "e9b560ada9921fce249c66cf6d6b3633cb7d561fb438ab2415f1761714c1336a"
 
 [metadata.files]
 alabaster = [
@@ -1914,10 +2000,6 @@ brotlicffi = [
     {file = "brotlicffi-1.0.9.2-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:9030cd5099252d16bfa4e22659c84a89c102e94f8e81d30764788b72e2d7cfb7"},
     {file = "brotlicffi-1.0.9.2-pp37-pypy37_pp73-win32.whl", hash = "sha256:7e72978f4090a161885b114f87b784f538dcb77dafc6602592c1cf39ae8d243d"},
     {file = "brotlicffi-1.0.9.2.tar.gz", hash = "sha256:0c248a68129d8fc6a217767406c731e498c3e19a7be05ea0a90c3c86637b7d96"},
-]
-cachy = [
-    {file = "cachy-0.3.0-py2.py3-none-any.whl", hash = "sha256:338ca09c8860e76b275aff52374330efedc4d5a5e45dc1c5b539c1ead0786fe7"},
-    {file = "cachy-0.3.0.tar.gz", hash = "sha256:186581f4ceb42a0bbe040c407da73c14092379b1e4c0e327fdb72ae4a9b269b1"},
 ]
 certifi = [
     {file = "certifi-2022.6.15-py3-none-any.whl", hash = "sha256:fe86415d55e84719d75f8b69414f6438ac3547d2078ab91b67e779ef69378412"},
@@ -2121,6 +2203,10 @@ dparse = [
     {file = "dparse-0.5.1-py3-none-any.whl", hash = "sha256:e953a25e44ebb60a5c6efc2add4420c177f1d8404509da88da9729202f306994"},
     {file = "dparse-0.5.1.tar.gz", hash = "sha256:a1b5f169102e1c894f9a7d5ccf6f9402a836a5d24be80a986c7ce9eaed78f367"},
 ]
+dpath = [
+    {file = "dpath-2.0.6-py3-none-any.whl", hash = "sha256:8c439bb1c3b3222427e9b8812701cd99a0ef3415ddbb7c03a2379f6989a03965"},
+    {file = "dpath-2.0.6.tar.gz", hash = "sha256:5a1ddae52233fbc8ef81b15fb85073a81126bb43698d3f3a1b6aaf561a46cdc0"},
+]
 eradicate = [
     {file = "eradicate-2.1.0-py3-none-any.whl", hash = "sha256:8bfaca181db9227dc88bdbce4d051a9627604c2243e7d85324f6d6ce0fd08bb2"},
     {file = "eradicate-2.1.0.tar.gz", hash = "sha256:aac7384ab25b1bf21c4c012de9b4bf8398945a14c98c911545b2ea50ab558014"},
@@ -2200,6 +2286,14 @@ flake8-string-format = [
     {file = "flake8-string-format-0.3.0.tar.gz", hash = "sha256:65f3da786a1461ef77fca3780b314edb2853c377f2e35069723348c8917deaa2"},
     {file = "flake8_string_format-0.3.0-py2.py3-none-any.whl", hash = "sha256:812ff431f10576a74c89be4e85b8e075a705be39bc40c4b4278b5b13e2afa9af"},
 ]
+flatten-dict = [
+    {file = "flatten-dict-0.4.2.tar.gz", hash = "sha256:506a96b6e6f805b81ae46a0f9f31290beb5fa79ded9d80dbe1b7fa236ab43076"},
+    {file = "flatten_dict-0.4.2-py2.py3-none-any.whl", hash = "sha256:7e245b20c4c718981212210eec4284a330c9f713e632e98765560e05421e48ad"},
+]
+furl = [
+    {file = "furl-2.1.3-py2.py3-none-any.whl", hash = "sha256:9ab425062c4217f9802508e45feb4a83e54324273ac4b202f1850363309666c0"},
+    {file = "furl-2.1.3.tar.gz", hash = "sha256:5a6188fe2666c484a12159c18be97a1977a71d632ef5bb867ef15f54af39cc4e"},
+]
 future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
@@ -2238,6 +2332,10 @@ iniconfig = [
 isort = [
     {file = "isort-5.10.1-py3-none-any.whl", hash = "sha256:6f62d78e2f89b4500b080fe3a81690850cd254227f27f75c3a0c491a1f351ba7"},
     {file = "isort-5.10.1.tar.gz", hash = "sha256:e8443a5e7a020e9d7f97f1d7d9cd17c88bcb3bc7e218bf9cf5095fe550be2951"},
+]
+itsdangerous = [
+    {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
+    {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
@@ -2427,8 +2525,12 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 nitpick = [
-    {file = "nitpick-0.30.0-py3-none-any.whl", hash = "sha256:3a0ec5ed3d7e2d3a640bf500292fe76a3404c94a0fe0c554e74023f6e2e37220"},
-    {file = "nitpick-0.30.0.tar.gz", hash = "sha256:daff9abcdb23d8cc3f39ad1ce6bd2dcf436e099c9f575636de7cb3df07c02c34"},
+    {file = "nitpick-0.32.0-py3-none-any.whl", hash = "sha256:a2befd6371f8726846d4c127b80b4bc2cc510f97ee8d1a698d879e9d20a95a89"},
+    {file = "nitpick-0.32.0.tar.gz", hash = "sha256:9df66107d9dfc5f8631ee5af1c3a1050ef9db0549e04873bef91bf6681a55b61"},
+]
+orderedmultidict = [
+    {file = "orderedmultidict-1.0.1-py2.py3-none-any.whl", hash = "sha256:43c839a17ee3cdd62234c47deca1a8508a3f2ca1d0678a3bf791c87cf84adbf3"},
+    {file = "orderedmultidict-1.0.1.tar.gz", hash = "sha256:04070bbb5e87291cc9bfa51df413677faf2141c73c61d2a5f7b26bea3cd882ad"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
@@ -2616,6 +2718,10 @@ requests = [
     {file = "requests-2.28.1-py3-none-any.whl", hash = "sha256:8fefa2a1a1365bf5520aac41836fbee479da67864514bdb821f31ce07ce65349"},
     {file = "requests-2.28.1.tar.gz", hash = "sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983"},
 ]
+requests-cache = [
+    {file = "requests-cache-0.6.4.tar.gz", hash = "sha256:dd9120a4ab7b8128cba9b6b120d8b5560d566a3cd0f828cced3d3fd60a42ec40"},
+    {file = "requests_cache-0.6.4-py2.py3-none-any.whl", hash = "sha256:1102daa13a804abe23fad62d694e7dee58d6063a35d94bf6e8c9821e22e5a78b"},
+]
 restructuredtext-lint = [
     {file = "restructuredtext_lint-1.4.0.tar.gz", hash = "sha256:1b235c0c922341ab6c530390892eb9e92f90b9b75046063e047cacfb0f050c45"},
 ]
@@ -2715,6 +2821,10 @@ stevedore = [
     {file = "stevedore-3.5.0-py3-none-any.whl", hash = "sha256:a547de73308fd7e90075bb4d301405bebf705292fa90a90fc3bcf9133f58616c"},
     {file = "stevedore-3.5.0.tar.gz", hash = "sha256:f40253887d8712eaa2bb0ea3830374416736dc8ec0e22f5a65092c1174c44335"},
 ]
+strenum = [
+    {file = "StrEnum-0.4.8-py3-none-any.whl", hash = "sha256:36de425703f97511326b358dfd25939c9dabb4bee1ca15663570ba7cb8b5fa9c"},
+    {file = "StrEnum-0.4.8.tar.gz", hash = "sha256:08a7647f4fac2977470e5618cccd5e8b939768f02e5f5dd7864adaa329559949"},
+]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
 ]
@@ -2788,6 +2898,10 @@ unicode-slugify = [
 unidecode = [
     {file = "Unidecode-1.3.4-py3-none-any.whl", hash = "sha256:afa04efcdd818a93237574791be9b2817d7077c25a068b00f8cff7baa4e59257"},
     {file = "Unidecode-1.3.4.tar.gz", hash = "sha256:8e4352fb93d5a735c788110d2e7ac8e8031eb06ccbfe8d324ab71735015f9342"},
+]
+url-normalize = [
+    {file = "url-normalize-1.4.3.tar.gz", hash = "sha256:d23d3a070ac52a67b83a1c59a0e68f8608d1cd538783b401bc9de2c0fac999b2"},
+    {file = "url_normalize-1.4.3-py2.py3-none-any.whl", hash = "sha256:ec3c301f04e5bb676d333a7fa162fa977ad2ca04b7e652bfc9fac4e405728eed"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.11-py2.py3-none-any.whl", hash = "sha256:c33ccba33c819596124764c23a97d25f32b28433ba0dedeb77d873a38722c9bc"},
