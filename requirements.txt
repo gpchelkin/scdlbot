@@ -20,7 +20,7 @@ idna==3.3; python_version >= "3.7" and python_version < "4"
 lxml==4.9.1; python_version >= "3.4" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.4"
 mock==4.0.3; python_version >= "3.6"
 mutagen==1.45.1; python_version >= "3.5" and python_version < "4"
-pathvalidate==2.5.1; python_version >= "3.6"
+pathvalidate==2.5.2; python_version >= "3.6"
 patool==1.12
 plumbum==1.7.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 prometheus-client==0.14.1; python_version >= "3.6"
