@@ -90,7 +90,7 @@ class ScdlBot:
         #     with open(config_path, 'w') as config_file:
         #         config.write(config_file)
 
-        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot")
+        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot", workers=12)
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.help_command_callback)
