@@ -62,7 +62,7 @@ class ScdlBot:
                               get_response_text('wait_beet.txt')]
         self.NO_AUDIO_TEXT = get_response_text('no_audio.txt')
         self.NO_URLS_TEXT = get_response_text('no_urls.txt')
-        self.OLG_MSG_TEXT = get_response_text('old_msg.txt')
+        self.OLD_MSG_TEXT = get_response_text('old_msg.txt')
         self.REGION_RESTRICTION_TEXT = get_response_text('region_restriction.txt')
         self.DIRECT_RESTRICTION_TEXT = get_response_text('direct_restriction.txt')
         self.LIVE_RESTRICTION_TEXT = get_response_text('live_restriction.txt')
@@ -117,9 +117,6 @@ class ScdlBot:
 
         button_query_handler = CallbackQueryHandler(self.button_query_callback)
         dispatcher.add_handler(button_query_handler)
-
-        inline_query_handler = InlineQueryHandler(self.inline_query_callback)
-        dispatcher.add_handler(inline_query_handler)
 
         unknown_handler = MessageHandler(Filters.command, self.unknown_command_callback)
         dispatcher.add_handler(unknown_handler)
@@ -199,7 +196,7 @@ class ScdlBot:
         chat_msgs = self.chat_storage[str(chat_id)].copy()
         for msg_id in chat_msgs:
             if msg_id != "settings":
-                timedelta = datetime.now() - self.chat_storage[str(chat_id)][msg_id]["message"].date
+                timedelta = datetime.now().replace(tzinfo=None) - self.chat_storage[str(chat_id)][msg_id]["message"].date.replace(tzinfo=None)
                 if timedelta.days > 0:
                     self.chat_storage[str(chat_id)].pop(msg_id)
         self.chat_storage.sync()
@@ -272,6 +269,7 @@ class ScdlBot:
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
         command_entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
+        command_passed = False
         if not command_entities:
             command_passed = False
             # if no command then it is just a message and use default mode
@@ -291,60 +289,24 @@ class ScdlBot:
                 mode)
             self.rant_and_cleanup(context.bot, chat_id, rant_text, reply_to_message_id=reply_to_message_id)
             return
-        # apologize and send TYPING: always in PM and only when it's command in non-PM
-        apologize = chat_type == Chat.PRIVATE or command_passed
-        if apologize:
-            context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
+        log_and_track(event_name, update.message)
+
+        apologize = False
+        # apologize and send TYPING: always in PM, only when it's command in non-PM
+        if chat_type == Chat.PRIVATE or command_passed:
+            apologize = True
         source_ip = None
         proxy = None
         if self.source_ips:
             source_ip = random.choice(self.source_ips)
         if self.proxies:
             proxy = random.choice(self.proxies)
-        # TODO find working IP?
-        urls = self.prepare_urls(msg_or_text=update.message,
-                                 direct_urls=(mode == "link"),
-                                 source_ip=source_ip, proxy=proxy)
-        logger.debug(urls)
-        if not urls:
-            if apologize:
-                context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                         text=self.NO_URLS_TEXT, parse_mode='Markdown')
-        else:
-            event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
-            log_and_track(event_name, update.message)
-            if mode == "dl":
-                wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                        parse_mode='Markdown', text=get_italic(self.get_wait_text()))
-                for url in urls:
-                    self.download_url_and_send(context.bot, url, urls[url], chat_id=chat_id,
-                                               reply_to_message_id=reply_to_message_id,
-                                               wait_message_id=wait_message.message_id,
-                                               source_ip=source_ip, proxy=proxy)
-            elif mode == "link":
-                wait_message = context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                                        parse_mode='Markdown', text=get_italic(self.get_wait_text()))
-
-                link_text = get_link_text(urls)
-                context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                         parse_mode='Markdown', disable_web_page_preview=True,
-                                         text=link_text if link_text else self.NO_URLS_TEXT)
-                context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
-            elif mode == "ask":
-                # ask: always in PM and only if good urls exist in non-PM
-                if chat_type == Chat.PRIVATE or "http" in " ".join(urls.values()):
-                    orig_msg_id = str(reply_to_message_id)
-                    self.chat_storage[str(chat_id)][orig_msg_id] = {"message": update.message, "urls": urls,
-                                                                    "source_ip": source_ip, "proxy": proxy}
-                    question = "🎶 links found, what to do?"
-                    button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
-                    button_link = InlineKeyboardButton(text="❇️ Links",
-                                                       callback_data=" ".join([orig_msg_id, "link"]))
-                    button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
-                    inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
-                    context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                             reply_markup=inline_keyboard, text=question)
-                self.cleanup_chat(chat_id)
+        self.prepare_urls(message=update.message,
+                          mode=mode,
+                          source_ip=source_ip, proxy=proxy,
+                          apologize=apologize, chat_id=chat_id,
+                          reply_to_message_id=reply_to_message_id, bot=context.bot)
 
     def button_query_callback(self, update: Update, context: CallbackContext):
         btn_msg = update.callback_query.message
@@ -403,42 +365,31 @@ class ScdlBot:
                                                wait_message_id=wait_message.message_id,
                                                source_ip=source_ip, proxy=proxy)
             elif action == "link":
-                update.callback_query.answer(text=self.get_wait_text())
-                wait_message = update.callback_query.edit_message_text(parse_mode='Markdown',
-                                                                       text=get_italic(self.get_wait_text()))
-                urls = self.prepare_urls(urls.keys(), direct_urls=True, source_ip=source_ip, proxy=proxy)
-                link_text = get_link_text(urls)
                 context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id,
                                          parse_mode='Markdown', disable_web_page_preview=True,
-                                         text=link_text if link_text else self.NO_URLS_TEXT)
-                context.bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
+                                         text=get_link_text(urls))
+                context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
             elif action == "nodl":
                 context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
         else:
-            update.callback_query.answer(text=self.OLG_MSG_TEXT)
+            update.callback_query.answer(text=self.OLD_MSG_TEXT)
             context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
 
-    def inline_query_callback(self, update: Update, context: CallbackContext):
-        log_and_track("link_inline")
-        inline_query_id = update.inline_query.id
-        text = update.inline_query.query
-        results = []
-        urls = self.prepare_urls(msg_or_text=text, direct_urls=True)
-        for url in urls:
-            for direct_url in urls[url].splitlines():  # TODO: fix non-mp3 and allow only sc/bc
-                logger.debug(direct_url)
-                results.append(
-                    InlineQueryResultAudio(id=str(uuid4()), audio_url=direct_url, title="FAST_INLINE_DOWNLOAD"))
-        try:
-            context.bot.answer_inline_query(inline_query_id, results)
-        except:
-            pass
+    @REQUEST_TIME.time()
+    @run_async
+    def prepare_urls(self, message, mode=None, source_ip=None, proxy=None,
+                     apologize=None, chat_id=None, reply_to_message_id=None, bot=None):
+        direct_urls = False
+        if mode == "link":
+            direct_urls = True
 
-    def prepare_urls(self, msg_or_text, direct_urls=False, source_ip=None, proxy=None):
-        if isinstance(msg_or_text, Message):
+        if apologize:
+            bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+
+        if isinstance(message, Message):
             urls = []
-            url_entities = msg_or_text.parse_entities(types=[MessageEntity.URL])
-            url_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.URL])
+            url_entities = message.parse_entities(types=[MessageEntity.URL])
+            url_caption_entities = message.parse_caption_entities(types=[MessageEntity.URL])
             url_entities.update(url_caption_entities)
             for entity in url_entities:
                 url_str = url_entities[entity]
@@ -446,15 +397,17 @@ class ScdlBot:
                 if "://" not in url_str:
                     url_str = "http://{}".format(url_str)
                 urls.append(URL(url_str))
-            text_link_entities = msg_or_text.parse_entities(types=[MessageEntity.TEXT_LINK])
-            text_link_caption_entities = msg_or_text.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
+            text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
+            text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
             text_link_entities.update(text_link_caption_entities)
             for entity in text_link_entities:
                 url_str = entity.url
                 logger.debug("Entity Text Link Parsed: %s", url_str)
                 urls.append(URL(url_str))
         else:
-            urls = find_all_links(msg_or_text, default_scheme="http")
+            urls = find_all_links(message, default_scheme="http")
+        logger.debug(urls)
+
         urls_dict = {}
         for url_item in urls:
             url = url_item
@@ -465,12 +418,12 @@ class ScdlBot:
                 except:
                     pass
             url_text = url.to_text(True)
-            #FIXME crutch:
+            # FIXME crutch:
             url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
             url_parts_num = len([part for part in url.path_parts if part])
             try:
                 if (
-                    # SoundCloud: tracks, sets and widget pages, no /you/ pages #TODO private sets are 5
+                    # SoundCloud: tracks, sets and widget pages, no /you/ pages  # TODO private sets are 5
                     (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 4 or self.SITES["scapi"] in url_text) and (
                         not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
@@ -491,7 +444,46 @@ class ScdlBot:
                 logger.debug("youtube-dl get-url failed: %s", url_text)
             except URLError as exc:
                 urls_dict[url_text] = exc.status
-        return urls_dict
+
+        logger.debug(urls_dict)
+        if not urls_dict and apologize:
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     text=self.NO_URLS_TEXT, parse_mode='Markdown')
+            return
+
+        if mode == "dl":
+            wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                            parse_mode='Markdown', text=get_italic(self.get_wait_text()))
+            for url in urls_dict:
+                self.download_url_and_send(bot, url, urls_dict[url], chat_id=chat_id,
+                                           reply_to_message_id=reply_to_message_id,
+                                           wait_message_id=wait_message.message_id,
+                                           source_ip=source_ip, proxy=proxy)
+        elif mode == "link":
+            wait_message = bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                            parse_mode='Markdown', text=get_italic(self.get_wait_text()))
+            bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                     parse_mode='Markdown', disable_web_page_preview=True,
+                                     text=get_link_text(urls_dict))
+            bot.delete_message(chat_id=chat_id, message_id=wait_message.message_id)
+        elif mode == "ask":
+            # ask only if good urls exist
+            if "http" in " ".join(urls_dict.values()):
+                orig_msg_id = str(reply_to_message_id)
+                self.chat_storage[str(chat_id)][orig_msg_id] = {
+                    "message": message,
+                    "urls": urls_dict,
+                    "source_ip": source_ip,
+                    "proxy": proxy
+                }
+                question = "🎶 links found, what to do?"
+                button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
+                button_link = InlineKeyboardButton(text="❇️ Links", callback_data=" ".join([orig_msg_id, "link"]))
+                button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
+                inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
+                                 reply_markup=inline_keyboard, text=question)
+            self.cleanup_chat(chat_id)
 
     @REQUEST_TIME.time()
     @run_async
@@ -541,7 +533,7 @@ class ScdlBot:
                         "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
                         "--overwrite",  # Overwrite tracks that already exist
                         "--group",  # Use album/track Label as iTunes grouping
-                        "--embed-art",  # Embed album art (if available)
+                        # "--embed-art",  # Embed album art (if available)
                         "--no-slugify",  # Disable slugification of track, album, and artist names
                         url,  # URL of album/track
                     )
@@ -620,7 +612,7 @@ class ScdlBot:
                 cmd_proc.join()
                 if cmd_retcode:
                     raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
-                    # raise cmd_status  #TODO: pass and re-raise original Exception?
+                    # raise cmd_status  # TODO: pass and re-raise original Exception?
                 logger.info("%s succeeded: %s", cmd_name, url)
                 status = 1
             except Empty:
@@ -664,7 +656,67 @@ class ScdlBot:
                     file_name = os.path.split(file)[-1]
                     file_parts = []
                     try:
-                        file_parts = self.convert_and_split_audio_file(file)
+                        file_root, file_ext = os.path.splitext(file)
+                        file_format = file_ext.replace(".", "").lower()
+                        file_size = os.path.getsize(file)
+                        if file_format not in ["mp3", "m4a", "mp4"]:
+                            raise FileNotSupportedError(file_format)
+                        if file_size > self.MAX_CONVERT_FILE_SIZE:
+                            raise FileTooLargeError(file_size)
+                        # FIXME tiktok.mp4 is for tiktok, inst.mp4 for instagram
+                        if file_format not in ["mp3"] and not ("tiktok." in file or "inst." in file):
+                            logger.info("Converting: %s", file)
+                            try:
+                                file_converted = file.replace(file_ext, ".mp3")
+                                ffinput = ffmpeg.input(file)
+                                ffmpeg.output(ffinput, file_converted, audio_bitrate="128k", vn=None).run()
+                                file = file_converted
+                                file_root, file_ext = os.path.splitext(file)
+                                file_format = file_ext.replace(".", "").lower()
+                                file_size = os.path.getsize(file)
+                            except Exception:
+                                # TODO exceptions
+                                raise FileNotConvertedError
+
+                        file_parts = []
+                        if file_size <= self.MAX_TG_FILE_SIZE:
+                            file_parts.append(file)
+                        else:
+                            logger.info("Splitting: %s", file)
+                            id3 = None
+                            try:
+                                id3 = ID3(file, translate=False)
+                            except:
+                                pass
+
+                            parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
+
+                            # https://github.com/c0decracker/video-splitter
+                            # https://superuser.com/a/1354956/464797
+                            try:
+                                # file_duration = float(ffmpeg.probe(file)['format']['duration'])
+                                part_size = file_size // parts_number
+                                cur_position = 0
+                                for i in range(parts_number):
+                                    file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
+                                    ffinput = ffmpeg.input(file)
+                                    if i == (parts_number - 1):
+                                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position).run()
+                                    else:
+                                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position,
+                                                      fs=part_size).run()
+                                        part_duration = float(ffmpeg.probe(file_part)['format']['duration'])
+                                        cur_position += part_duration
+                                    if id3:
+                                        try:
+                                            id3.save(file_part, v1=2, v2_version=4)
+                                        except:
+                                            pass
+                                    file_parts.append(file_part)
+                            except Exception:
+                                # TODO exceptions
+                                raise FileSplittedPartiallyError(file_parts)
+
                     except FileNotSupportedError as exc:
                         if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                             logger.warning("Unsupported file format: %s", file_name)
@@ -716,9 +768,85 @@ class ScdlBot:
                             caption = "@{} _got it from_ [{}]({}){}".format(self.bot_username.replace("_", "\_"),
                                                                             source, url, addition.replace("_", "\_"))
                             # logger.info(caption)
-                        sent_audio_ids = self.send_audio_file_parts(bot, chat_id, file_parts,
-                                                                    reply_to_message_id if flood == "yes" else None,
-                                                                    caption)
+                        reply_to_message_id_send = reply_to_message_id if flood == "yes" else None
+                        sent_audio_ids = []
+                        for index, file_part in enumerate(file_parts):
+                            path = pathlib.Path(file_part)
+                            file_name = os.path.split(file_part)[-1]
+                            # file_name = translit(file_name, 'ru', reversed=True)
+                            logger.info("Sending: %s", file_name)
+                            bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
+                            caption_part = None
+                            if len(file_parts) > 1:
+                                caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
+                            if caption:
+                                if caption_part:
+                                    caption_full = caption_part + " | " + caption
+                                else:
+                                    caption_full = caption
+                            else:
+                                if caption_part:
+                                    caption_full = caption_part
+                                else:
+                                    caption_full = ""
+                            # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
+                            for i in range(3):
+                                try:
+                                    if file_part.endswith('.mp3'):
+                                        mp3 = MP3(file_part)
+                                        duration = round(mp3.info.length)
+                                        performer = None
+                                        title = None
+                                        try:
+                                            performer = ", ".join(mp3['artist'])
+                                            title = ", ".join(mp3['title'])
+                                        except:
+                                            pass
+                                        if "127.0.0.1" in self.TG_BOT_API:
+                                            audio = path.absolute().as_uri()
+                                            logger.debug(audio)
+                                        elif self.SERVE_AUDIO:
+                                            audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                                            logger.debug(audio)
+                                        else:
+                                            audio = open(file_part, 'rb')
+                                        if i > 0:
+                                            # maybe: Reply message not found
+                                            reply_to_message_id_send = None
+                                        audio_msg = bot.send_audio(chat_id=chat_id,
+                                                                   reply_to_message_id=reply_to_message_id_send,
+                                                                   audio=audio,
+                                                                   duration=duration,
+                                                                   performer=performer,
+                                                                   title=title,
+                                                                   caption=caption_full,
+                                                                   parse_mode='Markdown')
+                                        sent_audio_ids.append(audio_msg.audio.file_id)
+                                        logger.info("Sending succeeded: %s", file_name)
+                                        break
+                                    elif "tiktok." in file_part or "inst." in file_part:
+                                        video = open(file_part, 'rb')
+                                        duration = float(ffmpeg.probe(file_part)['format']['duration'])
+                                        videostream = next(item for item in ffmpeg.probe(file_part)['streams'] if
+                                                           item["codec_type"] == "video")
+                                        width = int(videostream['width'])
+                                        height = int(videostream['height'])
+                                        video_msg = bot.send_video(chat_id=chat_id,
+                                                                   reply_to_message_id=reply_to_message_id_send,
+                                                                   video=video,
+                                                                   supports_streaming=True,
+                                                                   duration=duration, width=width, height=height,
+                                                                   caption=caption_full,
+                                                                   parse_mode='Markdown')
+                                        sent_audio_ids.append(video_msg.video.file_id)
+                                        logger.info("Sending succeeded: %s", file_name)
+                                        break
+                                except TelegramError:
+                                    if i == 2:
+                                        logger.exception("Sending failed because of TelegramError: %s", file_name)
+                        if len(sent_audio_ids) != len(file_parts):
+                            raise FileSentPartiallyError(sent_audio_ids)
+
                     except FileSentPartiallyError as exc:
                         sent_audio_ids = exc.sent_audio_ids
                         bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
@@ -734,144 +862,3 @@ class ScdlBot:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
                 pass
-
-    def convert_and_split_audio_file(self, file=""):
-        file_root, file_ext = os.path.splitext(file)
-        file_format = file_ext.replace(".", "").lower()
-        file_size = os.path.getsize(file)
-        if file_format not in ["mp3", "m4a", "mp4"]:
-            raise FileNotSupportedError(file_format)
-        if file_size > self.MAX_CONVERT_FILE_SIZE:
-            raise FileTooLargeError(file_size)
-        # FIXME tiktok.mp4 is for tiktok, inst.mp4 for instagram
-        if file_format not in ["mp3"] and not ("tiktok." in file or "inst." in file):
-            logger.info("Converting: %s", file)
-            try:
-                file_converted = file.replace(file_ext, ".mp3")
-                ffinput = ffmpeg.input(file)
-                ffmpeg.output(ffinput, file_converted, audio_bitrate="128k", vn=None).run()
-                file = file_converted
-                file_root, file_ext = os.path.splitext(file)
-                file_format = file_ext.replace(".", "").lower()
-                file_size = os.path.getsize(file)
-            except Exception:
-                # TODO exceptions
-                raise FileNotConvertedError
-
-        file_parts = []
-        if file_size <= self.MAX_TG_FILE_SIZE:
-            file_parts.append(file)
-        else:
-            logger.info("Splitting: %s", file)
-            id3 = None
-            try:
-                id3 = ID3(file, translate=False)
-            except:
-                pass
-
-            parts_number = file_size // self.MAX_TG_FILE_SIZE + 1
-
-            # https://github.com/c0decracker/video-splitter
-            # https://superuser.com/a/1354956/464797
-            try:
-                # file_duration = float(ffmpeg.probe(file)['format']['duration'])
-                part_size = file_size // parts_number
-                cur_position = 0
-                for i in range(parts_number):
-                    file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
-                    ffinput = ffmpeg.input(file)
-                    if i == (parts_number - 1):
-                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position).run()
-                    else:
-                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size).run()
-                        part_duration = float(ffmpeg.probe(file_part)['format']['duration'])
-                        cur_position += part_duration
-                    if id3:
-                        try:
-                            id3.save(file_part, v1=2, v2_version=4)
-                        except:
-                            pass
-                    file_parts.append(file_part)
-            except Exception:
-                # TODO exceptions
-                raise FileSplittedPartiallyError(file_parts)
-        return file_parts
-
-    def send_audio_file_parts(self, bot, chat_id, file_parts, reply_to_message_id=None, caption=None):
-        sent_audio_ids = []
-        for index, file_part in enumerate(file_parts):
-            path = pathlib.Path(file_part)
-            file_name = os.path.split(file_part)[-1]
-            # file_name = translit(file_name, 'ru', reversed=True)
-            logger.info("Sending: %s", file_name)
-            bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_AUDIO)
-            caption_part = None
-            if len(file_parts) > 1:
-                caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
-            if caption:
-                if caption_part:
-                    caption_full = caption_part + " | " + caption
-                else:
-                    caption_full = caption
-            else:
-                if caption_part:
-                    caption_full = caption_part
-                else:
-                    caption_full = ""
-            # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
-            for i in range(3):
-                try:
-                    if file_part.endswith('.mp3'):
-                        mp3 = MP3(file_part)
-                        duration = round(mp3.info.length)
-                        performer = None
-                        title = None
-                        try:
-                            performer = ", ".join(mp3['artist'])
-                            title = ", ".join(mp3['title'])
-                        except:
-                            pass
-                        if "127.0.0.1" in self.TG_BOT_API:
-                            audio = path.absolute().as_uri()
-                            logger.debug(audio)
-                        elif self.SERVE_AUDIO:
-                            audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                            logger.debug(audio)
-                        else:
-                            audio = open(file_part, 'rb')
-                        if i > 0:
-                            # maybe: Reply message not found
-                            reply_to_message_id = None
-                        audio_msg = bot.send_audio(chat_id=chat_id,
-                                                   reply_to_message_id=reply_to_message_id,
-                                                   audio=audio,
-                                                   duration=duration,
-                                                   performer=performer,
-                                                   title=title,
-                                                   caption=caption_full,
-                                                   parse_mode='Markdown')
-                        sent_audio_ids.append(audio_msg.audio.file_id)
-                        logger.info("Sending succeeded: %s", file_name)
-                        break
-                    elif "tiktok." in file_part or "inst." in file_part:
-                        video = open(file_part, 'rb')
-                        duration = float(ffmpeg.probe(file_part)['format']['duration'])
-                        videostream = next(item for item in ffmpeg.probe(file_part)['streams'] if item["codec_type"] == "video")
-                        width = int(videostream['width'])
-                        height = int(videostream['height'])
-                        video_msg = bot.send_video(chat_id=chat_id,
-                                                   reply_to_message_id=reply_to_message_id,
-                                                   video=video,
-                                                   supports_streaming=True,
-                                                   duration=duration, width=width, height=height,
-                                                   caption=caption_full,
-                                                   parse_mode='Markdown')
-                        sent_audio_ids.append(video_msg.video.file_id)
-                        logger.info("Sending succeeded: %s", file_name)
-                        break
-                except TelegramError:
-                    if i == 2:
-                        logger.exception("Sending failed because of TelegramError: %s", file_name)
-        if len(sent_audio_ids) != len(file_parts):
-            raise FileSentPartiallyError(sent_audio_ids)
-        return sent_audio_ids

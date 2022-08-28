@@ -67,7 +67,7 @@ prometheus_client = "^0.14.0"
 #youtube_dl = "2021.12.17"
 #youtube-dlc = "2020.11.11.post3"
 #scdl = "2.7.1"
-#bandcamp-downloader = "0.0.12"
+#bandcamp-downloader = "0.0.13"
 
 ### For making it really work:
 # https://github.com/ytdl-org/youtube-dl/pull/26684
