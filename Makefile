@@ -14,7 +14,8 @@ unit:
 package:
 	poetry run poetry check
 	poetry run pip check
-	poetry run safety check --full-report --ignore 39462  # tornado is needed for python-telegram-bot
+	poetry run safety check --full-report
+	# --ignore 39462  # tornado is needed for python-telegram-bot
 
 .PHONY: test
 test: lint package unit
