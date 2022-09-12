@@ -26,7 +26,7 @@ jobs:
         # pipes do not work in GitHub Actions?
         # pip freeze | xargs pip uninstall -y
         pip install --upgrade pip setuptools wheel tox tox-gh-actions
-        export POETRY_VERSION=1.1.13
+        export POETRY_VERSION=1.2.0
         wget --output-document=install-poetry.py https://install.python-poetry.org
         # wget "https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py"
         python "install-poetry.py"
@@ -37,6 +37,7 @@ jobs:
         poetry config installer.parallel false
         poetry config experimental.new-installer false
         # poetry config virtualenvs.in-project true
+        # poetry config virtualenvs.prefer-active-python true
         cat "$HOME/.config/pypoetry/config.toml"
         export PATH="$(pwd)/.venv/bin:$PATH"
         tox
