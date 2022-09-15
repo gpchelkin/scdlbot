@@ -18,10 +18,6 @@ Music Downloader Telegram Bot aka scdlbot
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
 
-.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
-        :target: https://travis-ci.com/gpchelkin/scdlbot
-        :alt: Travis CI Build Status
-
 .. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg?branch=master&event=push
         :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3Abuild
         :alt: GitHub Actions Build Status
