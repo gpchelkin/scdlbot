@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.nitpick]
@@ -38,14 +38,6 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-
-# Docs, optional, use `poetry install -E docs` to install them:
-sphinx = { version = "^5.0",  optional = true }
-sphinx-autodoc-typehints = { version = "^1.12", optional = true }
-recommonmark = { version = "^0.7", optional = true }
-m2r2 = { version = "^0.3",  optional = true }
-tomlkit = { version = "^0.11", optional = true }
-typing-extensions = { version = "^4.1", optional = true }
 
 # Requirements of project's code:
 #python-telegram-bot = "13.11"
@@ -86,6 +78,9 @@ bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", bran
 
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.971"
 
@@ -103,9 +98,13 @@ pytest-randomly = "^3.10"
 
 tox = "^3.25"
 
-[tool.poetry.extras]
-docs = ["sphinx", "sphinx-autodoc-typehints", "recommonmark", "m2r2", "tomlkit", "typing-extensions"]
+[tool.poetry.group.docs]
+optional = true
 
-[tool.dephell.main]
-from = {format = "poetry", path = "pyproject.toml"}
-to = {format = "setuppy", path = "setup.py"}
+[tool.poetry.group.docs.dependencies]
+sphinx = { version = "^5.0" }
+sphinx-autodoc-typehints = { version = "^1.12" }
+recommonmark = { version = "^0.7" }
+m2r2 = { version = "^0.3" }
+tomlkit = { version = "^0.11" }
+typing-extensions = { version = "^4.1" }
