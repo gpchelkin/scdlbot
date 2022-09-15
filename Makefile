@@ -13,8 +13,7 @@ package:
 	poetry run safety check --full-report
 
 .PHONY: test
-test: lint package unit
+test: lint package
 
 .DEFAULT:
 	@cd docs && $(MAKE) $@
-
