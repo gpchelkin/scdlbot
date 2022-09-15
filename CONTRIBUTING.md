@@ -21,14 +21,8 @@ Run `make test` to run everything we have!
 
 ## Tests
 
-We use `pytest` and `flake8` for quality control.
+We use `flake8` for quality control.
 We also use [wemake_python_styleguide](https://github.com/wemake-services/wemake-python-styleguide) to enforce the code quality.
-
-To run all tests:
-
-```bash
-pytest
-```
 
 To run linting:
 
@@ -38,18 +32,6 @@ flake8 .
 Keep in mind: default virtual environment folder excluded by flake8 style checking is `.venv`.
 If you want to customize this parameter, you should do this in `setup.cfg`.
 These steps are mandatory during the CI.
-
-
-## Type checks
-
-We use `mypy` to run type checks on our code.
-To use it:
-
-```bash
-mypy scdlbot tests/**/*.py
-```
-
-This step is mandatory during the CI.
 
 
 ## Submitting your code
@@ -76,13 +58,10 @@ In this method, the latest version of the app is always in the `master` branch.
 
 Before submitting your code please do the following steps:
 
-1. Run `pytest` to make sure everything was working before
 2. Add any changes you want
 3. Add tests for the new changes
 4. Edit documentation if you have changed something significant
 5. Update `CHANGELOG.md` with a quick summary of your changes
-6. Run `pytest` again to make sure it is still working
-7. Run `mypy` to ensure that types are correct
 8. Run `flake8` to ensure that style is correct
 9. Run `doc8` to ensure that docs are correct
 

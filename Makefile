@@ -2,13 +2,9 @@ SHELL:=/usr/bin/env bash
 
 .PHONY: lint
 lint:
-#	poetry run mypy scdlbot tests/*.py
-#	poetry run flake8 .
+	poetry run flake8 .
 	poetry run doc8 -q docs
 
-.PHONY: unit
-unit:
-#	poetry run pytest
 
 .PHONY: package
 package:
