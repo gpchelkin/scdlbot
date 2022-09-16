@@ -7,7 +7,7 @@ on:
   pull_request:
   workflow_dispatch:
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
@@ -30,7 +30,8 @@ jobs:
         # pipes do not work in GitHub Actions?
         # pip freeze | xargs pip uninstall -y
         pip install --upgrade pip
-        pip install --upgrade setuptools wheel tox tox-poetry tox-gh-actions
+        pip install --upgrade setuptools wheel
+        pip install --upgrade tox tox-poetry tox-gh-actions
         export POETRY_VERSION=1.2.0
         wget --output-document=install-poetry.py https://install.python-poetry.org
         python "install-poetry.py"
@@ -44,3 +45,11 @@ jobs:
 
     - name: Test with tox
       run: tox
+
+#    - name: Publish tagged release
+#      run: |
+#        # POETRY_PYPI_TOKEN_PYPI should be set in environment variables
+#        poetry publish --build
+#        on:
+#            tags: true
+#            python: '3.10'

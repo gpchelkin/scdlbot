@@ -2,10 +2,45 @@
 requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
 
-
+[tool.isort]
+# isort configuration:
+# https://github.com/timothycrosley/isort/wiki/isort-Settings
+include_trailing_comma = true
+use_parentheses = true
+# See https://github.com/timothycrosley/isort#multi-line-output-modes
+multi_line_output = 3
+# match flake8 max-line-length:
+line_length = 180
+[tool.black]
+# match flake8 max-line-length:
+line-length = 180
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
 
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = true
+envlist = py37, py38, py39, py310
+
+[gh-actions]
+#tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
+python =
+    3.7: py37
+    3.8: py38
+    3.9: py39
+    3.10: py310
+
+[testenv]
+allowlist_externals =
+    make
+    poetry
+# either use command 'poetry install',
+# or use tox-poetry - it will install main and dev deps to venv with poetry
+commands =
+    poetry install --with main,dev --verbose
+    make test
+"""
 
 [tool.poetry]
 name = "scdlbot"
@@ -56,10 +91,10 @@ prometheus_client = "^0.14.0"
 #transliterate = "1.10.2"
 
 ### For publishing to PyPI:
-#yt-dlp = "2022.4.8"
+#yt-dlp = "2022.9.1"
 #youtube_dl = "2021.12.17"
 #youtube-dlc = "2020.11.11.post3"
-#scdl = "2.7.1"
+#scdl = "2.7.3"
 #bandcamp-downloader = "0.0.13"
 
 ### For making it really work:
@@ -80,19 +115,22 @@ bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", bran
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 [tool.poetry.group.dev]
-# for tox-poetry:
-optional = false
-
+# must be false if tox-poetry is used (it doesn't support groups):
+optional = true
 [tool.poetry.group.dev.dependencies]
+# make external:
+# poetry, tox, (tox-poetry)
+# format:
+isort = "^5.10"
+black = "^22.8"
+# lint:
 wemake-python-styleguide = "^0.16"
 doc8 = "^1.0.0"
 nitpick = "^0.32.0"
 safety = "^2.1.0"
-tox = "^3.25"
 
 [tool.poetry.group.docs]
 optional = true
-
 [tool.poetry.group.docs.dependencies]
 sphinx = { version = "^5.0" }
 sphinx-autodoc-typehints = { version = "^1.12" }

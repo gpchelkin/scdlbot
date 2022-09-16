@@ -1,10 +1,15 @@
 SHELL:=/usr/bin/env bash
 
+.PHONY: format
+format:
+	poetry run isort .
+	poetry run black .
+
 .PHONY: lint
 lint:
-	poetry run flake8 .
+	echo $(shell pwd)
+	poetry run flake8 --statistics --show-source .
 	poetry run doc8 -q docs
-
 
 .PHONY: package
 package:
