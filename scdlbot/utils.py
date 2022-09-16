@@ -6,35 +6,38 @@ import requests
 
 try:
     import yt_dlp as youtube_dl
-    youtube_dl_bin_name = 'yt-dlp'
+
+    youtube_dl_bin_name = "yt-dlp"
 except:
     try:
         import youtube_dl
-        youtube_dl_bin_name = 'youtube-dl'
+
+        youtube_dl_bin_name = "youtube-dl"
     except:
         import youtube_dlc as youtube_dl
-        youtube_dl_bin_name = 'youtube-dlc'
+
+        youtube_dl_bin_name = "youtube-dlc"
 
 from boltons.urlutils import URL
-from plumbum import local, ProcessExecutionError, ProcessTimedOut
+from plumbum import ProcessExecutionError, ProcessTimedOut, local
 
 from scdlbot.exceptions import *
 
 # from requests.exceptions import Timeout, RequestException, SSLError
 
-bin_path = os.getenv('BIN_PATH', '')
-scdl_bin = local[os.path.join(bin_path, 'scdl')]
-bandcamp_dl_bin = local[os.path.join(bin_path, 'bandcamp-dl')]
+bin_path = os.getenv("BIN_PATH", "")
+scdl_bin = local[os.path.join(bin_path, "scdl")]
+bandcamp_dl_bin = local[os.path.join(bin_path, "bandcamp-dl")]
 youtube_dl_bin = local[os.path.join(bin_path, youtube_dl_bin_name)]
 
-BOTAN_TRACK_URL = 'https://api.botan.io/track'
+BOTAN_TRACK_URL = "https://api.botan.io/track"
 
 logger = logging.getLogger(__name__)
 
 
 def get_response_text(file_name):
     # https://stackoverflow.com/a/20885799/2490759
-    path = '/'.join(('texts', file_name))
+    path = "/".join(("texts", file_name))
     return pkg_resources.resource_string(__name__, path).decode("UTF-8")
 
 
@@ -47,7 +50,7 @@ def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_i
         if "http" in cookies_file:
             try:
                 r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                open(cookies_download_file, 'wb').write(r.content)
+                open(cookies_download_file, "wb").write(r.content)
                 youtube_dl_args.extend(["--cookies", cookies_download_file])
             except:
                 pass
@@ -124,9 +127,10 @@ def youtube_dl_func(url, ydl_opts, queue=None):
 #             logger.exception("Botan 🙀astrophic error on event: %s", event_name)
 #     return False
 
+
 def shorten_url(url):
     try:
-        return requests.get('https://clck.ru/--?url=' + url).text.replace("https://", "")
+        return requests.get("https://clck.ru/--?url=" + url).text.replace("https://", "")
     except:
         return url
 
