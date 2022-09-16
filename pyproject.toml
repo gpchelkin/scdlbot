@@ -80,7 +80,8 @@ bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", bran
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 [tool.poetry.group.dev]
-optional = true
+# for tox-poetry:
+optional = false
 
 [tool.poetry.group.dev.dependencies]
 wemake-python-styleguide = "^0.16"

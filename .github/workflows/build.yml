@@ -29,7 +29,8 @@ jobs:
       run: |
         # pipes do not work in GitHub Actions?
         # pip freeze | xargs pip uninstall -y
-        pip install --upgrade pip setuptools wheel tox tox-gh-actions
+        pip install --upgrade pip
+        pip install --upgrade setuptools wheel tox tox-poetry tox-gh-actions
         export POETRY_VERSION=1.2.0
         wget --output-document=install-poetry.py https://install.python-poetry.org
         python "install-poetry.py"
@@ -42,6 +43,4 @@ jobs:
         cat "$HOME/.config/pypoetry/config.toml"
 
     - name: Test with tox
-      run: |
-        # export PATH="$(pwd)/.venv/bin:$PATH"
-        tox
+      run: tox
