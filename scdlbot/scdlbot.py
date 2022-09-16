@@ -19,9 +19,9 @@ from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
-from telegram import Chat, ChatAction, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultAudio, Message, MessageEntity, Update
+from telegram import Chat, ChatAction, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
 from telegram.error import BadRequest, ChatMigrated, NetworkError, TelegramError, TimedOut, Unauthorized
-from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, InlineQueryHandler, MessageHandler, Updater
+from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
 from telegram.ext.dispatcher import run_async
 
 from scdlbot.utils import *
