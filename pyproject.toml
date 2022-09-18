@@ -17,6 +17,31 @@ line-length = 180
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
 
+# TODO flakeheaven
+# https://github.com/flakeheaven/flakeheaven
+# https://wemake-python-styleguide.readthedocs.io/en/latest/pages/usage/integrations/flakehell.html
+# https://github.com/wemake-services/wemake-python-styleguide/blob/master/styles/flakehell.toml
+[tool.flakeheaven]
+format = "grouped"
+show_source = true
+statistics = false
+doctests = true
+enable_extensions = "G"
+accept_encodings = "utf-8"
+max_complexity = 6
+max_line_length = 180
+ignore = "D100, D104, D401, W504, RST303, RST304, DAR103, DAR203"
+# poetry run flakeheaven baseline > .flakehell_baseline
+baseline = ".flakehell_baseline"
+[tool.flakeheaven.plugins]
+"flake8-*" = ["+*"]
+mccabe = ["+*"]
+nitpick = ["+*"]
+"pep8-naming" = ["+*"]
+pycodestyle = ["+*"]
+pyflakes = ["+*"]
+"wemake-python-styleguide" = ["+*"]
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
@@ -73,7 +98,7 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9"
 
 # Requirements of project's code:
 #python-telegram-bot = "13.11"
@@ -128,13 +153,14 @@ wemake-python-styleguide = "^0.16"
 doc8 = "^1.0.0"
 nitpick = "^0.32.0"
 safety = "^2.1.0"
+flakeheaven = "^3.0"
 
 [tool.poetry.group.docs]
 optional = true
 [tool.poetry.group.docs.dependencies]
-sphinx = { version = "^5.0" }
-sphinx-autodoc-typehints = { version = "^1.12" }
+sphinx = { version = "^5.1" }
+sphinx-autodoc-typehints = { version = "^1.19" }
 recommonmark = { version = "^0.7" }
 m2r2 = { version = "^0.3" }
 tomlkit = { version = "^0.11" }
-typing-extensions = { version = "^4.1" }
+typing-extensions = { version = "^4.3" }
