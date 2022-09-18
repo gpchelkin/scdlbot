@@ -100,7 +100,7 @@ Requirements
 
 Those should be available in your ``PATH``:
 
--  `Python 3.6+ <https://www.python.org>`__
+-  `Python 3.9+ <https://www.python.org>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ and `poetry <https://python-poetry.org/>`__ are recommended)
 -  `FFmpeg 4.0+ <https://ffmpeg.org/download.html>`__ if not running on Heroku
    (fresh builds for
