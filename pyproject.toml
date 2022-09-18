@@ -31,8 +31,8 @@ accept_encodings = "utf-8"
 max_complexity = 6
 max_line_length = 180
 ignore = "D100, D104, D401, W504, RST303, RST304, DAR103, DAR203"
-# poetry run flakeheaven baseline > .flakehell_baseline
-baseline = ".flakehell_baseline"
+# poetry run flakeheaven baseline > .flakeheaven_baseline
+baseline = ".flakeheaven_baseline"
 [tool.flakeheaven.plugins]
 "flake8-*" = ["+*"]
 mccabe = ["+*"]
