@@ -22,6 +22,7 @@ ExecStart=/usr/local/bin/scdlbot
 #StandardOutput=syslog
 #StandardError=syslog
 Restart=always
+MemoryHigh=60%
 MemoryMax=70%
 
 [Install]
