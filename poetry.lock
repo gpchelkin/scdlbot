@@ -882,11 +882,11 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "mutagen"
-version = "1.45.1"
+version = "1.46.0"
 description = "read and write audio tags for many formats"
 category = "main"
 optional = false
-python-versions = ">=3.5, <4"
+python-versions = ">=3.7"
 
 [[package]]
 name = "mypy-extensions"
@@ -1697,7 +1697,7 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [[package]]
 name = "yt-dlp"
-version = "2022.9.1"
+version = "2022.10.4"
 description = "A youtube-dl fork with additional features and patches"
 category = "main"
 optional = false
@@ -1716,7 +1716,7 @@ websockets = "*"
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "fada8272b6c86ec43f0ccdeaa7bd29baecb4ba2d"
+resolved_reference = "ade1fa70cbaaaadaa4772e5f0564870cea3167ef"
 
 [[package]]
 name = "zipp"
@@ -1733,7 +1733,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "99aca06ff427495f59f232a55c3876a7e7a98925e83975f54a38812d3bee1e3f"
+content-hash = "cf86154715f5128463cc4a10fbd45aeeb2e4b57c519d9b6001bc8cbf67a9664d"
 
 [metadata.files]
 alabaster = [
@@ -2334,8 +2334,8 @@ more-itertools = [
     {file = "more_itertools-8.14.0-py3-none-any.whl", hash = "sha256:1bc4f91ee5b1b31ac7ceacc17c09befe6a40a503907baf9c839c229b5095cfd2"},
 ]
 mutagen = [
-    {file = "mutagen-1.45.1-py3-none-any.whl", hash = "sha256:9c9f243fcec7f410f138cb12c21c84c64fde4195481a30c9bfb05b5f003adfed"},
-    {file = "mutagen-1.45.1.tar.gz", hash = "sha256:6397602efb3c2d7baebd2166ed85731ae1c1d475abca22090b7141ff5034b3e1"},
+    {file = "mutagen-1.46.0-py3-none-any.whl", hash = "sha256:8af0728aa2d5c3ee5a727e28d0627966641fddfe804c23eabb5926a4d770aed5"},
+    {file = "mutagen-1.46.0.tar.gz", hash = "sha256:6e5f8ba84836b99fe60be5fb27f84be4ad919bbb6b49caa6ae81e70584b55e58"},
 ]
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
