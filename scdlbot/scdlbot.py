@@ -512,7 +512,7 @@ class ScdlBot:
                     cmd_input = "yes"
 
                 logger.info("%s starts: %s", cmd_name, url)
-                cmd_proc = cmd[cmd_args].popen(stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+                cmd_proc = cmd[cmd_args].popen(env={"http_proxy": proxy,"https_proxy": proxy}, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
                 try:
                     cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=self.DL_TIMEOUT)
                     cmd_retcode = cmd_proc.returncode
