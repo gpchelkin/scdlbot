@@ -397,7 +397,7 @@ class ScdlBot:
             # unshorten soundcloud.app.goo.gl and other links, but not tiktok or instagram:
             if not ("tiktok" in url_item.host or "instagr" in url_item.host):
                 try:
-                    url = URL(requests.head(url_item, allow_redirects=True, timeout=5).url)
+                    url = URL(requests.head(url_item, allow_redirects=True, timeout=5, proxies=dict(http=proxy, https=proxy), headers={'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0'}).url)
                 except:
                     pass
             url_text = url.to_text(True)

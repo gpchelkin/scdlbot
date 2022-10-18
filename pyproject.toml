@@ -107,7 +107,7 @@ plumbum = "^1.8.0"
 ffmpeg-python = "0.2.0"
 mutagen = "^1.46.0"
 patool = "1.12"
-requests = "^2.26.0"
+requests = { version = "^2.28.1", extras = ["socks"] }
 prometheus_client = "^0.15.0"
 #celery = "^5.2.6"
 #pyshorteners = "1.0.1"
