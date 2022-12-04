@@ -46,13 +46,14 @@ pyflakes = ["+*"]
 legacy_tox_ini = """
 [tox]
 skipsdist = true
-envlist = py39, py310
+envlist = py39, py310, py311
 
 [gh-actions]
 #tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
 python =
     3.9: py39
     3.10: py310
+    3.11: py311
 
 [testenv]
 allowlist_externals =

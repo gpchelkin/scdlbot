@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10']
+        python-version: ['3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v3
@@ -50,4 +50,4 @@ jobs:
 #        poetry publish --build
 #        on:
 #            tags: true
-#            python: '3.10'
+#            python: '3.11'
