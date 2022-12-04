@@ -101,7 +101,7 @@ python = "^3.9"
 
 # Requirements of project's code:
 #python-telegram-bot = "13.11"
-python-telegram-bot = "12.8"
+python-telegram-bot = "13.14"
 python-telegram-handler = "2.2.1"
 boltons = "21.0.0"
 plumbum = "^1.8.0"
