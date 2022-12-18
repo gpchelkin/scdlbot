@@ -9,31 +9,31 @@ services:
     plan: free # optional; defaults to starter
     numInstances: 1
     envVars:
-      - key: ALERT_CHAT_IDS # Imported from Heroku app
+      - key: ALERT_CHAT_IDS
         value: 1306343
-      - key: APP_URL # Imported from Heroku app
+      - key: APP_URL
         value: https://scdlbot.herokuapp.com/
-      - key: DL_DIR # Imported from Heroku app
+      - key: DL_DIR
         value: /tmp/scdlbot
-      - key: DL_TIMEOUT # Imported from Heroku app
+      - key: DL_TIMEOUT
         value: 900
-      - key: HOST # Imported from Heroku app
+      - key: HOST
         value: 0.0.0.0
-      - key: HOSTNAME # Imported from Heroku app
+      - key: HOSTNAME
         value: test-heroku
-      - key: MAX_CONVERT_FILE_SIZE # Imported from Heroku app
+      - key: MAX_CONVERT_FILE_SIZE
         value: 300_000_000
-      - key: MAX_TG_FILE_SIZE # Imported from Heroku app
+      - key: MAX_TG_FILE_SIZE
         value: 45_000_000
-      - key: NO_FLOOD_CHAT_IDS # Imported from Heroku app
+      - key: NO_FLOOD_CHAT_IDS
         value: -1001108859218,-1001106680201
-      - key: STORE_CHAT_ID # Imported from Heroku app
+      - key: STORE_CHAT_ID
         value: -172951900
-      - key: SYSLOG_ADDRESS # Imported from Heroku app
+      - key: SYSLOG_ADDRESS
         value: logs6.papertrailapp.com:54882
-      - key: SYSLOG_DEBUG # Imported from Heroku app
+      - key: SYSLOG_DEBUG
         value: 1
-      - key: USE_WEBHOOK # Imported from Heroku app
+      - key: USE_WEBHOOK
         value: 1
       - key: WORKERS
         value: 2
