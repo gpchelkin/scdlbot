@@ -395,9 +395,10 @@ class ScdlBot:
 
         urls_dict = {}
         for url_item in urls:
-            url = url_item
-            # unshorten soundcloud.app.goo.gl and other links, but not tiktok or instagram:
-            if not ("tiktok" in url_item.host or "instagr" in url_item.host):
+            # unshorten soundcloud.app.goo.gl and other links, but not tiktok or instagram or youtube:
+            if "tiktok" in url_item.host or "instagr" in url_item.host or self.SITES["yt"] in url_item.host:
+                url = url_item
+            else:
                 try:
                     url = URL(
                         requests.head(
@@ -409,7 +410,7 @@ class ScdlBot:
                         ).url
                     )
                 except:
-                    pass
+                    url = url_item
             url_text = url.to_text(True)
             # FIXME crutch:
             url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
@@ -576,6 +577,7 @@ class ScdlBot:
                         },
                         # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                     ],
+                    "noplaylist": True,
                 }
             if proxy:
                 ydl_opts["proxy"] = proxy

@@ -30,7 +30,7 @@ jobs:
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
         poetry config installer.parallel true
 
-    - name: Publish tagged release
+    - name: Publish release
       env:
         POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
       run: |
