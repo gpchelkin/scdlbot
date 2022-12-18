@@ -1,6 +1,10 @@
 Version history
 ===============
 
+0.14.0 (2022-12-18)
+-----------------------
+* many things
+
 0.13.6 (2020-08-03)
 -----------------------
 * add and handle timeout for youtube-dl get-url and cookies file download

@@ -1,29 +1,21 @@
-name: build
+name: release
 
 on:
   push:
-    branches:
-      - master
-  pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+    tags:
+      - v*
 
 jobs:
-  build:
+  release:
+    needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
 
@@ -38,9 +30,7 @@ jobs:
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
         poetry config installer.parallel true
 
-    - name: Install tox
+    - name: Publish tagged release
       run: |
-        pip install --upgrade tox tox-gh-actions
-
-    - name: Test with tox
-      run: tox
+        # POETRY_PYPI_TOKEN_PYPI should be set in environment variables
+        poetry publish --build

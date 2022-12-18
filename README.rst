@@ -19,7 +19,7 @@ Music Downloader Telegram Bot aka scdlbot
         :alt: PyPI Version
 
 .. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg?branch=master&event=push
-        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3Abuild
+        :target: https://github.com/gpchelkin/scdlbot/actions/workflows/build.yml
         :alt: GitHub Actions Build Status
 
 .. image:: https://github.com/gpchelkin/scdlbot/actions/workflows/codeql-analysis.yml/badge.svg?branch=master&event=push
@@ -39,16 +39,12 @@ Music Downloader Telegram Bot aka scdlbot
         :alt: Code Climate Issue Count
 
 .. image:: https://api.codacy.com/project/badge/Grade/7dfb6d8e7a094987b303e9283fc7368c
-        :target: https://www.codacy.com/app/gpchelkin/scdlbot
+        :target: https://app.codacy.com/gh/gpchelkin/scdlbot
         :alt: Codacy Build Status
 
 .. image:: https://codebeat.co/badges/57243b9d-2269-4f31-a35b-6aedd11626d2
         :target: https://codebeat.co/projects/github-com-gpchelkin-scdlbot-master
         :alt: Codebeat Quality
-
-.. image:: https://bettercodehub.com/edge/badge/gpchelkin/scdlbot?branch=master
-        :target: https://bettercodehub.com/results/gpchelkin/scdlbot
-        :alt: Better Code Hub Compliance
 
 .. image:: https://www.codefactor.io/repository/github/gpchelkin/scdlbot/badge
         :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot

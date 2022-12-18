@@ -35,3 +35,5 @@ services:
         value: 1
       - key: USE_WEBHOOK # Imported from Heroku app
         value: 1
+      - key: WORKERS
+        value: 2

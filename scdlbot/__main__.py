@@ -62,6 +62,7 @@ def main():
     if source_ips:
         source_ips = source_ips.split(",")
     cookies_file = os.getenv("COOKIES_FILE", "")
+    workers = os.getenv("WORKERS", 4)
 
     scdlbot = ScdlBot(
         tg_bot_token,
@@ -79,6 +80,7 @@ def main():
         serve_audio,
         cookies_file,
         source_ips,
+        workers,
     )
 
     use_webhook = bool(int(os.getenv("USE_WEBHOOK", "0")))

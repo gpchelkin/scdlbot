@@ -49,6 +49,7 @@ class ScdlBot:
         serve_audio=False,
         cookies_file=None,
         source_ips=None,
+        workers=4,
     ):
         self.SITES = {
             "sc": "soundcloud",
@@ -86,6 +87,7 @@ class ScdlBot:
         self.source_ips = source_ips
         # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
         self.cookies_file = cookies_file
+        self.workers = workers
 
         # if sc_auth_token:
         #     config = configparser.ConfigParser()
@@ -98,7 +100,7 @@ class ScdlBot:
         #     with open(config_path, 'w') as config_file:
         #         config.write(config_file)
 
-        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot", workers=8)
+        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot", workers=self.workers)
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler("start", self.help_command_callback)
@@ -397,7 +399,15 @@ class ScdlBot:
             # unshorten soundcloud.app.goo.gl and other links, but not tiktok or instagram:
             if not ("tiktok" in url_item.host or "instagr" in url_item.host):
                 try:
-                    url = URL(requests.head(url_item, allow_redirects=True, timeout=5, proxies=dict(http=proxy, https=proxy), headers={'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0'}).url)
+                    url = URL(
+                        requests.head(
+                            url_item,
+                            allow_redirects=True,
+                            timeout=5,
+                            proxies=dict(http=proxy, https=proxy),
+                            headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
+                        ).url
+                    )
                 except:
                     pass
             url_text = url.to_text(True)
