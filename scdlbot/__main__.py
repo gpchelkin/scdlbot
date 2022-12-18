@@ -62,7 +62,7 @@ def main():
     if source_ips:
         source_ips = source_ips.split(",")
     cookies_file = os.getenv("COOKIES_FILE", "")
-    workers = os.getenv("WORKERS", 4)
+    workers = int(os.getenv("WORKERS", 4))
 
     scdlbot = ScdlBot(
         tg_bot_token,

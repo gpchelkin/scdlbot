@@ -1,13 +1,13 @@
 name: release
 
 on:
-  push:
-    tags:
-      - v*
+  workflow_run:
+    workflows: ["build"]
+    branches: ["release"]
+    types: ["completed"]
 
 jobs:
   release:
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
