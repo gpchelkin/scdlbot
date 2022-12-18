@@ -354,7 +354,6 @@ class ScdlBot:
                 self.cleanup_chat(chat_id)
 
     def button_query_callback(self, update: Update, context: CallbackContext):
-
         btn_msg = update.callback_query.message
         self.init_chat(btn_msg)
         user_id = update.callback_query.from_user.id
@@ -629,9 +628,12 @@ class ScdlBot:
                     {
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': 'mp3',
-                        'preferredquality': '312',
+                        'preferredquality': '320',
                     },
-                    {'key': 'FFmpegMetadata',},
+                    {
+                        'key': 'FFmpegMetadata',
+                    },
+                    # {'key': 'EmbedThumbnail'},
                 ],
             }
             host = urlparse(url).hostname

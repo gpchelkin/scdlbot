@@ -107,7 +107,7 @@
     "BLACKLIST_DOMS": {
       "description": "A space separated list of domains which should be considered blacklisted - the bot will not process these domains. Example of domain: example.com if the domain has a subdomain this needs to be included: subdomain.example.com **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
       "required": false
-    },
+    }
   },
   "formation": {
     "web": {
