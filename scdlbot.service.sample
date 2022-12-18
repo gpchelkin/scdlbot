@@ -1,3 +1,4 @@
+
 # This is systemd service file. How to install service:
 # sudo cp scdlbot.service.sample /etc/systemd/system/scdlbot.service
 # sudo nano /etc/systemd/system/scdlbot.service
@@ -16,11 +17,13 @@ Group=www-data
 Type=simple
 EnvironmentFile=-/etc/default/scdlbot
 Environment=PYTHONUNBUFFERED=1
+Environment=XDG_CONFIG_HOME=/scdlbothome
 ExecStart=/usr/local/bin/scdlbot
-#ExecStart=/home/gpchelkin/.pyenv/shims/scdlbot
 #StandardOutput=syslog
 #StandardError=syslog
 Restart=always
+MemoryHigh=60%
+MemoryMax=70%
 
 [Install]
 WantedBy=multi-user.target

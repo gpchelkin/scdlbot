@@ -1,30 +1,21 @@
-name: build
+name: release
 
 on:
-  push:
-    branches:
-      - master
-      - release
-  pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  workflow_run:
+    workflows: ["build"]
+    branches: ["release"]
+    types: ["completed"]
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
 
@@ -39,9 +30,8 @@ jobs:
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
         poetry config installer.parallel true
 
-    - name: Install tox
+    - name: Publish release
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
       run: |
-        pip install --upgrade tox tox-gh-actions
-
-    - name: Test with tox
-      run: tox
+        poetry publish --build

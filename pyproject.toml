@@ -1,17 +1,75 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.4.0"]
 build-backend = "poetry.core.masonry.api"
-#requires = ["poetry>=1.0"]
-#build-backend = "poetry.masonry.api"
 
+[tool.isort]
+# isort configuration:
+# https://github.com/timothycrosley/isort/wiki/isort-Settings
+include_trailing_comma = true
+use_parentheses = true
+# See https://github.com/timothycrosley/isort#multi-line-output-modes
+multi_line_output = 3
+# match flake8 max-line-length:
+line_length = 180
+[tool.black]
+# match flake8 max-line-length:
+line-length = 180
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
 
+# TODO flakeheaven
+# https://github.com/flakeheaven/flakeheaven
+# https://wemake-python-styleguide.readthedocs.io/en/latest/pages/usage/integrations/flakehell.html
+# https://github.com/wemake-services/wemake-python-styleguide/blob/master/styles/flakehell.toml
+[tool.flakeheaven]
+format = "grouped"
+show_source = true
+statistics = false
+doctests = true
+enable_extensions = "G"
+accept_encodings = "utf-8"
+max_complexity = 6
+max_line_length = 180
+ignore = "D100, D104, D401, W504, RST303, RST304, DAR103, DAR203"
+# poetry run flakeheaven baseline > .flakeheaven_baseline
+baseline = ".flakeheaven_baseline"
+[tool.flakeheaven.plugins]
+"flake8-*" = ["+*"]
+mccabe = ["+*"]
+nitpick = ["+*"]
+"pep8-naming" = ["+*"]
+pycodestyle = ["+*"]
+pyflakes = ["+*"]
+"wemake-python-styleguide" = ["+*"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = true
+envlist = py39, py310, py311
+
+[gh-actions]
+#tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
+python =
+    3.9: py39
+    3.10: py310
+    3.11: py311
+
+[testenv]
+allowlist_externals =
+    make
+    poetry
+# either use command 'poetry install',
+# or use tox-poetry - it will install main and dev deps to venv with poetry
+commands =
+    poetry install --with main,dev --verbose
+    make test
+"""
 
 [tool.poetry]
 name = "scdlbot"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
-version = "0.13.7"
+version = "0.14.1"
 license = "MIT"
 
 authors = ["George Pchelkin <george@pchelk.in>"]
@@ -39,60 +97,66 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-#python-telegram-bot = "13.1"
+python = "^3.9"
+
+# Requirements of project's code:
 python-telegram-bot = "12.8"
-python-telegram-handler = "2.2"
-boltons = "20.2.1"
-plumbum = "1.7.0"
+#python-telegram-bot = "13.11"
+python-telegram-handler = "2.2.1"
+boltons = "21.0.0"
+plumbum = "^1.8.0"
 ffmpeg-python = "0.2.0"
-mutagen = "1.45.1"
+mutagen = "^1.46.0"
 patool = "1.12"
-requests = "^2.25.0"
-prometheus_client = "0.9.0"
-celery = "^5.0.1"
-#pyshorteners = "0.6.1"
+requests = { version = "^2.28.1", extras = ["socks"] }
+prometheus_client = "^0.15.0"
+#pyshorteners = "1.0.1"
 #transliterate = "1.10.2"
+#fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
-### For publishing to PyPI:
-youtube_dl = "2021.4.1"
-#youtube-dlc = "2020.11.11.post3"
-#scdl = "1.6.12"
-#bandcamp-downloader = "0.0.8.post12"
+### For publishing to PyPI at release:
+yt-dlp = "2022.11.11"
+##youtube_dl = "2021.12.17"
+##youtube-dlc = "2020.11.11.post3"
+scdl = "2.7.3"
+bandcamp-downloader = "0.0.13"
 
-### For making it really work:
-# https://github.com/ytdl-org/youtube-dl/pull/26684
-#youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
-#youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
-#youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
-#youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-scdl = { git = "https://github.com/flyingrub/scdl.git" }
-bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git" }
+### For making it work better using latest git revision:
+#yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
+##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
+## https://github.com/ytdl-org/youtube-dl/pull/26684
+##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
+##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
+##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
+#scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
+##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
+##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
+##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
 
-[tool.poetry.dev-dependencies]
-mypy = "^0.812"
+[tool.poetry.group.dev]
+# must be false if tox-poetry is used (it doesn't support groups):
+optional = true
+[tool.poetry.group.dev.dependencies]
+# make additional external tools: poetry, tox, (tox-poetry)
+# make format:
+isort = "^5.11"
+black = "^22.12"
+# make lint:
+wemake-python-styleguide = "^0.17"
+doc8 = "^1.0.0"
+nitpick = "^0.32.0"
+safety = "^2.3.5"
+flakeheaven = "^3.2"
 
-wemake-python-styleguide = "^0.15"
-flake8-pytest = "^1.3"
-flake8-pytest-style = "^1.4"
-nitpick = "^0.26.0"
-
-safety = "^1.10.0"
-
-pytest = "^6.2.0"
-pytest-cov = "^2.11"
-#TODO
-pytest-randomly = "3.5.0"
-
-sphinx = "^3.5.0"
-sphinx-autodoc-typehints = "^1.11.0"
-doc8 = "^0.8"
-m2r2 = "^0.2"
-tomlkit = "^0.7"
-
-tox = "^3.22"
-
-
-[tool.dephell.main]
-from = {format = "poetry", path = "pyproject.toml"}
-to = {format = "setuppy", path = "setup.py"}
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+sphinx = { version = "^5.3" }
+sphinx-autodoc-typehints = { version = "^1.19" }
+recommonmark = { version = "^0.7" }
+m2r2 = { version = "^0.3" }
+tomlkit = { version = "^0.11" }
+typing-extensions = { version = "^4.4" }

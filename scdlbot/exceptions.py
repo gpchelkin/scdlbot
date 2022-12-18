@@ -1,6 +1,7 @@
 class Error(Exception):
     """Base class for exceptions in this module."""
 
+
 class FileNotSupportedError(Error):
     """Exception raised for errors in the input.
 
@@ -12,6 +13,7 @@ class FileNotSupportedError(Error):
     def __init__(self, file_format):
         self.file_format = file_format
 
+
 class FileTooLargeError(Error):
     """Exception raised for errors in the input.
 
@@ -22,6 +24,7 @@ class FileTooLargeError(Error):
 
     def __init__(self, file_size):
         self.file_size = file_size
+
 
 class FileSplittedPartiallyError(Error):
     """Exception raised for errors in the input.
@@ -46,6 +49,7 @@ class FileNotConvertedError(Error):
     def __init__(self):
         pass
 
+
 class FileSentPartiallyError(Error):
     """Exception raised for errors in the input.
 
@@ -56,6 +60,7 @@ class FileSentPartiallyError(Error):
 
     def __init__(self, sent_audio_ids):
         self.sent_audio_ids = sent_audio_ids
+
 
 class URLError(Error):
     """Exception raised for errors in the input.
@@ -68,6 +73,7 @@ class URLError(Error):
     def __init__(self):
         self.status = ""
 
+
 class URLDirectError(URLError):
     """Exception raised for errors in the input.
 
@@ -78,6 +84,7 @@ class URLDirectError(URLError):
 
     def __init__(self):
         self.status = "direct"
+
 
 class URLCountryError(URLError):
     """Exception raised for errors in the input.
@@ -90,6 +97,7 @@ class URLCountryError(URLError):
     def __init__(self):
         self.status = "country"
 
+
 class URLLiveError(URLError):
     """Exception raised for errors in the input.
 
@@ -100,6 +108,7 @@ class URLLiveError(URLError):
 
     def __init__(self):
         self.status = "live"
+
 
 class URLTimeoutError(URLError):
     """Exception raised for errors in the input.
