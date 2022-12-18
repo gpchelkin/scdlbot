@@ -38,7 +38,7 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 class ScdlBot:
 
     def __init__(self, tg_bot_token, tg_bot_api="https://api.telegram.org", proxies=None,
-                 store_chat_id=None, no_flood_chat_ids=None,
+                 store_chat_id=None, no_flood_chat_ids=None, alert_chat_ids=None,
                  dl_dir="/tmp/scdlbot", dl_timeout=300, max_tg_file_size=45_000_000, max_convert_file_size=80_000_000,
                  chat_storage_file="/tmp/scdlbotdata", app_url=None,
                  serve_audio=False, cookies_file=None, source_ips=None):
@@ -71,6 +71,7 @@ class ScdlBot:
         self.chat_storage = shelve.open(chat_storage_file, writeback=True)
         for chat_id in no_flood_chat_ids:
             self.init_chat(chat_id=chat_id, chat_type=Chat.PRIVATE if chat_id > 0 else Chat.SUPERGROUP, flood="no")
+        self.ALERT_CHAT_IDS = set(alert_chat_ids) if alert_chat_ids else set()
         self.STORE_CHAT_ID = store_chat_id
         self.DL_DIR = dl_dir
         self.COOKIES_DOWNLOAD_FILE = "/tmp/scdlbot_cookies.txt"
@@ -369,7 +370,7 @@ class ScdlBot:
             if chat_type != Chat.PRIVATE:
                 chat_member_status = chat.get_member(user_id).status
                 if chat_member_status not in [ChatMember.ADMINISTRATOR,
-                                              ChatMember.CREATOR]:
+                                              ChatMember.CREATOR] and user_id not in self.ALERT_CHAT_IDS:
                     log_and_track("settings_fail")
                     update.callback_query.answer(text="You're not chat admin")
                     return
@@ -527,7 +528,7 @@ class ScdlBot:
         if netloc in telegram_domains:
             return False
         return self.url_allowed(url)
-    
+
     def url_allowed(self, url):
         # Example export BLACKLIST_DOMS = "invidious.tube invidious.kavin.rocks invidious.himiko.cloud invidious.namazso.eu dev.viewtube.io tube.cadence.moe piped.kavin.rocks"
         whitelist = set(x for x in os.environ.get("WHITELIST_DOMS", "").split())
@@ -772,7 +773,7 @@ class ScdlBot:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
                 pass
-    
+
     @run_async
     def blacklist_whitelist(self, update: Update, context: CallbackContext):
          chat_id = update.message.chat_id

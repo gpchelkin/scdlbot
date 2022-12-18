@@ -43,6 +43,10 @@
       "description": "Comma-separated chat IDs with no replying and caption hashtags",
       "required": false
     },
+    "ALERT_CHAT_IDS": {
+      "description": "Comma-separated chat IDs with no replying and caption hashtags",
+      "required": false
+    },
     "BIN_PATH": {
       "description": "Custom directory where scdl and bandcamp-dl binaries are available",
       "required": false

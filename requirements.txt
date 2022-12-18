@@ -31,6 +31,7 @@ prompt-toolkit==3.0.3; python_version >= "3.6"
 pycparser==2.20; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 pypiwin32==223; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_version > "3.4")
 python-telegram-bot==12.8
+python-telegram-handler==2.2
 pytz==2021.1; python_version >= "3.6"
 pywin32==300; platform_system == "Windows" and platform_python_implementation != "PyPy" and (python_version >= "2.7" and python_full_version < "3.0.0" or python_version > "3.4")
 requests==2.25.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
