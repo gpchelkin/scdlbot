@@ -158,4 +158,5 @@ def get_link_text(urls):
                         content_type = "Video"
                 # direct_url = shorten_url(direct_url)
                 link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
+    link_text += "\n*Note:* Final download URLs are only guaranteed to work on the same machine/IP where extracted"
     return link_text

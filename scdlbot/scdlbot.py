@@ -131,6 +131,9 @@ class ScdlBot:
         unknown_handler = MessageHandler(Filters.command, self.unknown_command_callback)
         dispatcher.add_handler(unknown_handler)
 
+        blacklist_whitelist_handler = MessageHandler(Filters.status_update.new_chat_members, self.blacklist_whitelist)
+        dispatcher.add_handler(blacklist_whitelist_handler)
+
         dispatcher.add_error_handler(self.error_callback)
 
         self.bot_username = self.updater.bot.get_me().username
@@ -262,6 +265,9 @@ class ScdlBot:
     def common_command_callback(self, update: Update, context: CallbackContext):
         self.init_chat(update.message)
         chat_id = update.message.chat_id
+        if not self.is_chat_allowed(chat_id):
+            context.bot.send_message(chat_id=chat_id, text="This command isn't allowed in this chat.")
+            return
         chat_type = update.message.chat.type
         reply_to_message_id = update.message.message_id
         command_entities = update.message.parse_entities(types=[MessageEntity.BOT_COMMAND])
@@ -310,6 +316,9 @@ class ScdlBot:
         chat_id = chat.id
         chat_type = chat.type
         orig_msg_id, action = update.callback_query.data.split()
+        if not self.is_chat_allowed(chat_id):
+            update.callback_query.answer(text="This command isn't allowed in this chat.")
+            return
         if orig_msg_id == "settings":
             if chat_type != Chat.PRIVATE:
                 chat_member_status = chat.get_member(user_id).status
@@ -378,19 +387,26 @@ class ScdlBot:
             url_entities.update(url_caption_entities)
             for entity in url_entities:
                 url_str = url_entities[entity]
-                logger.debug("Entity URL Parsed: %s", url_str)
-                if "://" not in url_str:
-                    url_str = "http://{}".format(url_str)
-                urls.append(URL(url_str))
+                if self.url_valid(url_str):
+                    logger.debug("Entity URL Parsed: %s", url_str)
+                    if "://" not in url_str:
+                        url_str = "http://{}".format(url_str)
+                    urls.append(URL(url_str))
+                else:
+                    logger.debug("Entry URL not valid or blacklisted: %s", url_str)
             text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
             text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
             text_link_entities.update(text_link_caption_entities)
             for entity in text_link_entities:
                 url_str = entity.url
-                logger.debug("Entity Text Link Parsed: %s", url_str)
-                urls.append(URL(url_str))
+                if self.url_valid(url_str):
+                    logger.debug("Entity Text Link Parsed: %s", url_str)
+                    urls.append(URL(url_str))
+                else:
+                    logger.debug("Entry URL not valid or blacklisted: %s", url_str)
         else:
-            urls = find_all_links(message, default_scheme="http")
+            all_links = find_all_links(message, default_scheme="http")
+            urls = [link for link in all_links if self.url_valid(link)]
         logger.debug(urls)
 
         urls_dict = {}
@@ -464,6 +480,33 @@ class ScdlBot:
                 inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
                 bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
             self.cleanup_chat(chat_id)
+
+    def url_valid(self, url):
+        telegram_domains = ["t.me", "telegram.org", "telegram.dog", "telegra.ph", "tdesktop.com", "telesco.pe", "graph.org", "contest.dev"]
+        logger.debug("Checking Url Entry: %s", url)
+        try:
+            netloc = urlparse(url).netloc
+        except AttributeError:
+            return False
+        if netloc in telegram_domains:
+            return False
+        return self.url_allowed(url)
+
+    def url_allowed(self, url):
+        # Example export BLACKLIST_DOMS = "invidious.tube invidious.kavin.rocks invidious.himiko.cloud invidious.namazso.eu dev.viewtube.io tube.cadence.moe piped.kavin.rocks"
+        whitelist = set(x for x in os.environ.get("WHITELIST_DOMS", "").split())
+        blacklist = set(x for x in os.environ.get("BLACKLIST_DOMS", "").split())
+        netloc = urlparse(url).netloc
+        if whitelist:
+            if netloc not in whitelist:
+                return False
+        if blacklist:
+            if netloc in blacklist:
+                return False
+        if whitelist and blacklist:
+            if netloc in blacklist:
+                return False
+        return True
 
     @REQUEST_TIME.time()
     @run_async
@@ -573,9 +616,12 @@ class ScdlBot:
                         {
                             "key": "FFmpegExtractAudio",
                             "preferredcodec": "mp3",
-                            "preferredquality": "128",
+                            "preferredquality": "320",
                         },
-                        # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
+                        {
+                            "key": "FFmpegMetadata",
+                        },
+                        # {'key': 'EmbedThumbnail'},
                     ],
                     "noplaylist": True,
                 }
@@ -654,7 +700,8 @@ class ScdlBot:
                             try:
                                 file_converted = file.replace(file_ext, ".mp3")
                                 ffinput = ffmpeg.input(file)
-                                ffmpeg.output(ffinput, file_converted, audio_bitrate="128k", vn=None).run()
+                                # audio_bitrate="320k"
+                                ffmpeg.output(ffinput, file_converted, vn=None).run()
                                 file = file_converted
                                 file_root, file_ext = os.path.splitext(file)
                                 file_format = file_ext.replace(".", "").lower()
@@ -861,3 +908,29 @@ class ScdlBot:
                 bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
             except:
                 pass
+
+    @run_async
+    def blacklist_whitelist(self, update: Update, context: CallbackContext):
+        chat_id = update.message.chat_id
+        if not self.is_chat_allowed(chat_id):
+            context.bot.leave_chat(chat_id)
+
+    def is_chat_allowed(self, chat_id):
+        try:
+            whitelist = set(int(x) for x in os.environ.get("WHITELIST_CHATS", "").split())
+        except ValueError:
+            raise ValueError("Your whitelisted chats does not contain valid integers.")
+        try:
+            blacklist = set(int(x) for x in os.environ.get("BLACKLIST_CHATS", "").split())
+        except ValueError:
+            raise ValueError("Your blacklisted chats does not contain valid integers.")
+        if whitelist:
+            if chat_id not in whitelist:
+                return False
+        if blacklist:
+            if chat_id in blacklist:
+                return False
+        if whitelist and blacklist:
+            if chat_id in blacklist:
+                return False
+        return True
