@@ -82,8 +82,8 @@ scdlbot is standing on the shoulders of giants:
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
 -  `YouTube <https://www.youtube.com/>`__, `Yandex.Music <https://music.yandex.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://yt-dl.org/supportedsites.html>`__:
-   `youtube-dl <https://yt-dl.org>`__
+   `Mixcloud <https://www.mixcloud.com/>`__, and almost `everything from this list <https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md>`__:
+   `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__
 
 Run your own scdlbot
 --------------------
