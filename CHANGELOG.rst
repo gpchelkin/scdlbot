@@ -1,9 +1,21 @@
 Version history
 ===============
 
+0.14.2 (2022-12-19)
+-----------------------
+* merge #508:
+
+ * support 320 Kbps
+ * stop the bot from handling telegram links
+ * added domain and id blacklisting and whitelisting
+ * add metadata to downloaded songs
+ * more described in PR #508
+
+* support working in channels, close #176
+
 0.14.1 (2022-12-18)
 -----------------------
-* fix youtube playlist and video in playlist download
+* fix youtube playlist and video in playlist download, close #439
 
 0.14.0 (2022-12-18)
 -----------------------
