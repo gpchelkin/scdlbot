@@ -115,7 +115,7 @@ prometheus_client = "^0.15.0"
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
 
 ### For publishing to PyPI at release:
-yt-dlp = "2022.11.11"
+yt-dlp = "2023.1.6"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 scdl = "2.7.3"
