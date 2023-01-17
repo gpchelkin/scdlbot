@@ -3,7 +3,7 @@ SHELL:=/usr/bin/env bash
 .PHONY: format
 format:
 	poetry run isort .
-	poetry run black .
+	poetry run black --extend-exclude docs/ .
 
 .PHONY: lint
 lint:
