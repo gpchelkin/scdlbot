@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""Main module."""
-
 import gc
 import pathlib
 import random

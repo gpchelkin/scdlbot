@@ -152,5 +152,6 @@ scdlbotdata
 scdlbotdata.dat
 scdlbotdata.dir
 scdlbotdata.bak
+*.pickle
 *.mp3
 *.mp4
