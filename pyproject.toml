@@ -12,14 +12,15 @@ authors = ["George Pchelkin <george@pchelk.in>"]
 
 readme = "README.rst"
 
-repository = "https://github.com/gpchelkin/scdlbot"
 homepage = "https://github.com/gpchelkin/scdlbot"
 documentation = "https://scdlbot.readthedocs.io"
+repository = "https://github.com/gpchelkin/scdlbot"
 
 keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud", "yandex", "audio", "music", "download"]
 
 classifiers = [
   "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
   "Intended Audience :: System Administrators",
   "Topic :: Multimedia :: Sound/Audio",
   "Topic :: Internet",
@@ -28,6 +29,13 @@ classifiers = [
 ]
 
 include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
+
+[tool.poetry.urls]
+# https://github.com/python-poetry/poetry/blob/master/docs/pyproject.md#urls
+"Issues" = "https://github.com/gpchelkin/scdlbot/issues"
+"CI" = "https://github.com/gpchelkin/scdlbot/actions"
+"Changelog" = "https://github.com/gpchelkin/scdlbot/releases"
+#"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
 
 [tool.poetry.scripts]
 scdlbot = "scdlbot.__main__:main"
@@ -95,7 +103,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^5.3"
-sphinx-autodoc-typehints = "^1.19"
+sphinx-autodoc-typehints = "^1.21"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"

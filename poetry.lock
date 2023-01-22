@@ -2386,14 +2386,14 @@ termcolor = "*"
 
 [[package]]
 name = "setuptools"
-version = "66.0.0"
+version = "66.1.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-66.0.0-py3-none-any.whl", hash = "sha256:a78d01d1e2c175c474884671dde039962c9d74c7223db7369771fcf6e29ceeab"},
-    {file = "setuptools-66.0.0.tar.gz", hash = "sha256:bd6eb2d6722568de6d14b87c44a96fac54b2a45ff5e940e639979a3d1792adb6"},
+    {file = "setuptools-66.1.1-py3-none-any.whl", hash = "sha256:6f590d76b713d5de4e49fe4fbca24474469f53c83632d5d0fd056f7ff7e8112b"},
+    {file = "setuptools-66.1.1.tar.gz", hash = "sha256:ac4008d396bc9cd983ea483cb7139c0240a07bbc74ffb6232fceffedc6cf03a8"},
 ]
 
 [package.extras]
@@ -2531,14 +2531,14 @@ test = ["cython", "html5lib", "pytest (>=4.6)", "typed_ast"]
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "1.21.3"
+version = "1.21.7"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "sphinx_autodoc_typehints-1.21.3-py3-none-any.whl", hash = "sha256:7c7b7f0fb4865cab0842680adcb9f2d7b00fc76f91fac45039ec079cd29ab287"},
-    {file = "sphinx_autodoc_typehints-1.21.3.tar.gz", hash = "sha256:101e1473a35d3426632a4db6fb8bc5e218a9da5c72d8016764cae24183844fc4"},
+    {file = "sphinx_autodoc_typehints-1.21.7-py3-none-any.whl", hash = "sha256:e62ae99f7e0546f5083262f744365256ad9f975dab47c6a1fe11fd4d316fb4dd"},
+    {file = "sphinx_autodoc_typehints-1.21.7.tar.gz", hash = "sha256:92bee8da845edfe33df3bba4b5a67f1ff5723f597ee2c9c3f831c29ce918819d"},
 ]
 
 [package.dependencies]
@@ -3030,4 +3030,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "250bb21e0cc0be63a3701cfc2e9d6fd672fddcdcc2cf269ee973132a4dc2ecab"
+content-hash = "f9d90500a7c2597dccfa0f1042510262dcdbbc4fc819ebdec16bf884f4c6c59f"
