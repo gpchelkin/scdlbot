@@ -109,7 +109,7 @@ ffmpeg-python = "0.2.0"
 mutagen = "^1.46.0"
 patool = "1.12"
 requests = { version = "^2.28.1", extras = ["socks"] }
-prometheus_client = "^0.15.0"
+prometheus_client = ">=0.15,<0.17"
 #pyshorteners = "1.0.1"
 #transliterate = "1.10.2"
 #fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
