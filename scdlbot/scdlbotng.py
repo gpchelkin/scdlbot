@@ -2,10 +2,11 @@ import gc
 import logging
 import os
 import pathlib
-import tempfile
-#import traceback
+
+# import traceback
 import random
 import shutil
+import tempfile
 from logging.handlers import SysLogHandler
 from multiprocessing import Process, Queue
 from queue import Empty
@@ -44,7 +45,6 @@ except:
 
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, ProcessTimedOut, local
-
 
 # Config options:
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
@@ -169,32 +169,28 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Exceptions:
-class Error(Exception):
-    """Base class for exceptions in this module."""
-
-
-class FileNotSupportedError(Error):
+# TODO Exceptions:
+class FileNotSupportedError(Exception):
     def __init__(self, file_format):
         self.file_format = file_format
 
 
-class FileTooLargeError(Error):
+class FileTooLargeError(Exception):
     def __init__(self, file_size):
         self.file_size = file_size
 
 
-class FileSplittedPartiallyError(Error):
+class FileSplittedPartiallyError(Exception):
     def __init__(self, file_parts):
         self.file_parts = file_parts
 
 
-class FileNotConvertedError(Error):
+class FileNotConvertedError(Exception):
     def __init__(self):
         pass
 
 
-class FileSentPartiallyError(Error):
+class FileSentPartiallyError(Exception):
     def __init__(self, sent_audio_ids):
         self.sent_audio_ids = sent_audio_ids
 
@@ -423,9 +419,9 @@ async def button_query_callback(update: Update, context: ContextTypes.DEFAULT_TY
             for url in urls_dict:
                 await download_url_and_send(
                     bot=context.bot,
+                    chat_id=chat_id,
                     url=url,
                     direct_urls=urls_dict[url],
-                    chat_id=chat_id,
                     reply_to_message_id=orig_msg_id,
                     wait_message_id=wait_message.message_id,
                     cookies_file=cookies_file,
@@ -485,8 +481,18 @@ def init_chat_data(chat_data, mode="dl", flood="yes"):
         chat_data["settings"]["flood"] = flood
 
 
-async def prepare_urls(context: ContextTypes.DEFAULT_TYPE, message, mode=None, cookies_file=None, source_ip=None, proxy=None, apologize=None, chat_id=None, reply_to_message_id=None):
-    logger.debug("prepare_urls function started")
+async def prepare_urls(
+    context: ContextTypes.DEFAULT_TYPE,
+    message,
+    mode=None,
+    cookies_file=None,
+    source_ip=None,
+    proxy=None,
+    apologize=None,
+    chat_id=None,
+    reply_to_message_id=None,
+):
+    logger.debug("Entering: prepare_urls")
     direct_urls = False
     if mode == "link":
         direct_urls = True
@@ -549,35 +555,24 @@ async def prepare_urls(context: ContextTypes.DEFAULT_TYPE, message, mode=None, c
         if direct_urls:
             # We run it if it was requested by "links" mode + for YouTube region restriction:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
-        elif (
+        elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages  # TODO private sets URLs have 5 parts
-            (DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts))
-        ):
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (
+        elif DOMAIN_BC in url.host and (2 <= url_parts_num <= 2):
             # Bandcamp: tracks and albums
-            (DOMAIN_BC in url.host and (2 <= url_parts_num <= 2))
-        ):
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (
+        elif DOMAIN_TT in url.host:
             # TikTok: videos
-            (DOMAIN_TT in url.host)
-        ):
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (
+        elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
-            (DOMAIN_IG in url.host)
-        ):
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (
+        elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            (DOMAIN_YT in url.host and (
-                DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path))
-        ):
             # We still run it for YouTube region restriction:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
         elif (
@@ -598,9 +593,9 @@ async def prepare_urls(context: ContextTypes.DEFAULT_TYPE, message, mode=None, c
         for url in urls_dict:
             await download_url_and_send(
                 bot=context.bot,
+                chat_id=chat_id,
                 url=url,
                 direct_urls=urls_dict[url],
-                chat_id=chat_id,
                 reply_to_message_id=reply_to_message_id,
                 wait_message_id=wait_message.message_id,
                 cookies_file=cookies_file,
@@ -609,7 +604,9 @@ async def prepare_urls(context: ContextTypes.DEFAULT_TYPE, message, mode=None, c
                 flood=flood,
             )
     elif mode == "link":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
+        await context.bot.send_message(
+            chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
+        )
     elif mode == "ask":
         # ask only if any good url exist in get-url output:
         if "http" in " ".join(urls_dict.values()):
@@ -623,7 +620,19 @@ async def prepare_urls(context: ContextTypes.DEFAULT_TYPE, message, mode=None, c
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
 
 
-async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message_id=None, wait_message_id=None, cookies_file=None, source_ip=None, proxy=None, flood="yes"):
+async def download_url_and_send(
+    bot,
+    chat_id,
+    url,
+    direct_urls,
+    reply_to_message_id=None,
+    wait_message_id=None,
+    cookies_file=None,
+    source_ip=None,
+    proxy=None,
+    flood="yes",
+):
+    logger.debug("Entering: download_url_and_send")
     await bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
@@ -698,7 +707,6 @@ async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message
             cmd = ydl_download
             cmd_name = "ydl_download"
             host = urlparse(url).hostname
-            # TODO use different ydl_opts for different sites
             # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
             ydl_opts = {}
             if DOMAIN_TT in host:
@@ -840,7 +848,6 @@ async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message
                             file_format = file_ext.replace(".", "").lower()
                             file_size = os.path.getsize(file)
                         except Exception:
-                            # TODO exceptions
                             raise FileNotConvertedError
 
                     file_parts = []
@@ -878,7 +885,6 @@ async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message
                                         pass
                                 file_parts.append(file_part)
                         except Exception:
-                            # TODO exceptions
                             raise FileSplittedPartiallyError(file_parts)
 
                 except FileNotSupportedError as exc:
@@ -1032,7 +1038,7 @@ async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message
 
     if not SERVE_AUDIO:
         shutil.rmtree(download_dir, ignore_errors=True)
-    if wait_message_id:  # TODO delete only once
+    if wait_message_id:  # FIXME delete only once
         try:
             await bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
         except:
@@ -1040,7 +1046,7 @@ async def download_url_and_send(bot, url, direct_urls, chat_id, reply_to_message
 
 
 def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
-    logger.debug("ydl_get_direct_urls function started: %s", url)
+    logger.debug("Entering: ydl_get_direct_urls: %s", url)
     ydl_args = []
     if cookies_file:
         cookies_download_file = tempfile.NamedTemporaryFile()
@@ -1079,7 +1085,6 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         result = "timeout"
     except ProcessExecutionError as exc:
         logger.debug("ydl_get_direct_urls failed: %s", url)
-        # TODO think about the following case: one page has multiple videos, some available, some not.
         if "returning it as such" in exc.stderr:
             result = "restrict_direct"
         elif "proxy server" in exc.stderr:
