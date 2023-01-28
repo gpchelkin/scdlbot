@@ -19,7 +19,7 @@ import pkg_resources
 import prometheus_client
 import requests
 from boltons.urlutils import find_all_links
-from mutagen.id3 import ID3
+from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
 from telegram import Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
@@ -269,6 +269,7 @@ def url_valid_and_allowed(url):
 
 
 async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = None
     if update.channel_post:
         message = update.channel_post
     elif update.message:
@@ -297,6 +298,7 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
 
 
 async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = None
     if update.channel_post:
         message = update.channel_post
     elif update.message:
@@ -430,7 +432,7 @@ async def button_query_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     flood=flood,
                 )
         elif action == "link":
-            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls))
+            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
         elif action == "nodl":
             await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
@@ -533,7 +535,7 @@ async def prepare_urls(
     logger.debug(f"prepare_urls: urls list: {urls}")
     urls_dict = {}
     for url_item in urls:
-        # unshorten soundcloud.app.goo.gl and other links; don't do it for tiktok, instagram, youtube:
+        # unshorten soundcloud.app.goo.gl and other links; don't do it for TikTok, Instagram, YouTube:
         if DOMAIN_TT in url_item.host or DOMAIN_IG in url_item.host or DOMAIN_YT in url_item.host:
             url = url_item
         else:
@@ -706,7 +708,7 @@ async def download_url_and_send(
             # If link is not sc/bc or scdl/bcdl just failed, we use ydl:
             cmd = ydl_download
             cmd_name = "ydl_download"
-            host = urlparse(url).hostname
+            host = str(urlparse(url).hostname)
             # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
             ydl_opts = {}
             if DOMAIN_TT in host:
@@ -755,6 +757,7 @@ async def download_url_and_send(
                 ydl_opts["proxy"] = proxy
             if source_ip:
                 ydl_opts["source_address"] = source_ip
+            cookies_download_file = None
             if cookies_file:
                 cookies_download_file = tempfile.NamedTemporaryFile()
                 cookies_download_file_path = pathlib.Path(cookies_download_file.name)
@@ -880,7 +883,7 @@ async def download_url_and_send(
                                     cur_position += part_duration
                                 if id3:
                                     try:
-                                        id3.save(file_part, v1=2, v2_version=4)
+                                        id3.save(file_part, v1=ID3v1SaveOptions.CREATE, v2_version=4)
                                     except:
                                         pass
                                 file_parts.append(file_part)
@@ -1048,6 +1051,7 @@ async def download_url_and_send(
 def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
     logger.debug("Entering: ydl_get_direct_urls: %s", url)
     ydl_args = []
+    cookies_download_file = None
     if cookies_file:
         cookies_download_file = tempfile.NamedTemporaryFile()
         cookies_download_file_path = pathlib.Path(cookies_download_file.name)
