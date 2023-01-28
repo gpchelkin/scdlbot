@@ -49,6 +49,9 @@ from plumbum import ProcessExecutionError, ProcessTimedOut, local
 # Config options:
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
+LOCAL_MODE = False
+if "127.0.0.1" in TG_BOT_API:
+    LOCAL_MODE = True
 BOT_OWNER_CHAT_ID = int(os.getenv("BOT_OWNER_CHAT_ID", "0"))
 TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "scdlbot")
 
@@ -996,7 +999,7 @@ async def download_url_and_send(
                                         title = ", ".join(mp3["title"])
                                     except:
                                         pass
-                                    if "127.0.0.1" in TG_BOT_API:
+                                    if LOCAL_MODE:
                                         audio = path.absolute().as_uri()
                                         logger.debug(audio)
                                     elif SERVE_AUDIO:
@@ -1171,6 +1174,7 @@ def main():
     application = (
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
+        .local_mode(True)
         .concurrent_updates(True)
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
