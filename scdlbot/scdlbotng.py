@@ -52,15 +52,16 @@ TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
 BOT_OWNER_CHAT_ID = int(os.getenv("BOT_OWNER_CHAT_ID", "0"))
 TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "scdlbot")
 
-# FIXME support webhook
+# TODO handle unset variables better
 USE_WEBHOOK = bool(int(os.getenv("USE_WEBHOOK", "0")))
 WEBHOOK_HOST = os.getenv("HOST", "127.0.0.1")
 WEBHOOK_PORT = int(os.getenv("PORT", "5000"))
-APP_URL = os.getenv("APP_URL", "")
-SERVE_AUDIO = bool(int(os.getenv("SERVE_AUDIO", "0")))
-CERT_FILE = os.getenv("CERT_FILE", "")
-CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", "")
 URL_PATH = os.getenv("URL_PATH", TG_BOT_TOKEN.replace(":", ""))
+APP_URL = os.getenv("APP_URL", "")
+CERT_FILE = os.getenv("CERT_FILE", None)
+CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", None)
+WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
+SERVE_AUDIO = bool(int(os.getenv("SERVE_AUDIO", "0")))
 
 NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
@@ -286,7 +287,7 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def settings_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.debug("settings")
+    logger.warning("settings")
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
     init_chat_data(
@@ -350,6 +351,22 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
         source_ip = random.choice(SOURCE_IPS)
     if PROXIES:
         proxy = random.choice(PROXIES)
+    data = {
+        "message": message,
+        "mode": mode,
+        "cookies_file": cookies_file,
+        "source_ip": source_ip,
+        "proxy": proxy,
+        "apologize": apologize,
+        "reply_to_message_id": reply_to_message_id,
+    }
+    delay_seconds = 10
+    logger.debug(len(context.job_queue.get_jobs_by_name("prepare_urls")))
+    logger.debug(len(context.job_queue.jobs()))
+    if len(context.job_queue.jobs()) > 0:
+        logger.debug("will start later!")
+        delay_seconds = 60
+    # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
     await prepare_urls(
         context=context,
         message=message,
@@ -1114,21 +1131,23 @@ def ydl_download(url, ydl_opts, queue=None):
         return ydl_status
 
 
-async def caps(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    name = update.effective_chat.full_name
-    text_caps = " ".join(context.args).upper()
-    context.job_queue.run_once(callback_30, 2, data=name, chat_id=chat_id)
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=text_caps,
-    )
-
-
-async def callback_30(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=context.job.chat_id,
-        text=f"BEEP {context.job.data}!",
+async def callback_job_prepare_urls(context: ContextTypes.DEFAULT_TYPE):
+    chat_id = context.job.chat_id
+    data = context.job.data
+    # await context.bot.send_message(
+    #     chat_id=chat_id,
+    #     text=f"BEEP {data['user_name']}!",
+    # )
+    await prepare_urls(
+        context=context,
+        message=data["message"],
+        mode=data["mode"],
+        cookies_file=data["cookies_file"],
+        source_ip=data["source_ip"],
+        proxy=data["proxy"],
+        apologize=data["apologize"],
+        chat_id=chat_id,
+        reply_to_message_id=data["reply_to_message_id"],
     )
 
 
@@ -1188,7 +1207,21 @@ def main():
     application.add_handler(blacklist_whitelist_handler)
     application.add_handler(unknown_handler)
     application.add_error_handler(error_callback)
-    application.run_polling()
+    if USE_WEBHOOK:
+        application.run_webhook(
+            listen=WEBHOOK_HOST,
+            port=WEBHOOK_PORT,
+            url_path=URL_PATH,
+            cert=CERT_FILE,
+            key=CERT_KEY_FILE,
+            webhook_url=urljoin(APP_URL, URL_PATH),
+            drop_pending_updates=True,
+            secret_token=WEBHOOK_SECRET_TOKEN,
+        )
+    else:
+        application.run_polling(
+            drop_pending_updates=True,
+        )
 
 
 if __name__ == "__main__":

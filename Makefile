@@ -21,5 +21,11 @@ package:
 .PHONY: test
 test: lint package
 
+.PHONY: run_dev
+run_debug:
+	set -o allexport; \
+	source .env-dev; \
+	poetry run python scdlbot/scdlbotng.py
+
 .DEFAULT:
 	@cd docs && $(MAKE) $@
