@@ -95,9 +95,9 @@ except ValueError:
 
 
 # Logging and Prometheus' metrics:
-SYSLOG_DEBUG = bool(int(os.getenv("SYSLOG_DEBUG", "0")))
 SYSLOG_ADDRESS = os.getenv("SYSLOG_ADDRESS", "")
 SYSLOG_HOSTNAME = os.getenv("HOSTNAME", "test-host")
+SYSLOG_DEBUG = bool(int(os.getenv("SYSLOG_DEBUG", "0")))
 METRICS_HOST = os.getenv("METRICS_HOST", "127.0.0.1")
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
@@ -143,12 +143,11 @@ DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_
 
 # Configure logging:
 logging_handlers = []
-logging_level = logging.DEBUG if SYSLOG_DEBUG else logging.INFO
 
 console_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.WARNING)
 logging_handlers.append(console_handler)
 
 telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
@@ -158,18 +157,18 @@ logging_handlers.append(telegram_handler)
 if SYSLOG_ADDRESS:
     syslog_formatter = logging.Formatter("%(asctime)s " + SYSLOG_HOSTNAME + " %(name)s: %(message)s", datefmt="%b %d %H:%M:%S")
     syslog_host, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_logging_level = logging.DEBUG if SYSLOG_DEBUG else logging.WARNING
     syslog_handler = SysLogHandler(address=(syslog_host, int(syslog_udp_port)))
     syslog_handler.setFormatter(syslog_formatter)
-    syslog_handler.setLevel(logging_level)
+    syslog_handler.setLevel(syslog_logging_level)
     logging_handlers.append(syslog_handler)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.DEBUG,
+    level=logging.WARNING,
     handlers=logging_handlers,
 )
-
 logger = logging.getLogger(__name__)
 
 
