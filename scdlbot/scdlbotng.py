@@ -7,6 +7,7 @@ import pathlib
 import random
 import shutil
 import tempfile
+import time
 from logging.handlers import SysLogHandler
 from multiprocessing import Process, Queue
 from queue import Empty
@@ -16,7 +17,8 @@ from uuid import uuid4
 
 import ffmpeg
 import pkg_resources
-import prometheus_client
+
+# import prometheus_client
 import requests
 from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3, ID3v1SaveOptions
@@ -49,6 +51,7 @@ from plumbum import ProcessExecutionError, ProcessTimedOut, local
 # Config options:
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
+# https://github.com/python-telegram-bot/python-telegram-bot/wiki/Local-Bot-API-Server
 LOCAL_MODE = False
 if "127.0.0.1" in TG_BOT_API:
     LOCAL_MODE = True
@@ -64,7 +67,6 @@ APP_URL = os.getenv("APP_URL", "")
 CERT_FILE = os.getenv("CERT_FILE", None)
 CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", None)
 WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
-SERVE_AUDIO = bool(int(os.getenv("SERVE_AUDIO", "0")))
 
 NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
@@ -72,8 +74,6 @@ DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", "300"))
 MAX_CONVERT_FILE_SIZE = int(os.getenv("MAX_CONVERT_FILE_SIZE", "80_000_000"))
 MAX_TG_FILE_SIZE = int(os.getenv("MAX_TG_FILE_SIZE", "45_000_000"))
-if SERVE_AUDIO:
-    MAX_TG_FILE_SIZE = 19_000_000
 PROXIES = os.getenv("PROXIES", None)
 if PROXIES:
     PROXIES = PROXIES.split(",")
@@ -369,6 +369,7 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
     if len(context.job_queue.jobs()) > 0:
         logger.debug("will start later!")
         delay_seconds = 60
+    # https://stackoverflow.com/a/65731909/2490759
     # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
     await prepare_urls(
         context=context,
@@ -855,11 +856,10 @@ async def download_url_and_send(
                     file_size = os.path.getsize(file)
                     if file_format not in ["mp3", "m4a", "mp4", "webm"]:
                         raise FileNotSupportedError(file_format)
-                    if file_size > MAX_CONVERT_FILE_SIZE:
-                        raise FileTooLargeError(file_size)
-                    # We don't convert videos from tiktok or instagram:
-                    logger.debug(file_name)
-                    if file_format not in ["mp3"] and not download_video:
+                    # We don't convert videos (from tiktok or instagram):
+                    if file_format in ["m4a", "mp4", "webm"] and not download_video:
+                        if file_size > MAX_CONVERT_FILE_SIZE:
+                            raise FileTooLargeError(file_size)
                         logger.debug("Converting: %s", file)
                         try:
                             file_converted = file.replace(file_ext, ".mp3")
@@ -911,6 +911,7 @@ async def download_url_and_send(
                             raise FileSplittedPartiallyError(file_parts)
 
                 except FileNotSupportedError as exc:
+                    # If format is not some extra garbage from downloaders:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
                         await bot.send_message(
@@ -986,7 +987,7 @@ async def download_url_and_send(
                             else:
                                 caption_full = ""
                         # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
-                        for i in range(3):
+                        for i in range(5):
                             try:
                                 logger.debug(file_part)
                                 if file_part.endswith(".mp3"):
@@ -1002,17 +1003,11 @@ async def download_url_and_send(
                                     if LOCAL_MODE:
                                         audio = path.absolute().as_uri()
                                         logger.debug(audio)
-                                    elif SERVE_AUDIO:
-                                        audio = str(urljoin(APP_URL, str(path.relative_to(DL_DIR))))
-                                        logger.debug(audio)
                                     else:
                                         audio = open(file_part, "rb")
-                                    if i > 0:
-                                        # maybe: Reply message not found
-                                        reply_to_message_id_send = None
                                     audio_msg = await bot.send_audio(
                                         chat_id=chat_id,
-                                        reply_to_message_id=reply_to_message_id_send,
+                                        reply_to_message_id=reply_to_message_id,
                                         audio=audio,
                                         duration=duration,
                                         performer=performer,
@@ -1021,7 +1016,7 @@ async def download_url_and_send(
                                         parse_mode="Markdown",
                                     )
                                     sent_audio_ids.append(audio_msg.audio.file_id)
-                                    logger.debug("Sending succeeded: %s", file_name)
+                                    logger.debug("Sending audio succeeded: %s", file_name)
                                     break
                                 elif download_video:
                                     video = open(file_part, "rb")
@@ -1041,11 +1036,13 @@ async def download_url_and_send(
                                         parse_mode="Markdown",
                                     )
                                     sent_audio_ids.append(video_msg.video.file_id)
-                                    logger.debug("Sending succeeded: %s", file_name)
+                                    logger.debug("Sending video succeeded: %s", file_name)
                                     break
                             except TelegramError:
-                                if i == 2:
+                                if i == 4:
                                     logger.debug("Sending failed because of TelegramError: %s", file_name)
+                                else:
+                                    time.sleep(5)
                     if len(sent_audio_ids) != len(file_parts):
                         raise FileSentPartiallyError(sent_audio_ids)
 
@@ -1059,8 +1056,7 @@ async def download_url_and_send(
                     )
                     logger.debug("Sending some parts failed: %s", file_name)
 
-    if not SERVE_AUDIO:
-        shutil.rmtree(download_dir, ignore_errors=True)
+    shutil.rmtree(download_dir, ignore_errors=True)
     if wait_message_id:  # FIXME delete only once
         try:
             await bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
@@ -1156,7 +1152,7 @@ async def callback_job_prepare_urls(context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
-    prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST)
+    # prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST)
 
     # TODO maybe use token again? https://github.com/flyingrub/scdl/issues/429
     # if sc_auth_token:
@@ -1174,11 +1170,13 @@ def main():
     application = (
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
-        .local_mode(True)
-        .concurrent_updates(True)
+        .local_mode(LOCAL_MODE)
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
-        .persistence(persistence=persistence)
+        .concurrent_updates(128)
+        .connection_pool_size(256)
+        .pool_timeout(30)
+        .persistence(persistence)
         .build()
     )
 
@@ -1196,7 +1194,6 @@ def main():
         ),
         common_command_callback,
     )
-
     button_query_handler = CallbackQueryHandler(button_query_callback)
     blacklist_whitelist_handler = MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, blacklist_whitelist_callback)
     unknown_handler = MessageHandler(filters.COMMAND, unknown_command_callback)
@@ -1211,6 +1208,7 @@ def main():
     application.add_handler(blacklist_whitelist_handler)
     application.add_handler(unknown_handler)
     application.add_error_handler(error_callback)
+
     if USE_WEBHOOK:
         application.run_webhook(
             listen=WEBHOOK_HOST,
@@ -1220,6 +1218,7 @@ def main():
             key=CERT_KEY_FILE,
             webhook_url=urljoin(APP_URL, URL_PATH),
             drop_pending_updates=True,
+            max_connections=128,
             secret_token=WEBHOOK_SECRET_TOKEN,
         )
     else:
