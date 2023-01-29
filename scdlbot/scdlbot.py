@@ -365,21 +365,21 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
     # https://docs.python-telegram-bot.org/en/v20.0/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
     # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
-    # context.application.create_task(
-    #     prepare_urls(
-    #         context=context,
-    #         message=message,
-    #         mode=mode,
-    #         apologize=apologize,
-    #     ),
-    #     update=update,
-    # )
-    await prepare_urls(
-        context=context,
-        message=message,
-        mode=mode,
-        apologize=apologize,
+    context.application.create_task(
+        prepare_urls(
+            context=context,
+            message=message,
+            mode=mode,
+            apologize=apologize,
+        ),
+        update=update,
     )
+    # await prepare_urls(
+    #     context=context,
+    #     message=message,
+    #     mode=mode,
+    #     apologize=apologize,
+    # )
 
 
 async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -435,31 +435,31 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await update.callback_query.answer(text=get_wait_text())
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
             for url in urls_dict:
-                # context.application.create_task(
-                #     download_url_and_send(
-                #         context=context,
-                #         chat_id=chat_id,
-                #         url=url,
-                #         direct_urls_status=urls_dict[url],
-                #         reply_to_message_id=url_message_id,
-                #         wait_message_id=wait_message.message_id,
-                #         cookies_file=COOKIES_FILE,
-                #         source_ip=url_message_data["source_ip"],
-                #         proxy=url_message_data["proxy"],
-                #     ),
-                #     update=update,
-                # )
-                await download_url_and_send(
-                    context=context,
-                    chat_id=chat_id,
-                    url=url,
-                    direct_urls_status=urls_dict[url],
-                    reply_to_message_id=url_message_id,
-                    wait_message_id=wait_message.message_id,
-                    cookies_file=COOKIES_FILE,
-                    source_ip=url_message_data["source_ip"],
-                    proxy=url_message_data["proxy"],
+                context.application.create_task(
+                    download_url_and_send(
+                        context=context,
+                        chat_id=chat_id,
+                        url=url,
+                        direct_urls_status=urls_dict[url],
+                        reply_to_message_id=url_message_id,
+                        wait_message_id=wait_message.message_id,
+                        cookies_file=COOKIES_FILE,
+                        source_ip=url_message_data["source_ip"],
+                        proxy=url_message_data["proxy"],
+                    ),
+                    update=update,
                 )
+                # await download_url_and_send(
+                #     context=context,
+                #     chat_id=chat_id,
+                #     url=url,
+                #     direct_urls_status=urls_dict[url],
+                #     reply_to_message_id=url_message_id,
+                #     wait_message_id=wait_message.message_id,
+                #     cookies_file=COOKIES_FILE,
+                #     source_ip=url_message_data["source_ip"],
+                #     proxy=url_message_data["proxy"],
+                # )
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
@@ -1048,7 +1048,7 @@ async def download_url_and_send(
                                 sent_audio_ids.append(video_msg.video.file_id)
                                 logger.debug("Sending video succeeded: %s", file_name)
                                 break
-                        except TelegramError as exc:
+                        except TelegramError:
                             print(traceback.format_exc())
                             if i == 4:
                                 logger.debug("Sending failed because of TelegramError: %s", file_name)
