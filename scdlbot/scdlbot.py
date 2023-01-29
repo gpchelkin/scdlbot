@@ -2,12 +2,11 @@ import gc
 import logging
 import os
 import pathlib
-
-# import traceback
 import random
 import shutil
 import tempfile
 import time
+import traceback
 from logging.handlers import SysLogHandler
 from multiprocessing import Process, Queue
 from queue import Empty
@@ -20,11 +19,12 @@ import pkg_resources
 
 # import prometheus_client
 import requests
-from boltons.urlutils import find_all_links
+
+# from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
-from telegram import Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
+from telegram import Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
@@ -82,9 +82,10 @@ SOURCE_IPS = os.getenv("SOURCE_IPS", None)
 if SOURCE_IPS:
     SOURCE_IPS = SOURCE_IPS.split(",")
 # https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
-COOKIES_FILE = os.getenv("COOKIES_FILE", "")
+COOKIES_FILE = os.getenv("COOKIES_FILE", None)
 WHITELIST_DOMAINS = set(x for x in os.getenv("WHITELIST_DOMAINS", "").split())
 BLACKLIST_DOMAINS = set(x for x in os.getenv("BLACKLIST_DOMAINS", "").split())
+BLACKLIST_TELEGRAM_DOMAINS = ["t.me", "telegram.org", "telegram.dog", "telegra.ph", "te.legra.ph", "tdesktop.com", "telesco.pe", "graph.org", "contest.dev"]
 try:
     WHITELIST_CHATS = set(int(x) for x in os.getenv("WHITELIST_CHATS", "").split())
 except ValueError:
@@ -148,7 +149,7 @@ logging_handlers = []
 console_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
-console_handler.setLevel(logging.WARNING)
+console_handler.setLevel(logging.DEBUG)
 logging_handlers.append(console_handler)
 
 telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
@@ -167,7 +168,7 @@ if SYSLOG_ADDRESS:
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.WARNING,
+    level=logging.DEBUG,
     handlers=logging_handlers,
 )
 logger = logging.getLogger(__name__)
@@ -253,12 +254,11 @@ def chat_allowed(chat_id):
 
 
 def url_valid_and_allowed(url):
-    telegram_domains = ["t.me", "telegram.org", "telegram.dog", "telegra.ph", "te.legra.ph", "tdesktop.com", "telesco.pe", "graph.org", "contest.dev"]
     try:
         netloc = urlparse(url).netloc
     except AttributeError:
         return False
-    if netloc in telegram_domains:
+    if netloc in BLACKLIST_TELEGRAM_DOMAINS:
         return False
     if WHITELIST_DOMAINS:
         if netloc not in WHITELIST_DOMAINS:
@@ -272,20 +272,21 @@ def url_valid_and_allowed(url):
     return True
 
 
-async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_help_commands_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = None
     if update.channel_post:
         message = update.channel_post
     elif update.message:
         message = update.message
-    event_name = "help"
-    entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
-    for entity_value in entities.values():
-        event_name = entity_value.replace("/", "").replace("@{}".format(TG_BOT_USERNAME), "")
-        break
-    logger.debug(event_name)
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
+    command_name = "help"
+    # Determine the original command:
+    entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
+    for entity_value in entities.values():
+        command_name = entity_value.replace("/", "").replace(f"@{TG_BOT_USERNAME}", "")
+        break
+    logger.debug(command_name)
     await context.bot.send_message(chat_id=chat_id, text=HELP_TEXT, parse_mode="Markdown", disable_web_page_preview=True)
 
 
@@ -301,7 +302,7 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
     await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(context.chat_data), text=SETTINGS_TEXT)
 
 
-async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def dl_link_commands_and_messages_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = None
     if update.channel_post:
         message = update.channel_post
@@ -309,20 +310,21 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
         message = update.message
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
+    reply_to_message_id = message.message_id
+    if not chat_allowed(chat_id):
+        await context.bot.send_message(chat_id=chat_id, text="This command isn't allowed in this chat.")
+        return
     init_chat_data(
         chat_data=context.chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
         flood=("no" if chat_id in NO_FLOOD_CHAT_IDS else "yes"),
     )
-    if not chat_allowed(chat_id):
-        await context.bot.send_message(chat_id=chat_id, text="This command isn't allowed in this chat.")
-        return
-    reply_to_message_id = message.message_id
+    # Determine the original command:
     command_entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
     command_passed = False
     if not command_entities:
         command_passed = False
-        # if no command then it is just a message and use default mode
+        # if no command then it is just a message and use message mode from settings:
         mode = context.chat_data["settings"]["mode"]
     else:
         command_passed = True
@@ -334,34 +336,22 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
         if not mode:
             mode = "dl"
     if command_passed and not context.args:
+        # TODO rant?
         # rant_text = RANT_TEXT_PRIVATE if chat_type == Chat.PRIVATE else RANT_TEXT_PUBLIC
         # rant_text += "\nYou can simply send message with links (to download) OR command as `/{} <links>`.".format(mode)
         # rant_and_cleanup(context.bot, chat_id, rant_text, reply_to_message_id=reply_to_message_id)
         return
-    event_name = ("{}_cmd".format(mode)) if command_passed else ("{}_msg".format(mode))
-    logger.debug(event_name)
-
+    command_name = f"{mode}_cmd" if command_passed else f"{mode}_msg"
+    logger.debug(command_name)
     apologize = False
     # apologize and send TYPING: always in PM, only when it's command in non-PM
     if chat_type == Chat.PRIVATE or command_passed:
         apologize = True
-    cookies_file = None
-    source_ip = None
-    proxy = None
-    if COOKIES_FILE:
-        cookies_file = COOKIES_FILE
-    if SOURCE_IPS:
-        source_ip = random.choice(SOURCE_IPS)
-    if PROXIES:
-        proxy = random.choice(PROXIES)
+
     data = {
         "message": message,
         "mode": mode,
-        "cookies_file": cookies_file,
-        "source_ip": source_ip,
-        "proxy": proxy,
         "apologize": apologize,
-        "reply_to_message_id": reply_to_message_id,
     }
     delay_seconds = 10
     logger.debug(len(context.job_queue.get_jobs_by_name("prepare_urls")))
@@ -371,124 +361,113 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
         delay_seconds = 60
     # https://stackoverflow.com/a/65731909/2490759
     # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
-    context.application.create_task(
-        prepare_urls(
-            context=context,
-            message=message,
-            mode=mode,
-            cookies_file=cookies_file,
-            source_ip=source_ip,
-            proxy=proxy,
-            apologize=apologize,
-            chat_id=chat_id,
-            reply_to_message_id=reply_to_message_id,
-        ),
-        update=update,
-    )
-    # await prepare_urls(
-    #     context=context,
-    #     message=message,
-    #     mode=mode,
-    #     cookies_file=cookies_file,
-    #     source_ip=source_ip,
-    #     proxy=proxy,
-    #     apologize=apologize,
-    #     chat_id=chat_id,
-    #     reply_to_message_id=reply_to_message_id,
+
+    # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
+    # https://docs.python-telegram-bot.org/en/v20.0/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
+    # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
+    # context.application.create_task(
+    #     prepare_urls(
+    #         context=context,
+    #         message=message,
+    #         mode=mode,
+    #         apologize=apologize,
+    #     ),
+    #     update=update,
     # )
+    await prepare_urls(
+        context=context,
+        message=message,
+        mode=mode,
+        apologize=apologize,
+    )
 
 
-async def button_query_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    btn_msg = update.callback_query.message
-    btn_msg_id = btn_msg.message_id
+async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    button_message = update.callback_query.message
+    button_message_id = button_message.message_id
     user_id = update.callback_query.from_user.id
     chat = update.effective_chat
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
-    orig_msg_id, action = update.callback_query.data.split()
+    # get message id and action from button data:
+    url_message_id, button_action = update.callback_query.data.split()
     if not chat_allowed(chat_id):
         await update.callback_query.answer(text="This command isn't allowed in this chat.")
         return
-    if orig_msg_id == "settings":
+    if url_message_id == "settings":
+        # button on settings message:
         if chat_type != Chat.PRIVATE:
             chat_member = await chat.get_member(user_id)
-            chat_member_status = chat_member.status
-            if chat_member_status not in [ChatMemberAdministrator, ChatMemberOwner] and user_id != BOT_OWNER_CHAT_ID:
+            if chat_member.status not in [ChatMemberAdministrator, ChatMemberOwner] and user_id != BOT_OWNER_CHAT_ID:
                 logger.debug("settings_fail")
-                await update.callback_query.answer(text="You're not chat admin")
+                await update.callback_query.answer(text="You're not chat admin.")
                 return
-        logger.debug(f"settings_{action}")
-        if action == "close":
-            await context.bot.delete_message(chat_id, btn_msg_id)
+        logger.debug(f"settings_{button_action}")
+        if button_action == "close":
+            await context.bot.delete_message(chat_id, button_message_id)
         else:
             setting_changed = False
-            if action in ["dl", "link", "ask"]:
+            if button_action in ["dl", "link", "ask"]:
                 current_setting = context.chat_data["settings"]["mode"]
-                if action != current_setting:
+                if button_action != current_setting:
                     setting_changed = True
-                    context.chat_data["settings"]["mode"] = action
-            elif action in ["flood"]:
+                    context.chat_data["settings"]["mode"] = button_action
+            elif button_action in ["flood"]:
                 current_setting = context.chat_data["settings"]["flood"]
                 setting_changed = True
                 if current_setting == "yes":
-                    context.chat_data["settings"][action] = "no"
+                    context.chat_data["settings"]["flood"] = "no"
                 else:
-                    context.chat_data["settings"][action] = "yes"
+                    context.chat_data["settings"]["flood"] = "yes"
             if setting_changed:
                 await update.callback_query.answer(text="Settings changed")
                 await update.callback_query.edit_message_reply_markup(reply_markup=get_settings_inline_keyboard(context.chat_data))
             else:
                 await update.callback_query.answer(text="Settings not changed")
 
-    elif orig_msg_id in context.chat_data:
-        msg_from_storage = context.chat_data.pop(orig_msg_id)
-        urls_dict = msg_from_storage["urls"]
-        cookies_file = None
-        if COOKIES_FILE:
-            cookies_file = COOKIES_FILE
-        source_ip = msg_from_storage["source_ip"]
-        proxy = msg_from_storage["proxy"]
-        logger.debug(f"{action}_msg")
-        if action == "dl":
+    elif url_message_id in context.chat_data:
+        # mode is ask, we got data from button on asking message.
+        # if it asked, then we were in prepare_urls:
+        url_message_data = context.chat_data.pop(url_message_id)
+        urls_dict = url_message_data["urls"]
+        logger.debug(f"{button_action}_msg")
+        if button_action == "dl":
             await update.callback_query.answer(text=get_wait_text())
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
-            flood = context.chat_data["settings"]["flood"]
             for url in urls_dict:
-                context.application.create_task(
-                    download_url_and_send(
-                        bot=context.bot,
-                        chat_id=chat_id,
-                        url=url,
-                        direct_urls=urls_dict[url],
-                        reply_to_message_id=orig_msg_id,
-                        wait_message_id=wait_message.message_id,
-                        cookies_file=cookies_file,
-                        source_ip=source_ip,
-                        proxy=proxy,
-                        flood=flood,
-                    ),
-                    update=update,
-                )
-                # await download_url_and_send(
-                #     bot=context.bot,
-                #     chat_id=chat_id,
-                #     url=url,
-                #     direct_urls=urls_dict[url],
-                #     reply_to_message_id=orig_msg_id,
-                #     wait_message_id=wait_message.message_id,
-                #     cookies_file=cookies_file,
-                #     source_ip=source_ip,
-                #     proxy=proxy,
-                #     flood=flood,
+                # context.application.create_task(
+                #     download_url_and_send(
+                #         context=context,
+                #         chat_id=chat_id,
+                #         url=url,
+                #         direct_urls_status=urls_dict[url],
+                #         reply_to_message_id=url_message_id,
+                #         wait_message_id=wait_message.message_id,
+                #         cookies_file=COOKIES_FILE,
+                #         source_ip=url_message_data["source_ip"],
+                #         proxy=url_message_data["proxy"],
+                #     ),
+                #     update=update,
                 # )
-        elif action == "link":
-            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
-            await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
-        elif action == "nodl":
-            await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+                await download_url_and_send(
+                    context=context,
+                    chat_id=chat_id,
+                    url=url,
+                    direct_urls_status=urls_dict[url],
+                    reply_to_message_id=url_message_id,
+                    wait_message_id=wait_message.message_id,
+                    cookies_file=COOKIES_FILE,
+                    source_ip=url_message_data["source_ip"],
+                    proxy=url_message_data["proxy"],
+                )
+        elif button_action == "link":
+            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
+            await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
+        elif button_action == "cancel":
+            await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
     else:
         await update.callback_query.answer(text=OLD_MSG_TEXT)
-        await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
+        await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
 
 
 async def blacklist_whitelist_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -537,50 +516,49 @@ async def prepare_urls(
     context: ContextTypes.DEFAULT_TYPE,
     message,
     mode=None,
-    cookies_file=None,
-    source_ip=None,
-    proxy=None,
     apologize=None,
-    chat_id=None,
-    reply_to_message_id=None,
 ):
+    chat_id = message.chat_id
+    reply_to_message_id = message.message_id
+    source_ip = None
+    proxy = None
+    if SOURCE_IPS:
+        source_ip = random.choice(SOURCE_IPS)
+    if PROXIES:
+        proxy = random.choice(PROXIES)
     logger.debug("Entering: prepare_urls")
     direct_urls = False
     if mode == "link":
         direct_urls = True
-
     if apologize:
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-
-    if isinstance(message, Message):
-        # Telegram message passed:
-        urls = []
-        url_entities = message.parse_entities(types=[MessageEntity.URL])
-        url_caption_entities = message.parse_caption_entities(types=[MessageEntity.URL])
-        url_entities.update(url_caption_entities)
-        for entity in url_entities:
-            url_str = url_entities[entity]
-            if url_valid_and_allowed(url_str):
-                logger.debug("Entity URL parsed: %s", url_str)
-                if "://" not in url_str:
-                    url_str = "http://{}".format(url_str)
-                urls.append(URL(url_str))
-            else:
-                logger.debug("Entry URL is not valid or blacklisted: %s", url_str)
-        text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
-        text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
-        text_link_entities.update(text_link_caption_entities)
-        for entity in text_link_entities:
-            url_str = entity.url
-            if url_valid_and_allowed(url_str):
-                logger.debug("Entity Text Link parsed: %s", url_str)
-                urls.append(URL(url_str))
-            else:
-                logger.debug("Entry Text Link is not valid or blacklisted: %s", url_str)
-    else:
-        # Just some text passed:
-        all_links = find_all_links(message, default_scheme="http")
-        urls = [link for link in all_links if url_valid_and_allowed(link)]
+    # If telegram message passed:
+    urls = []
+    url_entities = message.parse_entities(types=[MessageEntity.URL])
+    url_caption_entities = message.parse_caption_entities(types=[MessageEntity.URL])
+    url_entities.update(url_caption_entities)
+    for entity in url_entities:
+        url_str = url_entities[entity]
+        if url_valid_and_allowed(url_str):
+            logger.debug("Entity URL parsed: %s", url_str)
+            if "://" not in url_str:
+                url_str = "http://{}".format(url_str)
+            urls.append(URL(url_str))
+        else:
+            logger.debug("Entry URL is not valid or blacklisted: %s", url_str)
+    text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
+    text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
+    text_link_entities.update(text_link_caption_entities)
+    for entity in text_link_entities:
+        url_str = entity.url
+        if url_valid_and_allowed(url_str):
+            logger.debug("Entity Text Link parsed: %s", url_str)
+            urls.append(URL(url_str))
+        else:
+            logger.debug("Entry Text Link is not valid or blacklisted: %s", url_str)
+    # If message just some text passed (not isinstance(message, Message)):
+    # all_links = find_all_links(message, default_scheme="http")
+    # urls = [link for link in all_links if url_valid_and_allowed(link)]
 
     logger.debug(f"prepare_urls: urls list: {urls}")
     urls_dict = {}
@@ -604,9 +582,10 @@ async def prepare_urls(
         url_text = url.to_text(full_quote=True)
         # url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
         url_parts_num = len([part for part in url.path_parts if part])
-        if direct_urls:
+        if direct_urls or not any((site in url.host for site in DOMAINS)):
             # We run it if it was requested by "links" mode + for YouTube region restriction:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
+            # And all other links. We need to skip the links with known domains but not conforming the rules:
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages  # TODO private sets URLs have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -626,12 +605,7 @@ async def prepare_urls(
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
             # We still run it for checking YouTube region restriction:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
-        elif (
-            # All other links. We need to skip the links with known domains but not conforming the rules:
-            not any((site in url.host for site in DOMAINS))
-        ):
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     if not urls_dict:
@@ -641,58 +615,69 @@ async def prepare_urls(
 
     if mode == "dl":
         wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
-        flood = context.chat_data["settings"]["flood"]
         for url in urls_dict:
+            # FIXME send_audio connection troubles when async - make it in queue
+            # context.application.create_task(
+            #     download_url_and_send(
+            #         context=context,
+            #         chat_id=chat_id,
+            #         url=url,
+            #         direct_urls_status=urls_dict[url],
+            #         reply_to_message_id=reply_to_message_id,
+            #         wait_message_id=wait_message.message_id,
+            #         cookies_file=COOKIES_FILE,
+            #         source_ip=source_ip,
+            #         proxy=proxy,
+            #     ),
+            # )
             await download_url_and_send(
-                bot=context.bot,
+                context=context,
                 chat_id=chat_id,
                 url=url,
-                direct_urls=urls_dict[url],
+                direct_urls_status=urls_dict[url],
                 reply_to_message_id=reply_to_message_id,
                 wait_message_id=wait_message.message_id,
-                cookies_file=cookies_file,
+                cookies_file=COOKIES_FILE,
                 source_ip=source_ip,
                 proxy=proxy,
-                flood=flood,
             )
     elif mode == "link":
         await context.bot.send_message(
             chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
         )
     elif mode == "ask":
-        # ask only if any good url exist in get-url output:
+        # ask only if any good direct url status exist (or if we deal with trusted urls):
         if "http" in " ".join(urls_dict.values()):
-            orig_msg_id = str(reply_to_message_id)
-            context.chat_data[orig_msg_id] = {"message": message, "urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
+            url_message_id = str(reply_to_message_id)
+            context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
             question = "🎶 links found, what to do?"
-            button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([orig_msg_id, "dl"]))
-            button_link = InlineKeyboardButton(text="❇️ Links", callback_data=" ".join([orig_msg_id, "link"]))
-            button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([orig_msg_id, "nodl"]))
+            button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([url_message_id, "dl"]))
+            button_link = InlineKeyboardButton(text="❇️ Links", callback_data=" ".join([url_message_id, "link"]))
+            button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([url_message_id, "cancel"]))
             inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
 
 
 async def download_url_and_send(
-    bot,
+    context,
     chat_id,
     url,
-    direct_urls,
+    direct_urls_status,
     reply_to_message_id=None,
     wait_message_id=None,
     cookies_file=None,
     source_ip=None,
     proxy=None,
-    flood="yes",
 ):
     logger.debug("Entering: download_url_and_send")
-    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
-
+    flood = context.chat_data["settings"]["flood"]
     download_video = False
-    if direct_urls in ["restrict_direct", "restrict_region", "restrict_live", "timeout"]:
-        status = direct_urls
+    if direct_urls_status in ["restrict_direct", "restrict_region", "restrict_live", "timeout"]:
+        status = direct_urls_status
     else:
         status = "initial"
         cmd = None
@@ -826,11 +811,7 @@ async def download_url_and_send(
                     shutil.copyfile(cookies_file, cookies_download_file_path)
                     ydl_opts["cookiefile"] = str(cookies_download_file_path)
             queue = Queue()
-            cmd_args = (
-                url,
-                ydl_opts,
-                queue,
-            )
+            cmd_args = (url, ydl_opts, queue)
             logger.debug("%s starts: %s", cmd_name, url)
             cmd_proc = Process(target=cmd, args=cmd_args)
             cmd_proc.start()
@@ -856,15 +837,15 @@ async def download_url_and_send(
             gc.collect()
 
     if status == "timeout":
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
     elif status == "failed":
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_AUDIO_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_AUDIO_TEXT, parse_mode="Markdown")
     elif status == "restrict_direct":
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
     elif status == "restrict_region":
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
     elif status == "restrict_live":
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
     elif status == "success":
         file_list = []
         for d, dirs, files in os.walk(download_dir):
@@ -872,7 +853,7 @@ async def download_url_and_send(
                 file_list.append(os.path.join(d, file))
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
-            await bot.send_message(
+            await context.bot.send_message(
                 chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from provided links", parse_mode="Markdown"
             )
         else:
@@ -943,7 +924,7 @@ async def download_url_and_send(
                     # If format is not some extra garbage from downloaders:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
-                        await bot.send_message(
+                        await context.bot.send_message(
                             chat_id=chat_id,
                             reply_to_message_id=reply_to_message_id,
                             text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
@@ -951,7 +932,7 @@ async def download_url_and_send(
                         )
                 except FileTooLargeError as exc:
                     logger.debug("Large file for convert: %s", file_name)
-                    await bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
                         text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
@@ -962,7 +943,7 @@ async def download_url_and_send(
                 except FileSplittedPartiallyError as exc:
                     file_parts = exc.file_parts
                     logger.debug("Splitting failed: %s", file_name)
-                    await bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
                         text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
@@ -970,114 +951,111 @@ async def download_url_and_send(
                     )
                 except FileNotConvertedError as exc:
                     logger.debug("Splitting failed: %s", file_name)
-                    await bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
                         text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
                         parse_mode="Markdown",
                     )
-                try:
-                    caption = None
-                    if flood == "yes":
-                        addition = ""
-                        url_obj = URL(url)
-                        if DOMAIN_YT in url_obj.host:
-                            source = "YouTube"
-                            file_root, file_ext = os.path.splitext(file_name)
-                            file_title = file_root.replace(file_ext, "")
-                            addition = ": " + file_title
-                        elif DOMAIN_SC in url_obj.host:
-                            source = "SoundCloud"
-                        elif DOMAIN_BC in url_obj.host:
-                            source = "Bandcamp"
+                caption = None
+                reply_to_message_id_send = None
+                if flood == "yes":
+                    addition = ""
+                    url_obj = URL(url)
+                    if DOMAIN_YT in url_obj.host:
+                        source = "YouTube"
+                        file_root, file_ext = os.path.splitext(file_name)
+                        file_title = file_root.replace(file_ext, "")
+                        addition = ": " + file_title
+                    elif DOMAIN_SC in url_obj.host:
+                        source = "SoundCloud"
+                    elif DOMAIN_BC in url_obj.host:
+                        source = "Bandcamp"
+                    else:
+                        source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
+                    caption = "@{} _got it from_ [{}]({}){}".format(TG_BOT_USERNAME.replace("_", "\_"), source, url, addition.replace("_", "\_"))
+                    # logger.debug(caption)
+                    reply_to_message_id_send = reply_to_message_id
+                sent_audio_ids = []
+                for index, file_part in enumerate(file_parts):
+                    path = pathlib.Path(file_part)
+                    file_name = os.path.split(file_part)[-1]
+                    # file_name = translit(file_name, 'ru', reversed=True)
+                    logger.debug("Sending: %s", file_name)
+                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE)
+                    caption_part = None
+                    if len(file_parts) > 1:
+                        caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
+                    if caption:
+                        if caption_part:
+                            caption_full = caption_part + " | " + caption
                         else:
-                            source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
-                        caption = "@{} _got it from_ [{}]({}){}".format(TG_BOT_USERNAME.replace("_", "\_"), source, url, addition.replace("_", "\_"))
-                        # logger.debug(caption)
-                    reply_to_message_id_send = reply_to_message_id if flood == "yes" else None
-                    sent_audio_ids = []
-                    for index, file_part in enumerate(file_parts):
-                        path = pathlib.Path(file_part)
-                        file_name = os.path.split(file_part)[-1]
-                        # file_name = translit(file_name, 'ru', reversed=True)
-                        logger.debug("Sending: %s", file_name)
-                        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE)
-                        caption_part = None
-                        if len(file_parts) > 1:
-                            caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
-                        if caption:
-                            if caption_part:
-                                caption_full = caption_part + " | " + caption
-                            else:
-                                caption_full = caption
+                            caption_full = caption
+                    else:
+                        if caption_part:
+                            caption_full = caption_part
                         else:
-                            if caption_part:
-                                caption_full = caption_part
-                            else:
-                                caption_full = ""
-                        # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
-                        for i in range(5):
-                            try:
-                                logger.debug(file_part)
-                                if file_part.endswith(".mp3"):
-                                    mp3 = MP3(file_part)
-                                    duration = round(mp3.info.length)
-                                    performer = None
-                                    title = None
-                                    try:
-                                        performer = ", ".join(mp3["artist"])
-                                        title = ", ".join(mp3["title"])
-                                    except:
-                                        pass
-                                    if LOCAL_MODE:
-                                        audio = path.absolute().as_uri()
-                                        logger.debug(audio)
-                                    else:
-                                        audio = open(file_part, "rb")
-                                    audio_msg = await bot.send_audio(
-                                        chat_id=chat_id,
-                                        reply_to_message_id=reply_to_message_id,
-                                        audio=audio,
-                                        duration=duration,
-                                        performer=performer,
-                                        title=title,
-                                        caption=caption_full,
-                                        parse_mode="Markdown",
-                                    )
-                                    sent_audio_ids.append(audio_msg.audio.file_id)
-                                    logger.debug("Sending audio succeeded: %s", file_name)
-                                    break
-                                elif download_video:
-                                    video = open(file_part, "rb")
-                                    duration = float(ffmpeg.probe(file_part)["format"]["duration"])
-                                    videostream = next(item for item in ffmpeg.probe(file_part)["streams"] if item["codec_type"] == "video")
-                                    width = int(videostream["width"])
-                                    height = int(videostream["height"])
-                                    video_msg = await bot.send_video(
-                                        chat_id=chat_id,
-                                        reply_to_message_id=reply_to_message_id_send,
-                                        video=video,
-                                        supports_streaming=True,
-                                        duration=duration,
-                                        width=width,
-                                        height=height,
-                                        caption=caption_full,
-                                        parse_mode="Markdown",
-                                    )
-                                    sent_audio_ids.append(video_msg.video.file_id)
-                                    logger.debug("Sending video succeeded: %s", file_name)
-                                    break
-                            except TelegramError:
-                                if i == 4:
-                                    logger.debug("Sending failed because of TelegramError: %s", file_name)
+                            caption_full = ""
+                    # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
+                    for i in range(5):
+                        try:
+                            logger.debug(f"Trying {i} time to send file part: {file_part}")
+                            if file_part.endswith(".mp3"):
+                                mp3 = MP3(file_part)
+                                duration = round(mp3.info.length)
+                                performer = None
+                                title = None
+                                try:
+                                    performer = ", ".join(mp3["artist"])
+                                    title = ", ".join(mp3["title"])
+                                except:
+                                    pass
+                                if LOCAL_MODE:
+                                    audio = path.absolute().as_uri()
+                                    logger.debug(audio)
                                 else:
-                                    time.sleep(5)
-                    if len(sent_audio_ids) != len(file_parts):
-                        raise FileSentPartiallyError(sent_audio_ids)
-
-                except FileSentPartiallyError as exc:
-                    sent_audio_ids = exc.sent_audio_ids
-                    await bot.send_message(
+                                    audio = open(file_part, "rb")
+                                audio_msg = await context.bot.send_audio(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    audio=audio,
+                                    duration=duration,
+                                    performer=performer,
+                                    title=title,
+                                    caption=caption_full,
+                                    parse_mode="Markdown",
+                                )
+                                sent_audio_ids.append(audio_msg.audio.file_id)
+                                logger.debug("Sending audio succeeded: %s", file_name)
+                                break
+                            elif download_video:
+                                video = open(file_part, "rb")
+                                duration = float(ffmpeg.probe(file_part)["format"]["duration"])
+                                videostream = next(item for item in ffmpeg.probe(file_part)["streams"] if item["codec_type"] == "video")
+                                width = int(videostream["width"])
+                                height = int(videostream["height"])
+                                video_msg = await context.bot.send_video(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    video=video,
+                                    supports_streaming=True,
+                                    duration=duration,
+                                    width=width,
+                                    height=height,
+                                    caption=caption_full,
+                                    parse_mode="Markdown",
+                                )
+                                sent_audio_ids.append(video_msg.video.file_id)
+                                logger.debug("Sending video succeeded: %s", file_name)
+                                break
+                        except TelegramError as exc:
+                            print(traceback.format_exc())
+                            if i == 4:
+                                logger.debug("Sending failed because of TelegramError: %s", file_name)
+                            else:
+                                time.sleep(5)
+                if len(sent_audio_ids) != len(file_parts):
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
                         text="*Sorry*, could not send file `{}` or some of it's parts..".format(file_name),
@@ -1088,7 +1066,7 @@ async def download_url_and_send(
     shutil.rmtree(download_dir, ignore_errors=True)
     if wait_message_id:  # TODO delete only once
         try:
-            await bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
         except:
             pass
 
@@ -1159,24 +1137,19 @@ def ydl_download(url, ydl_opts, queue=None):
         return ydl_status
 
 
-async def callback_job_prepare_urls(context: ContextTypes.DEFAULT_TYPE):
-    chat_id = context.job.chat_id
-    data = context.job.data
-    # await context.bot.send_message(
-    #     chat_id=chat_id,
-    #     text=f"BEEP {data['user_name']}!",
-    # )
-    await prepare_urls(
-        context=context,
-        message=data["message"],
-        mode=data["mode"],
-        cookies_file=data["cookies_file"],
-        source_ip=data["source_ip"],
-        proxy=data["proxy"],
-        apologize=data["apologize"],
-        chat_id=chat_id,
-        reply_to_message_id=data["reply_to_message_id"],
-    )
+# async def callback_job_prepare_urls(context: ContextTypes.DEFAULT_TYPE):
+#     chat_id = context.job.chat_id
+#     data = context.job.data
+#     # await context.bot.send_message(
+#     #     chat_id=chat_id,
+#     #     text=f"BEEP {data['user_name']}!",
+#     # )
+#     await prepare_urls(
+#         context=context,
+#         message=data["message"],
+#         mode=data["mode"],
+#         apologize=data["apologize"],
+#     )
 
 
 def main():
@@ -1204,16 +1177,20 @@ def main():
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
         # .concurrent_updates(1024)
-        # .connection_pool_size(2048)
-        # .pool_timeout(30)
+        .connection_pool_size(2048)
+        .connect_timeout(300)
+        .read_timeout(300)
+        .write_timeout(300)
+        .pool_timeout(300)
         .build()
     )
 
-    start_command_handler = CommandHandler("start", help_command_callback)
-    help_command_handler = CommandHandler("help", help_command_callback)
+    blacklist_whitelist_handler = MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, blacklist_whitelist_callback)
+    start_command_handler = CommandHandler("start", start_help_commands_callback)
+    help_command_handler = CommandHandler("help", start_help_commands_callback)
     settings_command_handler = CommandHandler("settings", settings_command_callback)
-    dl_command_handler = CommandHandler("dl", common_command_callback, filters=~filters.UpdateType.EDITED_MESSAGE & ~filters.FORWARDED)
-    link_command_handler = CommandHandler("link", common_command_callback, filters=~filters.UpdateType.EDITED_MESSAGE & ~filters.FORWARDED)
+    dl_command_handler = CommandHandler("dl", dl_link_commands_and_messages_callback, filters=~filters.UpdateType.EDITED_MESSAGE & ~filters.FORWARDED)
+    link_command_handler = CommandHandler("link", dl_link_commands_and_messages_callback, filters=~filters.UpdateType.EDITED_MESSAGE & ~filters.FORWARDED)
     message_with_links_handler = MessageHandler(
         ~filters.UpdateType.EDITED_MESSAGE
         & ~filters.COMMAND
@@ -1221,12 +1198,12 @@ def main():
             (filters.TEXT & (filters.Entity(MessageEntity.URL) | filters.Entity(MessageEntity.TEXT_LINK)))
             | (filters.CAPTION & (filters.CaptionEntity(MessageEntity.URL) | filters.CaptionEntity(MessageEntity.TEXT_LINK)))
         ),
-        common_command_callback,
+        dl_link_commands_and_messages_callback,
     )
-    button_query_handler = CallbackQueryHandler(button_query_callback)
-    blacklist_whitelist_handler = MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, blacklist_whitelist_callback)
+    button_query_handler = CallbackQueryHandler(button_press_callback)
     unknown_handler = MessageHandler(filters.COMMAND, unknown_command_callback)
 
+    application.add_handler(blacklist_whitelist_handler)
     application.add_handler(start_command_handler)
     application.add_handler(help_command_handler)
     application.add_handler(settings_command_handler)
@@ -1234,7 +1211,6 @@ def main():
     application.add_handler(link_command_handler)
     application.add_handler(message_with_links_handler)
     application.add_handler(button_query_handler)
-    application.add_handler(blacklist_whitelist_handler)
     application.add_handler(unknown_handler)
     application.add_error_handler(error_callback)
 
