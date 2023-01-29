@@ -22,7 +22,7 @@ package:
 test: lint package
 
 .PHONY: run_dev
-run_debug:
+run_dev:
 	set -o allexport; \
 	source .env-dev; \
 	poetry run python scdlbot/scdlbot.py

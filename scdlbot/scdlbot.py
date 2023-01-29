@@ -173,7 +173,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# TODO Exceptions:
+# TODO exceptions:
 class FileNotSupportedError(Exception):
     def __init__(self, file_format):
         self.file_format = file_format
@@ -371,17 +371,31 @@ async def common_command_callback(update: Update, context: ContextTypes.DEFAULT_
         delay_seconds = 60
     # https://stackoverflow.com/a/65731909/2490759
     # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
-    await prepare_urls(
-        context=context,
-        message=message,
-        mode=mode,
-        cookies_file=cookies_file,
-        source_ip=source_ip,
-        proxy=proxy,
-        apologize=apologize,
-        chat_id=chat_id,
-        reply_to_message_id=reply_to_message_id,
+    context.application.create_task(
+        prepare_urls(
+            context=context,
+            message=message,
+            mode=mode,
+            cookies_file=cookies_file,
+            source_ip=source_ip,
+            proxy=proxy,
+            apologize=apologize,
+            chat_id=chat_id,
+            reply_to_message_id=reply_to_message_id,
+        ),
+        update=update,
     )
+    # await prepare_urls(
+    #     context=context,
+    #     message=message,
+    #     mode=mode,
+    #     cookies_file=cookies_file,
+    #     source_ip=source_ip,
+    #     proxy=proxy,
+    #     apologize=apologize,
+    #     chat_id=chat_id,
+    #     reply_to_message_id=reply_to_message_id,
+    # )
 
 
 async def button_query_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -440,18 +454,33 @@ async def button_query_callback(update: Update, context: ContextTypes.DEFAULT_TY
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
             flood = context.chat_data["settings"]["flood"]
             for url in urls_dict:
-                await download_url_and_send(
-                    bot=context.bot,
-                    chat_id=chat_id,
-                    url=url,
-                    direct_urls=urls_dict[url],
-                    reply_to_message_id=orig_msg_id,
-                    wait_message_id=wait_message.message_id,
-                    cookies_file=cookies_file,
-                    source_ip=source_ip,
-                    proxy=proxy,
-                    flood=flood,
+                context.application.create_task(
+                    download_url_and_send(
+                        bot=context.bot,
+                        chat_id=chat_id,
+                        url=url,
+                        direct_urls=urls_dict[url],
+                        reply_to_message_id=orig_msg_id,
+                        wait_message_id=wait_message.message_id,
+                        cookies_file=cookies_file,
+                        source_ip=source_ip,
+                        proxy=proxy,
+                        flood=flood,
+                    ),
+                    update=update,
                 )
+                # await download_url_and_send(
+                #     bot=context.bot,
+                #     chat_id=chat_id,
+                #     url=url,
+                #     direct_urls=urls_dict[url],
+                #     reply_to_message_id=orig_msg_id,
+                #     wait_message_id=wait_message.message_id,
+                #     cookies_file=cookies_file,
+                #     source_ip=source_ip,
+                #     proxy=proxy,
+                #     flood=flood,
+                # )
         elif action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=orig_msg_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=btn_msg_id)
@@ -596,7 +625,7 @@ async def prepare_urls(
             urls_dict[url_text] = "http"
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # We still run it for YouTube region restriction:
+            # We still run it for checking YouTube region restriction:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, cookies_file, source_ip, proxy)
         elif (
             # All other links. We need to skip the links with known domains but not conforming the rules:
@@ -1057,7 +1086,7 @@ async def download_url_and_send(
                     logger.debug("Sending some parts failed: %s", file_name)
 
     shutil.rmtree(download_dir, ignore_errors=True)
-    if wait_message_id:  # FIXME delete only once
+    if wait_message_id:  # TODO delete only once
         try:
             await bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
         except:
@@ -1173,10 +1202,10 @@ def main():
         .local_mode(LOCAL_MODE)
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
-        .concurrent_updates(1024)
-        .connection_pool_size(2048)
-        .pool_timeout(30)
         .persistence(persistence)
+        # .concurrent_updates(1024)
+        # .connection_pool_size(2048)
+        # .pool_timeout(30)
         .build()
     )
 
