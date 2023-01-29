@@ -1839,14 +1839,14 @@ ssh = ["paramiko"]
 
 [[package]]
 name = "prometheus-client"
-version = "0.15.0"
+version = "0.16.0"
 description = "Python client for the Prometheus monitoring system."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "prometheus_client-0.15.0-py3-none-any.whl", hash = "sha256:db7c05cbd13a0f79975592d112320f2605a325969b270a94b71dcabc47b931d2"},
-    {file = "prometheus_client-0.15.0.tar.gz", hash = "sha256:be26aa452490cfcf6da953f9436e95a9f2b4d578ca80094b4458930e5f584ab1"},
+    {file = "prometheus_client-0.16.0-py3-none-any.whl", hash = "sha256:0836af6eb2c8f4fed712b2f279f6c0a8bbab29f9f4aa15276b91c7cb0d1616ab"},
+    {file = "prometheus_client-0.16.0.tar.gz", hash = "sha256:a03e35b359f14dd1630898543e2120addfdeacd1a6069c1367ae90fd93ad3f48"},
 ]
 
 [package.extras]
@@ -2993,10 +2993,8 @@ description = "A youtube-dl fork with additional features and patches"
 category = "main"
 optional = false
 python-versions = ">=3.7"
-files = [
-    {file = "yt-dlp-2023.1.6.tar.gz", hash = "sha256:3a783a36751ced16368f40b3ba865ab39b30689ed8056f1ee2346aa3839a0b0f"},
-    {file = "yt_dlp-2023.1.6-py2.py3-none-any.whl", hash = "sha256:bcac3231e2022cad128a83f69948c845b364b2a85fde53415378f7c199808849"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 brotli = {version = "*", markers = "platform_python_implementation == \"CPython\""}
@@ -3005,6 +3003,12 @@ certifi = "*"
 mutagen = "*"
 pycryptodomex = "*"
 websockets = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/yt-dlp/yt-dlp.git"
+reference = "master"
+resolved_reference = "8aa0bd5d10627ece3c1815c01d02fb8bf22847a7"
 
 [[package]]
 name = "zipp"
@@ -3025,4 +3029,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d2d9de2098ead013e1f494333d681c23d45e9181d74febeaabcdbeb44bd3ab1a"
+content-hash = "fff0d2b8e9592722c361da79e9c9521441519608d0b96e80bfeebeb128f0bacf"

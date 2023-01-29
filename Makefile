@@ -25,7 +25,7 @@ test: lint package
 run_debug:
 	set -o allexport; \
 	source .env-dev; \
-	poetry run python scdlbot/scdlbotng.py
+	poetry run python scdlbot/scdlbot.py
 
 .DEFAULT:
 	@cd docs && $(MAKE) $@

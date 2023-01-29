@@ -38,8 +38,7 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 #"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
 
 [tool.poetry.scripts]
-scdlbot = "scdlbot.__main__:main"
-scdlbotng = "scdlbot.scdlbotng:main"
+scdlbot = "scdlbot.scdlbot:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -54,21 +53,21 @@ plumbum = "^1.8.1"
 ffmpeg-python = "0.2.0"
 mutagen = "^1.46.0"
 requests = { version = "^2.28.2", extras = ["socks"] }
-prometheus_client = "^0.15.0"
+prometheus_client = "^0.16.0"
 #patool = "1.12"
 #pyshorteners = "1.0.1"
 #transliterate = "1.10.2"
 #fake-useragent = "1.1.1"
 
 ### For publishing to PyPI at release:
-yt-dlp = "2023.1.6"
+#yt-dlp = "2023.1.6"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 scdl = "2.7.3"
 bandcamp-downloader = "0.0.13"
 
 ### For making it work better using latest git revision:
-#yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 ##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
 ## https://github.com/ytdl-org/youtube-dl/pull/26684
