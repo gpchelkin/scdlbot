@@ -52,6 +52,7 @@ from plumbum import ProcessExecutionError, ProcessTimedOut, local
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
 # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Local-Bot-API-Server
+# https://github.com/tdlib/telegram-bot-api#usage
 LOCAL_MODE = False
 if "127.0.0.1" in TG_BOT_API:
     LOCAL_MODE = True
@@ -1172,8 +1173,8 @@ def main():
         .local_mode(LOCAL_MODE)
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
-        .concurrent_updates(128)
-        .connection_pool_size(256)
+        .concurrent_updates(1024)
+        .connection_pool_size(2048)
         .pool_timeout(30)
         .persistence(persistence)
         .build()
@@ -1217,7 +1218,7 @@ def main():
             key=CERT_KEY_FILE,
             webhook_url=urljoin(APP_URL, URL_PATH),
             drop_pending_updates=True,
-            max_connections=128,
+            max_connections=1024,
             secret_token=WEBHOOK_SECRET_TOKEN,
         )
     else:
