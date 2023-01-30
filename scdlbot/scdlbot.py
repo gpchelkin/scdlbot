@@ -347,6 +347,10 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # apologize and send TYPING: always in PM, only when it's command in non-PM
     if chat_type == Chat.PRIVATE or command_passed:
         apologize = True
+    wait_message_id = None
+    if mode == "dl":
+        wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
+        wait_message_id = wait_message.message_id
 
     data = {
         "message": message,
@@ -365,11 +369,15 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
     # https://docs.python-telegram-bot.org/en/v20.0/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
     # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
+    # FIXME send_audio connection troubles when async. Bad on my computer, good on server with local API.
+    # FIXME needs concurrent limit
+    # FIXME make other functions run async? but they are light
     context.application.create_task(
         prepare_urls(
             context=context,
             message=message,
             mode=mode,
+            wait_message_id=wait_message_id,
             apologize=apologize,
         ),
         update=update,
@@ -516,6 +524,7 @@ async def prepare_urls(
     context: ContextTypes.DEFAULT_TYPE,
     message,
     mode=None,
+    wait_message_id=None,
     apologize=None,
 ):
     chat_id = message.chat_id
@@ -527,9 +536,6 @@ async def prepare_urls(
     if PROXIES:
         proxy = random.choice(PROXIES)
     logger.debug("Entering: prepare_urls")
-    direct_urls = False
-    if mode == "link":
-        direct_urls = True
     if apologize:
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
     # If telegram message passed:
@@ -582,8 +588,8 @@ async def prepare_urls(
         url_text = url.to_text(full_quote=True)
         # url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
         url_parts_num = len([part for part in url.path_parts if part])
-        if direct_urls or not any((site in url.host for site in DOMAINS)):
-            # We run it if it was requested by "links" mode + for YouTube region restriction:
+        if mode == "link" or not any((site in url.host for site in DOMAINS)):
+            # We run it if it was requested by "link" mode + for YouTube region restriction:
             # And all other links. We need to skip the links with known domains but not conforming the rules:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts):
@@ -614,33 +620,31 @@ async def prepare_urls(
         return
 
     if mode == "dl":
-        wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
         for url in urls_dict:
-            # FIXME send_audio connection troubles when async - make it in queue
-            # context.application.create_task(
-            #     download_url_and_send(
-            #         context=context,
-            #         chat_id=chat_id,
-            #         url=url,
-            #         direct_urls_status=urls_dict[url],
-            #         reply_to_message_id=reply_to_message_id,
-            #         wait_message_id=wait_message.message_id,
-            #         cookies_file=COOKIES_FILE,
-            #         source_ip=source_ip,
-            #         proxy=proxy,
-            #     ),
-            # )
-            await download_url_and_send(
-                context=context,
-                chat_id=chat_id,
-                url=url,
-                direct_urls_status=urls_dict[url],
-                reply_to_message_id=reply_to_message_id,
-                wait_message_id=wait_message.message_id,
-                cookies_file=COOKIES_FILE,
-                source_ip=source_ip,
-                proxy=proxy,
+            context.application.create_task(
+                download_url_and_send(
+                    context=context,
+                    chat_id=chat_id,
+                    url=url,
+                    direct_urls_status=urls_dict[url],
+                    reply_to_message_id=reply_to_message_id,
+                    wait_message_id=wait_message_id,
+                    cookies_file=COOKIES_FILE,
+                    source_ip=source_ip,
+                    proxy=proxy,
+                ),
             )
+            # await download_url_and_send(
+            #     context=context,
+            #     chat_id=chat_id,
+            #     url=url,
+            #     direct_urls_status=urls_dict[url],
+            #     reply_to_message_id=reply_to_message_id,
+            #     wait_message_id=wait_message_id,
+            #     cookies_file=COOKIES_FILE,
+            #     source_ip=source_ip,
+            #     proxy=proxy,
+            # )
     elif mode == "link":
         await context.bot.send_message(
             chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
@@ -997,7 +1001,8 @@ async def download_url_and_send(
                         else:
                             caption_full = ""
                     # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
-                    for i in range(5):
+                    retries = 5
+                    for i in range(retries):
                         try:
                             logger.debug(f"Trying {i} time to send file part: {file_part}")
                             if file_part.endswith(".mp3"):
@@ -1050,7 +1055,7 @@ async def download_url_and_send(
                                 break
                         except TelegramError:
                             print(traceback.format_exc())
-                            if i == 4:
+                            if i == retries-1:
                                 logger.debug("Sending failed because of TelegramError: %s", file_name)
                             else:
                                 time.sleep(5)
@@ -1095,10 +1100,8 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
 
     if source_ip:
         ydl_args.extend(["--source-address", source_ip])
-
     if proxy:
         ydl_args.extend(["--proxy", proxy])
-
     ydl_args.extend(["--get-url", url])
     result = ""
     try:
@@ -1169,6 +1172,7 @@ def main():
     #         config.write(config_file)
 
     persistence = PicklePersistence(filepath=CHAT_STORAGE)
+    # Timeouts: https://www.python-httpx.org/advanced/
     application = (
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
@@ -1177,7 +1181,7 @@ def main():
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
         # .concurrent_updates(1024)
-        .connection_pool_size(2048)
+        .connection_pool_size(1024)
         .connect_timeout(300)
         .read_timeout(300)
         .write_timeout(300)
