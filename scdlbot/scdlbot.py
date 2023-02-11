@@ -385,23 +385,25 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # FIXME use concurrent_updates with limit instead of unlimited create_task? make other commands async too?
     # send_audio has connection troubles when running async.
     # Works bad on my computer, but good on server with local API.
-    context.application.create_task(
-        prepare_urls(
-            context=context,
-            message=message,
-            mode=mode,
-            wait_message_id=wait_message_id,
-            apologize=apologize,
-            allow_unknown_sites=allow_unknown_sites,
-        ),
-        update=update,
-    )
-    # await prepare_urls(
-    #     context=context,
-    #     message=message,
-    #     mode=mode,
-    #     apologize=apologize,
+    # context.application.create_task(
+    #     prepare_urls(
+    #         context=context,
+    #         message=message,
+    #         mode=mode,
+    #         wait_message_id=wait_message_id,
+    #         apologize=apologize,
+    #         allow_unknown_sites=allow_unknown_sites,
+    #     ),
+    #     update=update,
     # )
+    await prepare_urls(
+        context=context,
+        message=message,
+        mode=mode,
+        wait_message_id=wait_message_id,
+        apologize=apologize,
+        allow_unknown_sites=allow_unknown_sites,
+    )
 
 
 async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -456,31 +458,31 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await update.callback_query.answer(text=get_wait_text())
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
             for url in urls_dict:
-                context.application.create_task(
-                    download_url_and_send(
-                        context=context,
-                        chat_id=chat_id,
-                        url=url,
-                        direct_urls_status=urls_dict[url],
-                        reply_to_message_id=url_message_id,
-                        wait_message_id=wait_message.message_id,
-                        cookies_file=COOKIES_FILE,
-                        source_ip=url_message_data["source_ip"],
-                        proxy=url_message_data["proxy"],
-                    ),
-                    update=update,
-                )
-                # await download_url_and_send(
-                #     context=context,
-                #     chat_id=chat_id,
-                #     url=url,
-                #     direct_urls_status=urls_dict[url],
-                #     reply_to_message_id=url_message_id,
-                #     wait_message_id=wait_message.message_id,
-                #     cookies_file=COOKIES_FILE,
-                #     source_ip=url_message_data["source_ip"],
-                #     proxy=url_message_data["proxy"],
+                # context.application.create_task(
+                #     download_url_and_send(
+                #         context=context,
+                #         chat_id=chat_id,
+                #         url=url,
+                #         direct_urls_status=urls_dict[url],
+                #         reply_to_message_id=url_message_id,
+                #         wait_message_id=wait_message.message_id,
+                #         cookies_file=COOKIES_FILE,
+                #         source_ip=url_message_data["source_ip"],
+                #         proxy=url_message_data["proxy"],
+                #     ),
+                #     update=update,
                 # )
+                await download_url_and_send(
+                    context=context,
+                    chat_id=chat_id,
+                    url=url,
+                    direct_urls_status=urls_dict[url],
+                    reply_to_message_id=url_message_id,
+                    wait_message_id=wait_message.message_id,
+                    cookies_file=COOKIES_FILE,
+                    source_ip=url_message_data["source_ip"],
+                    proxy=url_message_data["proxy"],
+                )
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
@@ -656,30 +658,30 @@ async def prepare_urls(
 
     if mode == "dl":
         for url in urls_dict:
-            context.application.create_task(
-                download_url_and_send(
-                    context=context,
-                    chat_id=chat_id,
-                    url=url,
-                    direct_urls_status=urls_dict[url],
-                    reply_to_message_id=reply_to_message_id,
-                    wait_message_id=wait_message_id,
-                    cookies_file=COOKIES_FILE,
-                    source_ip=source_ip,
-                    proxy=proxy,
-                ),
-            )
-            # await download_url_and_send(
-            #     context=context,
-            #     chat_id=chat_id,
-            #     url=url,
-            #     direct_urls_status=urls_dict[url],
-            #     reply_to_message_id=reply_to_message_id,
-            #     wait_message_id=wait_message_id,
-            #     cookies_file=COOKIES_FILE,
-            #     source_ip=source_ip,
-            #     proxy=proxy,
+            # context.application.create_task(
+            #     download_url_and_send(
+            #         context=context,
+            #         chat_id=chat_id,
+            #         url=url,
+            #         direct_urls_status=urls_dict[url],
+            #         reply_to_message_id=reply_to_message_id,
+            #         wait_message_id=wait_message_id,
+            #         cookies_file=COOKIES_FILE,
+            #         source_ip=source_ip,
+            #         proxy=proxy,
+            #     ),
             # )
+            await download_url_and_send(
+                context=context,
+                chat_id=chat_id,
+                url=url,
+                direct_urls_status=urls_dict[url],
+                reply_to_message_id=reply_to_message_id,
+                wait_message_id=wait_message_id,
+                cookies_file=COOKIES_FILE,
+                source_ip=source_ip,
+                proxy=proxy,
+            )
     elif mode == "link":
         await context.bot.send_message(
             chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
@@ -1218,10 +1220,11 @@ def main():
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
         .local_mode(LOCAL_MODE)
+        .http_version("1.1")  # FIXME 2.0 doesn't work in local mode
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
-        # .concurrent_updates(1024)
+        .concurrent_updates(256)
         .connection_pool_size(1024)
         .connect_timeout(300)
         .read_timeout(300)
