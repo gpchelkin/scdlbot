@@ -53,11 +53,11 @@ plumbum = "^1.8.1"
 mutagen = "^1.46.0"
 requests = { version = "^2.28.2", extras = ["socks"] }
 prometheus_client = "^0.16.0"
+#fake-useragent = "^1.1.1"
 ffmpeg-python = "0.2.0"
 #patool = "1.12"
 #pyshorteners = "1.0.1"
 #transliterate = "1.10.2"
-#fake-useragent = "1.1.1"
 
 ### For publishing to PyPI at release:
 #yt-dlp = "2023.1.6"
@@ -80,6 +80,7 @@ yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
 #bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
 ##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
+fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
 
 [tool.poetry.group.dev]
 # must be false if tox-poetry is used (it doesn't support groups):

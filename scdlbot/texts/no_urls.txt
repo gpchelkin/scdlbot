@@ -1,4 +1,3 @@
-*Sorry*, no supported links found in your request.
-Or, if it was YouTube link, YouTube just didn't let me download from it too repeatedly..
+*Sorry*, no supported links found in your request, or the website just didn't let me download from it..
 Just wait and try again later, or try my test version bot: @scdltestbot or some another bot like @utubebot.
 For more information see /help

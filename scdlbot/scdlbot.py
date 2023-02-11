@@ -19,6 +19,7 @@ import pkg_resources
 
 # import prometheus_client
 import requests
+from fake_useragent import UserAgent
 
 # from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3, ID3v1SaveOptions
@@ -122,12 +123,12 @@ HELP_TEXT = get_response_text("help.tg.md")
 SETTINGS_TEXT = get_response_text("settings.tg.md")
 DL_TIMEOUT_TEXT = get_response_text("dl_timeout.txt").format(DL_TIMEOUT // 60)
 WAIT_BIT_TEXT = [get_response_text("wait_bit.txt"), get_response_text("wait_beat.txt"), get_response_text("wait_beet.txt")]
-NO_AUDIO_TEXT = get_response_text("no_audio.txt")
-NO_URLS_TEXT = get_response_text("no_urls.txt")
-OLD_MSG_TEXT = get_response_text("old_msg.txt")
+NO_URLS_TEXT = get_response_text("no_urls.txt")  # FIXME fix text for failed unknown site
+FAILED_TEXT = get_response_text("failed.txt")  # FIXME fix text for failed unknown site
 REGION_RESTRICTION_TEXT = get_response_text("region_restriction.txt")
 DIRECT_RESTRICTION_TEXT = get_response_text("direct_restriction.txt")
 LIVE_RESTRICTION_TEXT = get_response_text("live_restriction.txt")
+OLD_MSG_TEXT = get_response_text("old_msg.txt")
 RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
 RANT_TEXT_PUBLIC = f"[Start me in PM to read help and learn how to use me](t.me/{TG_BOT_USERNAME}?start=1)"
 
@@ -141,7 +142,8 @@ DOMAIN_YT = "youtu"
 DOMAIN_YT_BE = "youtu.be"
 DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
-DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG]
+DOMAIN_TW = "twitter.com"
+DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW]
 
 # Configure logging:
 logging_handlers = []
@@ -172,6 +174,9 @@ logging.basicConfig(
     handlers=logging_handlers,
 )
 logger = logging.getLogger(__name__)
+
+ua = UserAgent()
+ua.update()
 
 
 # TODO exceptions:
@@ -229,14 +234,21 @@ def get_italic(text):
 def get_settings_inline_keyboard(chat_data):
     mode = chat_data["settings"]["mode"]
     flood = chat_data["settings"]["flood"]
-    emoji_yes = "✅"
-    emoji_no = "❌"
-    button_dl = InlineKeyboardButton(text=" ".join([emoji_yes if mode == "dl" else emoji_no, "Download"]), callback_data=" ".join(["settings", "dl"]))
-    button_link = InlineKeyboardButton(text=" ".join([emoji_yes if mode == "link" else emoji_no, "Links"]), callback_data=" ".join(["settings", "link"]))
-    button_ask = InlineKeyboardButton(text=" ".join([emoji_yes if mode == "ask" else emoji_no, "Ask"]), callback_data=" ".join(["settings", "ask"]))
-    button_flood = InlineKeyboardButton(text=" ".join([emoji_yes if flood == "yes" else emoji_no, "Captions"]), callback_data=" ".join(["settings", "flood"]))
-    button_close = InlineKeyboardButton(text=" ".join([emoji_no, "Close settings"]), callback_data=" ".join(["settings", "close"]))
-    inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_ask], [button_flood, button_close]])
+    allow_unknown_sites = chat_data["settings"]["allow_unknown_sites"]
+    emoji_radio_selected = "🟢"
+    emoji_radio_unselected = "🟡"
+    emoji_toggle_enabled = "✅"
+    emoji_toggle_disabled = "❌"
+    emoji_close = "❌"
+    button_dl = InlineKeyboardButton(text=" ".join([emoji_radio_selected if mode == "dl" else emoji_radio_unselected, "Download"]), callback_data=" ".join(["settings", "dl"]))
+    button_link = InlineKeyboardButton(text=" ".join([emoji_radio_selected if mode == "link" else emoji_radio_unselected, "Links"]), callback_data=" ".join(["settings", "link"]))
+    button_ask = InlineKeyboardButton(text=" ".join([emoji_radio_selected if mode == "ask" else emoji_radio_unselected, "Ask"]), callback_data=" ".join(["settings", "ask"]))
+    button_flood = InlineKeyboardButton(text=" ".join([emoji_toggle_enabled if flood else emoji_toggle_disabled, "Captions"]), callback_data=" ".join(["settings", "flood"]))
+    button_allow_unknown_sites = InlineKeyboardButton(
+        text=" ".join([emoji_toggle_enabled if allow_unknown_sites else emoji_toggle_disabled, "Unknown sites"]), callback_data=" ".join(["settings", "allow_unknown_sites"])
+    )
+    button_close = InlineKeyboardButton(text=" ".join([emoji_close, "Close settings"]), callback_data=" ".join(["settings", "close"]))
+    inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_ask], [button_allow_unknown_sites, button_flood], [button_close]])
     return inline_keyboard
 
 
@@ -247,13 +259,10 @@ def chat_allowed(chat_id):
     if BLACKLIST_CHATS:
         if chat_id in BLACKLIST_CHATS:
             return False
-    if WHITELIST_CHATS and BLACKLIST_CHATS:
-        if chat_id in BLACKLIST_CHATS:
-            return False
     return True
 
 
-def url_valid_and_allowed(url):
+def url_valid_and_allowed(url, allow_unknown_sites=False):
     try:
         netloc = urlparse(url).netloc
     except AttributeError:
@@ -266,10 +275,13 @@ def url_valid_and_allowed(url):
     if BLACKLIST_DOMAINS:
         if netloc in BLACKLIST_DOMAINS:
             return False
-    if WHITELIST_DOMAINS and BLACKLIST_DOMAINS:
-        if netloc in BLACKLIST_DOMAINS:
+    if allow_unknown_sites:
+        return True
+    else:
+        if any((site in netloc for site in DOMAINS)):
+            return True
+        else:
             return False
-    return True
 
 
 async def start_help_commands_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -297,7 +309,7 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
     init_chat_data(
         chat_data=context.chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
-        flood=("no" if chat_id in NO_FLOOD_CHAT_IDS else "yes"),
+        flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(context.chat_data), text=SETTINGS_TEXT)
 
@@ -317,10 +329,11 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     init_chat_data(
         chat_data=context.chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
-        flood=("no" if chat_id in NO_FLOOD_CHAT_IDS else "yes"),
+        flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     # Determine the original command:
     command_entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
+    allow_unknown_sites = context.chat_data["settings"]["allow_unknown_sites"]
     command_passed = False
     if not command_entities:
         command_passed = False
@@ -344,7 +357,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     command_name = f"{mode}_cmd" if command_passed else f"{mode}_msg"
     logger.debug(command_name)
     apologize = False
-    # apologize and send TYPING: always in PM, only when it's command in non-PM
+    # apologize for fails: always in PM; only when it was explicit command in non-PM:
     if chat_type == Chat.PRIVATE or command_passed:
         apologize = True
     wait_message_id = None
@@ -357,22 +370,21 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         "mode": mode,
         "apologize": apologize,
     }
-    delay_seconds = 10
-    logger.debug(len(context.job_queue.get_jobs_by_name("prepare_urls")))
-    logger.debug(len(context.job_queue.jobs()))
-    if len(context.job_queue.jobs()) > 0:
-        logger.debug("will start later!")
-        delay_seconds = 60
+    # delay_seconds = 10
+    # logger.debug(len(context.job_queue.get_jobs_by_name("prepare_urls")))
+    # logger.debug(len(context.job_queue.jobs()))
+    # if len(context.job_queue.jobs()) > 0:
+    #     logger.debug("will start later!")
+    #     delay_seconds = 60
     # https://stackoverflow.com/a/65731909/2490759
     # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
 
     # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
-    # https://docs.python-telegram-bot.org/en/v20.0/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
+    # https://docs.python-telegram-bot.org/en/v20.1/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
     # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
-    # FIXME send_audio connection troubles when async. Bad on my computer, good on server with local API.
-    # FIXME needs concurrent limit
-    # FIXME make other functions run async? but they are light
-    # FIXME remove old messages from chat data regularly
+    # FIXME use concurrent_updates with limit instead of unlimited create_task? make other commands async too?
+    # send_audio has connection troubles when running async.
+    # Works bad on my computer, but good on server with local API.
     context.application.create_task(
         prepare_urls(
             context=context,
@@ -380,6 +392,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
             mode=mode,
             wait_message_id=wait_message_id,
             apologize=apologize,
+            allow_unknown_sites=allow_unknown_sites,
         ),
         update=update,
     )
@@ -417,17 +430,16 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
         else:
             setting_changed = False
             if button_action in ["dl", "link", "ask"]:
+                # Radio buttons:
                 current_setting = context.chat_data["settings"]["mode"]
                 if button_action != current_setting:
                     setting_changed = True
                     context.chat_data["settings"]["mode"] = button_action
-            elif button_action in ["flood"]:
-                current_setting = context.chat_data["settings"]["flood"]
+            elif button_action in ["flood", "allow_unknown_sites"]:
+                # Toggles TODO support multiple settings windows:
+                current_setting = context.chat_data["settings"][button_action]
+                context.chat_data["settings"][button_action] = not current_setting
                 setting_changed = True
-                if current_setting == "yes":
-                    context.chat_data["settings"]["flood"] = "no"
-                else:
-                    context.chat_data["settings"]["flood"] = "yes"
             if setting_changed:
                 await update.callback_query.answer(text="Settings changed")
                 await update.callback_query.edit_message_reply_markup(reply_markup=get_settings_inline_keyboard(context.chat_data))
@@ -512,13 +524,17 @@ async def error_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):  #
         logger.debug(f"Update {update} caused TelegramError error: {context.error}")
 
 
-def init_chat_data(chat_data, mode="dl", flood="yes"):
+def init_chat_data(chat_data, mode="dl", flood=True):
     if "settings" not in chat_data:
         chat_data["settings"] = {}
     if "mode" not in chat_data["settings"]:
         chat_data["settings"]["mode"] = mode
     if "flood" not in chat_data["settings"]:
         chat_data["settings"]["flood"] = flood
+    if "allow_unknown_sites" not in chat_data["settings"]:
+        # FIXME remove old messages regularly
+        # FIXME reset allow_unknown_sites regularly
+        chat_data["settings"]["allow_unknown_sites"] = False
 
 
 async def prepare_urls(
@@ -527,6 +543,7 @@ async def prepare_urls(
     mode=None,
     wait_message_id=None,
     apologize=None,
+    allow_unknown_sites=False,
 ):
     chat_id = message.chat_id
     reply_to_message_id = message.message_id
@@ -537,8 +554,7 @@ async def prepare_urls(
     if PROXIES:
         proxy = random.choice(PROXIES)
     logger.debug("Entering: prepare_urls")
-    if apologize:
-        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
     # If telegram message passed:
     urls = []
     url_entities = message.parse_entities(types=[MessageEntity.URL])
@@ -546,7 +562,7 @@ async def prepare_urls(
     url_entities.update(url_caption_entities)
     for entity in url_entities:
         url_str = url_entities[entity]
-        if url_valid_and_allowed(url_str):
+        if url_valid_and_allowed(url_str, allow_unknown_sites=allow_unknown_sites):
             logger.debug("Entity URL parsed: %s", url_str)
             if "://" not in url_str:
                 url_str = "http://{}".format(url_str)
@@ -558,7 +574,7 @@ async def prepare_urls(
     text_link_entities.update(text_link_caption_entities)
     for entity in text_link_entities:
         url_str = entity.url
-        if url_valid_and_allowed(url_str):
+        if url_valid_and_allowed(url_str, allow_unknown_sites=allow_unknown_sites):
             logger.debug("Entity Text Link parsed: %s", url_str)
             urls.append(URL(url_str))
         else:
@@ -570,10 +586,10 @@ async def prepare_urls(
     logger.debug(f"prepare_urls: urls list: {urls}")
     urls_dict = {}
     for url_item in urls:
-        # unshorten soundcloud.app.goo.gl and other links; don't do it for TikTok, Instagram, YouTube:
-        if DOMAIN_TT in url_item.host or DOMAIN_IG in url_item.host or DOMAIN_YT in url_item.host:
-            url = url_item
-        else:
+        unknown_site = not any((site in url_item.host for site in DOMAINS))
+        # unshorten soundcloud.app.goo.gl and unknown sites links
+        # example: https://soundcloud.app.goo.gl/mBMvG
+        if unknown_site or DOMAIN_SC in url_item.host:
             try:
                 url = URL(
                     requests.head(
@@ -581,17 +597,23 @@ async def prepare_urls(
                         allow_redirects=True,
                         timeout=5,
                         proxies=dict(http=proxy, https=proxy),
+                        # headers={"User-Agent": ua.random},  # TODO later
                         headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
                     ).url
                 )
             except:
                 url = url_item
+        else:
+            url = url_item
+        unknown_site = not any((site in url.host for site in DOMAINS))
         url_text = url.to_text(full_quote=True)
+        logger.debug(f"unshortened link: {url_text}")
         # url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
         url_parts_num = len([part for part in url.path_parts if part])
-        if mode == "link" or not any((site in url.host for site in DOMAINS)):
-            # We run it if it was requested by "link" mode + for YouTube region restriction:
-            # And all other links. We need to skip the links with known domains but not conforming the rules:
+        if mode == "link" or unknown_site:
+            # We run it if it was explicitly requested as per "link" mode.
+            # We run it for links from unknown sites (if they were allowed).
+            # If it's known site, we need to check it more thoroughly below.
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages  # TODO private sets URLs have 5 parts
@@ -605,19 +627,31 @@ async def prepare_urls(
             # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif DOMAIN_IG in url.host:
-            # Instagram: videos, reels
+        elif DOMAIN_TW in url.host:
+            # Twitter: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
+        elif DOMAIN_IG in url.host:
+            # Instagram: videos, reels
+            # We still run it for checking Instagram ban:
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
             # We still run it for checking YouTube region restriction:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
-    if not urls_dict:
+    # FIXME!!! check status right here and don't create download tasks
+    urls_values = " ".join(urls_dict.values())
+    # continue only if any good direct url status exist (or if we deal with trusted urls):
+    if (mode != "dl" and "http" not in urls_values) or (mode == "dl" and not urls_dict):
         if apologize:
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
+        if wait_message_id:  # TODO delete only once
+            try:
+                await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            except:
+                pass
         return
 
     if mode == "dl":
@@ -651,16 +685,14 @@ async def prepare_urls(
             chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
         )
     elif mode == "ask":
-        # ask only if any good direct url status exist (or if we deal with trusted urls):
-        if "http" in " ".join(urls_dict.values()):
-            url_message_id = str(reply_to_message_id)
-            context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
-            question = "🎶 links found, what to do?"
-            button_dl = InlineKeyboardButton(text="✅ Download", callback_data=" ".join([url_message_id, "dl"]))
-            button_link = InlineKeyboardButton(text="❇️ Links", callback_data=" ".join([url_message_id, "link"]))
-            button_cancel = InlineKeyboardButton(text="❎", callback_data=" ".join([url_message_id, "cancel"]))
-            inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
-            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
+        url_message_id = str(reply_to_message_id)
+        context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
+        question = "🎶 links found, what to do?"
+        button_dl = InlineKeyboardButton(text="⬇️ Download", callback_data=" ".join([url_message_id, "dl"]))
+        button_link = InlineKeyboardButton(text="🔗️ Get links", callback_data=" ".join([url_message_id, "link"]))
+        button_cancel = InlineKeyboardButton(text="❌", callback_data=" ".join([url_message_id, "cancel"]))
+        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
 
 
 async def download_url_and_send(
@@ -751,48 +783,56 @@ async def download_url_and_send(
             host = str(urlparse(url).hostname)
             # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
             ydl_opts = {}
+            # default outtmpl is "%(title)s [%(id)s].%(ext)s"
+            # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils.py#L3414
+            # https://github.com/yt-dlp/yt-dlp#output-template
+            # Take first 16 symbols of title.
+            ydl_opts["outtmpl"] = os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s")
             if DOMAIN_TT in host:
                 download_video = True
-                ydl_opts = {
-                    "outtmpl": os.path.join(download_dir, "%(title)s.%(ext)s"),
-                    "videoformat": "mp4",
-                    # "postprocessors": [
-                    #     {
-                    #         "key": "FFmpegVideoConvertor",
-                    #         "preferedformat": "mp4",
-                    #     }
-                    # ],
-                }
+                ydl_opts.update(
+                    {
+                        "videoformat": "mp4",
+                    }
+                )
+            elif DOMAIN_TW in host:
+                download_video = True
+                ydl_opts.update(
+                    {
+                        "videoformat": "mp4",
+                    }
+                )
             elif DOMAIN_IG in host:
                 download_video = True
-                ydl_opts = {
-                    "outtmpl": os.path.join(download_dir, "%(title)s.%(ext)s"),
-                    "videoformat": "webm",
-                    # "postprocessors": [
-                    #     {
-                    #         "key": "FFmpegVideoConvertor",
-                    #         "preferedformat": "mp4",
-                    #     }
-                    # ],
-                }
+                ydl_opts.update(
+                    {
+                        "videoformat": "webm",
+                        # "postprocessors": [
+                        #     {
+                        #         "key": "FFmpegVideoConvertor",
+                        #         "preferedformat": "mp4",
+                        #     }
+                        # ],
+                    }
+                )
             else:
-                ydl_opts = {
-                    # default outtmpl is "%(autonumber)s - %(title)s-%(id)s.%(ext)s"
-                    "outtmpl": os.path.join(download_dir, "%(title)s.%(ext)s"),
-                    "format": "bestaudio/best",
-                    "postprocessors": [
-                        {
-                            "key": "FFmpegExtractAudio",
-                            "preferredcodec": "mp3",
-                            "preferredquality": "320",
-                        },
-                        {
-                            "key": "FFmpegMetadata",
-                        },
-                        # {"key": "EmbedThumbnail"},
-                    ],
-                    "noplaylist": True,
-                }
+                ydl_opts.update(
+                    {
+                        "format": "bestaudio/best",
+                        "postprocessors": [
+                            {
+                                "key": "FFmpegExtractAudio",
+                                "preferredcodec": "mp3",
+                                "preferredquality": "320",
+                            },
+                            {
+                                "key": "FFmpegMetadata",
+                            },
+                            # {"key": "EmbedThumbnail"},
+                        ],
+                        "noplaylist": True,
+                    }
+                )
             if proxy:
                 ydl_opts["proxy"] = proxy
             if source_ip:
@@ -844,7 +884,7 @@ async def download_url_and_send(
     if status == "timeout":
         await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
     elif status == "failed":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_AUDIO_TEXT, parse_mode="Markdown")
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
     elif status == "restrict_direct":
         await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
     elif status == "restrict_region":
@@ -871,7 +911,7 @@ async def download_url_and_send(
                     file_size = os.path.getsize(file)
                     if file_format not in ["mp3", "m4a", "mp4", "webm"]:
                         raise FileNotSupportedError(file_format)
-                    # We don't convert videos (from tiktok or instagram):
+                    # We don't convert videos (from tiktok or instagram or twitter):
                     if file_format in ["m4a", "mp4", "webm"] and not download_video:
                         if file_size > MAX_CONVERT_FILE_SIZE:
                             raise FileTooLargeError(file_size)
@@ -964,7 +1004,7 @@ async def download_url_and_send(
                     )
                 caption = None
                 reply_to_message_id_send = None
-                if flood == "yes":
+                if flood:
                     addition = ""
                     url_obj = URL(url)
                     if DOMAIN_YT in url_obj.host:
@@ -1056,7 +1096,7 @@ async def download_url_and_send(
                                 break
                         except TelegramError:
                             print(traceback.format_exc())
-                            if i == retries-1:
+                            if i == retries - 1:
                                 logger.debug("Sending failed because of TelegramError: %s", file_name)
                             else:
                                 time.sleep(5)
