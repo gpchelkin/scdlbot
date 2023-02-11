@@ -308,7 +308,7 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
     chat_type = update.effective_chat.type
     init_chat_data(
         chat_data=context.chat_data,
-        mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
+        mode=("dl" if chat_type == Chat.PRIVATE else "silent"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(context.chat_data), text=SETTINGS_TEXT)
@@ -328,7 +328,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         return
     init_chat_data(
         chat_data=context.chat_data,
-        mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
+        mode=("dl" if chat_type == Chat.PRIVATE else "silent"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     # Determine the original command:
@@ -339,6 +339,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         command_passed = False
         # if no command then it is just a message and use message mode from settings:
         mode = context.chat_data["settings"]["mode"]
+        if mode == "silent":
+            return
     else:
         command_passed = True
         # try to determine mode from command
@@ -635,12 +637,12 @@ async def prepare_urls(
             urls_dict[url_text] = "http"
         elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
-            # We still run it for checking Instagram ban:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            # FIXME We still run it for checking Instagram ban:
+            urls_dict[url_text] = "http"
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # We still run it for checking YouTube region restriction:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            # FIXME We still run it for checking YouTube region restriction:
+            urls_dict[url_text] = "http"
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     # FIXME!!! check status right here and don't create download tasks
