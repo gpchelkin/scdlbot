@@ -372,6 +372,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # FIXME send_audio connection troubles when async. Bad on my computer, good on server with local API.
     # FIXME needs concurrent limit
     # FIXME make other functions run async? but they are light
+    # FIXME remove old messages from chat data regularly
     context.application.create_task(
         prepare_urls(
             context=context,

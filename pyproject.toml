@@ -42,18 +42,18 @@ scdlbot = "scdlbot.scdlbot:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-python-telegram-bot = { version = "20.0", extras = ["webhooks", "job-queue"] }
+python-telegram-bot = { version = "20.1", extras = ["webhooks", "job-queue"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 #ptbcontrib = { git = "https://github.com/gpchelkin/ptbcontrib.git", branch = "update", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
-python-telegram-handler = "2.2.1"
-boltons = "21.0.0"
+python-telegram-handler = "^2.2.1"
+boltons = "^21.0.0"
 plumbum = "^1.8.1"
-ffmpeg-python = "0.2.0"
 mutagen = "^1.46.0"
 requests = { version = "^2.28.2", extras = ["socks"] }
 prometheus_client = "^0.16.0"
+ffmpeg-python = "0.2.0"
 #patool = "1.12"
 #pyshorteners = "1.0.1"
 #transliterate = "1.10.2"
@@ -88,11 +88,11 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
-isort = "^5.11"
-black = "^22.12"
+isort = "^5.12"
+black = "^23.1"
 # make lint:
 wemake-python-styleguide = "^0.17"
-doc8 = "^1.0"
+doc8 = "^1.1"
 nitpick = "^0.32"
 safety = "^2.3"
 flakeheaven = "^3.2"
@@ -101,8 +101,8 @@ flakeheaven = "^3.2"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^5.3"
-sphinx-autodoc-typehints = "^1.21"
+sphinx = "^6.1"
+sphinx-autodoc-typehints = "^1.22"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
