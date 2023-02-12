@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 import gc
 import logging
 import os
@@ -9,7 +11,7 @@ import time
 import traceback
 from logging.handlers import SysLogHandler
 from multiprocessing import Process, Queue
-from queue import Empty
+from queue import Empty as QueueEmptyError
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
 from urllib.parse import urljoin, urlparse
 from uuid import uuid4
@@ -28,7 +30,7 @@ from prometheus_client import Summary
 from telegram import Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
+from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
 from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
@@ -70,6 +72,7 @@ CERT_FILE = os.getenv("CERT_FILE", None)
 CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", None)
 WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
 
+WORKERS = int(os.getenv("WORKERS", 4))
 NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
 DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
@@ -148,10 +151,12 @@ DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_
 # Configure logging:
 logging_handlers = []
 
+common_logging_level = logging.DEBUG if SYSLOG_DEBUG else logging.WARNING
+
 console_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(common_logging_level)
 logging_handlers.append(console_handler)
 
 telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
@@ -161,22 +166,22 @@ logging_handlers.append(telegram_handler)
 if SYSLOG_ADDRESS:
     syslog_formatter = logging.Formatter("%(asctime)s " + SYSLOG_HOSTNAME + " %(name)s: %(message)s", datefmt="%b %d %H:%M:%S")
     syslog_host, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_logging_level = logging.DEBUG if SYSLOG_DEBUG else logging.WARNING
     syslog_handler = SysLogHandler(address=(syslog_host, int(syslog_udp_port)))
     syslog_handler.setFormatter(syslog_formatter)
-    syslog_handler.setLevel(syslog_logging_level)
+    syslog_handler.setLevel(common_logging_level)
     logging_handlers.append(syslog_handler)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.DEBUG,
+    level=common_logging_level,
     handlers=logging_handlers,
 )
 logger = logging.getLogger(__name__)
 
-ua = UserAgent()
-ua.update()
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
+UA = UserAgent()
+UA.update()
 
 
 # TODO exceptions:
@@ -367,11 +372,11 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
         wait_message_id = wait_message.message_id
 
-    data = {
-        "message": message,
-        "mode": mode,
-        "apologize": apologize,
-    }
+    # data = {
+    #     "message": message,
+    #     "mode": mode,
+    #     "apologize": apologize,
+    # }
     # delay_seconds = 10
     # logger.debug(len(context.job_queue.get_jobs_by_name("prepare_urls")))
     # logger.debug(len(context.job_queue.jobs()))
@@ -387,25 +392,21 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # FIXME use concurrent_updates with limit instead of unlimited create_task? make other commands async too?
     # send_audio has connection troubles when running async.
     # Works bad on my computer, but good on server with local API.
+    kwargs = {
+        "context": context,
+        "message": message,
+        "mode": mode,
+        "wait_message_id": wait_message_id,
+        "apologize": apologize,
+        "allow_unknown_sites": allow_unknown_sites,
+    }
+    # future = EXECUTOR.submit(prepare_urls_sync, **kwargs)
+    # future.result(timeout=300)
     # context.application.create_task(
-    #     prepare_urls(
-    #         context=context,
-    #         message=message,
-    #         mode=mode,
-    #         wait_message_id=wait_message_id,
-    #         apologize=apologize,
-    #         allow_unknown_sites=allow_unknown_sites,
-    #     ),
+    #     prepare_urls(**kwargs),
     #     update=update,
     # )
-    await prepare_urls(
-        context=context,
-        message=message,
-        mode=mode,
-        wait_message_id=wait_message_id,
-        apologize=apologize,
-        allow_unknown_sites=allow_unknown_sites,
-    )
+    await prepare_urls(**kwargs)
 
 
 async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -460,31 +461,24 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await update.callback_query.answer(text=get_wait_text())
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
             for url in urls_dict:
+                kwargs = {
+                    "context": context,
+                    "chat_id": chat_id,
+                    "url": url,
+                    "direct_urls_status": urls_dict[url],
+                    "reply_to_message_id": url_message_id,
+                    "wait_message_id": wait_message.message_id,
+                    "cookies_file": COOKIES_FILE,
+                    "source_ip": url_message_data["source_ip"],
+                    "proxy": url_message_data["proxy"],
+                }
+                # future = EXECUTOR.submit(download_url_and_send_sync, **kwargs)
+                # future.result(timeout=300)
                 # context.application.create_task(
-                #     download_url_and_send(
-                #         context=context,
-                #         chat_id=chat_id,
-                #         url=url,
-                #         direct_urls_status=urls_dict[url],
-                #         reply_to_message_id=url_message_id,
-                #         wait_message_id=wait_message.message_id,
-                #         cookies_file=COOKIES_FILE,
-                #         source_ip=url_message_data["source_ip"],
-                #         proxy=url_message_data["proxy"],
-                #     ),
+                #     download_url_and_send(**kwargs),
                 #     update=update,
                 # )
-                await download_url_and_send(
-                    context=context,
-                    chat_id=chat_id,
-                    url=url,
-                    direct_urls_status=urls_dict[url],
-                    reply_to_message_id=url_message_id,
-                    wait_message_id=wait_message.message_id,
-                    cookies_file=COOKIES_FILE,
-                    source_ip=url_message_data["source_ip"],
-                    proxy=url_message_data["proxy"],
-                )
+                await download_url_and_send(**kwargs)
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
@@ -541,24 +535,7 @@ def init_chat_data(chat_data, mode="dl", flood=True):
         chat_data["settings"]["allow_unknown_sites"] = False
 
 
-async def prepare_urls(
-    context: ContextTypes.DEFAULT_TYPE,
-    message,
-    mode=None,
-    wait_message_id=None,
-    apologize=None,
-    allow_unknown_sites=False,
-):
-    chat_id = message.chat_id
-    reply_to_message_id = message.message_id
-    source_ip = None
-    proxy = None
-    if SOURCE_IPS:
-        source_ip = random.choice(SOURCE_IPS)
-    if PROXIES:
-        proxy = random.choice(PROXIES)
-    logger.debug("Entering: prepare_urls")
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
     # If telegram message passed:
     urls = []
     url_entities = message.parse_entities(types=[MessageEntity.URL])
@@ -586,8 +563,8 @@ async def prepare_urls(
     # If message just some text passed (not isinstance(message, Message)):
     # all_links = find_all_links(message, default_scheme="http")
     # urls = [link for link in all_links if url_valid_and_allowed(link)]
-
     logger.debug(f"prepare_urls: urls list: {urls}")
+
     urls_dict = {}
     for url_item in urls:
         unknown_site = not any((site in url_item.host for site in DOMAINS))
@@ -601,7 +578,7 @@ async def prepare_urls(
                         allow_redirects=True,
                         timeout=5,
                         proxies=dict(http=proxy, https=proxy),
-                        # headers={"User-Agent": ua.random},  # TODO later
+                        # headers={"User-Agent": UA.random},  # TODO later
                         headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
                     ).url
                 )
@@ -643,9 +620,32 @@ async def prepare_urls(
             # YouTube: videos and playlists
             # FIXME We still run it for checking YouTube region restriction:
             urls_dict[url_text] = "http"
+    return urls_dict
+
+
+async def prepare_urls(
+    context: ContextTypes.DEFAULT_TYPE,
+    message,
+    mode=None,
+    wait_message_id=None,
+    apologize=None,
+    allow_unknown_sites=False,
+):
+    chat_id = message.chat_id
+    logger.debug("Entering: prepare_urls")
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    reply_to_message_id = message.message_id
+    source_ip = None
+    proxy = None
+    if SOURCE_IPS:
+        source_ip = random.choice(SOURCE_IPS)
+    if PROXIES:
+        proxy = random.choice(PROXIES)
+
+    loop = asyncio.get_event_loop()
+    urls_dict = await loop.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
-    # FIXME!!! check status right here and don't create download tasks
     urls_values = " ".join(urls_dict.values())
     # continue only if any good direct url status exist (or if we deal with trusted urls):
     if (mode != "dl" and "http" not in urls_values) or (mode == "dl" and not urls_dict):
@@ -660,30 +660,41 @@ async def prepare_urls(
 
     if mode == "dl":
         for url in urls_dict:
-            # context.application.create_task(
-            #     download_url_and_send(
-            #         context=context,
-            #         chat_id=chat_id,
-            #         url=url,
-            #         direct_urls_status=urls_dict[url],
-            #         reply_to_message_id=reply_to_message_id,
-            #         wait_message_id=wait_message_id,
-            #         cookies_file=COOKIES_FILE,
-            #         source_ip=source_ip,
-            #         proxy=proxy,
-            #     ),
-            # )
-            await download_url_and_send(
-                context=context,
-                chat_id=chat_id,
-                url=url,
-                direct_urls_status=urls_dict[url],
-                reply_to_message_id=reply_to_message_id,
-                wait_message_id=wait_message_id,
-                cookies_file=COOKIES_FILE,
-                source_ip=source_ip,
-                proxy=proxy,
-            )
+            direct_urls_status = urls_dict[url]
+            if direct_urls_status in ["failed", "restrict_direct", "restrict_region", "restrict_live", "timeout"]:
+                if direct_urls_status == "failed":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "timeout":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_direct":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_region":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_live":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
+                if wait_message_id:  # TODO delete only once
+                    try:
+                        await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+                    except:
+                        pass
+            else:
+                kwargs = {
+                    "context": context,
+                    "chat_id": chat_id,
+                    "url": url,
+                    "direct_urls_status": direct_urls_status,
+                    "reply_to_message_id": reply_to_message_id,
+                    "wait_message_id": wait_message_id,
+                    "cookies_file": COOKIES_FILE,
+                    "source_ip": source_ip,
+                    "proxy": proxy,
+                }
+                # future = EXECUTOR.submit(prepare_urls_sync, **kwargs)
+                # future.result(timeout=300)
+                # context.application.create_task(
+                #     download_url_and_send(**kwargs),
+                # )
+                await download_url_and_send(**kwargs)
     elif mode == "link":
         await context.bot.send_message(
             chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
@@ -700,7 +711,7 @@ async def prepare_urls(
 
 
 async def download_url_and_send(
-    context,
+    context: ContextTypes.DEFAULT_TYPE,
     chat_id,
     url,
     direct_urls_status,
@@ -712,189 +723,181 @@ async def download_url_and_send(
 ):
     logger.debug("Entering: download_url_and_send")
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
     flood = context.chat_data["settings"]["flood"]
     download_video = False
-    if direct_urls_status in ["restrict_direct", "restrict_region", "restrict_live", "timeout"]:
-        status = direct_urls_status
-    else:
-        status = "initial"
-        cmd = None
-        cmd_name = ""
-        cmd_args = ()
-        cmd_input = None
-        if (DOMAIN_SC in url and DOMAIN_SC_API not in url) or (DOMAIN_BC in url):
-            # If link is sc/bc, we try scdl/bcdl first:
-            if DOMAIN_SC in url and DOMAIN_SC_API not in url:
-                cmd = scdl_bin
-                cmd_name = str(cmd)
-                cmd_args = (
-                    "-l",
-                    url,  # URL of track/playlist/user
-                    "-c",  # Continue if a music already exist
-                    "--path",
-                    download_dir,  # Download the music to a custom path
-                    "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
-                    "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
-                    "--addtimestamp",
-                    # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
-                    "--no-playlist-folder",
-                    # Download playlist tracks into directory, instead of making a playlist subfolder
-                    "--extract-artist",  # Set artist tag from title instead of username
-                )
-                cmd_input = None
-            elif DOMAIN_BC in url:
-                cmd = bcdl_bin
-                cmd_name = str(cmd)
-                cmd_args = (
-                    "--base-dir",
-                    download_dir,  # Base location of which all files are downloaded
-                    "--template",
-                    "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
-                    "--overwrite",  # Overwrite tracks that already exist
-                    "--group",  # Use album/track Label as iTunes grouping
-                    # "--embed-art",  # Embed album art (if available)
-                    "--no-slugify",  # Disable slugification of track, album, and artist names
-                    url,  # URL of album/track
-                )
-                cmd_input = "yes"
+    status = "initial"
+    cmd = None
+    cmd_name = ""
+    cmd_args = ()
+    cmd_input = None
+    if (DOMAIN_SC in url and DOMAIN_SC_API not in url) or (DOMAIN_BC in url):
+        # If link is sc/bc, we try scdl/bcdl first:
+        if DOMAIN_SC in url and DOMAIN_SC_API not in url:
+            cmd = scdl_bin
+            cmd_name = str(cmd)
+            cmd_args = (
+                "-l",
+                url,  # URL of track/playlist/user
+                "-c",  # Continue if a music already exist
+                "--path",
+                download_dir,  # Download the music to a custom path
+                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
+                "--addtimestamp",
+                # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
+                "--no-playlist-folder",
+                # Download playlist tracks into directory, instead of making a playlist subfolder
+                "--extract-artist",  # Set artist tag from title instead of username
+            )
+            cmd_input = None
+        elif DOMAIN_BC in url:
+            cmd = bcdl_bin
+            cmd_name = str(cmd)
+            cmd_args = (
+                "--base-dir",
+                download_dir,  # Base location of which all files are downloaded
+                "--template",
+                "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
+                "--overwrite",  # Overwrite tracks that already exist
+                "--group",  # Use album/track Label as iTunes grouping
+                # "--embed-art",  # Embed album art (if available)
+                "--no-slugify",  # Disable slugification of track, album, and artist names
+                url,  # URL of album/track
+            )
+            cmd_input = "yes"
 
-            env = None
-            if proxy:
-                env = {"http_proxy": proxy, "https_proxy": proxy}
-            logger.debug("%s starts: %s", cmd_name, url)
-            cmd_proc = cmd[cmd_args].popen(env=env, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-            try:
-                cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=DL_TIMEOUT)
-                cmd_retcode = cmd_proc.returncode
-                # listed are common scdl problems for one track with 0 retcode, all its output is always in stderr:
-                if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable", "Failed to get item"]) and ".mp3" not in cmd_stderr):
-                    raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
-                logger.debug("%s succeeded: %s", cmd_name, url)
-                status = "success"
-            except TimeoutExpired:
-                cmd_proc.kill()
-                logger.debug("%s took too much time and dropped: %s", cmd_name, url)
-            except ProcessExecutionError:
-                logger.debug("%s failed: %s", cmd_name, url)
+        env = None
+        if proxy:
+            env = {"http_proxy": proxy, "https_proxy": proxy}
+        logger.debug("%s starts: %s", cmd_name, url)
+        cmd_proc = cmd[cmd_args].popen(env=env, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+        try:
+            cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=DL_TIMEOUT)
+            cmd_retcode = cmd_proc.returncode
+            # listed are common scdl problems for one track with 0 retcode, all its output is always in stderr:
+            if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable", "Failed to get item"]) and ".mp3" not in cmd_stderr):
+                raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
+            logger.debug("%s succeeded: %s", cmd_name, url)
+            status = "success"
+        except TimeoutExpired:
+            cmd_proc.kill()
+            logger.debug("%s took too much time and dropped: %s", cmd_name, url)
+        except ProcessExecutionError:
+            logger.debug("%s failed: %s", cmd_name, url)
 
-        if status == "initial":
-            # If link is not sc/bc or scdl/bcdl just failed, we use ydl:
-            cmd = ydl_download
-            cmd_name = "ydl_download"
-            host = str(urlparse(url).hostname)
-            # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
-            ydl_opts = {}
-            # default outtmpl is "%(title)s [%(id)s].%(ext)s"
-            # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils.py#L3414
-            # https://github.com/yt-dlp/yt-dlp#output-template
-            # Take first 16 symbols of title.
-            ydl_opts["outtmpl"] = os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s")
-            if DOMAIN_TT in host:
-                download_video = True
-                ydl_opts.update(
-                    {
-                        "videoformat": "mp4",
-                    }
-                )
-            elif DOMAIN_TW in host:
-                download_video = True
-                ydl_opts.update(
-                    {
-                        "videoformat": "mp4",
-                    }
-                )
-            elif DOMAIN_IG in host:
-                download_video = True
-                ydl_opts.update(
-                    {
-                        "videoformat": "webm",
-                        # "postprocessors": [
-                        #     {
-                        #         "key": "FFmpegVideoConvertor",
-                        #         "preferedformat": "mp4",
-                        #     }
-                        # ],
-                    }
-                )
-            else:
-                ydl_opts.update(
-                    {
-                        "format": "bestaudio/best",
-                        "postprocessors": [
-                            {
-                                "key": "FFmpegExtractAudio",
-                                "preferredcodec": "mp3",
-                                "preferredquality": "320",
-                            },
-                            {
-                                "key": "FFmpegMetadata",
-                            },
-                            # {"key": "EmbedThumbnail"},
-                        ],
-                        "noplaylist": True,
-                    }
-                )
-            if proxy:
-                ydl_opts["proxy"] = proxy
-            if source_ip:
-                ydl_opts["source_address"] = source_ip
-            cookies_download_file = None
-            if cookies_file:
-                cookies_download_file = tempfile.NamedTemporaryFile()
-                cookies_download_file_path = pathlib.Path(cookies_download_file.name)
-                if cookies_file.startswith("http"):
-                    # URL for downloading cookie file:
-                    try:
-                        r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                        with open(cookies_download_file_path, "wb") as cfile:
-                            cfile.write(r.content)
-                        ydl_opts["cookiefile"] = str(cookies_download_file_path)
-                    except:
-                        logger.debug("download_url_and_send could not download cookies file")
-                        pass
-                else:
-                    # cookie file local path:
-                    shutil.copyfile(cookies_file, cookies_download_file_path)
+    if status == "initial":
+        # If link is not sc/bc or scdl/bcdl just failed, we use ydl:
+        cmd = ydl_download
+        cmd_name = "ydl_download"
+        host = str(urlparse(url).hostname)
+        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
+        ydl_opts = {}
+        # default outtmpl is "%(title)s [%(id)s].%(ext)s"
+        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils.py#L3414
+        # https://github.com/yt-dlp/yt-dlp#output-template
+        # Take first 16 symbols of title.
+        ydl_opts["outtmpl"] = os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s")
+        if DOMAIN_TT in host:
+            download_video = True
+            ydl_opts.update(
+                {
+                    "videoformat": "mp4",
+                }
+            )
+        elif DOMAIN_TW in host:
+            download_video = True
+            ydl_opts.update(
+                {
+                    "videoformat": "mp4",
+                }
+            )
+        elif DOMAIN_IG in host:
+            download_video = True
+            ydl_opts.update(
+                {
+                    "videoformat": "webm",
+                    # "postprocessors": [
+                    #     {
+                    #         "key": "FFmpegVideoConvertor",
+                    #         "preferedformat": "mp4",
+                    #     }
+                    # ],
+                }
+            )
+        else:
+            ydl_opts.update(
+                {
+                    "format": "bestaudio/best",
+                    "postprocessors": [
+                        {
+                            "key": "FFmpegExtractAudio",
+                            "preferredcodec": "mp3",
+                            "preferredquality": "320",
+                        },
+                        {
+                            "key": "FFmpegMetadata",
+                        },
+                        # {"key": "EmbedThumbnail"},
+                    ],
+                    "noplaylist": True,
+                }
+            )
+        if proxy:
+            ydl_opts["proxy"] = proxy
+        if source_ip:
+            ydl_opts["source_address"] = source_ip
+        cookies_download_file = None
+        if cookies_file:
+            cookies_download_file = tempfile.NamedTemporaryFile()
+            cookies_download_file_path = pathlib.Path(cookies_download_file.name)
+            if cookies_file.startswith("http"):
+                # URL for downloading cookie file:
+                try:
+                    r = requests.get(cookies_file, allow_redirects=True, timeout=5)
+                    with open(cookies_download_file_path, "wb") as cfile:
+                        cfile.write(r.content)
                     ydl_opts["cookiefile"] = str(cookies_download_file_path)
-            queue = Queue()
-            cmd_args = (url, ydl_opts, queue)
-            logger.debug("%s starts: %s", cmd_name, url)
-            cmd_proc = Process(target=cmd, args=cmd_args)
-            cmd_proc.start()
-            try:
-                cmd_retcode, cmd_stderr = queue.get(block=True, timeout=DL_TIMEOUT)
-                cmd_stdout = ""
-                cmd_proc.join()
-                if cmd_retcode:
-                    raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
-                logger.debug("%s succeeded: %s", cmd_name, url)
-                status = "success"
-            except Empty:
-                cmd_proc.join(1)
-                if cmd_proc.is_alive():
-                    cmd_proc.terminate()
-                logger.debug("%s took too much time and dropped: %s", cmd_name, url)
-                status = "timeout"
-            except ProcessExecutionError:
-                logger.debug("%s failed: %s", cmd_name, url)
-                status = "failed"
-            if cookies_file:
-                cookies_download_file.close()
-            gc.collect()
+                except:
+                    logger.debug("download_url_and_send could not download cookies file")
+                    pass
+            else:
+                # cookie file local path:
+                shutil.copyfile(cookies_file, cookies_download_file_path)
+                ydl_opts["cookiefile"] = str(cookies_download_file_path)
+        queue = Queue()
+        cmd_args = (url, ydl_opts, queue)
+        logger.debug("%s starts: %s", cmd_name, url)
+        cmd_proc = Process(target=cmd, args=cmd_args, name=cmd_name)
+        cmd_proc.start()
+        try:
+            cmd_retcode, cmd_stderr = queue.get(block=True, timeout=DL_TIMEOUT)
+            cmd_stdout = ""
+            cmd_proc.join()
+            if cmd_retcode:
+                raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
+            logger.debug("%s succeeded: %s", cmd_name, url)
+            status = "success"
+        except QueueEmptyError:
+            cmd_proc.join(1)
+            if cmd_proc.is_alive():
+                cmd_proc.terminate()
+            logger.debug("%s took too much time and dropped: %s", cmd_name, url)
+            status = "timeout"
+        except ProcessExecutionError:
+            logger.debug("%s failed: %s", cmd_name, url)
+            status = "failed"
+        if cookies_file:
+            cookies_download_file.close()
+        gc.collect()
 
-    if status == "timeout":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
-    elif status == "failed":
+    if status == "failed":
         await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
-    elif status == "restrict_direct":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
-    elif status == "restrict_region":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
-    elif status == "restrict_live":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
+    elif status == "timeout":
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
     elif status == "success":
         file_list = []
         for d, dirs, files in os.walk(download_dir):
@@ -1200,6 +1203,10 @@ def ydl_download(url, ydl_opts, queue=None):
 #     )
 
 
+async def post_shutdown(application: Application) -> None:
+    EXECUTOR.shutdown(wait=False, cancel_futures=False)
+
+
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
     # prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST)
@@ -1226,6 +1233,7 @@ def main():
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
+        .post_shutdown(post_shutdown)
         .concurrent_updates(256)
         .connection_pool_size(1024)
         .connect_timeout(300)
@@ -1266,15 +1274,15 @@ def main():
 
     if USE_WEBHOOK:
         application.run_webhook(
+            drop_pending_updates=True,
             listen=WEBHOOK_HOST,
             port=WEBHOOK_PORT,
             url_path=URL_PATH,
             cert=CERT_FILE,
             key=CERT_KEY_FILE,
             webhook_url=urljoin(APP_URL, URL_PATH),
-            drop_pending_updates=True,
-            max_connections=1024,
             secret_token=WEBHOOK_SECRET_TOKEN,
+            max_connections=1024,
         )
     else:
         application.run_polling(
