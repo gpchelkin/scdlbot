@@ -3,7 +3,7 @@ SHELL:=/usr/bin/env bash
 .PHONY: format
 format:
 	poetry run isort .
-	poetry run black .
+	poetry run black --extend-exclude docs/ .
 
 .PHONY: lint
 lint:
@@ -20,6 +20,13 @@ package:
 
 .PHONY: test
 test: lint package
+
+.PHONY: run_dev
+run_dev:
+	set -o allexport; \
+	source .env-dev; \
+	ps -ef | grep python | grep scdlbot | awk '{print $2}' | xargs kill -9; \
+	poetry run python scdlbot/scdlbot.py
 
 .DEFAULT:
 	@cd docs && $(MAKE) $@

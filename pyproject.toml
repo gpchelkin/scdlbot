@@ -2,26 +2,138 @@
 requires = ["poetry-core>=1.4.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.poetry]
+name = "scdlbot"
+description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
+version = "0.14.2"
+license = "MIT"
+
+authors = ["George Pchelkin <george@pchelk.in>"]
+
+readme = "README.rst"
+
+homepage = "https://github.com/gpchelkin/scdlbot"
+documentation = "https://scdlbot.readthedocs.io"
+repository = "https://github.com/gpchelkin/scdlbot"
+
+keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud", "yandex", "audio", "music", "download"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Topic :: Multimedia :: Sound/Audio",
+  "Topic :: Internet",
+  "Operating System :: OS Independent",
+  "Natural Language :: English",
+]
+
+include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
+
+[tool.poetry.urls]
+# https://github.com/python-poetry/poetry/blob/master/docs/pyproject.md#urls
+"Issues" = "https://github.com/gpchelkin/scdlbot/issues"
+"CI" = "https://github.com/gpchelkin/scdlbot/actions"
+"Changelog" = "https://github.com/gpchelkin/scdlbot/releases"
+#"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
+
+[tool.poetry.scripts]
+scdlbot = "scdlbot.scdlbot:main"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+python-telegram-bot = { version = "20.0", extras = ["webhooks", "job-queue"] }
+#ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
+#ptbcontrib = { git = "https://github.com/gpchelkin/ptbcontrib.git", branch = "update", extras = ["postgres-persistence"] }
+# https://python-poetry.org/docs/dependency-specification#path-dependencies
+#ptbcontrib = { path = "../ptbcontrib/", develop = false }
+python-telegram-handler = "^2.2.1"
+boltons = "^21.0.0"
+plumbum = "^1.8.1"
+mutagen = "^1.46.0"
+requests = { version = "^2.28.2", extras = ["socks"] }
+prometheus_client = "^0.16.0"
+sdnotify = "^0.3.2"
+#fake-useragent = "^1.1.1"
+ffmpeg-python = "0.2.0"
+#patool = "1.12"
+#pyshorteners = "1.0.1"
+#transliterate = "1.10.2"
+
+### For publishing to PyPI at release:
+#yt-dlp = "2023.1.6"
+##youtube_dl = "2021.12.17"
+##youtube-dlc = "2020.11.11.post3"
+scdl = "2.7.3"
+bandcamp-downloader = "0.0.13"
+
+### For making it work better using latest git revision:
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
+##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
+## https://github.com/ytdl-org/youtube-dl/pull/26684
+##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
+##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
+##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
+#scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
+##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
+##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
+##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
+fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
+
+[tool.poetry.group.dev]
+# must be false if tox-poetry is used (it doesn't support groups):
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+# make additional external tools: poetry, tox, (tox-poetry)
+# make format:
+isort = "^5.12"
+black = "^23.1"
+# make lint:
+wemake-python-styleguide = "^0.17"
+doc8 = "^1.1"
+nitpick = "^0.32"
+safety = "^2.3"
+flakeheaven = "^3.2"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^6.1"
+sphinx-autodoc-typehints = "^1.22"
+m2r2 = "^0.3"
+tomli = "^2.0"
+recommonmark = "^0.7"
+typing-extensions = "^4.4"
+
+
 [tool.isort]
 # isort configuration:
-# https://github.com/timothycrosley/isort/wiki/isort-Settings
+# https://pycqa.github.io/isort/docs/configuration/options.html
+# https://pycqa.github.io/isort/docs/configuration/profiles.html
+# https://pycqa.github.io/isort/docs/configuration/multi_line_output_modes.html#3-vertical-hanging-indent
+multi_line_output = 3
 include_trailing_comma = true
 use_parentheses = true
-# See https://github.com/timothycrosley/isort#multi-line-output-modes
-multi_line_output = 3
 # match flake8 max-line-length:
 line_length = 180
+
 [tool.black]
 # match flake8 max-line-length:
 line-length = 180
+
 [tool.nitpick]
 style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
 
+[tool.flakeheaven]
 # TODO flakeheaven
 # https://github.com/flakeheaven/flakeheaven
 # https://wemake-python-styleguide.readthedocs.io/en/latest/pages/usage/integrations/flakehell.html
 # https://github.com/wemake-services/wemake-python-styleguide/blob/master/styles/flakehell.toml
-[tool.flakeheaven]
 format = "grouped"
 show_source = true
 statistics = false
@@ -65,98 +177,3 @@ commands =
     poetry install --with main,dev --verbose
     make test
 """
-
-[tool.poetry]
-name = "scdlbot"
-description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
-version = "0.14.2"
-license = "MIT"
-
-authors = ["George Pchelkin <george@pchelk.in>"]
-
-readme = "README.rst"
-
-repository = "https://github.com/gpchelkin/scdlbot"
-homepage = "https://github.com/gpchelkin/scdlbot"
-documentation = "https://scdlbot.readthedocs.io"
-
-keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud", "yandex", "audio", "music", "download"]
-
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: End Users/Desktop",
-    "Topic :: Multimedia :: Sound/Audio",
-    "Topic :: Internet",
-    "Operating System :: OS Independent",
-    "Natural Language :: English",
-]
-
-include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
-
-[tool.poetry.scripts]
-scdlbot = "scdlbot.__main__:main"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-
-# Requirements of project's code:
-python-telegram-bot = "12.8"
-#python-telegram-bot = "13.11"
-python-telegram-handler = "2.2.1"
-boltons = "21.0.0"
-plumbum = "^1.8.0"
-ffmpeg-python = "0.2.0"
-mutagen = "^1.46.0"
-patool = "1.12"
-requests = { version = "^2.28.1", extras = ["socks"] }
-prometheus_client = "^0.15.0"
-#pyshorteners = "1.0.1"
-#transliterate = "1.10.2"
-#fake-useragent = { git = "https://github.com/Jordan9675/fake-useragent.git", branch = "master" }
-
-### For publishing to PyPI at release:
-yt-dlp = "2022.11.11"
-##youtube_dl = "2021.12.17"
-##youtube-dlc = "2020.11.11.post3"
-scdl = "2.7.3"
-bandcamp-downloader = "0.0.13"
-
-### For making it work better using latest git revision:
-#yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
-##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
-##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
-## https://github.com/ytdl-org/youtube-dl/pull/26684
-##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
-##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
-##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-#scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
-##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
-##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
-##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
-#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
-##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
-
-[tool.poetry.group.dev]
-# must be false if tox-poetry is used (it doesn't support groups):
-optional = true
-[tool.poetry.group.dev.dependencies]
-# make additional external tools: poetry, tox, (tox-poetry)
-# make format:
-isort = "^5.11"
-black = "^22.12"
-# make lint:
-wemake-python-styleguide = "^0.17"
-doc8 = "^1.0.0"
-nitpick = "^0.32.0"
-safety = "^2.3.5"
-flakeheaven = "^3.2"
-
-[tool.poetry.group.docs]
-optional = true
-[tool.poetry.group.docs.dependencies]
-sphinx = { version = "^5.3" }
-sphinx-autodoc-typehints = { version = "^1.19" }
-recommonmark = { version = "^0.7" }
-m2r2 = { version = "^0.3" }
-tomlkit = { version = "^0.11" }
-typing-extensions = { version = "^4.4" }

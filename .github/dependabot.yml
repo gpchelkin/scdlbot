@@ -4,7 +4,7 @@ updates:
   directory: "/"
   schedule:
     interval: daily
-    time: '12:00'
+    time: "12:00"
     timezone: Europe/Moscow
   open-pull-requests-limit: 99
   reviewers:
@@ -12,11 +12,11 @@ updates:
   assignees:
   - gpchelkin
 
-- package-ecosystem: "github-actions"
+- package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: "daily"
-    time: '12:00'
+    time: "12:00"
     timezone: Europe/Moscow
   open-pull-requests-limit: 99
   reviewers:
