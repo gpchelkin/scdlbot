@@ -22,8 +22,11 @@ ExecStart=/usr/local/bin/scdlbot
 WatchdogSec=120
 Restart=on-watchdog
 RestartSec=10
+CPUQuotaPeriodSec=1000ms
+CPUQuota=180%
 MemoryHigh=72%
 MemoryMax=80%
+TasksMax=infinity
 
 [Install]
 WantedBy=multi-user.target

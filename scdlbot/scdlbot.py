@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import datetime
 
 # import gc
 import logging
@@ -1233,11 +1234,12 @@ async def post_shutdown(application: Application) -> None:
 
 async def post_init(application: Application) -> None:
     SYSTEMD_NOTIFIER.notify("READY=1")
-    SYSTEMD_NOTIFIER.notify(f"STATUS=It's going well")
+    SYSTEMD_NOTIFIER.notify(f"STATUS=Application initialized")
 
 
 async def callback_watchdog(context: ContextTypes.DEFAULT_TYPE):
     SYSTEMD_NOTIFIER.notify("WATCHDOG=1")
+    SYSTEMD_NOTIFIER.notify(f"STATUS=Watchdog was sent {datetime.datetime.now()}")
 
 
 def main():
