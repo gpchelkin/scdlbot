@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
-import gc
+
+# import gc
 import logging
 import os
 import pathlib
@@ -21,6 +22,7 @@ import ffmpeg
 import pkg_resources
 import prometheus_client
 import requests
+import sdnotify
 from fake_useragent import UserAgent
 
 # from boltons.urlutils import find_all_links
@@ -31,6 +33,7 @@ from telegram import Bot, Chat, ChatMemberAdministrator, ChatMemberOwner, Inline
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
+
 # from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
@@ -185,6 +188,7 @@ logger = logging.getLogger(__name__)
 EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
 UA = UserAgent()
 UA.update()
+SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 REGISTRY = prometheus_client.CollectorRegistry()
 EXECUTOR_TASKS_REMAINING = prometheus_client.Gauge(
     "executor_tasks_remaining",
@@ -403,8 +407,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     if mode == "dl":
         if not urls_dict:
             if apologize:
-                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               text=NO_URLS_TEXT, parse_mode="Markdown")
+                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
         else:
             for url in urls_dict:
                 direct_urls_status = urls_dict[url]
@@ -423,8 +426,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                     kwargs = {
                         "bot_options": {
                             "token": context.bot.token,
-                            "base_url": context.bot.base_url.split("/bot")[0]+"/bot",
-                            "base_file_url": context.bot.base_file_url.split("/file/bot")[0]+"/file/bot",
+                            "base_url": context.bot.base_url.split("/bot")[0] + "/bot",
+                            "base_file_url": context.bot.base_file_url.split("/file/bot")[0] + "/file/bot",
                             "local_mode": context.bot.local_mode,
                         },
                         "chat_id": chat_id,
@@ -445,8 +448,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     elif mode == "link":
         if "http" not in urls_values:
             if apologize:
-                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               text=NO_URLS_TEXT, parse_mode="Markdown")
+                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
         else:
             await context.bot.send_message(
                 chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
@@ -454,8 +456,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     elif mode == "ask":
         if "http" not in urls_values:
             if apologize:
-                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
-                                               text=NO_URLS_TEXT, parse_mode="Markdown")
+                await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
         else:
             url_message_id = str(reply_to_message_id)
             context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
@@ -1230,6 +1231,15 @@ async def post_shutdown(application: Application) -> None:
     EXECUTOR.shutdown(wait=False, cancel_futures=True)
 
 
+async def post_init(application: Application) -> None:
+    SYSTEMD_NOTIFIER.notify("READY=1")
+    SYSTEMD_NOTIFIER.notify(f"STATUS=It's going well")
+
+
+async def callback_watchdog(context: ContextTypes.DEFAULT_TYPE):
+    SYSTEMD_NOTIFIER.notify("WATCHDOG=1")
+
+
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
     prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST, registry=REGISTRY)
@@ -1262,6 +1272,7 @@ def main():
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
+        .post_init(post_init)
         .post_shutdown(post_shutdown)
         .concurrent_updates(256)
         .connection_pool_size(512)
@@ -1300,6 +1311,9 @@ def main():
     application.add_handler(button_query_handler)
     application.add_handler(unknown_handler)
     application.add_error_handler(error_callback)
+
+    job_queue = application.job_queue
+    job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
 
     if USE_WEBHOOK:
         application.run_webhook(

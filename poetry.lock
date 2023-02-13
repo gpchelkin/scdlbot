@@ -1286,14 +1286,14 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "identify"
-version = "2.5.17"
+version = "2.5.18"
 description = "File identification library for Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "identify-2.5.17-py2.py3-none-any.whl", hash = "sha256:7d526dd1283555aafcc91539acc061d8f6f59adb0a7bba462735b0a318bff7ed"},
-    {file = "identify-2.5.17.tar.gz", hash = "sha256:93cc61a861052de9d4c541a7acb7e3dcc9c11b398a2144f6e52ae5285f5f4f06"},
+    {file = "identify-2.5.18-py2.py3-none-any.whl", hash = "sha256:93aac7ecf2f6abf879b8f29a8002d3c6de7086b8c28d88e1ad15045a15ab63f9"},
+    {file = "identify-2.5.18.tar.gz", hash = "sha256:89e144fa560cc4cffb6ef2ab5e9fb18ed9f9b3cb054384bab4b95c12f6c309fe"},
 ]
 
 [package.extras]
@@ -2414,6 +2414,17 @@ soundcloud-v2 = ">=1.3.0"
 termcolor = "*"
 
 [[package]]
+name = "sdnotify"
+version = "0.3.2"
+description = "A pure Python implementation of systemd's service notification protocol (sd_notify)"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sdnotify-0.3.2.tar.gz", hash = "sha256:73977fc746b36cc41184dd43c3fe81323e7b8b06c2bb0826c4f59a20c56bb9f1"},
+]
+
+[[package]]
 name = "setuptools"
 version = "67.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -3042,7 +3053,7 @@ websockets = "*"
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "a9c685453f7019bee94170f936619c6db76c964e"
+resolved_reference = "44699d10dc8de9c6a338f4a8e5c63506ec4d2118"
 
 [[package]]
 name = "zipp"
@@ -3063,4 +3074,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "654e4ab342c4fbf86f0f38767d7acb5b73e0c16e04468d5c91b0a0c8694178b7"
+content-hash = "033b06341c0416e7b3184b07ed2f4c449f5ce2e7a4eb2f214ada5c6b2acd7106"
