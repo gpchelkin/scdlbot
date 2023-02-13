@@ -7,6 +7,7 @@ import pathlib
 import random
 import shutil
 import tempfile
+import threading
 import time
 import traceback
 from logging.handlers import SysLogHandler
@@ -18,8 +19,7 @@ from uuid import uuid4
 
 import ffmpeg
 import pkg_resources
-
-# import prometheus_client
+import prometheus_client
 import requests
 from fake_useragent import UserAgent
 
@@ -27,7 +27,7 @@ from fake_useragent import UserAgent
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
-from telegram import Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
+from telegram import Bot, Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
@@ -182,6 +182,12 @@ logger = logging.getLogger(__name__)
 EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
 UA = UserAgent()
 UA.update()
+REGISTRY = prometheus_client.CollectorRegistry()
+EXECUTOR_TASKS_REMAINING = prometheus_client.Gauge(
+    "executor_tasks_remaining",
+    "Value: executor_tasks_remaining",
+    registry=REGISTRY,
+)
 
 
 # TODO exceptions:
@@ -313,13 +319,15 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
     chat_type = update.effective_chat.type
     init_chat_data(
         chat_data=context.chat_data,
-        mode=("dl" if chat_type == Chat.PRIVATE else "silent"),
+        mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(context.chat_data), text=SETTINGS_TEXT)
 
 
 async def dl_link_commands_and_messages_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
     message = None
     if update.channel_post:
         message = update.channel_post
@@ -333,7 +341,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         return
     init_chat_data(
         chat_data=context.chat_data,
-        mode=("dl" if chat_type == Chat.PRIVATE else "silent"),
+        mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     # Determine the original command:
@@ -386,27 +394,91 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # https://stackoverflow.com/a/65731909/2490759
     # context.job_queue.run_custom(callback_job_prepare_urls, job_kwargs={"misfire_grace_time": None}, name="prepare_urls", data=data, chat_id=chat_id)
 
-    # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
-    # https://docs.python-telegram-bot.org/en/v20.1/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
-    # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
-    # FIXME use concurrent_updates with limit instead of unlimited create_task? make other commands async too?
-    # send_audio has connection troubles when running async.
-    # Works bad on my computer, but good on server with local API.
-    kwargs = {
-        "context": context,
-        "message": message,
-        "mode": mode,
-        "wait_message_id": wait_message_id,
-        "apologize": apologize,
-        "allow_unknown_sites": allow_unknown_sites,
-    }
-    # future = EXECUTOR.submit(prepare_urls_sync, **kwargs)
-    # future.result(timeout=300)
-    # context.application.create_task(
-    #     prepare_urls(**kwargs),
-    #     update=update,
-    # )
-    await prepare_urls(**kwargs)
+    reply_to_message_id = message.message_id
+    source_ip = None
+    proxy = None
+    if SOURCE_IPS:
+        source_ip = random.choice(SOURCE_IPS)
+    if PROXIES:
+        proxy = random.choice(PROXIES)
+
+    # Get our main running asyncio loop:
+    loop_main = asyncio.get_event_loop()
+    # Run heavy task in separate process, but without blocking the main running asyncio loop:
+    urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
+    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+
+    logger.debug(f"prepare_urls: urls dict: {urls_dict}")
+    urls_values = " ".join(urls_dict.values())
+    # continue only if any good direct url status exist (or if we deal with trusted urls):
+    if (mode != "dl" and "http" not in urls_values) or (mode == "dl" and not urls_dict):
+        if apologize:
+            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
+        if wait_message_id:  # TODO delete only once
+            try:
+                await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            except:
+                pass
+        return
+
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+
+    if mode == "dl":
+        for url in urls_dict:
+            direct_urls_status = urls_dict[url]
+            if direct_urls_status in ["failed", "restrict_direct", "restrict_region", "restrict_live", "timeout"]:
+                if direct_urls_status == "failed":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "timeout":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_direct":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_region":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
+                elif direct_urls_status == "restrict_live":
+                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
+                if wait_message_id:  # TODO delete only once
+                    try:
+                        await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+                    except:
+                        pass
+            else:
+                kwargs = {
+                    "bot_options": {
+                        "token": context.bot.token,
+                        "base_url": context.bot.base_url[:-45],
+                        "base_file_url": context.bot.base_file_url[:-45],
+                        "local_mode": context.bot.local_mode,
+                    },
+                    "chat_id": chat_id,
+                    "url": url,
+                    "flood": context.chat_data["settings"]["flood"],
+                    "reply_to_message_id": reply_to_message_id,
+                    "wait_message_id": wait_message_id,
+                    "cookies_file": COOKIES_FILE,
+                    "source_ip": source_ip,
+                    "proxy": proxy,
+                }
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+                # Run heavy task in separate process, "fire and forget":
+                EXECUTOR.submit(download_url_and_send, **kwargs)
+                logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+                EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+
+    elif mode == "link":
+        await context.bot.send_message(
+            chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
+        )
+    elif mode == "ask":
+        url_message_id = str(reply_to_message_id)
+        context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
+        question = "🎶 links found, what to do?"
+        button_dl = InlineKeyboardButton(text="⬇️ Download", callback_data=" ".join([url_message_id, "dl"]))
+        button_link = InlineKeyboardButton(text="🔗️ Get links", callback_data=" ".join([url_message_id, "link"]))
+        button_cancel = InlineKeyboardButton(text="❌", callback_data=" ".join([url_message_id, "cancel"]))
+        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
+        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
 
 
 async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -417,6 +489,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
     # get message id and action from button data:
+    # TODO create separate callbacks and handlers by pattern
     url_message_id, button_action = update.callback_query.data.split()
     if not chat_allowed(chat_id):
         await update.callback_query.answer(text="This command isn't allowed in this chat.")
@@ -462,23 +535,27 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
             for url in urls_dict:
                 kwargs = {
-                    "context": context,
+                    "bot_options": {
+                        "token": context.bot.token,
+                        "base_url": context.bot.base_url[:-45],
+                        "base_file_url": context.bot.base_file_url[:-45],
+                        "local_mode": context.bot.local_mode,
+                    },
                     "chat_id": chat_id,
                     "url": url,
-                    "direct_urls_status": urls_dict[url],
+                    "flood": context.chat_data["settings"]["flood"],
                     "reply_to_message_id": url_message_id,
                     "wait_message_id": wait_message.message_id,
                     "cookies_file": COOKIES_FILE,
                     "source_ip": url_message_data["source_ip"],
                     "proxy": url_message_data["proxy"],
                 }
-                # future = EXECUTOR.submit(download_url_and_send_sync, **kwargs)
-                # future.result(timeout=300)
-                # context.application.create_task(
-                #     download_url_and_send(**kwargs),
-                #     update=update,
-                # )
-                await download_url_and_send(**kwargs)
+                await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+                # Run heavy task in separate process, "fire and forget":
+                EXECUTOR.submit(download_url_and_send, **kwargs)
+                logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+                EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
@@ -614,107 +691,20 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             urls_dict[url_text] = "http"
         elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
-            # FIXME We still run it for checking Instagram ban:
-            urls_dict[url_text] = "http"
+            # We still run it for checking Instagram ban:
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # FIXME We still run it for checking YouTube region restriction:
-            urls_dict[url_text] = "http"
+            # We still run it for checking YouTube region restriction:
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
     return urls_dict
 
 
-async def prepare_urls(
-    context: ContextTypes.DEFAULT_TYPE,
-    message,
-    mode=None,
-    wait_message_id=None,
-    apologize=None,
-    allow_unknown_sites=False,
-):
-    chat_id = message.chat_id
-    logger.debug("Entering: prepare_urls")
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    reply_to_message_id = message.message_id
-    source_ip = None
-    proxy = None
-    if SOURCE_IPS:
-        source_ip = random.choice(SOURCE_IPS)
-    if PROXIES:
-        proxy = random.choice(PROXIES)
-
-    loop = asyncio.get_event_loop()
-    urls_dict = await loop.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
-
-    logger.debug(f"prepare_urls: urls dict: {urls_dict}")
-    urls_values = " ".join(urls_dict.values())
-    # continue only if any good direct url status exist (or if we deal with trusted urls):
-    if (mode != "dl" and "http" not in urls_values) or (mode == "dl" and not urls_dict):
-        if apologize:
-            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
-        if wait_message_id:  # TODO delete only once
-            try:
-                await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
-            except:
-                pass
-        return
-
-    if mode == "dl":
-        for url in urls_dict:
-            direct_urls_status = urls_dict[url]
-            if direct_urls_status in ["failed", "restrict_direct", "restrict_region", "restrict_live", "timeout"]:
-                if direct_urls_status == "failed":
-                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
-                elif direct_urls_status == "timeout":
-                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
-                elif direct_urls_status == "restrict_direct":
-                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DIRECT_RESTRICTION_TEXT, parse_mode="Markdown")
-                elif direct_urls_status == "restrict_region":
-                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=REGION_RESTRICTION_TEXT, parse_mode="Markdown")
-                elif direct_urls_status == "restrict_live":
-                    await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=LIVE_RESTRICTION_TEXT, parse_mode="Markdown")
-                if wait_message_id:  # TODO delete only once
-                    try:
-                        await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
-                    except:
-                        pass
-            else:
-                kwargs = {
-                    "context": context,
-                    "chat_id": chat_id,
-                    "url": url,
-                    "direct_urls_status": direct_urls_status,
-                    "reply_to_message_id": reply_to_message_id,
-                    "wait_message_id": wait_message_id,
-                    "cookies_file": COOKIES_FILE,
-                    "source_ip": source_ip,
-                    "proxy": proxy,
-                }
-                # future = EXECUTOR.submit(prepare_urls_sync, **kwargs)
-                # future.result(timeout=300)
-                # context.application.create_task(
-                #     download_url_and_send(**kwargs),
-                # )
-                await download_url_and_send(**kwargs)
-    elif mode == "link":
-        await context.bot.send_message(
-            chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
-        )
-    elif mode == "ask":
-        url_message_id = str(reply_to_message_id)
-        context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
-        question = "🎶 links found, what to do?"
-        button_dl = InlineKeyboardButton(text="⬇️ Download", callback_data=" ".join([url_message_id, "dl"]))
-        button_link = InlineKeyboardButton(text="🔗️ Get links", callback_data=" ".join([url_message_id, "link"]))
-        button_cancel = InlineKeyboardButton(text="❌", callback_data=" ".join([url_message_id, "cancel"]))
-        inline_keyboard = InlineKeyboardMarkup([[button_dl, button_link, button_cancel]])
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, reply_markup=inline_keyboard, text=question)
-
-
-async def download_url_and_send(
-    context: ContextTypes.DEFAULT_TYPE,
+def download_url_and_send(
+    bot_options,
     chat_id,
     url,
-    direct_urls_status,
+    flood=False,
     reply_to_message_id=None,
     wait_message_id=None,
     cookies_file=None,
@@ -722,12 +712,43 @@ async def download_url_and_send(
     proxy=None,
 ):
     logger.debug("Entering: download_url_and_send")
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
+    # loop_main = asyncio.get_event_loop()
 
+    # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
+    # https://docs.python-telegram-bot.org/en/v20.1/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
+    # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
+    # We use concurrent_updates with limit instead of unlimited create_task
+    # send_audio has connection troubles when running async.
+    # Works bad on my computer, but good on server with local API.
+    # But still we run it in another process.
+
+    # We can only submit sync function to process executor (because it forks and there is no point).
+    # We must not pass here, because they get serialized on fork and context/bot cannot be serialized pickled.
+    # https://docs.python-telegram-bot.org/en/v20.1/telegram.bot.html
+    # But we want to run async bot functions from framework here.
+    # We can't use loop_main.run_in_executor(None) because it doesn't give the result
+    # We can't use loop_main.run_until_complete because it is already running in our forked process
+    # So we run additional loop in additional thread and use it
+    loop_additional = asyncio.new_event_loop()
+    thread_additional = threading.Thread(target=loop_additional.run_forever, name="Async Runner", daemon=True)
+
+    def run_async(coro):
+        if not thread_additional.is_alive():
+            thread_additional.start()
+        future = asyncio.run_coroutine_threadsafe(coro, loop_additional)
+        return future.result()
+
+    bot = Bot(
+        token=bot_options["token"],
+        base_url=bot_options["base_url"],
+        base_file_url=bot_options["base_file_url"],
+        local_mode=bot_options["local_mode"],
+    )
+    run_async(bot.initialize())
+    logger.debug(bot.token)
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
-    flood = context.chat_data["settings"]["flood"]
     download_video = False
     status = "initial"
     cmd = None
@@ -895,9 +916,9 @@ async def download_url_and_send(
         gc.collect()
 
     if status == "failed":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown")
+        run_async(bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=FAILED_TEXT, parse_mode="Markdown"))
     elif status == "timeout":
-        await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown")
+        run_async(bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=DL_TIMEOUT_TEXT, parse_mode="Markdown"))
     elif status == "success":
         file_list = []
         for d, dirs, files in os.walk(download_dir):
@@ -905,8 +926,8 @@ async def download_url_and_send(
                 file_list.append(os.path.join(d, file))
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
-            await context.bot.send_message(
-                chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from provided links", parse_mode="Markdown"
+            run_async(
+                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from provided links", parse_mode="Markdown")
             )
         else:
             for file in sorted(file_list):
@@ -976,38 +997,46 @@ async def download_url_and_send(
                     # If format is not some extra garbage from downloaders:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
-                        await context.bot.send_message(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
-                            parse_mode="Markdown",
+                        run_async(
+                            bot.send_message(
+                                chat_id=chat_id,
+                                reply_to_message_id=reply_to_message_id,
+                                text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
+                                parse_mode="Markdown",
+                            )
                         )
                 except FileTooLargeError as exc:
                     logger.debug("Large file for convert: %s", file_name)
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
-                            file_name, exc.file_size // 1000000, MAX_CONVERT_FILE_SIZE // 1000000
-                        ),
-                        parse_mode="Markdown",
+                    run_async(
+                        bot.send_message(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
+                                file_name, exc.file_size // 1000000, MAX_CONVERT_FILE_SIZE // 1000000
+                            ),
+                            parse_mode="Markdown",
+                        )
                     )
                 except FileSplittedPartiallyError as exc:
                     file_parts = exc.file_parts
                     logger.debug("Splitting failed: %s", file_name)
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
-                        parse_mode="Markdown",
+                    run_async(
+                        bot.send_message(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
+                            parse_mode="Markdown",
+                        )
                     )
                 except FileNotConvertedError as exc:
                     logger.debug("Splitting failed: %s", file_name)
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
-                        parse_mode="Markdown",
+                    run_async(
+                        bot.send_message(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
+                            parse_mode="Markdown",
+                        )
                     )
                 caption = None
                 reply_to_message_id_send = None
@@ -1034,7 +1063,7 @@ async def download_url_and_send(
                     file_name = os.path.split(file_part)[-1]
                     # file_name = translit(file_name, 'ru', reversed=True)
                     logger.debug("Sending: %s", file_name)
-                    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE)
+                    run_async(bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE))
                     caption_part = None
                     if len(file_parts) > 1:
                         caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
@@ -1068,35 +1097,39 @@ async def download_url_and_send(
                                     logger.debug(audio)
                                 else:
                                     audio = open(file_part, "rb")
-                                audio_msg = await context.bot.send_audio(
-                                    chat_id=chat_id,
-                                    reply_to_message_id=reply_to_message_id_send,
-                                    audio=audio,
-                                    duration=duration,
-                                    performer=performer,
-                                    title=title,
-                                    caption=caption_full,
-                                    parse_mode="Markdown",
+                                audio_msg = run_async(
+                                    bot.send_audio(
+                                        chat_id=chat_id,
+                                        reply_to_message_id=reply_to_message_id_send,
+                                        audio=audio,
+                                        duration=duration,
+                                        performer=performer,
+                                        title=title,
+                                        caption=caption_full,
+                                        parse_mode="Markdown",
+                                    ),
                                 )
                                 sent_audio_ids.append(audio_msg.audio.file_id)
                                 logger.debug("Sending audio succeeded: %s", file_name)
                                 break
                             elif download_video:
                                 video = open(file_part, "rb")
-                                duration = float(ffmpeg.probe(file_part)["format"]["duration"])
+                                duration = int(float(ffmpeg.probe(file_part)["format"]["duration"]))
                                 videostream = next(item for item in ffmpeg.probe(file_part)["streams"] if item["codec_type"] == "video")
                                 width = int(videostream["width"])
                                 height = int(videostream["height"])
-                                video_msg = await context.bot.send_video(
-                                    chat_id=chat_id,
-                                    reply_to_message_id=reply_to_message_id_send,
-                                    video=video,
-                                    supports_streaming=True,
-                                    duration=duration,
-                                    width=width,
-                                    height=height,
-                                    caption=caption_full,
-                                    parse_mode="Markdown",
+                                video_msg = run_async(
+                                    bot.send_video(
+                                        chat_id=chat_id,
+                                        reply_to_message_id=reply_to_message_id_send,
+                                        video=video,
+                                        supports_streaming=True,
+                                        duration=duration,
+                                        width=width,
+                                        height=height,
+                                        caption=caption_full,
+                                        parse_mode="Markdown",
+                                    ),
                                 )
                                 sent_audio_ids.append(video_msg.video.file_id)
                                 logger.debug("Sending video succeeded: %s", file_name)
@@ -1108,20 +1141,28 @@ async def download_url_and_send(
                             else:
                                 time.sleep(5)
                 if len(sent_audio_ids) != len(file_parts):
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, could not send file `{}` or some of it's parts..".format(file_name),
-                        parse_mode="Markdown",
+                    run_async(
+                        bot.send_message(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, could not send file `{}` or some of it's parts..".format(file_name),
+                            parse_mode="Markdown",
+                        )
                     )
                     logger.debug("Sending some parts failed: %s", file_name)
 
     shutil.rmtree(download_dir, ignore_errors=True)
     if wait_message_id:  # TODO delete only once
         try:
-            await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            run_async(
+                bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=wait_message_id,
+                ),
+            )
         except:
             pass
+    run_async(bot.shutdown())
 
 
 def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
@@ -1204,12 +1245,12 @@ def ydl_download(url, ydl_opts, queue=None):
 
 
 async def post_shutdown(application: Application) -> None:
-    EXECUTOR.shutdown(wait=False, cancel_futures=False)
+    EXECUTOR.shutdown(wait=False, cancel_futures=True)
 
 
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
-    # prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST)
+    prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST, registry=REGISTRY)
 
     # TODO maybe use token again? https://github.com/flyingrub/scdl/issues/429
     # if sc_auth_token:
@@ -1235,11 +1276,11 @@ def main():
         .persistence(persistence)
         .post_shutdown(post_shutdown)
         .concurrent_updates(256)
-        .connection_pool_size(1024)
-        .connect_timeout(300)
-        .read_timeout(300)
-        .write_timeout(300)
-        .pool_timeout(300)
+        .connection_pool_size(512)
+        .connect_timeout(30)
+        .read_timeout(30)
+        .write_timeout(30)
+        .pool_timeout(30)
         .build()
     )
 
