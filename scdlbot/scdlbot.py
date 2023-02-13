@@ -31,7 +31,7 @@ from telegram import Bot, Chat, ChatMemberAdministrator, ChatMemberOwner, Inline
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
-from telegram_handler import TelegramHandler
+# from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
 try:
@@ -60,6 +60,7 @@ LOCAL_MODE = False
 if "127.0.0.1" in TG_BOT_API:
     LOCAL_MODE = True
 BOT_OWNER_CHAT_ID = int(os.getenv("BOT_OWNER_CHAT_ID", "0"))
+# TODO just use bot.username after init
 TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "scdlbot")
 
 # TODO handle unset variables better
@@ -159,9 +160,10 @@ console_handler.setFormatter(console_formatter)
 console_handler.setLevel(common_logging_level)
 logging_handlers.append(console_handler)
 
-telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
-telegram_handler.setLevel(logging.WARNING)
-logging_handlers.append(telegram_handler)
+# TODO async?
+# telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
+# telegram_handler.setLevel(logging.WARNING)
+# logging_handlers.append(telegram_handler)
 
 if SYSLOG_ADDRESS:
     syslog_formatter = logging.Formatter("%(asctime)s " + SYSLOG_HOSTNAME + " %(name)s: %(message)s", datefmt="%b %d %H:%M:%S")
@@ -447,8 +449,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                 kwargs = {
                     "bot_options": {
                         "token": context.bot.token,
-                        "base_url": context.bot.base_url[:-45],
-                        "base_file_url": context.bot.base_file_url[:-45],
+                        "base_url": context.bot.base_url.split("/bot")[0]+"/bot",
+                        "base_file_url": context.bot.base_file_url.split("/file/bot")[0]+"/file/bot",
                         "local_mode": context.bot.local_mode,
                     },
                     "chat_id": chat_id,
@@ -620,10 +622,10 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
     url_entities.update(url_caption_entities)
     for entity in url_entities:
         url_str = url_entities[entity]
+        if "://" not in url_str:
+            url_str = "http://" + url_str
         if url_valid_and_allowed(url_str, allow_unknown_sites=allow_unknown_sites):
             logger.debug("Entity URL parsed: %s", url_str)
-            if "://" not in url_str:
-                url_str = "http://{}".format(url_str)
             urls.append(URL(url_str))
         else:
             logger.debug("Entry URL is not valid or blacklisted: %s", url_str)
@@ -1054,6 +1056,7 @@ def download_url_and_send(
                         source = "Bandcamp"
                     else:
                         source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
+                    # TODO fix youtube id in []
                     caption = "@{} _got it from_ [{}]({}){}".format(TG_BOT_USERNAME.replace("_", "\_"), source, url, addition.replace("_", "\_"))
                     # logger.debug(caption)
                     reply_to_message_id_send = reply_to_message_id
@@ -1107,6 +1110,11 @@ def download_url_and_send(
                                         title=title,
                                         caption=caption_full,
                                         parse_mode="Markdown",
+                                        # FIXME
+                                        read_timeout=300,
+                                        write_timeout=300,
+                                        connect_timeout=300,
+                                        pool_timeout=300,
                                     ),
                                 )
                                 sent_audio_ids.append(audio_msg.audio.file_id)
@@ -1129,6 +1137,10 @@ def download_url_and_send(
                                         height=height,
                                         caption=caption_full,
                                         parse_mode="Markdown",
+                                        read_timeout=300,
+                                        write_timeout=300,
+                                        connect_timeout=300,
+                                        pool_timeout=300,
                                     ),
                                 )
                                 sent_audio_ids.append(video_msg.video.file_id)
@@ -1270,17 +1282,17 @@ def main():
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
         .local_mode(LOCAL_MODE)
-        .http_version("1.1")  # FIXME 2.0 doesn't work in local mode
+        .http_version("1.1")  # FIXME 2 doesn't work in local mode
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
         .post_shutdown(post_shutdown)
         .concurrent_updates(256)
         .connection_pool_size(512)
-        .connect_timeout(30)
-        .read_timeout(30)
-        .write_timeout(30)
-        .pool_timeout(30)
+        .connect_timeout(300)
+        .read_timeout(300)
+        .write_timeout(300)
+        .pool_timeout(300)
         .build()
     )
 
@@ -1326,10 +1338,11 @@ def main():
             max_connections=1024,
         )
     else:
+        application.bot.delete_webhook()
         application.run_polling(
             drop_pending_updates=True,
         )
-
+    # FIXME drop handling message edits (to other commands)
 
 if __name__ == "__main__":
     main()

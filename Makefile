@@ -25,6 +25,7 @@ test: lint package
 run_dev:
 	set -o allexport; \
 	source .env-dev; \
+	ps -ef | grep python | grep scdlbot | awk '{print $2}' | xargs kill -9; \
 	poetry run python scdlbot/scdlbot.py
 
 .DEFAULT:
