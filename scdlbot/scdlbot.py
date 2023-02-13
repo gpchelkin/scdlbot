@@ -296,11 +296,10 @@ def url_valid_and_allowed(url, allow_unknown_sites=False):
             return False
     if allow_unknown_sites:
         return True
+    if any((site in netloc for site in DOMAINS)):
+        return True
     else:
-        if any((site in netloc for site in DOMAINS)):
-            return True
-        else:
-            return False
+        return False
 
 
 async def start_help_commands_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
