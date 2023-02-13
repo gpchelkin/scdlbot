@@ -1282,7 +1282,13 @@ def main():
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
         .local_mode(LOCAL_MODE)
-        .http_version("1.1")  # FIXME 2 doesn't work in local mode
+        # FIXME:
+        # webhook + local API / local mode + v20.0 = works
+        # webhook + local API / local mode + v20.1 = doesn't work some things
+        # polling + local API / local mode + v20.1 = doesn't work some things
+        # polling + official API + v20.1 = works
+        # http2 + local mode + v20.1 = doesn't work?
+        # .http_version("1.1")
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
@@ -1343,6 +1349,7 @@ def main():
             drop_pending_updates=True,
         )
     # FIXME drop handling message edits (to other commands)
+
 
 if __name__ == "__main__":
     main()
