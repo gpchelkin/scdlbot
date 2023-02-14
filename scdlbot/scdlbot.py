@@ -228,8 +228,9 @@ def get_link_text(urls):
     link_text = ""
     for i, url in enumerate(urls):
         link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
-        direct_urls = urls[url].splitlines()
-        for direct_url in direct_urls:
+        # TODO long link message split in many
+        direct_urls = urls[url].splitlines()[:3]
+        for idx, direct_url in enumerate(direct_urls):
             if direct_url.startswith("http"):
                 content_type = ""
                 if "googlevideo" in direct_url:
@@ -237,7 +238,7 @@ def get_link_text(urls):
                         content_type = "Audio"
                     else:
                         content_type = "Video"
-                link_text += "• {} [Direct Link]({})\n".format(content_type, direct_url)
+                link_text += "• {} {} [Direct Link]({})\n".format(content_type, str(idx + 1), direct_url)
     link_text += "\n*Note:* Final download URLs are only guaranteed to work on the same machine/IP where extracted"
     return link_text
 
@@ -391,12 +392,20 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
         wait_message_id = wait_message.message_id
 
+    # FIXME blocking io !!!
+    urls_dict = get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites)
+
     # Get our main running asyncio loop:
-    loop_main = asyncio.get_event_loop()
+    # loop_main = asyncio.get_event_loop()
     # Run heavy task in separate process, but without blocking the main running asyncio loop:
-    urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
-    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+    # urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
+    # logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+    # EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+
+    # We can just run in thread pool if we get rid of timeout signals:
+    # urls_dict = {}
+    # with concurrent.futures.ThreadPoolExecutor() as pool:
+    #     urls_dict = await loop_main.run_in_executor(pool, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     urls_values = " ".join(urls_dict.values())
@@ -641,7 +650,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                     requests.head(
                         url_item.to_text(full_quote=True),
                         allow_redirects=True,
-                        timeout=5,
+                        timeout=2,
                         proxies={"http": proxy, "https": proxy},
                         # TODO randomize User-Agent
                         # headers={"User-Agent": UA.random},
@@ -729,11 +738,15 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
     signal.alarm(DL_TIMEOUT)
     try:
         info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
-        direct_url = info_dict["url"]
-        logger.debug("ydl_get_direct_urls failed: %s", url)
+        # TODO actualize checks, fix for youtube playlists
+        if "url" in info_dict:
+            direct_url = info_dict["url"]
+        elif 'entries' in info_dict:
+            direct_url = "\n".join([x['url'] for x in info_dict['entries'] if 'url' in x])
+        else:
+            raise Exception()
         if "yt_live_broadcast" in direct_url:
             status = "restrict_live"
-        # TODO actualize checks
         elif "returning it as such" in direct_url:
             status = "restrict_direct"
         elif "proxy server" in direct_url:
@@ -745,10 +758,9 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
     except FunctionTimeoutError:
         logger.debug("%s took too much time and dropped: %s", cmd_name, url)
         status = "timeout"
-    except Exception as exc:
-        print(exc)
+    except Exception:
         logger.debug("%s failed: %s", cmd_name, url)
-        # logger.debug(traceback.format_exc())
+        logger.debug(traceback.format_exc())
         status = "failed"
     finally:
         signal.alarm(0)
@@ -1329,6 +1341,7 @@ def main():
             max_connections=1024,
         )
     else:
+        # TODO await it somehow
         application.bot.delete_webhook()
         application.run_polling(
             drop_pending_updates=True,
