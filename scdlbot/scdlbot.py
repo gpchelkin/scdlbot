@@ -8,15 +8,14 @@ import os
 import pathlib
 import random
 import shutil
+import signal
 import tempfile
 import threading
 import time
 import traceback
 from logging.handlers import SysLogHandler
-from multiprocessing import Process, Queue
-from queue import Empty as QueueEmptyError
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 from uuid import uuid4
 
 import ffmpeg
@@ -40,20 +39,14 @@ from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, 
 # Support different old versions just in case:
 try:
     import yt_dlp as ydl
-
-    ydl_bin_name = "yt-dlp"
 except:
     try:
         import youtube_dl as ydl
-
-        ydl_bin_name = "youtube-dl"
     except:
         import youtube_dlc as ydl
 
-        ydl_bin_name = "youtube-dlc"
-
 from boltons.urlutils import URL
-from plumbum import ProcessExecutionError, ProcessTimedOut, local
+from plumbum import ProcessExecutionError, local
 
 # Config options:
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
@@ -77,7 +70,7 @@ CERT_FILE = os.getenv("CERT_FILE", None)
 CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", None)
 WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
 
-WORKERS = int(os.getenv("WORKERS", 4))
+WORKERS = int(os.getenv("WORKERS", 2))
 NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
 DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
@@ -119,7 +112,6 @@ REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing requ
 BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
-ydl_bin = local[os.path.join(BIN_PATH, ydl_bin_name)]
 
 
 # Text constants:
@@ -224,6 +216,14 @@ class FileSentPartiallyError(Exception):
         self.sent_audio_ids = sent_audio_ids
 
 
+class FunctionTimeoutError(TimeoutError):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise FunctionTimeoutError()
+
+
 def get_link_text(urls):
     link_text = ""
     for i, url in enumerate(urls):
@@ -283,20 +283,20 @@ def chat_allowed(chat_id):
 
 def url_valid_and_allowed(url, allow_unknown_sites=False):
     try:
-        netloc = urlparse(url).netloc
+        host = url.host
     except AttributeError:
         return False
-    if netloc in BLACKLIST_TELEGRAM_DOMAINS:
+    if host in BLACKLIST_TELEGRAM_DOMAINS:
         return False
     if WHITELIST_DOMAINS:
-        if netloc not in WHITELIST_DOMAINS:
+        if host not in WHITELIST_DOMAINS:
             return False
     if BLACKLIST_DOMAINS:
-        if netloc in BLACKLIST_DOMAINS:
+        if host in BLACKLIST_DOMAINS:
             return False
     if allow_unknown_sites:
         return True
-    if any((site in netloc for site in DOMAINS)):
+    if any((site in host for site in DOMAINS)):
         return True
     else:
         return False
@@ -525,8 +525,8 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 kwargs = {
                     "bot_options": {
                         "token": context.bot.token,
-                        "base_url": context.bot.base_url[:-45],
-                        "base_file_url": context.bot.base_file_url[:-45],
+                        "base_url": context.bot.base_url.split("/bot")[0] + "/bot",
+                        "base_file_url": context.bot.base_file_url.split("/file/bot")[0] + "/file/bot",
                         "local_mode": context.bot.local_mode,
                     },
                     "chat_id": chat_id,
@@ -608,21 +608,23 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         url_str = url_entities[entity]
         if "://" not in url_str:
             url_str = "http://" + url_str
-        if url_valid_and_allowed(url_str, allow_unknown_sites=allow_unknown_sites):
-            logger.debug("Entity URL parsed: %s", url_str)
-            urls.append(URL(url_str))
+        # TODO try except
+        url = URL(url_str)
+        if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
+            logger.debug("Entity URL parsed: %s", url)
+            urls.append(url)
         else:
             logger.debug("Entry URL is not valid or blacklisted: %s", url_str)
     text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
     text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
     text_link_entities.update(text_link_caption_entities)
     for entity in text_link_entities:
-        url_str = entity.url
-        if url_valid_and_allowed(url_str, allow_unknown_sites=allow_unknown_sites):
-            logger.debug("Entity Text Link parsed: %s", url_str)
-            urls.append(URL(url_str))
+        url = URL(entity.url)
+        if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
+            logger.debug("Entity Text Link parsed: %s", url)
+            urls.append(url)
         else:
-            logger.debug("Entry Text Link is not valid or blacklisted: %s", url_str)
+            logger.debug("Entry Text Link is not valid or blacklisted: %s", url)
     # If message just some text passed (not isinstance(message, Message)):
     # all_links = find_all_links(message, default_scheme="http")
     # urls = [link for link in all_links if url_valid_and_allowed(link)]
@@ -640,7 +642,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                         url_item.to_text(full_quote=True),
                         allow_redirects=True,
                         timeout=5,
-                        proxies=dict(http=proxy, https=proxy),
+                        proxies={"http": proxy, "https": proxy},
                         # TODO randomize User-Agent
                         # headers={"User-Agent": UA.random},
                         headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
@@ -660,7 +662,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # We run it for links from unknown sites (if they were allowed).
             # If it's known site, we need to check it more thoroughly below.
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
-        elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url_text) and (not "you" in url.path_parts):
+        elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -686,6 +688,74 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # We still run it for checking YouTube region restriction:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
     return urls_dict
+
+
+def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
+    logger.debug("Entering: ydl_get_direct_urls: %s", url)
+    status = ""
+    cmd_name = "ydl_get_direct_urls"
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "noplaylist": True,
+        "skip_download": True,
+        # "forceprint": {"before_dl":}
+    }
+    if proxy:
+        ydl_opts["proxy"] = proxy
+    if source_ip:
+        ydl_opts["source_address"] = source_ip
+    # TODO create ydl function and deduplicate
+    cookies_download_file = None
+    if cookies_file:
+        cookies_download_file = tempfile.NamedTemporaryFile()
+        cookies_download_file_path = pathlib.Path(cookies_download_file.name)
+        if cookies_file.startswith("http"):
+            # URL for downloading cookie file:
+            try:
+                r = requests.get(cookies_file, allow_redirects=True, timeout=5)
+                with open(cookies_download_file_path, "wb") as cfile:
+                    cfile.write(r.content)
+                ydl_opts["cookiefile"] = str(cookies_download_file_path)
+            except:
+                logger.debug("download_url_and_send could not download cookies file")
+                pass
+        else:
+            # cookie file local path:
+            shutil.copyfile(cookies_file, cookies_download_file_path)
+            ydl_opts["cookiefile"] = str(cookies_download_file_path)
+
+    logger.debug("%s starts: %s", cmd_name, url)
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(DL_TIMEOUT)
+    try:
+        info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+        direct_url = info_dict["url"]
+        logger.debug("ydl_get_direct_urls failed: %s", url)
+        if "yt_live_broadcast" in direct_url:
+            status = "restrict_live"
+        # TODO actualize checks
+        elif "returning it as such" in direct_url:
+            status = "restrict_direct"
+        elif "proxy server" in direct_url:
+            status = "restrict_region"
+        # end actualize checks
+        else:
+            status = direct_url
+            logger.debug("%s succeeded: %s", cmd_name, url)
+    except FunctionTimeoutError:
+        logger.debug("%s took too much time and dropped: %s", cmd_name, url)
+        status = "timeout"
+    except Exception as exc:
+        print(exc)
+        logger.debug("%s failed: %s", cmd_name, url)
+        # logger.debug(traceback.format_exc())
+        status = "failed"
+    finally:
+        signal.alarm(0)
+    if cookies_file:
+        cookies_download_file.close()
+
+    return status
 
 
 def download_url_and_send(
@@ -737,15 +807,17 @@ def download_url_and_send(
     download_dir = os.path.join(DL_DIR, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
+    url_obj = URL(url)
+    host = url_obj.host
     download_video = False
     status = "initial"
     cmd = None
     cmd_name = ""
     cmd_args = ()
     cmd_input = None
-    if (DOMAIN_SC in url and DOMAIN_SC_API not in url) or (DOMAIN_BC in url):
+    if (DOMAIN_SC in host and DOMAIN_SC_API not in host) or (DOMAIN_BC in host):
         # If link is sc/bc, we try scdl/bcdl first:
-        if DOMAIN_SC in url and DOMAIN_SC_API not in url:
+        if DOMAIN_SC in host and DOMAIN_SC_API not in host:
             cmd = scdl_bin
             cmd_name = str(cmd)
             cmd_args = (
@@ -763,7 +835,7 @@ def download_url_and_send(
                 "--extract-artist",  # Set artist tag from title instead of username
             )
             cmd_input = None
-        elif DOMAIN_BC in url:
+        elif DOMAIN_BC in host:
             cmd = bcdl_bin
             cmd_name = str(cmd)
             cmd_args = (
@@ -797,33 +869,28 @@ def download_url_and_send(
             logger.debug("%s took too much time and dropped: %s", cmd_name, url)
         except ProcessExecutionError:
             logger.debug("%s failed: %s", cmd_name, url)
+            logger.debug(traceback.format_exc())
 
     if status == "initial":
-        # If link is not sc/bc or scdl/bcdl just failed, we use ydl:
-        cmd = ydl_download
+        # If link is not sc/bc or scdl/bcdl just failed, we use ydl
         cmd_name = "ydl_download"
-        host = str(urlparse(url).hostname)
         # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
-        ydl_opts = {}
-        # default outtmpl is "%(title)s [%(id)s].%(ext)s"
         # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils.py#L3414
-        # https://github.com/yt-dlp/yt-dlp#output-template
-        # Take first 16 symbols of title.
-        ydl_opts["outtmpl"] = os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s")
+        ydl_opts = {
+            # https://github.com/yt-dlp/yt-dlp#output-template
+            # Default outtmpl is "%(title)s [%(id)s].%(ext)s"
+            # Take first 16 symbols of title:
+            "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
+            "restrictfilenames": True,
+            "windowsfilenames": True,
+            # "trim_file_name": 32,
+        }
         if DOMAIN_TT in host:
             download_video = True
-            ydl_opts.update(
-                {
-                    "videoformat": "mp4",
-                }
-            )
+            ydl_opts["videoformat"] = "mp4"
         elif DOMAIN_TW in host:
             download_video = True
-            ydl_opts.update(
-                {
-                    "videoformat": "mp4",
-                }
-            )
+            ydl_opts["videoformat"] = "mp4"
         elif DOMAIN_IG in host:
             download_video = True
             ydl_opts.update(
@@ -863,7 +930,6 @@ def download_url_and_send(
         if cookies_file:
             cookies_download_file = tempfile.NamedTemporaryFile()
             cookies_download_file_path = pathlib.Path(cookies_download_file.name)
-            # TODO create function for getting cookie
             if cookies_file.startswith("http"):
                 # URL for downloading cookie file:
                 try:
@@ -878,28 +944,25 @@ def download_url_and_send(
                 # cookie file local path:
                 shutil.copyfile(cookies_file, cookies_download_file_path)
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
-        queue = Queue()
-        cmd_args = (url, ydl_opts, queue)
+
         logger.debug("%s starts: %s", cmd_name, url)
-        cmd_proc = Process(target=cmd, args=cmd_args, name=cmd_name)
-        cmd_proc.start()
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(DL_TIMEOUT)
         try:
-            cmd_retcode, cmd_stderr = queue.get(block=True, timeout=DL_TIMEOUT)
-            cmd_stdout = ""
-            cmd_proc.join()
-            if cmd_retcode:
-                raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
+            # TODO check result
+            info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
             status = "success"
-        except QueueEmptyError:
-            cmd_proc.join(1)
-            if cmd_proc.is_alive():
-                cmd_proc.terminate()
+        except FunctionTimeoutError:
             logger.debug("%s took too much time and dropped: %s", cmd_name, url)
             status = "timeout"
-        except ProcessExecutionError:
+        except Exception as exc:
+            print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
+            # logger.debug(traceback.format_exc())
             status = "failed"
+        finally:
+            signal.alarm(0)
         if cookies_file:
             cookies_download_file.close()
         # gc.collect()
@@ -916,7 +979,9 @@ def download_url_and_send(
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
             run_async(
-                bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from provided links", parse_mode="Markdown")
+                bot.send_message(
+                    chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from some of the provided links", parse_mode="Markdown"
+                )
             )
         else:
             for file in sorted(file_list):
@@ -1031,15 +1096,14 @@ def download_url_and_send(
                 reply_to_message_id_send = None
                 if flood:
                     addition = ""
-                    url_obj = URL(url)
-                    if DOMAIN_YT in url_obj.host:
+                    if DOMAIN_YT in host:
                         source = "YouTube"
                         file_root, file_ext = os.path.splitext(file_name)
                         file_title = file_root.replace(file_ext, "")
                         addition = ": " + file_title
-                    elif DOMAIN_SC in url_obj.host:
+                    elif DOMAIN_SC in host:
                         source = "SoundCloud"
-                    elif DOMAIN_BC in url_obj.host:
+                    elif DOMAIN_BC in host:
                         source = "Bandcamp"
                     else:
                         source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
@@ -1068,10 +1132,10 @@ def download_url_and_send(
                         else:
                             caption_full = ""
                     # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
-                    retries = 5
+                    retries = 3
                     for i in range(retries):
                         try:
-                            logger.debug(f"Trying {i} time to send file part: {file_part}")
+                            logger.debug(f"Trying {i+1} time to send file part: {file_part}")
                             if file_part.endswith(".mp3"):
                                 mp3 = MP3(file_part)
                                 duration = round(mp3.info.length)
@@ -1161,70 +1225,6 @@ def download_url_and_send(
         except:
             pass
     run_async(bot.shutdown())
-
-
-def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
-    logger.debug("Entering: ydl_get_direct_urls: %s", url)
-    ydl_args = []
-    cookies_download_file = None
-    if cookies_file:
-        cookies_download_file = tempfile.NamedTemporaryFile()
-        cookies_download_file_path = pathlib.Path(cookies_download_file.name)
-        if cookies_file.startswith("http"):
-            # URL for downloading cookie file:
-            try:
-                r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                with open(cookies_download_file_path, "wb") as cfile:
-                    cfile.write(r.content)
-                ydl_args.extend(["--cookies", str(cookies_download_file_path)])
-            except:
-                logger.debug("ydl_get_direct_urls could not download cookies file")
-                pass
-        else:
-            # cookie file local path:
-            shutil.copyfile(cookies_file, cookies_download_file_path)
-            ydl_args.extend(["--cookies", str(cookies_download_file_path)])
-
-    if source_ip:
-        ydl_args.extend(["--source-address", source_ip])
-    if proxy:
-        ydl_args.extend(["--proxy", proxy])
-    ydl_args.extend(["--get-url", url])
-    result = ""
-    try:
-        ret_code, std_out, std_err = ydl_bin[ydl_args].run(timeout=60)
-        if "yt_live_broadcast" in std_out:
-            result = "restrict_live"
-        else:
-            result = std_out
-    except ProcessTimedOut as exc:
-        logger.debug("ydl_get_direct_urls timed out: %s", url)
-        result = "timeout"
-    except ProcessExecutionError as exc:
-        logger.debug("ydl_get_direct_urls failed: %s", url)
-        if "returning it as such" in exc.stderr:
-            result = "restrict_direct"
-        elif "proxy server" in exc.stderr:
-            result = "restrict_region"
-        else:
-            result = "failed"
-    if cookies_file:
-        cookies_download_file.close()
-    return result
-
-
-def ydl_download(url, ydl_opts, queue=None):
-    # we make function like cmd, with exit code
-    ydl_status = (1, "did not run")
-    try:
-        ydl.YoutubeDL(ydl_opts).download([url])
-        ydl_status = (0, "OK")
-    except Exception as exc:
-        ydl_status = (2, str(exc))
-    if queue:
-        queue.put(ydl_status)
-    else:
-        return ydl_status
 
 
 async def post_shutdown(application: Application) -> None:
