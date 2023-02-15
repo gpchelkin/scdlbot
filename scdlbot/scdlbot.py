@@ -690,11 +690,11 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             urls_dict[url_text] = "http"
         elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
-            # We still run it for checking Instagram ban:
+            # TODO We run it for checking Instagram ban to avoid fake asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # We still run it for checking YouTube region restriction:
+            # We still run it for checking YouTube region restriction to avoid fake asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
     return urls_dict
 
@@ -728,6 +728,9 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
             except:
                 logger.debug("download_url_and_send could not download cookies file")
                 pass
+        elif cookies_file.startswith("firefox:"):
+            # TODO better handling of env var
+            ydl_opts["cookiesfrombrowser"] = ('firefox', cookies_file.split(":")[1], None, None)
         else:
             # cookie file local path:
             shutil.copyfile(cookies_file, cookies_download_file_path)
@@ -952,6 +955,9 @@ def download_url_and_send(
                 except:
                     logger.debug("download_url_and_send could not download cookies file")
                     pass
+            elif cookies_file.startswith("firefox:"):
+                # TODO better handling of env var
+                ydl_opts["cookiesfrombrowser"] = ('firefox', cookies_file.split(":")[1], None, None)
             else:
                 # cookie file local path:
                 shutil.copyfile(cookies_file, cookies_download_file_path)
