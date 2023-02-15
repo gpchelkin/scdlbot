@@ -8,7 +8,6 @@ import os
 import pathlib
 import random
 import shutil
-import signal
 import tempfile
 import threading
 import time
@@ -188,6 +187,12 @@ EXECUTOR_TASKS_REMAINING = prometheus_client.Gauge(
     "Value: executor_tasks_remaining",
     registry=REGISTRY,
 )
+BOT_REQUESTS = prometheus_client.Counter(
+    "bot_requests_total",
+    "Value: bot_requests_total",
+    labelnames=["type", "chat_type", "mode"],
+    registry=REGISTRY,
+)
 
 
 # TODO get rid of exceptions:
@@ -216,14 +221,6 @@ class FileSentPartiallyError(Exception):
         self.sent_audio_ids = sent_audio_ids
 
 
-class FunctionTimeoutError(TimeoutError):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise FunctionTimeoutError()
-
-
 def get_link_text(urls):
     link_text = ""
     for i, url in enumerate(urls):
@@ -238,7 +235,7 @@ def get_link_text(urls):
                         content_type = "Audio"
                     else:
                         content_type = "Video"
-                link_text += "• {} {} [Direct Link]({})\n".format(content_type, str(idx + 1), direct_url)
+                link_text += "• {} #{} [Direct Link]({})\n".format(content_type, str(idx + 1), direct_url)
     link_text += "\n*Note:* Final download URLs are only guaranteed to work on the same machine/IP where extracted"
     return link_text
 
@@ -318,13 +315,16 @@ async def start_help_commands_callback(update: Update, context: ContextTypes.DEF
         command_name = entity_value.replace("/", "").replace(f"@{TG_BOT_USERNAME}", "")
         break
     logger.debug(command_name)
+    BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
     await context.bot.send_message(chat_id=chat_id, text=HELP_TEXT, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 async def settings_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.warning("settings")
+    command_name = "settings"
     chat_id = update.effective_chat.id
     chat_type = update.effective_chat.type
+    logger.debug(command_name)
+    BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
     init_chat_data(
         chat_data=context.chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
@@ -334,8 +334,6 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
 
 
 async def dl_link_commands_and_messages_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
     message = None
     if update.channel_post:
         message = update.channel_post
@@ -354,19 +352,20 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # Determine the original command:
     command_entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
     allow_unknown_sites = context.chat_data["settings"]["allow_unknown_sites"]
+    mode = context.chat_data["settings"]["mode"]
     command_passed = False
-    mode = None
+    action = None
     if command_entities:
         command_passed = True
-        # Try to determine mode from command:
-        mode = None
+        # Try to determine action from command:
+        action = None
         for entity_value in command_entities.values():
-            mode = entity_value.replace("/", "").replace("@{}".format(TG_BOT_USERNAME), "")
+            action = entity_value.replace("/", "").replace("@{}".format(TG_BOT_USERNAME), "")
             break
-    # If no command then it is just a message and use message mode from settings:
-    if not mode:
-        mode = context.chat_data["settings"]["mode"]
-    if mode == "silent":
+    # If no command then it is just a message and use message action from settings:
+    if not action:
+        action = mode
+    if action == "silent":
         return
     if command_passed and not context.args:
         # TODO rant for empty commands?
@@ -374,8 +373,9 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         # rant_text += "\nYou can simply send message with links (to download) OR command as `/{} <links>`.".format(mode)
         # rant_and_cleanup(context.bot, chat_id, rant_text, reply_to_message_id=reply_to_message_id)
         return
-    command_name = f"{mode}_cmd" if command_passed else f"{mode}_msg"
+    command_name = f"{action}_cmd" if command_passed else f"{action}_msg"
     logger.debug(command_name)
+    BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode=mode).inc()
     apologize = False
     # Apologize for fails: always in PM; only when it was explicit command in non-PM:
     if chat_type == Chat.PRIVATE or command_passed:
@@ -388,36 +388,52 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     if PROXIES:
         proxy = random.choice(PROXIES)
     wait_message_id = None
-    if mode == "dl":
+    if action in ["dl", "link"]:
+        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
         wait_message_id = wait_message.message_id
 
-    # FIXME blocking io !!!
-    urls_dict = get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites)
+    CHECK_URL_TIMEOUT = 20
+    urls_dict = {}
 
     # Get our main running asyncio loop:
-    # loop_main = asyncio.get_event_loop()
-    # Run heavy task in separate process, but without blocking the main running asyncio loop:
-    # urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
-    # logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-    # EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+    loop_main = asyncio.get_event_loop()
 
-    # We can just run in thread pool if we get rid of timeout signals:
-    # urls_dict = {}
-    # with concurrent.futures.ThreadPoolExecutor() as pool:
-    #     urls_dict = await loop_main.run_in_executor(pool, get_direct_urls_dict, message, mode, proxy, source_ip, allow_unknown_sites)
+    # a) Run heavy task blocking the main running asyncio loop.
+    # Needs to have timeout signals in function, but they are bad.
+    # urls_dict = get_direct_urls_dict(message, action, proxy, source_ip, allow_unknown_sites)
+
+    # b) Run heavy task in separate process or thread, but without blocking the main running asyncio loop.
+    # Function will continue working till the end: https://stackoverflow.com/a/34457515/2490759
+    # You may add timeout signals in function, but they are bad.
+    # If ThreadPoolExecutor - no signals.
+    # We monitor EXECUTOR process pool task queue, so we use it.
+    # FIXME apply CHECK_URL_TIMEOUT to terminate, maybe use https://github.com/noxdafox/pebble
+    # Dunno why it failed every ~10 minutes (need to re-check with asyncio.wait_for).
+
+    # pool = concurrent.futures.ThreadPoolExecutor()
+    try:
+        urls_dict = await asyncio.wait_for(
+            loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
+            timeout=CHECK_URL_TIMEOUT,
+        )
+    except asyncio.TimeoutError:
+        logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
+    except Exception:
+        logger.debug("get_direct_urls_dict failed for some unhandled reason")
+    # pool.shutdown(wait=False, cancel_futures=True)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     urls_values = " ".join(urls_dict.values())
     # continue only if any good direct url status exist (or if we deal with trusted urls):
 
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-
-    if mode == "dl":
+    if action == "dl":
         if not urls_dict:
             if apologize:
                 await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
+            await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
         else:
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
             for url in urls_dict:
                 direct_urls_status = urls_dict[url]
                 if direct_urls_status in ["failed", "restrict_direct", "restrict_region", "restrict_live", "timeout"]:
@@ -451,18 +467,18 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     # Run heavy task in separate process, "fire and forget":
                     EXECUTOR.submit(download_url_and_send, **kwargs)
-                    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-                    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
 
-    elif mode == "link":
+    elif action == "link":
         if "http" not in urls_values:
             if apologize:
                 await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
         else:
+            await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
             await context.bot.send_message(
                 chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
             )
-    elif mode == "ask":
+        await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+    elif action == "ask":
         if "http" not in urls_values:
             if apologize:
                 await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
@@ -498,7 +514,9 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 logger.debug("settings_fail")
                 await update.callback_query.answer(text="You're not chat admin.")
                 return
-        logger.debug(f"settings_{button_action}")
+        command_name = f"settings_{button_action}"
+        logger.debug(command_name)
+        BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
         if button_action == "close":
             await context.bot.delete_message(chat_id, button_message_id)
         else:
@@ -526,7 +544,9 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
         # if it asked, then we were in prepare_urls:
         url_message_data = context.chat_data.pop(url_message_id)
         urls_dict = url_message_data["urls"]
-        logger.debug(f"{button_action}_msg")
+        command_name = f"{button_action}_msg"
+        logger.debug(command_name)
+        BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="ask").inc()
         if button_action == "dl":
             await update.callback_query.answer(text=get_wait_text())
             wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
@@ -550,8 +570,6 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                 # Run heavy task in separate process, "fire and forget":
                 EXECUTOR.submit(download_url_and_send, **kwargs)
-                logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-                EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
 
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
@@ -700,6 +718,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
 
 def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
+    # TODO transform into unified ydl function and deduplicate
     logger.debug("Entering: ydl_get_direct_urls: %s", url)
     status = ""
     cmd_name = "ydl_get_direct_urls"
@@ -713,7 +732,6 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         ydl_opts["proxy"] = proxy
     if source_ip:
         ydl_opts["source_address"] = source_ip
-    # TODO create ydl function and deduplicate
     cookies_download_file = None
     if cookies_file:
         cookies_download_file = tempfile.NamedTemporaryFile()
@@ -730,22 +748,21 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
                 pass
         elif cookies_file.startswith("firefox:"):
             # TODO better handling of env var
-            ydl_opts["cookiesfrombrowser"] = ('firefox', cookies_file.split(":")[1], None, None)
+            ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file.split(":")[1], None, None)
         else:
             # cookie file local path:
             shutil.copyfile(cookies_file, cookies_download_file_path)
             ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
+    # FIXME apply CHECK_URL_TIMEOUT by using a process (as we did before)
     logger.debug("%s starts: %s", cmd_name, url)
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(DL_TIMEOUT)
     try:
         info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
         # TODO actualize checks, fix for youtube playlists
         if "url" in info_dict:
             direct_url = info_dict["url"]
-        elif 'entries' in info_dict:
-            direct_url = "\n".join([x['url'] for x in info_dict['entries'] if 'url' in x])
+        elif "entries" in info_dict:
+            direct_url = "\n".join([x["url"] for x in info_dict["entries"] if "url" in x])
         else:
             raise Exception()
         if "yt_live_broadcast" in direct_url:
@@ -758,15 +775,10 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         else:
             status = direct_url
             logger.debug("%s succeeded: %s", cmd_name, url)
-    except FunctionTimeoutError:
-        logger.debug("%s took too much time and dropped: %s", cmd_name, url)
-        status = "timeout"
     except Exception:
         logger.debug("%s failed: %s", cmd_name, url)
         logger.debug(traceback.format_exc())
         status = "failed"
-    finally:
-        signal.alarm(0)
     if cookies_file:
         cookies_download_file.close()
 
@@ -957,30 +969,24 @@ def download_url_and_send(
                     pass
             elif cookies_file.startswith("firefox:"):
                 # TODO better handling of env var
-                ydl_opts["cookiesfrombrowser"] = ('firefox', cookies_file.split(":")[1], None, None)
+                ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file.split(":")[1], None, None)
             else:
                 # cookie file local path:
                 shutil.copyfile(cookies_file, cookies_download_file_path)
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
+        # FIXME apply DL_TIMEOUT by using a process (as we did before)
         logger.debug("%s starts: %s", cmd_name, url)
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(DL_TIMEOUT)
         try:
             # TODO check result
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
             status = "success"
-        except FunctionTimeoutError:
-            logger.debug("%s took too much time and dropped: %s", cmd_name, url)
-            status = "timeout"
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
             # logger.debug(traceback.format_exc())
             status = "failed"
-        finally:
-            signal.alarm(0)
         if cookies_file:
             cookies_download_file.close()
         # gc.collect()
@@ -1259,6 +1265,11 @@ async def callback_watchdog(context: ContextTypes.DEFAULT_TYPE):
     SYSTEMD_NOTIFIER.notify(f"STATUS=Watchdog was sent {datetime.datetime.now()}")
 
 
+async def callback_monitor(context: ContextTypes.DEFAULT_TYPE):
+    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
+    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+
+
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
     prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST, registry=REGISTRY)
@@ -1333,6 +1344,7 @@ def main():
 
     job_queue = application.job_queue
     job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
+    job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=10)
 
     if USE_WEBHOOK:
         application.run_webhook(
