@@ -28,7 +28,7 @@ from fake_useragent import UserAgent
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
-from telegram import Bot, Chat, ChatMemberAdministrator, ChatMemberOwner, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
+from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
@@ -510,7 +510,8 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
         # button on settings message:
         if chat_type != Chat.PRIVATE:
             chat_member = await chat.get_member(user_id)
-            if chat_member.status not in [ChatMemberAdministrator, ChatMemberOwner] and user_id != BOT_OWNER_CHAT_ID:
+            # logger.debug(chat_member.status)
+            if chat_member.status not in [ChatMember.OWNER, ChatMember.ADMINISTRATOR] and user_id != BOT_OWNER_CHAT_ID:
                 logger.debug("settings_fail")
                 await update.callback_query.answer(text="You're not chat admin.")
                 return

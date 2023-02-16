@@ -18,14 +18,24 @@ package:
 	poetry run pip check
 	poetry run safety check --full-report
 
+.PHONY: update
+update:
+	poetry self lock
+	poetry self install --sync
+	poetry self update
+	poetry update --with main,dev,docs
+	poetry export --only main --without-hashes -f requirements.txt -o requirements.txt
+	poetry export --only docs --without-hashes -f requirements.txt -o requirements-docs.txt
+	poetry export --only dev  --without-hashes -f requirements.txt -o requirements-dev.txt
+
 .PHONY: test
 test: lint package
 
 .PHONY: run_dev
 run_dev:
+	ps -ef | grep '[s]cdlbot/scdlbot.py' | grep -v bash | awk '{print $$2}' | xargs --no-run-if-empty kill -15
 	set -o allexport; \
 	source .env-dev; \
-	ps -ef | grep python | grep scdlbot | awk '{print $2}' | xargs kill -9; \
 	poetry run python scdlbot/scdlbot.py
 
 .DEFAULT:
