@@ -1293,13 +1293,15 @@ def main():
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
         .local_mode(LOCAL_MODE)
-        # TODO wait for response from devs https://t.me/pythontelegrambotgroup/657921
-        # webhook + local API / local mode + v20.0 = works
-        # webhook + local API / local mode + v20.1 = doesn't work some things
-        # polling + local API / local mode + v20.1 = doesn't work some things
-        # polling + official API + v20.1 = works
-        # http2 + local mode + v20.1 = doesn't work?
+        # https://t.me/pythontelegrambotgroup/657921
+        # https://github.com/python-telegram-bot/python-telegram-bot/issues/3556
+        # v20.0: http1 + webhook/polling + local mode = Works
+        # v20.1: http1/http2 + polling + official API = Works
+        # v20.1: http1/http2 + webhook + official API = I don't know, but should work TODO check
+        # v20.1: http1 + webhook/polling + local mode = Doesn't work TODO logs/details
+        # v20.1: http2 + webhook/polling + local mode = Doesn't work as stated in issue
         # .http_version("1.1")
+        # .get_updates_http_version("1.1")
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
