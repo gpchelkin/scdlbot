@@ -74,6 +74,7 @@ NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
 DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
+CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
 COMMON_CONNECTION_TIMEOUT = int(os.getenv("COMMON_CONNECTION_TIMEOUT", 30))
 MAX_CONVERT_FILE_SIZE = int(os.getenv("MAX_CONVERT_FILE_SIZE", "80_000_000"))
@@ -393,7 +394,6 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
         wait_message_id = wait_message.message_id
 
-    CHECK_URL_TIMEOUT = 20
     urls_dict = {}
 
     # Get our main running asyncio loop:
@@ -408,14 +408,13 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # You may add timeout signals in function, but they are bad.
     # If ThreadPoolExecutor - no signals.
     # We monitor EXECUTOR process pool task queue, so we use it.
-    # FIXME apply CHECK_URL_TIMEOUT to terminate, maybe use https://github.com/noxdafox/pebble
-    # Dunno why it failed every ~10 minutes (need to re-check with asyncio.wait_for).
+    # FIXME maybe don't use wait_for here because it includes pool queue waiting
 
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
         urls_dict = await asyncio.wait_for(
             loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
-            timeout=CHECK_URL_TIMEOUT,
+            timeout=CHECK_URL_TIMEOUT * 4,
         )
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
@@ -425,8 +424,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     urls_values = " ".join(urls_dict.values())
-    # continue only if any good direct url status exist (or if we deal with trusted urls):
 
+    # Continue only if any good direct url status exist (or if we deal with trusted urls):
     if action == "dl":
         if not urls_dict:
             if apologize:
@@ -755,7 +754,7 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
             shutil.copyfile(cookies_file, cookies_download_file_path)
             ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
-    # FIXME apply CHECK_URL_TIMEOUT by using a process (as we did before)
+    # FIXME apply CHECK_URL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
     logger.debug("%s starts: %s", cmd_name, url)
     try:
         info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
@@ -976,7 +975,7 @@ def download_url_and_send(
                 shutil.copyfile(cookies_file, cookies_download_file_path)
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
-        # FIXME apply DL_TIMEOUT by using a process (as we did before)
+        # FIXME apply DL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
         logger.debug("%s starts: %s", cmd_name, url)
         try:
             # TODO check result
