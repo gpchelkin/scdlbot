@@ -1,6 +1,6 @@
 # sudo apt install tmpreaper
-# sudo mv /etc/cron.daily/tmpreaper /etc/cron.hourly/
-# sudo mv tmpreaper.conf.sample /etc/tmpreaper.conf
+# sudo mv /etc/cron.daily/tmpreaper /etc/cron.hourly/tmpreaper
+# sudo cp tmpreaper.conf.sample /etc/tmpreaper.conf
 
 SHOWWARNING=false
 TMPREAPER_TIME=1h

@@ -148,9 +148,8 @@ ENV/
 .idea
 
 #### scdlbot ####
-scdlbotdata
-scdlbotdata.dat
-scdlbotdata.dir
-scdlbotdata.bak
+*.pickle
 *.mp3
 *.mp4
+*.webm
+notes.txt

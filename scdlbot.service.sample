@@ -1,10 +1,9 @@
-
 # This is systemd service file. How to install service:
 # sudo cp scdlbot.service.sample /etc/systemd/system/scdlbot.service
 # sudo nano /etc/systemd/system/scdlbot.service
 # sudo systemctl daemon-reload
 # sudo systemctl enable scdlbot
-# sudo systemctl start scdlbot
+# sudo systemctl restart scdlbot
 # sudo systemctl status scdlbot
 
 [Unit]
@@ -15,15 +14,22 @@ After=network.target
 User=www-data
 Group=www-data
 Type=simple
-EnvironmentFile=-/etc/default/scdlbot
-Environment=PYTHONUNBUFFERED=1
-Environment=XDG_CONFIG_HOME=/scdlbothome
+EnvironmentFile=/etc/default/scdlbot
+#Environment=SYSTEMD_LOG_LEVEL=debug
 ExecStart=/usr/local/bin/scdlbot
-#StandardOutput=syslog
-#StandardError=syslog
+#ExecStart=/opt/pyenv/versions/3.11.0/bin/scdlbot
+WatchdogSec=300
+#NotifyAccess=all
 Restart=always
-MemoryHigh=60%
-MemoryMax=70%
+RestartSec=10
+CPUQuotaPeriodSec=1000ms
+CPUQuota=165%
+MemoryHigh=2000M
+MemoryMax=2400M
+TasksMax=infinity
+LimitAS=infinity
+LimitRSS=infinity
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

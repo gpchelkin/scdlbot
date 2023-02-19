@@ -82,8 +82,8 @@ scdlbot is standing on the shoulders of giants:
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
 -  `YouTube <https://www.youtube.com/>`__, `Yandex.Music <https://music.yandex.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://yt-dl.org/supportedsites.html>`__:
-   `youtube-dl <https://yt-dl.org>`__
+   `Mixcloud <https://www.mixcloud.com/>`__, and almost `everything from this list <https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md>`__:
+   `yt-dlp <https://github.com/yt-dlp/yt-dlp>`__
 
 Run your own scdlbot
 --------------------
@@ -163,9 +163,9 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling mode (when USE_WEBHOOK=0):
+    # For long polling mode (when WEBHOOK_ENABLE=0):
     heroku local -e .env worker
-    # For webhook mode (when USE_WEBHOOK=1):
+    # For webhook mode (when WEBHOOK_ENABLE=1):
     heroku local -e .env web
 
 Using Python only

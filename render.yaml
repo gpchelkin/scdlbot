@@ -2,38 +2,30 @@
 # https://www.npmjs.com/package/@renderinc/heroku-import
 # Schema documented at https://render.com/docs/yaml-spec
 services:
-  - type: web # valid values: https://render.com/docs/yaml-spec#type
-    name: scdlbot
-    env: docker # valid values: https://render.com/docs/yaml-spec#environment
-    dockerfilePath: Dockerfile.render
-    plan: free # optional; defaults to starter
+  - name: scdlbot
+    plan: free
     numInstances: 1
+    type: web
+    env: docker
+    dockerfilePath: Dockerfile.render
     envVars:
-      - key: ALERT_CHAT_IDS
+      - key: TG_BOT_OWNER_CHAT_ID
         value: 1306343
-      - key: APP_URL
-        value: https://scdlbot.herokuapp.com/
-      - key: DL_DIR
-        value: /tmp/scdlbot
-      - key: DL_TIMEOUT
-        value: 900
+      - key: WEBHOOK_ENABLE
+        value: 1
+      - key: WEBHOOK_APP_URL_ROOT
+        value: https://scdlbot.onrender.com
       - key: HOST
         value: 0.0.0.0
       - key: HOSTNAME
-        value: test-heroku
+        value: test-render
+      - key: WORKERS
+        value: 3
+      - key: DL_TIMEOUT
+        value: 900
       - key: MAX_CONVERT_FILE_SIZE
-        value: 300_000_000
+        value: 150_000_000
       - key: MAX_TG_FILE_SIZE
         value: 45_000_000
-      - key: NO_FLOOD_CHAT_IDS
-        value: -1001108859218,-1001106680201
-      - key: STORE_CHAT_ID
-        value: -172951900
-      - key: SYSLOG_ADDRESS
-        value: logs6.papertrailapp.com:54882
-      - key: SYSLOG_DEBUG
-        value: 1
-      - key: USE_WEBHOOK
-        value: 1
-      - key: WORKERS
-        value: 2
+      - key: LOGLEVEL
+        value: INFO

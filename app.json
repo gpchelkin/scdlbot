@@ -29,52 +29,18 @@
       "description": "Telegram Bot API Token",
       "required": true
     },
-    "DL_DIR": {
-      "description": "Parent directory for downloads directories",
-      "value": "/tmp/scdlbot",
+    "WEBHOOK_ENABLE": {
+      "description": "Use webhook for bot updates: 1, use polling (default): 0",
+      "value": "0",
       "required": false
     },
-    "DL_TIMEOUT": {
-      "description": "Download timeout in seconds, stop downloading if it takes longer than allowed",
-      "value": "300",
+    "WEBHOOK_APP_URL_ROOT": {
+      "description": "Your host URL like https://scdlbot.herokuapp.com, required for webhook mode",
       "required": false
     },
-    "NO_FLOOD_CHAT_IDS": {
-      "description": "Comma-separated chat IDs with no replying and caption hashtags",
-      "required": false
-    },
-    "ALERT_CHAT_IDS": {
-      "description": "Comma-separated chat IDs with no replying and caption hashtags",
-      "required": false
-    },
-    "BIN_PATH": {
-      "description": "Custom directory where scdl and bandcamp-dl binaries are available",
-      "required": false
-    },
-    "CHAT_STORAGE": {
-      "description": "Chat storage",
-      "value": "/tmp/scdlbotdata",
-      "required": false
-    },
-    "STORE_CHAT_ID": {
-      "description": "Chat ID for storing audios for inline mode",
-      "required": false
-    },
-    "WHITELIST_CHATS": {
-      "description": "A space separated list of chat_ids which should be considered whitelisted - the bot will only join those chats **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
-      "required": false
-    },
-    "BLACKLIST_CHATS": {
-      "description": "A space separated list of chat_ids which should be considered blacklisted - the bot will not join those chats. **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
-      "required": false
-    },
-    "COOKIES_FILE": {
-      "description": "HTTP or local path with cookies file for Yandex.Music",
-      "required": false
-    },
-    "MAX_CONVERT_FILE_SIZE": {
-      "description": "Don't try to split and send files over this number of bytes",
-      "value": "80_000_000",
+    "HOST": {
+      "description": "Hostname to show in Syslog messages",
+      "value": "0.0.0.0",
       "required": false
     },
     "HOSTNAME": {
@@ -82,32 +48,6 @@
       "value": "heroku",
       "required": false
     },
-    "SYSLOG_ADDRESS": {
-      "description": "Syslog server, for example: logsX.papertrailapp.com:55555",
-      "required": false
-    },
-    "SYSLOG_DEBUG": {
-      "description": "Set to 1 to enable verbose debug logging",
-      "value": "0",
-      "required": false
-    },
-    "USE_WEBHOOK": {
-      "description": "Use webhook for bot updates: 1, use polling (default): 0",
-      "value": "0",
-      "required": false
-    },
-    "APP_URL": {
-      "description": "Your host URL like https://scdlbot.herokuapp.com/, required for webhook mode",
-      "required": false
-    },
-    "WHITELIST_DOMS": {
-      "description": "A space separated list of domains which should be considered whitelisted - the bot will only process these domains. Example of domain: example.com if the domain has a subdomain this needs to be included: subdomain.example.com **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
-      "required": false
-    },
-    "BLACKLIST_DOMS": {
-      "description": "A space separated list of domains which should be considered blacklisted - the bot will not process these domains. Example of domain: example.com if the domain has a subdomain this needs to be included: subdomain.example.com **NOTE** that if both whitelist and blacklist will be used, only the blacklist will be taken into consideration.",
-      "required": false
-    }
   },
   "formation": {
     "web": {
