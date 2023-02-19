@@ -872,17 +872,13 @@ description = "Up-to-date simple useragent faker with real world database"
 category = "main"
 optional = false
 python-versions = "*"
-files = []
-develop = false
+files = [
+    {file = "fake-useragent-1.1.1.tar.gz", hash = "sha256:579c72b18ba792a5bd54ba48e63e464d21933e336472c974091a6757f31bfcdc"},
+    {file = "fake_useragent-1.1.1-py3-none-any.whl", hash = "sha256:9f9b3667d3741ba81e34ebf9a6aa32658ecf7835499257826dd72642af629d59"},
+]
 
 [package.dependencies]
 importlib-resources = {version = ">=5.0", markers = "python_version < \"3.10\""}
-
-[package.source]
-type = "git"
-url = "https://github.com/fake-useragent/fake-useragent.git"
-reference = "1.1.2"
-resolved_reference = "81951fd01e6de842eda1c75e3aa30caf3dc659ed"
 
 [[package]]
 name = "ffmpeg-python"
@@ -2128,20 +2124,6 @@ socks = ["httpx[socks]"]
 webhooks = ["tornado (>=6.2,<7.0)"]
 
 [[package]]
-name = "python-telegram-handler"
-version = "2.2.1"
-description = "A python logging handler that sends logs via Telegram Bot Api."
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "python-telegram-handler-2.2.1.tar.gz", hash = "sha256:f6e9ca60e15fa4e4595e323cc57362fe20cca3ca16e06158ad726caa48b3b16e"},
-]
-
-[package.dependencies]
-requests = "*"
-
-[[package]]
 name = "pytz"
 version = "2022.7.1"
 description = "World timezone definitions, modern and historical"
@@ -3078,8 +3060,10 @@ description = "A youtube-dl fork with additional features and patches"
 category = "main"
 optional = false
 python-versions = ">=3.7"
-files = []
-develop = false
+files = [
+    {file = "yt-dlp-2023.2.17.tar.gz", hash = "sha256:9af92de5effc193bdb51216d9ebf28874d96180d202fae752b0d9f2a63380f3a"},
+    {file = "yt_dlp-2023.2.17-py2.py3-none-any.whl", hash = "sha256:3b2df037c80922f0f83f63ee2f9253496b4a8668c0fe8d2a836ba9040f853b07"},
+]
 
 [package.dependencies]
 brotli = {version = "*", markers = "platform_python_implementation == \"CPython\""}
@@ -3088,12 +3072,6 @@ certifi = "*"
 mutagen = "*"
 pycryptodomex = "*"
 websockets = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/yt-dlp/yt-dlp.git"
-reference = "master"
-resolved_reference = "18d295c9e0f95adc179eef345b7af64d6372db78"
 
 [[package]]
 name = "zipp"
@@ -3114,4 +3092,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "0c124937a2cf4effc35e20242b5e8ddf5c589b7199b5d0c374280580ed7401ef"
+content-hash = "bbd552326505f16f9ef9ab4170bd40924ed03b3c0dd722b80c7147f88955047b"

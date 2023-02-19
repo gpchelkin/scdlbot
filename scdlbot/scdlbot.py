@@ -27,7 +27,6 @@ from fake_useragent import UserAgent
 # from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
-from prometheus_client import Summary
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
@@ -40,83 +39,150 @@ from telegram.request import HTTPXRequest
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
 try:
     import yt_dlp as ydl
-except:
+except ImportError:
     try:
         import youtube_dl as ydl
-    except:
+    except ImportError:
         import youtube_dlc as ydl
 
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
 
-# Config options:
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
 # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Local-Bot-API-Server
 # https://github.com/tdlib/telegram-bot-api#usage
-LOCAL_MODE = False
-if "127.0.0.1" in TG_BOT_API or "localhost" in TG_BOT_API:
-    LOCAL_MODE = True
-BOT_OWNER_CHAT_ID = int(os.getenv("BOT_OWNER_CHAT_ID", "0"))
-# TODO just use bot.username after init
-TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "scdlbot")
+TG_BOT_API_LOCAL_MODE = False
+if "TG_BOT_API_LOCAL_MODE" in os.environ:
+    TG_BOT_API_LOCAL_MODE = bool(int(os.getenv("TG_BOT_API_LOCAL_MODE", "0")))
+elif "127.0.0.1" in TG_BOT_API or "localhost" in TG_BOT_API:
+    TG_BOT_API_LOCAL_MODE = True
+HTTP_VERSION = "2"
+if TG_BOT_API_LOCAL_MODE:
+    HTTP_VERSION = "1.1"
+TG_BOT_OWNER_CHAT_ID = int(os.getenv("TG_BOT_OWNER_CHAT_ID", "0"))
 
-# TODO improve handling (unset) environment variables
-USE_WEBHOOK = bool(int(os.getenv("USE_WEBHOOK", "0")))
-WEBHOOK_HOST = os.getenv("HOST", "127.0.0.1")
-WEBHOOK_PORT = int(os.getenv("PORT", "5000"))
-URL_PATH = os.getenv("URL_PATH", TG_BOT_TOKEN.replace(":", ""))
-APP_URL = os.getenv("APP_URL", "")
-CERT_FILE = os.getenv("CERT_FILE", None)
-CERT_KEY_FILE = os.getenv("CERT_KEY_FILE", None)
-WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
-
-WORKERS = int(os.getenv("WORKERS", 2))
-NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 CHAT_STORAGE = os.path.expanduser(os.getenv("CHAT_STORAGE", "/tmp/scdlbot.pickle"))
 DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
-DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
-CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
-# Timeouts: https://www.python-httpx.org/advanced/
-COMMON_CONNECTION_TIMEOUT = int(os.getenv("COMMON_CONNECTION_TIMEOUT", 30))
-MAX_CONVERT_FILE_SIZE = int(os.getenv("MAX_CONVERT_FILE_SIZE", "80_000_000"))
-MAX_TG_FILE_SIZE = int(os.getenv("MAX_TG_FILE_SIZE", "45_000_000"))
-PROXIES = os.getenv("PROXIES", None)
-if PROXIES:
-    PROXIES = PROXIES.split(",")
-SOURCE_IPS = os.getenv("SOURCE_IPS", None)
-if SOURCE_IPS:
-    SOURCE_IPS = SOURCE_IPS.split(",")
-# https://yandex.com/support/music-app-ios/search-and-listen/listening-abroad.html
-COOKIES_FILE = os.getenv("COOKIES_FILE", None)
-WHITELIST_DOMAINS = set(x for x in os.getenv("WHITELIST_DOMAINS", "").split())
-BLACKLIST_DOMAINS = set(x for x in os.getenv("BLACKLIST_DOMAINS", "").split())
-BLACKLIST_TELEGRAM_DOMAINS = ["t.me", "telegram.org", "telegram.dog", "telegra.ph", "te.legra.ph", "tdesktop.com", "telesco.pe", "graph.org", "contest.dev"]
-try:
-    WHITELIST_CHATS = set(int(x) for x in os.getenv("WHITELIST_CHATS", "").split())
-except ValueError:
-    raise ValueError("Your whitelisted chats does not contain valid integers.")
-try:
-    BLACKLIST_CHATS = set(int(x) for x in os.getenv("BLACKLIST_CHATS", "").split())
-except ValueError:
-    raise ValueError("Your blacklisted chats does not contain valid integers.")
-
-
-# Logging and Prometheus' metrics:
-SYSLOG_ADDRESS = os.getenv("SYSLOG_ADDRESS", "")
-SYSLOG_HOSTNAME = os.getenv("HOSTNAME", "test-host")
-SYSLOG_DEBUG = bool(int(os.getenv("SYSLOG_DEBUG", "0")))
-METRICS_HOST = os.getenv("METRICS_HOST", "127.0.0.1")
-METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
-REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
-
-# Binaries:
 BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
+WORKERS = int(os.getenv("WORKERS", 2))
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
+DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
+CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
+# Timeouts: https://www.python-httpx.org/advanced/
+COMMON_CONNECTION_TIMEOUT = int(os.getenv("COMMON_CONNECTION_TIMEOUT", 10))
+MAX_TG_FILE_SIZE = int(os.getenv("MAX_TG_FILE_SIZE", "45_000_000"))
+MAX_CONVERT_FILE_SIZE = int(os.getenv("MAX_CONVERT_FILE_SIZE", "80_000_000"))
+NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
+COOKIES_FILE = os.getenv("COOKIES_FILE", None)
+PROXIES = []
+if "PROXIES" in os.environ:
+    PROXIES = [None if x == "direct" else x for x in os.getenv("PROXIES").split(",")]
+SOURCE_IPS = []
+if "SOURCE_IPS" in os.environ:
+    SOURCE_IPS = os.getenv("SOURCE_IPS").split(",")
+BLACKLIST_TELEGRAM_DOMAINS = [
+    "telegram.org",
+    "telegram.me",
+    "t.me",
+    "telegram.dog",
+    "telegra.ph",
+    "te.legra.ph",
+    "graph.org",
+    "tdesktop.com",
+    "desktop.telegram.org",
+    "telesco.pe",
+    "contest.com",
+    "contest.dev",
+]
+WHITELIST_DOMAINS = {}
+if "WHITELIST_DOMAINS" in os.environ:
+    WHITELIST_DOMAINS = set(x for x in os.getenv("WHITELIST_DOMAINS").split(","))
+BLACKLIST_DOMAINS = {}
+if "BLACKLIST_DOMAINS" in os.environ:
+    BLACKLIST_DOMAINS = set(x for x in os.getenv("BLACKLIST_DOMAINS").split(","))
+WHITELIST_CHATS = []
+if "WHITELIST_CHATS" in os.environ:
+    try:
+        WHITELIST_CHATS = set(int(x) for x in os.getenv("WHITELIST_CHATS").split(","))
+    except ValueError:
+        raise ValueError("Your whitelisted chats list does not contain valid integers.")
+BLACKLIST_CHATS = []
+if "BLACKLIST_CHATS" in os.environ:
+    try:
+        BLACKLIST_CHATS = set(int(x) for x in os.getenv("BLACKLIST_CHATS").split(","))
+    except ValueError:
+        raise ValueError("Your blacklisted chats list does not contain valid integers.")
+
+# Webhook:
+WEBHOOK_ENABLE = bool(int(os.getenv("WEBHOOK_ENABLE", "0")))
+WEBHOOK_HOST = os.getenv("HOST", "127.0.0.1")
+WEBHOOK_PORT = int(os.getenv("PORT", "5000"))
+WEBHOOK_APP_URL_ROOT = os.getenv("WEBHOOK_APP_URL_ROOT", "")
+WEBHOOK_APP_URL_PATH = os.getenv("WEBHOOK_APP_URL_PATH", TG_BOT_TOKEN.replace(":", ""))
+WEBHOOK_CERT_FILE = os.getenv("WEBHOOK_CERT_FILE", None)
+WEBHOOK_KEY_FILE = os.getenv("WEBHOOK_KEY_FILE", None)
+WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
+
+# Prometheus metrics:
+METRICS_HOST = os.getenv("METRICS_HOST", "127.0.0.1")
+METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
+REGISTRY = prometheus_client.CollectorRegistry()
+EXECUTOR_TASKS_REMAINING = prometheus_client.Gauge(
+    "executor_tasks_remaining",
+    "Value: executor_tasks_remaining",
+    registry=REGISTRY,
+)
+BOT_REQUESTS = prometheus_client.Counter(
+    "bot_requests_total",
+    "Value: bot_requests_total",
+    labelnames=["type", "chat_type", "mode"],
+    registry=REGISTRY,
+)
+
+# Logging:
+logging_handlers = []
+LOGLEVEL = os.getenv("LOGLEVEL", "INFO").upper()
+HOSTNAME = os.getenv("HOSTNAME", "scdlbot-host")
+
+console_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(console_formatter)
+console_handler.setLevel(LOGLEVEL)
+logging_handlers.append(console_handler)
+
+SYSLOG_ADDRESS = os.getenv("SYSLOG_ADDRESS", None)
+if SYSLOG_ADDRESS:
+    syslog_formatter = logging.Formatter("%(asctime)s " + HOSTNAME + " %(name)s: %(message)s", datefmt="%b %d %H:%M:%S")
+    syslog_host, syslog_udp_port = SYSLOG_ADDRESS.split(":")
+    syslog_handler = SysLogHandler(address=(syslog_host, int(syslog_udp_port)))
+    syslog_handler.setFormatter(syslog_formatter)
+    syslog_handler.setLevel(LOGLEVEL)
+    logging_handlers.append(syslog_handler)
+
+# telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(TG_BOT_OWNER_CHAT_ID))
+# telegram_handler.setLevel(logging.WARNING)
+# logging_handlers.append(telegram_handler)
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=LOGLEVEL,
+    handlers=logging_handlers,
+)
+logger = logging.getLogger(__name__)
+
+# Systemd watchdog monitoring:
+SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
+
+# TODO randomize User-Agent
+# UA = UserAgent()
+# UA.update()
 
 
-# Text constants:
+# Text constants from resources:
 def get_response_text(file_name):
     # https://stackoverflow.com/a/20885799/2490759
     path = "/".join(("texts", file_name))
@@ -133,10 +199,10 @@ REGION_RESTRICTION_TEXT = get_response_text("region_restriction.txt")
 DIRECT_RESTRICTION_TEXT = get_response_text("direct_restriction.txt")
 LIVE_RESTRICTION_TEXT = get_response_text("live_restriction.txt")
 OLD_MSG_TEXT = get_response_text("old_msg.txt")
-RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
-RANT_TEXT_PUBLIC = f"[Start me in PM to read help and learn how to use me](t.me/{TG_BOT_USERNAME}?start=1)"
+# RANT_TEXT_PRIVATE = "Read /help to learn how to use me"
+# RANT_TEXT_PUBLIC = f"[Start me in PM to read help and learn how to use me](t.me/{TG_BOT_USERNAME}?start=1)"
 
-# Site domains:
+# Known and supported site domains:
 # support soundcloud.com and soundcloud.app.goo.gl links:
 DOMAIN_SC = "soundcloud"
 DOMAIN_SC_API = "api.soundcloud"
@@ -149,56 +215,8 @@ DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
 DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW]
 
-# Configure logging:
-logging_handlers = []
 
-common_logging_level = logging.DEBUG if SYSLOG_DEBUG else logging.WARNING
-
-console_formatter = logging.Formatter("[%(name)s] %(levelname)s: %(message)s")
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(console_formatter)
-console_handler.setLevel(common_logging_level)
-logging_handlers.append(console_handler)
-
-# telegram_handler = TelegramHandler(token=TG_BOT_TOKEN, chat_id=str(BOT_OWNER_CHAT_ID))
-# telegram_handler.setLevel(logging.WARNING)
-# logging_handlers.append(telegram_handler)
-
-if SYSLOG_ADDRESS:
-    syslog_formatter = logging.Formatter("%(asctime)s " + SYSLOG_HOSTNAME + " %(name)s: %(message)s", datefmt="%b %d %H:%M:%S")
-    syslog_host, syslog_udp_port = SYSLOG_ADDRESS.split(":")
-    syslog_handler = SysLogHandler(address=(syslog_host, int(syslog_udp_port)))
-    syslog_handler.setFormatter(syslog_formatter)
-    syslog_handler.setLevel(common_logging_level)
-    logging_handlers.append(syslog_handler)
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=common_logging_level,
-    handlers=logging_handlers,
-)
-logger = logging.getLogger(__name__)
-
-EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
-UA = UserAgent()
-UA.update()
-SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
-REGISTRY = prometheus_client.CollectorRegistry()
-EXECUTOR_TASKS_REMAINING = prometheus_client.Gauge(
-    "executor_tasks_remaining",
-    "Value: executor_tasks_remaining",
-    registry=REGISTRY,
-)
-BOT_REQUESTS = prometheus_client.Counter(
-    "bot_requests_total",
-    "Value: bot_requests_total",
-    labelnames=["type", "chat_type", "mode"],
-    registry=REGISTRY,
-)
-
-
-# TODO get rid of exceptions:
+# TODO get rid of these dumb exceptions:
 class FileNotSupportedError(Exception):
     def __init__(self, file_format):
         self.file_format = file_format
@@ -224,6 +242,10 @@ class FileSentPartiallyError(Exception):
         self.sent_audio_ids = sent_audio_ids
 
 
+def get_random_wait_text():
+    return random.choice(WAIT_BIT_TEXT)
+
+
 def get_link_text(urls):
     link_text = ""
     for i, url in enumerate(urls):
@@ -241,14 +263,6 @@ def get_link_text(urls):
                 link_text += "• {} #{} [Direct Link]({})\n".format(content_type, str(idx + 1), direct_url)
     link_text += "\n*Note:* Final download URLs are only guaranteed to work on the same machine/IP where extracted"
     return link_text
-
-
-def get_wait_text():
-    return random.choice(WAIT_BIT_TEXT)
-
-
-def get_italic(text):
-    return "_{}_".format(text)
 
 
 def get_settings_inline_keyboard(chat_data):
@@ -283,10 +297,7 @@ def chat_allowed(chat_id):
 
 
 def url_valid_and_allowed(url, allow_unknown_sites=False):
-    try:
-        host = url.host
-    except AttributeError:
-        return False
+    host = url.host
     if host in BLACKLIST_TELEGRAM_DOMAINS:
         return False
     if WHITELIST_DOMAINS:
@@ -315,7 +326,7 @@ async def start_help_commands_callback(update: Update, context: ContextTypes.DEF
     # Determine the original command:
     entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
     for entity_value in entities.values():
-        command_name = entity_value.replace("/", "").replace(f"@{TG_BOT_USERNAME}", "")
+        command_name = entity_value.replace("/", "").replace(f"@{context.bot.username}", "")
         break
     logger.debug(command_name)
     BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
@@ -363,7 +374,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         # Try to determine action from command:
         action = None
         for entity_value in command_entities.values():
-            action = entity_value.replace("/", "").replace("@{}".format(TG_BOT_USERNAME), "")
+            action = entity_value.replace("/", "").replace("@{}".format(context.bot.username), "")
             break
     # If no command then it is just a message and use message action from settings:
     if not action:
@@ -385,15 +396,15 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         apologize = True
     reply_to_message_id = message.message_id
     source_ip = None
-    proxy = None
     if SOURCE_IPS:
         source_ip = random.choice(SOURCE_IPS)
+    proxy = None
     if PROXIES:
         proxy = random.choice(PROXIES)
     wait_message_id = None
     if action in ["dl", "link"]:
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=get_italic(get_wait_text()))
+        wait_message = await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", text=f"_{get_random_wait_text()}_")
         wait_message_id = wait_message.message_id
 
     urls_dict = {}
@@ -512,7 +523,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if chat_type != Chat.PRIVATE:
             chat_member = await chat.get_member(user_id)
             # logger.debug(chat_member.status)
-            if chat_member.status not in [ChatMember.OWNER, ChatMember.ADMINISTRATOR] and user_id != BOT_OWNER_CHAT_ID:
+            if chat_member.status not in [ChatMember.OWNER, ChatMember.ADMINISTRATOR] and user_id != TG_BOT_OWNER_CHAT_ID:
                 logger.debug("settings_fail")
                 await update.callback_query.answer(text="You're not chat admin.")
                 return
@@ -550,8 +561,8 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
         logger.debug(command_name)
         BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="ask").inc()
         if button_action == "dl":
-            await update.callback_query.answer(text=get_wait_text())
-            wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=get_italic(get_wait_text()))
+            await update.callback_query.answer(text=get_random_wait_text())
+            wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=f"_{get_random_wait_text()}_")
             for url in urls_dict:
                 kwargs = {
                     "bot_options": {
@@ -640,24 +651,24 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         # TODO try except
         url = URL(url_str)
         if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
-            logger.debug("Entity URL parsed: %s", url)
+            logger.info("Entity URL parsed: %s", url)
             urls.append(url)
         else:
-            logger.debug("Entry URL is not valid or blacklisted: %s", url_str)
+            logger.info("Entry URL is not valid or blacklisted: %s", url_str)
     text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
     text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
     text_link_entities.update(text_link_caption_entities)
     for entity in text_link_entities:
         url = URL(entity.url)
         if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
-            logger.debug("Entity Text Link parsed: %s", url)
+            logger.info("Entity Text Link parsed: %s", url)
             urls.append(url)
         else:
-            logger.debug("Entry Text Link is not valid or blacklisted: %s", url)
+            logger.info("Entry Text Link is not valid or blacklisted: %s", url)
     # If message just some text passed (not isinstance(message, Message)):
     # all_links = find_all_links(message, default_scheme="http")
     # urls = [link for link in all_links if url_valid_and_allowed(link)]
-    logger.debug(f"prepare_urls: urls list: {urls}")
+    logger.info(f"prepare_urls: urls list: {urls}")
 
     urls_dict = {}
     for url_item in urls:
@@ -665,14 +676,16 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         # unshorten soundcloud.app.goo.gl and unknown sites links
         # example: https://soundcloud.app.goo.gl/mBMvG
         if unknown_site or DOMAIN_SC in url_item.host:
+            proxy_arg = None
+            if proxy:
+                proxy_arg = {"http": proxy, "https": proxy}
             try:
                 url = URL(
                     requests.head(
                         url_item.to_text(full_quote=True),
                         allow_redirects=True,
                         timeout=2,
-                        proxies={"http": proxy, "https": proxy},
-                        # TODO randomize User-Agent
+                        proxies=proxy_arg,
                         # headers={"User-Agent": UA.random},
                         headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
                     ).url
@@ -830,8 +843,8 @@ def download_url_and_send(
         base_url=bot_options["base_url"],
         base_file_url=bot_options["base_file_url"],
         local_mode=bot_options["local_mode"],
-        request=HTTPXRequest(http_version="1.1"),
-        get_updates_request=HTTPXRequest(http_version="1.1"),
+        request=HTTPXRequest(http_version=HTTP_VERSION),
+        get_updates_request=HTTPXRequest(http_version=HTTP_VERSION),
     )
     run_async(bot.initialize())
     logger.debug(bot.token)
@@ -1136,7 +1149,7 @@ def download_url_and_send(
                     else:
                         source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
                     # TODO fix youtube id in []
-                    caption = "@{} _got it from_ [{}]({}){}".format(TG_BOT_USERNAME.replace("_", "\_"), source, url, addition.replace("_", "\_"))
+                    caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", "\_"), source, url, addition.replace("_", "\_"))
                     # logger.debug(caption)
                     reply_to_message_id_send = reply_to_message_id
                 sent_audio_ids = []
@@ -1174,7 +1187,7 @@ def download_url_and_send(
                                     title = ", ".join(mp3["title"])
                                 except:
                                     pass
-                                if LOCAL_MODE:
+                                if TG_BOT_API_LOCAL_MODE:
                                     audio = path.absolute().as_uri()
                                     logger.debug(audio)
                                 else:
@@ -1295,10 +1308,10 @@ def main():
     application = (
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
-        .local_mode(LOCAL_MODE)
+        .local_mode(TG_BOT_API_LOCAL_MODE)
         # https://github.com/python-telegram-bot/python-telegram-bot/issues/3556
-        .http_version("1.1")
-        .get_updates_http_version("1.1")
+        .http_version(HTTP_VERSION)
+        .get_updates_http_version(HTTP_VERSION)
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
@@ -1346,17 +1359,17 @@ def main():
     job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
     job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=5)
 
-    if USE_WEBHOOK:
+    if WEBHOOK_ENABLE:
         application.run_webhook(
             drop_pending_updates=True,
             listen=WEBHOOK_HOST,
             port=WEBHOOK_PORT,
-            url_path=URL_PATH,
-            cert=CERT_FILE,
-            key=CERT_KEY_FILE,
-            webhook_url=urljoin(APP_URL, URL_PATH),
+            url_path=WEBHOOK_APP_URL_PATH,
+            webhook_url=urljoin(WEBHOOK_APP_URL_ROOT, WEBHOOK_APP_URL_PATH),
             secret_token=WEBHOOK_SECRET_TOKEN,
             max_connections=1024,
+            cert=WEBHOOK_CERT_FILE,
+            key=WEBHOOK_KEY_FILE,
         )
     else:
         # TODO await it somehow

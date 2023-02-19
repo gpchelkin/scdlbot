@@ -163,9 +163,9 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling mode (when USE_WEBHOOK=0):
+    # For long polling mode (when WEBHOOK_ENABLE=0):
     heroku local -e .env worker
-    # For webhook mode (when USE_WEBHOOK=1):
+    # For webhook mode (when WEBHOOK_ENABLE=1):
     heroku local -e .env web
 
 Using Python only
