@@ -32,10 +32,12 @@ from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboard
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
+from telegram.request import HTTPXRequest
 
 # from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
+# https://github.com/yt-dlp/yt-dlp/wiki/Forks
 try:
     import yt_dlp as ydl
 except:
@@ -414,7 +416,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     try:
         urls_dict = await asyncio.wait_for(
             loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
-            timeout=CHECK_URL_TIMEOUT * 4,
+            timeout=CHECK_URL_TIMEOUT * 10,
         )
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
@@ -828,6 +830,8 @@ def download_url_and_send(
         base_url=bot_options["base_url"],
         base_file_url=bot_options["base_file_url"],
         local_mode=bot_options["local_mode"],
+        request=HTTPXRequest(http_version="1.1"),
+        get_updates_request=HTTPXRequest(http_version="1.1"),
     )
     run_async(bot.initialize())
     logger.debug(bot.token)
@@ -1292,15 +1296,9 @@ def main():
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
         .local_mode(LOCAL_MODE)
-        # https://t.me/pythontelegrambotgroup/657921
         # https://github.com/python-telegram-bot/python-telegram-bot/issues/3556
-        # v20.0: http1 + webhook/polling + local mode = Works
-        # v20.1: http1/http2 + polling + official API = Works
-        # v20.1: http1/http2 + webhook + official API = I don't know, but should work TODO check
-        # v20.1: http1 + webhook/polling + local mode = Doesn't work TODO logs/details
-        # v20.1: http2 + webhook/polling + local mode = Doesn't work as stated in issue
-        # .http_version("1.1")
-        # .get_updates_http_version("1.1")
+        .http_version("1.1")
+        .get_updates_http_version("1.1")
         .base_url(f"{TG_BOT_API}/bot")
         .base_file_url(f"{TG_BOT_API}/file/bot")
         .persistence(persistence)
@@ -1346,7 +1344,7 @@ def main():
 
     job_queue = application.job_queue
     job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
-    job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=10)
+    job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=5)
 
     if USE_WEBHOOK:
         application.run_webhook(
