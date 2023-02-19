@@ -47,7 +47,7 @@
       "description": "Hostname to show in Syslog messages",
       "value": "heroku",
       "required": false
-    },
+    }
   },
   "formation": {
     "web": {
