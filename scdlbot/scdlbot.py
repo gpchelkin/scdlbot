@@ -13,6 +13,7 @@ import threading
 import time
 import traceback
 from logging.handlers import SysLogHandler
+from multiprocessing import get_context
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -68,7 +69,12 @@ BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 WORKERS = int(os.getenv("WORKERS", 2))
-EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS)
+# TODO try to change to spawn or forkserver to save RAM
+# https://stackoverflow.com/a/66113051
+# https://superfastpython.com/processpoolexecutor-multiprocessing-context/
+# https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+# https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context('fork'))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/

@@ -174,12 +174,12 @@ Using Python only
 ::
 
     export $(grep -v '^#' .env | xargs)
-    python3 -m scdlbot
+    python3 -m scdlbot.scdlbot
     # or in one line:
-    env $(grep -v '^#' .env | xargs) python3 -m scdlbot
+    env $(grep -v '^#' .env | xargs) python3 -m scdlbot.scdlbot
 
     # If you've installed package from PyPI into the system,
-    # you can also replace 'python3 -m scdlbot' with only 'scdlbot'
+    # you can also replace 'python3 -m scdlbot.scdlbot' with only 'scdlbot'
 
 Deploying to `Heroku <https://heroku.com/>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,28 +203,30 @@ CLI <https://cli.heroku.com/>`__, not as much of a fun. Assuming you are in
 
 ::
 
+    # Log into Heroku:
     heroku login
     # Create app with Python 3 buildpack and set it for upcoming builds:
-    heroku create --buildpack heroku/python
-    heroku buildpacks:set heroku/python
+    heroku create --buildpack heroku/python myscdlbot
+    #heroku buildpacks:set heroku/python --app=myscdlbot
     # Add FFmpeg buildpack needed for youtube-dl & scdl:
-    heroku buildpacks:add --index 1 https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git --app scdlbot
-    # Deploy app to Heroku:
-    git push heroku master
-    # Set config vars automatically from your local .env file
+    heroku buildpacks:add --index 1 https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git --app=myscdlbot
+    # Set config vars automatically from your local .env file:
     heroku plugins:install heroku-config
-    heroku config:push
-    # Or set them manually:
-    heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" STORE_CHAT_ID="<STORE_CHAT_ID>" ...
+    heroku config:push --file=.env --app=myscdlbot
+    # Or set them manually like this:
+    heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" TG_BOT_OWNER_CHAT_ID="<TG_BOT_OWNER_CHAT_ID>" ...
+    # Deploy app to Heroku:
+    #heroku git:remote --app=myscdlbot  
+    git push heroku master
 
-If you use webhook, start web dyno and stop worker dyno:
+Then, if you want to use webhook, start web dyno and stop worker dyno:
 
 ::
 
     heroku ps:scale web=1 worker=0
     heroku ps:stop worker
 
-If you use polling, start worker dyno and stop web dyno:
+If you want to use polling, start worker dyno and stop web dyno:
 
 ::
 

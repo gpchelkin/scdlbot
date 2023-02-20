@@ -47,7 +47,7 @@ python-telegram-bot = { version = "20.1", extras = ["webhooks", "job-queue"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
 requests = { version = "^2.28.2", extras = ["socks"] }
-boltons = "^21.0.0"
+boltons = "^23.0.0"
 mutagen = "^1.46.0"
 plumbum = "^1.8.1"
 ffmpeg-python = "0.2.0"
