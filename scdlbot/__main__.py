@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import asyncio
 import concurrent.futures
 import datetime
@@ -1295,7 +1297,7 @@ async def callback_monitor(context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
-    prometheus_client.start_http_server(METRICS_PORT, addr=METRICS_HOST, registry=REGISTRY)
+    prometheus_client.start_http_server(addr=METRICS_HOST, port=METRICS_PORT, registry=REGISTRY)
 
     # Maybe we can use token again if we will buy SoundCloud Go+
     # https://github.com/flyingrub/scdl/issues/429

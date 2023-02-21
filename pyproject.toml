@@ -38,7 +38,7 @@ include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README
 #"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
 
 [tool.poetry.scripts]
-scdlbot = "scdlbot.scdlbot:main"
+scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -61,14 +61,14 @@ fake-useragent = "^1.1.1"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-yt-dlp = "2023.2.17"
+#yt-dlp = "2023.2.17"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 scdl = "2.7.3"
 bandcamp-downloader = "0.0.13"
 
 ### For making it work better using latest git revision:
-#yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 ##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
 ##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }

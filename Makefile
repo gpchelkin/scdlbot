@@ -23,6 +23,8 @@ update:
 	poetry self lock
 	poetry self install --sync
 	poetry self update
+	poetry install --with main,dev,docs --sync
+	poetry run pip install --upgrade pip setuptools wheel
 	poetry update --with main,dev,docs
 	poetry export --only main --without-hashes -f requirements.txt -o requirements.txt
 	poetry export --only docs --without-hashes -f requirements.txt -o requirements-docs.txt
@@ -33,10 +35,10 @@ test: lint package
 
 .PHONY: run_dev
 run_dev:
-	ps -ef | grep '[s]cdlbot/scdlbot.py' | grep -v bash | awk '{print $$2}' | xargs --no-run-if-empty kill -15
+	ps -ef | grep '[s]cdlbot' | grep 'python' | grep -v 'bash' | awk '{print $$2}' | xargs --no-run-if-empty kill -15
 	set -o allexport; \
 	source .env-dev; \
-	poetry run python scdlbot/scdlbot.py
+	poetry run python scdlbot/__main__.py
 
 .DEFAULT:
 	@cd docs && $(MAKE) $@

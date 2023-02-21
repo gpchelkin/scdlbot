@@ -105,25 +105,24 @@ Those should be available in your ``PATH``:
    and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
 -  `Heroku CLI <https://cli.heroku.com>`__ is recommended if you want to deploy to Heroku
 
-Install / Update stable from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
+Install / Update stable build from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
-    pip3 install scdlbot --upgrade
+    pip install --upgrade scdlbot
 
-...or get unstable from `Git source repository <https://github.com/gpchelkin/scdlbot>`__
+...or get latest unstable build from `Git source repository <https://github.com/gpchelkin/scdlbot>`__
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
     git clone https://github.com/gpchelkin/scdlbot.git
     cd scdlbot
-    pip3 install --requirement requirements.txt
+    pip install --editable "./"
 
-    # Update:
-    git pull
-    pip3 install --requirement requirements.txt
+    # or just install directly from Git with pip:
+    pip install "scdlbot @ git+https://github.com/gpchelkin/scdlbot.git@master"
 
 
 Configure Bot
@@ -134,12 +133,10 @@ config environment variables in it:
 
 ::
 
-    # If you've installed from PyPI - download sample config somewhere:
-    curl -o .env https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
+    # Skip if you've got Git source:
+    curl -o .env.sample https://raw.githubusercontent.com/gpchelkin/scdlbot/master/.env.sample
 
-    # If you've got Git source - just copy sample config:
     cp .env.sample .env
-
     # Use your favourite editor. Sample config is self-documented:
     nano .env
 
@@ -150,43 +147,43 @@ Send the commands from respective filenames in ``telegram_settings`` dir to `@Bo
 Disable privacy mode if you want bot to read and check every message in group for links.
 Otherwise, it would work only for commands.
 
-Running Locally or at Dedicated Server
+Running Locally or on Dedicated Server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using `Heroku Local <https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool>`__ (preferred)
+Using `Heroku Local <https://devcenter.heroku.com/articles/heroku-local#run-your-app-locally-using-the-heroku-local-command-line-tool>`__
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
 
 ::
 
-    # If you've installed from PyPI - download Procfile first (otherwise already present in Git repository):
+    # Skip if you've got Git source:
     curl -O https://raw.githubusercontent.com/gpchelkin/scdlbot/master/Procfile
 
-    # For long polling mode (when WEBHOOK_ENABLE=0):
+    # For long polling mode (if WEBHOOK_ENABLE="0"):
     heroku local -e .env worker
-    # For webhook mode (when WEBHOOK_ENABLE=1):
+    # For webhook mode (if WEBHOOK_ENABLE="1"):
     heroku local -e .env web
 
-Using Python only
+Using only Bash & Python
 """""""""""""""""
 
 ::
 
     export $(grep -v '^#' .env | xargs)
-    python3 -m scdlbot.scdlbot
+    python -m scdlbot
     # or in one line:
-    env $(grep -v '^#' .env | xargs) python3 -m scdlbot.scdlbot
+    env $(grep -v '^#' .env | xargs) python -m scdlbot
 
-    # If you've installed package from PyPI into the system,
-    # you can also replace 'python3 -m scdlbot.scdlbot' with only 'scdlbot'
+    # If you've installed package into your system Python,
+    # you can also replace 'python -m scdlbot' with just 'scdlbot'
 
-Deploying to `Heroku <https://heroku.com/>`__
+Deploying to `Heroku <https://www.heroku.com>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |Deploy|
 
-Register on Heroku, press the button above and
+Register on Heroku, press the Deploy button above and
 configure variables for deploying.
 When app is deployed you **must** set only one dyno working on
 "Resources" tab in your app settings depending on `which way of getting
@@ -198,8 +195,8 @@ Manually
 """"""""
 
 You can do the same as the button above but using `Heroku
-CLI <https://cli.heroku.com/>`__, not as much of a fun. Assuming you are in
-``scdlbot`` repository directory:
+CLI <https://cli.heroku.com/>`__. Assuming you are in
+``scdlbot`` Git repository directory:
 
 ::
 
@@ -213,10 +210,10 @@ CLI <https://cli.heroku.com/>`__, not as much of a fun. Assuming you are in
     # Set config vars automatically from your local .env file:
     heroku plugins:install heroku-config
     heroku config:push --file=.env --app=myscdlbot
-    # Or set them manually like this:
+    # or set them manually like this:
     heroku config:set TG_BOT_TOKEN="<TG_BOT_TOKEN>" TG_BOT_OWNER_CHAT_ID="<TG_BOT_OWNER_CHAT_ID>" ...
     # Deploy app to Heroku:
-    #heroku git:remote --app=myscdlbot  
+    #heroku git:remote --app=myscdlbot
     git push heroku master
 
 Then, if you want to use webhook, start web dyno and stop worker dyno:
