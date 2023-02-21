@@ -106,14 +106,14 @@ Those should be available in your ``PATH``:
 -  `Heroku CLI <https://cli.heroku.com>`__ is recommended if you want to deploy to Heroku
 
 Install / Update stable build from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
     pip install --upgrade scdlbot
 
 ...or get latest unstable build from `Git source repository <https://github.com/gpchelkin/scdlbot>`__
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 ::
 
@@ -166,7 +166,7 @@ You will need `Heroku CLI <https://cli.heroku.com/>`__ installed.
     heroku local -e .env web
 
 Using only Bash & Python
-"""""""""""""""""
+""""""""""""""""""""""""
 
 ::
 
@@ -179,7 +179,7 @@ Using only Bash & Python
     # you can also replace 'python -m scdlbot' with just 'scdlbot'
 
 Deploying to `Heroku <https://www.heroku.com>`__
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |Deploy|
 
