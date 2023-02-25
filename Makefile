@@ -35,7 +35,7 @@ test: lint package
 
 .PHONY: run_dev
 run_dev:
-	ps -ef | grep '[s]cdlbot' | grep 'python' | grep -v 'bash' | awk '{print $$2}' | xargs --no-run-if-empty kill -15
+	ps -ef | grep '[s]cdlbot' | grep 'python' | grep -v 'bash' | awk '{print $$2}' | xargs --no-run-if-empty kill -9
 	set -o allexport; \
 	source .env-dev; \
 	poetry run python scdlbot/__main__.py

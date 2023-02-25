@@ -11,6 +11,10 @@ Description=scdlbot
 After=network.target
 
 [Service]
+# https://manpages.ubuntu.com/manpages/bionic/man5/systemd.service.5.html
+# https://www.freedesktop.org/software/systemd/man/systemd.service.html
+# https://manpages.ubuntu.com/manpages/bionic/man5/systemd.resource-control.5.html
+# https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html
 User=www-data
 Group=www-data
 Type=simple

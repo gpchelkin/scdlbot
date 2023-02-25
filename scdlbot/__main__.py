@@ -3,8 +3,6 @@
 import asyncio
 import concurrent.futures
 import datetime
-
-# import gc
 import logging
 import os
 import pathlib
@@ -25,9 +23,6 @@ import pkg_resources
 import prometheus_client
 import requests
 import sdnotify
-from fake_useragent import UserAgent
-
-# from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
@@ -36,6 +31,9 @@ from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, Te
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
 from telegram.request import HTTPXRequest
 
+# import gc
+# from boltons.urlutils import find_all_links
+# from fake_useragent import UserAgent
 # from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
@@ -76,7 +74,7 @@ WORKERS = int(os.getenv("WORKERS", 2))
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context('fork'))
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context("fork"))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
@@ -433,6 +431,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
 
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
+        # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+        # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
         urls_dict = await asyncio.wait_for(
             loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
             timeout=CHECK_URL_TIMEOUT * 10,
@@ -822,21 +822,15 @@ def download_url_and_send(
     logger.debug("Entering: download_url_and_send")
     # loop_main = asyncio.get_event_loop()
 
-    # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
-    # https://docs.python-telegram-bot.org/en/v20.1/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
-    # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
-    # We use concurrent_updates with limit instead of unlimited create_task
-    # send_audio has connection troubles when running async.
-    # Works bad on my computer, but good on server with local API.
-    # But still we run it in another process.
-
-    # We can only submit sync function to process executor (because it forks and there is no point).
-    # We must not pass here, because they get serialized on fork and context/bot cannot be serialized pickled.
-    # https://docs.python-telegram-bot.org/en/v20.1/telegram.bot.html
-    # But we want to run async bot functions from framework here.
-    # We can't use loop_main.run_in_executor(None) because it doesn't give the result
-    # We can't use loop_main.run_until_complete because it is already running in our forked process
-    # So we run additional loop in additional thread and use it
+    # We use ProcessPoolExecutor that runs "fork".
+    # It has really useful fire-and-forget ProcessPoolExecutor.submit() that only accepts sync functions.
+    # Also, there is no point in using asyncio event loop/async functions inside it.
+    # Hence, download_url_and_send() is sync function, not async.
+    # But we still want to use async Bot functions from ptb framework here.
+    # We can't use loop_main.run_in_executor(None) because it doesn't return the result.
+    # We can't use loop_main.run_until_complete() because loop is already running in our forked process.
+    # We can't use asyncio.run_coroutine_threadsafe(coro, loop_main) because it doesn't work (interferes with framework?).
+    # So we run additional loop in additional thread and just use it:
     loop_additional = asyncio.new_event_loop()
     thread_additional = threading.Thread(target=loop_additional.run_forever, name="Async Runner", daemon=True)
 
@@ -846,6 +840,9 @@ def download_url_and_send(
         future = asyncio.run_coroutine_threadsafe(coro, loop_additional)
         return future.result()
 
+    # We must not pass context/bot here, because they need to get serialized/pickled on "fork" (and they cannot be).
+    # https://docs.python-telegram-bot.org/en/v20.1/telegram.bot.html
+    # So we create and use new Bot object:
     bot = Bot(
         token=bot_options["token"],
         base_url=bot_options["base_url"],
@@ -1050,7 +1047,8 @@ def download_url_and_send(
                         try:
                             file_converted = file.replace(file_ext, ".mp3")
                             ffinput = ffmpeg.input(file)
-                            # audio_bitrate="320k"
+                            # https://kkroening.github.io/ffmpeg-python/#ffmpeg.output
+                            # We could set audio_bitrate="320k", but we don't need it now
                             ffmpeg.output(ffinput, file_converted, vn=None).run()
                             file = file_converted
                             file_root, file_ext = os.path.splitext(file)
@@ -1200,6 +1198,9 @@ def download_url_and_send(
                                     logger.debug(audio)
                                 else:
                                     audio = open(file_part, "rb")
+                                # Bot.send_audio() has connection troubles when running async in parallel:
+                                # Works bad on my computer with official API (good with high timeout)
+                                # Works good on server with local API.
                                 audio_msg = run_async(
                                     bot.send_audio(
                                         chat_id=chat_id,
@@ -1313,6 +1314,11 @@ def main():
     #         config.write(config_file)
 
     persistence = PicklePersistence(filepath=CHAT_STORAGE)
+
+    # https://docs.python-telegram-bot.org/en/v20.1/telegram.ext.applicationbuilder.html#telegram.ext.ApplicationBuilder
+    # We use concurrent_updates with limit instead of unlimited create_task.
+    # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Concurrency#applicationconcurrent_updates
+    # https://github.com/python-telegram-bot/python-telegram-bot/issues/3509
     application = (
         ApplicationBuilder()
         .token(TG_BOT_TOKEN)
