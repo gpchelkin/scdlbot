@@ -41,6 +41,7 @@ jobs:
         rm -f "install-poetry.py"
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
         poetry config installer.parallel true
+        poetry config installer.modern-installation true
 
     - name: Install tox
       run: |
