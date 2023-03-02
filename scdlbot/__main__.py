@@ -68,6 +68,7 @@ DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
 BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
+BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
 # TODO try to change to spawn or forkserver to save RAM
 # https://stackoverflow.com/a/66113051
@@ -864,7 +865,7 @@ def download_url_and_send(
     cmd_name = ""
     cmd_args = ()
     cmd_input = None
-    if (DOMAIN_SC in host and DOMAIN_SC_API not in host) or (DOMAIN_BC in host):
+    if (DOMAIN_SC in host and DOMAIN_SC_API not in host) or (DOMAIN_BC in host and BCDL_ENABLE):
         # If link is sc/bc, we try scdl/bcdl first:
         if DOMAIN_SC in host and DOMAIN_SC_API not in host:
             cmd = scdl_bin
@@ -884,7 +885,7 @@ def download_url_and_send(
                 "--extract-artist",  # Set artist tag from title instead of username
             )
             cmd_input = None
-        elif DOMAIN_BC in host:
+        elif DOMAIN_BC in host and BCDL_ENABLE:
             cmd = bcdl_bin
             cmd_name = str(cmd)
             cmd_args = (
