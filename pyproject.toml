@@ -42,7 +42,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-python-telegram-bot = { version = "20.1", extras = ["webhooks", "job-queue"] }
+python-telegram-bot = { version = "20.2", extras = ["webhooks", "job-queue"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }

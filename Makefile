@@ -18,12 +18,15 @@ package:
 	poetry run pip check
 	poetry run safety check --full-report
 
+.PHONY: install
+install:
+	poetry install --with main,dev,docs --sync
+
 .PHONY: update
 update:
 	poetry self lock
 	poetry self install --sync
 	poetry self update
-	poetry install --with main,dev,docs --sync
 	poetry run pip install --upgrade pip setuptools wheel
 	poetry update --with main,dev,docs
 	poetry export --only main --without-hashes -f requirements.txt -o requirements.txt
