@@ -206,7 +206,7 @@ CLI <https://cli.heroku.com/>`__. Assuming you are in
     heroku create --buildpack heroku/python myscdlbot
     #heroku buildpacks:set heroku/python --app=myscdlbot
     # Add FFmpeg buildpack needed for youtube-dl & scdl:
-    heroku buildpacks:add --index 1 https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git --app=myscdlbot
+    heroku buildpacks:add --index 1 https://github.com/gpchelkin/heroku-buildpack-ffmpeg-latest.git --app=myscdlbot
     # Set config vars automatically from your local .env file:
     heroku plugins:install heroku-config
     heroku config:push --file=.env --app=myscdlbot
