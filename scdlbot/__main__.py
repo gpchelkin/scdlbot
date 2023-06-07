@@ -861,6 +861,7 @@ def download_url_and_send(
     host = url_obj.host
     download_video = False
     status = "initial"
+    add_description = ""
     cmd = None
     cmd_name = ""
     cmd_args = ()
@@ -1005,6 +1006,8 @@ def download_url_and_send(
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
             status = "success"
+            if "description" in info_dict and download_video:
+                add_description = info_dict["description"]
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
@@ -1157,6 +1160,8 @@ def download_url_and_send(
                         source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
                     # TODO fix youtube id in []
                     caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", "\_"), source, url, addition.replace("_", "\_"))
+                    if add_description:
+                        caption += "\n" + add_description
                     # logger.debug(caption)
                     reply_to_message_id_send = reply_to_message_id
                 sent_audio_ids = []
