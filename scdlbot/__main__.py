@@ -1006,8 +1006,10 @@ def download_url_and_send(
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
             status = "success"
-            if "description" in info_dict and download_video:
-                add_description = info_dict["description"]
+            if download_video:
+                info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+                if "description" in info_dict:
+                    add_description = info_dict["description"]
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
