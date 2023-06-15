@@ -11,3 +11,4 @@ Contributors
 
 * Leonid Runyshkin @leovp
 * Vadim Larionov @vadimlarionov
+* Marcel Alexandru Nitan @nitanmarcel
