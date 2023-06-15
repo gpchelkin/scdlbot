@@ -70,6 +70,7 @@ bandcamp-downloader = "0.0.13"
 ### For making it work better using latest git revision:
 yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
+##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
 ##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
 ##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 ##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
