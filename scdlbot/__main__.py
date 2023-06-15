@@ -15,7 +15,6 @@ import traceback
 from logging.handlers import SysLogHandler
 from multiprocessing import get_context
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
-from telegram.helpers import escape_markdown
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -30,6 +29,7 @@ from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboard
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
+from telegram.helpers import escape_markdown
 from telegram.request import HTTPXRequest
 
 # import gc
@@ -1011,7 +1011,7 @@ def download_url_and_send(
                 info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
                 if "description" in info_dict:
                     # TODO better handle right-to-left hashtags https://www.instagram.com/reel/CtZbNhtrJv3/
-                    add_description = escape_markdown(info_dict["description"][:800], version=2)
+                    add_description = escape_markdown(info_dict["description"][:800], version=1)
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
@@ -1246,7 +1246,7 @@ def download_url_and_send(
                                         width=width,
                                         height=height,
                                         caption=caption_full,
-                                        parse_mode="MarkdownV2",
+                                        parse_mode="Markdown",
                                         read_timeout=COMMON_CONNECTION_TIMEOUT,
                                         write_timeout=COMMON_CONNECTION_TIMEOUT,
                                         connect_timeout=COMMON_CONNECTION_TIMEOUT,
