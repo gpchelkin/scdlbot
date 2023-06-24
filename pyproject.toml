@@ -61,7 +61,7 @@ fake-useragent = "^1.1.1"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = "2023.2.17"
+#yt-dlp = "2023.6.22"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 scdl = "2.7.3"
