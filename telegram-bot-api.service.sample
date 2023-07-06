@@ -1,0 +1,23 @@
+# https://github.com/tdlib/telegram-bot-api
+# https://tdlib.github.io/telegram-bot-api/build.html
+
+[Unit]
+Description=telegram-bot-api
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/telegram-bot-api --api-id=changeme --api-hash=changeme --local --http-ip-address=127.0.0.1 --http-port=8081 --http-stat-ip-address=127.0.0.1 --http-stat-port=8082 --dir=/root/telegram-bot-api/work --temp-dir=/root/telegram-bot-api/temp --log=/root/telegram-bot-api/log
+Restart=always
+RuntimeMaxSec=12h
+RestartSec=1
+# https://github.com/tdlib/telegram-bot-api/issues/131
+MemoryHigh=250M
+MemoryMax=400M
+TasksMax=infinity
+LimitAS=infinity
+LimitRSS=infinity
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -108,7 +108,7 @@ sphinx-autodoc-typehints = "^1.23"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
-typing-extensions = "^4.5"
+typing-extensions = "^4.7"
 
 
 [tool.isort]
