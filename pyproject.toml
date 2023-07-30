@@ -91,20 +91,20 @@ optional = true
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
 isort = "^5.12"
-black = "^23.3"
+black = "^23.7"
 # make lint:
-wemake-python-styleguide = "^0.17"
+wemake-python-styleguide = "^0.18"
 doc8 = "^1.1"
 nitpick = "^0.33"
 safety = "^2.3"
-flakeheaven = "^3.3"
+#flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^7.0"
-sphinx-autodoc-typehints = "^1.23"
+sphinx = "^7.1"
+sphinx-autodoc-typehints = "^1.24"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
