@@ -773,7 +773,21 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
                 pass
         elif cookies_file.startswith("firefox:"):
             # TODO better handling of env var
-            ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file.split(":")[1], None, None)
+            cookies_file_components = cookies_file.split(":", maxsplit=2)
+            if len(cookies_file_components) == 3:
+                cookies_sqlite_file = cookies_file_components[2]
+                cookies_download_sqlite_path = pathlib.Path.home() / ".mozilla" / "firefox" / cookies_file_components[1] / "cookies.sqlite"
+                # URL for downloading cookie sqlite file:
+                try:
+                    r = requests.get(cookies_sqlite_file, allow_redirects=True, timeout=5)
+                    with open(cookies_download_sqlite_path, "wb") as cfile:
+                        cfile.write(r.content)
+                    ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
+                except:
+                    logger.debug("download_url_and_send could not download cookies sqlite file")
+                    pass
+            else:
+                ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
         else:
             # cookie file local path:
             shutil.copyfile(cookies_file, cookies_download_file_path)
@@ -994,7 +1008,21 @@ def download_url_and_send(
                     pass
             elif cookies_file.startswith("firefox:"):
                 # TODO better handling of env var
-                ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file.split(":")[1], None, None)
+                cookies_file_components = cookies_file.split(":", maxsplit=2)
+                if len(cookies_file_components) == 3:
+                    cookies_sqlite_file = cookies_file_components[2]
+                    cookies_download_sqlite_path = pathlib.Path.home() / ".mozilla" / "firefox" / cookies_file_components[1] / "cookies.sqlite"
+                    # URL for downloading cookie sqlite file:
+                    try:
+                        r = requests.get(cookies_sqlite_file, allow_redirects=True, timeout=5)
+                        with open(cookies_download_sqlite_path, "wb") as cfile:
+                            cfile.write(r.content)
+                        ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
+                    except:
+                        logger.debug("download_url_and_send could not download cookies sqlite file")
+                        pass
+                else:
+                    ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
             else:
                 # cookie file local path:
                 shutil.copyfile(cookies_file, cookies_download_file_path)
