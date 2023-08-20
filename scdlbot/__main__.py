@@ -221,7 +221,8 @@ DOMAIN_YT_BE = "youtu.be"
 DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
-DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW]
+DOMAIN_TWX = "x.com"
+DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
 
 
 # TODO get rid of these dumb exceptions:
@@ -727,7 +728,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif DOMAIN_TW in url.host:
+        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host)  and (3 <= url_parts_num <= 3):
             # Twitter: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
@@ -954,7 +955,7 @@ def download_url_and_send(
         if DOMAIN_TT in host:
             download_video = True
             ydl_opts["videoformat"] = "mp4"
-        elif DOMAIN_TW in host:
+        elif DOMAIN_TW in host or DOMAIN_TWX in host:
             download_video = True
             ydl_opts["videoformat"] = "mp4"
         elif DOMAIN_IG in host:

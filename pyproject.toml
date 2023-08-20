@@ -103,7 +103,7 @@ safety = "^2.3"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^7.1"
+sphinx = "^7.2"
 sphinx-autodoc-typehints = "^1.24"
 m2r2 = "^0.3"
 tomli = "^2.0"
