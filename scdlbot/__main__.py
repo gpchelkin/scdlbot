@@ -728,7 +728,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host)  and (3 <= url_parts_num <= 3):
+        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (3 <= url_parts_num <= 3):
             # Twitter: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
