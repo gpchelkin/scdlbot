@@ -1286,7 +1286,7 @@ def download_url_and_send(
                                 logger.debug("Sending video succeeded: %s", file_name)
                                 break
                         except TelegramError:
-                            print(traceback.format_exc())
+                            ### ??? print(traceback.format_exc())
                             if i == retries - 1:
                                 logger.debug("Sending failed because of TelegramError: %s", file_name)
                             else:
