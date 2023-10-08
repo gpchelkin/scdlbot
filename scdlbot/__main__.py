@@ -213,16 +213,17 @@ OLD_MSG_TEXT = get_response_text("old_msg.txt")
 # Known and supported site domains:
 # support soundcloud.com and soundcloud.app.goo.gl links:
 DOMAIN_SC = "soundcloud"
-DOMAIN_SC_API = "api.soundcloud"
+DOMAIN_SC_API = "api.soundcloud.com"
 DOMAIN_BC = "bandcamp.com"
-# support both youtube.com and youtu.be links:
-DOMAIN_YT = "youtu"
+DOMAIN_YT = "youtube.com"
 DOMAIN_YT_BE = "youtu.be"
+DOMAIN_YMR = "music.yandex.ru"
+DOMAIN_YMC = "music.yandex.com"
 DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
 DOMAIN_TWX = "x.com"
-DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
+DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
 
 
 # TODO get rid of these dumb exceptions:
@@ -683,6 +684,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
+        # FIXME better check domain in hostname
         unknown_site = not any((site in url_item.host for site in DOMAINS))
         # unshorten soundcloud.app.goo.gl and unknown sites links
         # example: https://soundcloud.app.goo.gl/mBMvG
@@ -724,22 +726,26 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # Bandcamp: tracks and albums
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif DOMAIN_TT in url.host:
+        elif (DOMAIN_YT in url.host or DOMAIN_YT_BE in url.host) and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
+            # YouTube: videos and playlists
+            # We still run it for checking YouTube region restriction to avoid fake asking:
+            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+        elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
             # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (3 <= url_parts_num <= 3):
-            # Twitter: videos
+        elif DOMAIN_TT in url.host:
+            # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
         elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
             # TODO We run it for checking Instagram ban to avoid fake asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
-        elif DOMAIN_YT in url.host and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
-            # YouTube: videos and playlists
-            # We still run it for checking YouTube region restriction to avoid fake asking:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (3 <= url_parts_num <= 3):
+            # Twitter: videos
+            # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
+            urls_dict[url_text] = "http"
     return urls_dict
 
 
@@ -1180,7 +1186,7 @@ def download_url_and_send(
                 reply_to_message_id_send = None
                 if flood:
                     addition = ""
-                    if DOMAIN_YT in host:
+                    if DOMAIN_YT in host or DOMAIN_YT_BE in host:
                         source = "YouTube"
                         file_root, file_ext = os.path.splitext(file_name)
                         file_title = file_root.replace(file_ext, "")
