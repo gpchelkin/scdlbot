@@ -1831,13 +1831,13 @@ twisted = ["twisted"]
 
 [[package]]
 name = "pycodestyle"
-version = "2.11.0"
+version = "2.11.1"
 description = "Python style guide checker"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pycodestyle-2.11.0-py2.py3-none-any.whl", hash = "sha256:5d1013ba8dc7895b548be5afb05740ca82454fd899971563d2ef625d090326f8"},
-    {file = "pycodestyle-2.11.0.tar.gz", hash = "sha256:259bcc17857d8a8b3b4a2327324b79e5f020a13c16074670f9c8c8f872ea76d0"},
+    {file = "pycodestyle-2.11.1-py2.py3-none-any.whl", hash = "sha256:44fe31000b2d866f2e41841b18528a505fbd7fef9017b04eff4e2648a0fadc67"},
+    {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
 ]
 
 [[package]]
@@ -2891,7 +2891,7 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [[package]]
 name = "yt-dlp"
-version = "2023.9.24"
+version = "2023.10.13"
 description = "A youtube-dl fork with additional features and patches"
 optional = false
 python-versions = ">=3.7"
@@ -2904,13 +2904,15 @@ brotlicffi = {version = "*", markers = "platform_python_implementation != \"CPyt
 certifi = "*"
 mutagen = "*"
 pycryptodomex = "*"
+requests = ">=2.31.0,<3"
+urllib3 = ">=1.26.17,<3"
 websockets = "*"
 
 [package.source]
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "1c51c520f7b511ebd9e4eb7322285a8c31eedbbd"
+resolved_reference = "4e38e2ae9d7380015349e6aee59c78bb3938befd"
 
 [[package]]
 name = "zipp"
