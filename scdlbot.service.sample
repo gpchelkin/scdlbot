@@ -21,7 +21,7 @@ Type=simple
 EnvironmentFile=/etc/default/scdlbot
 #Environment=SYSTEMD_LOG_LEVEL=debug
 ExecStart=/usr/local/bin/scdlbot
-#ExecStart=/opt/pyenv/versions/3.11.0/bin/scdlbot
+#ExecStart=/opt/pyenv/versions/3.12.0/bin/scdlbot
 WatchdogSec=300
 #NotifyAccess=all
 Restart=always
