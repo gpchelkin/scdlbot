@@ -23,7 +23,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install --upgrade setuptools wheel
-        export POETRY_VERSION=1.6.1
+        export POETRY_VERSION=1.7.0
         wget --output-document=install-poetry.py https://install.python-poetry.org
         python "install-poetry.py"
         rm -f "install-poetry.py"
