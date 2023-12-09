@@ -1044,13 +1044,13 @@ def download_url_and_send(
             status = "success"
             if download_video:
                 info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
-                if "description" in info_dict:
+                if "description" in info_dict and info_dict["description"]:
                     # TODO better handle right-to-left hashtags https://www.instagram.com/reel/CtZbNhtrJv3/
                     add_description = escape_markdown(info_dict["description"][:800], version=1)
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
-            # logger.debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
             status = "failed"
         if cookies_file:
             cookies_download_file.close()
