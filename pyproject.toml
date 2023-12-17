@@ -91,7 +91,8 @@ optional = true
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
 isort = "^5.12"
-black = "^23.10"
+# TODO https://github.com/psf/black/issues/4107
+black = "23.11.0"
 # make lint:
 wemake-python-styleguide = "^0.18"
 doc8 = "^1.1"
