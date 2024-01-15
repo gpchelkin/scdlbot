@@ -95,7 +95,7 @@ black = "^23.12.1"
 # make lint:
 wemake-python-styleguide = "^0.18"
 doc8 = "^1.1"
-nitpick = "^0.34"
+nitpick = "^0.35"
 safety = "^2.3"
 #flakeheaven = "^3.3"
 
