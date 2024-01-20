@@ -96,7 +96,7 @@ black = "^23.12.1"
 wemake-python-styleguide = "^0.18"
 doc8 = "^1.1"
 nitpick = "^0.35"
-safety = "^2.3"
+safety = "^3.0"
 #flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
