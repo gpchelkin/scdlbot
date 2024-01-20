@@ -790,8 +790,9 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
                     with open(cookies_download_sqlite_path, "wb") as cfile:
                         cfile.write(r.content)
                     ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
+                    logger.debug("download_url_and_send downloaded cookies.sqlite file")
                 except:
-                    logger.debug("download_url_and_send could not download cookies sqlite file")
+                    logger.debug("download_url_and_send could not download cookies.sqlite file")
                     pass
             else:
                 ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
@@ -947,8 +948,8 @@ def download_url_and_send(
     if status == "initial":
         # If link is not sc/bc or scdl/bcdl just failed, we use ydl
         cmd_name = "ydl_download"
-        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L159
-        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils.py#L3414
+        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L172
+        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils/_utils.py
         ydl_opts = {
             # https://github.com/yt-dlp/yt-dlp#output-template
             # Default outtmpl is "%(title)s [%(id)s].%(ext)s"
@@ -956,25 +957,35 @@ def download_url_and_send(
             "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
+            # TODO Support ffmpeg_location parameter:
+            # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "trim_file_name": 32,
         }
         if DOMAIN_TT in host:
             download_video = True
-            ydl_opts["videoformat"] = "mp4"
+            ydl_opts["format"] = "mp4"
         elif DOMAIN_TW in host or DOMAIN_TWX in host:
             download_video = True
-            ydl_opts["videoformat"] = "mp4"
+            ydl_opts["format"] = "mp4"
         elif DOMAIN_IG in host:
             download_video = True
             ydl_opts.update(
                 {
-                    "videoformat": "mp4",
-                    # "postprocessors": [
-                    #     {
-                    #         "key": "FFmpegVideoConvertor",
-                    #         "preferedformat": "mp4",
-                    #     }
-                    # ],
+                    "format": "mp4",
+                    "postprocessors": [
+                        # Instagram gives VP9 cideo codec (when downloading with cookies) and it doesn't play in Telegram iOS client.
+                        # We need AVC (x264/h264) or HEVC (x265/h265) + AAC from Instagram videos.
+                        # "FFmpegVideoConvertor" doesn't work since it's already mp4.
+                        # --use-postprocessor FFmpegCopyStream --ppa copystream:"-c:v libx265 -c:a aac -f mp4"
+                        # https://github.com/yt-dlp/yt-dlp/issues/7607
+                        # https://github.com/yt-dlp/yt-dlp/issues/5859
+                        # https://github.com/yt-dlp/yt-dlp/issues/8904
+                        # {"key": "FFmpegVideoConvertor", "preferedformat": "mp4"},
+                        {"key": "FFmpegCopyStream"},
+                    ],
+                    "postprocessor_args": {
+                        "copystream": ["-codec:v", "libx265", "-codec:a", "aac", "-f", "mp4"],
+                    },
                 }
             )
         else:
@@ -982,14 +993,8 @@ def download_url_and_send(
                 {
                     "format": "bestaudio/best",
                     "postprocessors": [
-                        {
-                            "key": "FFmpegExtractAudio",
-                            "preferredcodec": "mp3",
-                            "preferredquality": "320",
-                        },
-                        {
-                            "key": "FFmpegMetadata",
-                        },
+                        {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "320"},
+                        {"key": "FFmpegMetadata"},
                         # {"key": "EmbedThumbnail"},
                     ],
                     "noplaylist": True,
@@ -1025,8 +1030,9 @@ def download_url_and_send(
                         with open(cookies_download_sqlite_path, "wb") as cfile:
                             cfile.write(r.content)
                         ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
+                        logger.debug("download_url_and_send downloaded cookies.sqlite file")
                     except:
-                        logger.debug("download_url_and_send could not download cookies sqlite file")
+                        logger.debug("download_url_and_send could not download cookies.sqlite file")
                         pass
                 else:
                     ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
