@@ -102,11 +102,14 @@ Those should be available in your ``PATH``:
 
 -  `Python 3.9+ <https://www.python.org>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ and `poetry <https://python-poetry.org/>`__ are recommended)
--  `FFmpeg 4.0+ <https://ffmpeg.org/download.html>`__ if not running on Heroku
-   (fresh builds for
-   `Windows <https://www.gyan.dev/ffmpeg/builds/#release-builds>`__,
-   `macOS <https://evermeet.cx/ffmpeg/>`__
-   and `Linux <https://johnvansickle.com/ffmpeg/>`__ are recommended)
+-  `yt-dlp strongly recommended dependencies <https://github.com/yt-dlp/yt-dlp#strongly-recommended>`__, including:
+-  `FFmpeg 6.1+ <https://ffmpeg.org/download.html>`__ (if not running on Heroku/Render)
+
+   -  `yt-dlp patched builds are highly recommended <https://github.com/yt-dlp/FFmpeg-Builds>`__
+   -  otherwise these fresh builds are recommended:
+      `Linux <https://johnvansickle.com/ffmpeg/>`__,
+      `macOS <https://evermeet.cx/ffmpeg/>`__,
+      `Windows <https://www.gyan.dev/ffmpeg/builds/#release-builds>`__.
 -  `Heroku CLI <https://cli.heroku.com>`__ is recommended if you want to deploy to Heroku
 
 Install / Update stable build from `PyPI <https://pypi.org/project/scdlbot>`__ (recommended)
