@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import pathlib
+import platform
 import random
 import shutil
 import tempfile
@@ -72,11 +73,14 @@ bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
 # TODO try to change to spawn or forkserver to save RAM
+mp_method = "fork"
+if platform.system() == "Windows":
+    mp_method = "spawn"
 # https://stackoverflow.com/a/66113051
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context("fork"))
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
