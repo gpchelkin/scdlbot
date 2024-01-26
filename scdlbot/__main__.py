@@ -13,6 +13,7 @@ import tempfile
 import threading
 import time
 import traceback
+from importlib import resources
 from logging.handlers import SysLogHandler
 from multiprocessing import get_context
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
@@ -20,7 +21,6 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import ffmpeg
-import pkg_resources
 import prometheus_client
 import requests
 import sdnotify
@@ -197,8 +197,8 @@ SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 # Text constants from resources:
 def get_response_text(file_name):
     # https://stackoverflow.com/a/20885799/2490759
-    path = "/".join(("texts", file_name))
-    return pkg_resources.resource_string(__name__, path).decode("UTF-8")
+    # https://docs.python.org/3/library/importlib.resources.html
+    return resources.files("scdlbot").joinpath("texts").joinpath(file_name).read_text(encoding="UTF-8")
 
 
 HELP_TEXT = get_response_text("help.tg.md")
