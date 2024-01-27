@@ -770,14 +770,14 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         ydl_opts["source_address"] = source_ip
     cookies_download_file = None
     if cookies_file:
-        cookies_download_file = tempfile.NamedTemporaryFile()
+        cookies_download_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
         cookies_download_file_path = pathlib.Path(cookies_download_file.name)
         if cookies_file.startswith("http"):
             # URL for downloading cookie file:
             try:
                 r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                with open(cookies_download_file_path, "wb") as cfile:
-                    cfile.write(r.content)
+                cookies_download_file.write(r.content)
+                cookies_download_file.close()
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
             except:
                 logger.debug("download_url_and_send could not download cookies file")
@@ -802,7 +802,8 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
                 ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
         else:
             # cookie file local path:
-            shutil.copyfile(cookies_file, cookies_download_file_path)
+            cookies_download_file.write(open(cookies_file, "rb").read())
+            cookies_download_file.close()
             ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
     # FIXME apply CHECK_URL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
@@ -832,6 +833,7 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         status = "failed"
     if cookies_file:
         cookies_download_file.close()
+        os.unlink(cookies_download_file.name)
 
     return status
 
@@ -1011,14 +1013,14 @@ def download_url_and_send(
             ydl_opts["source_address"] = source_ip
         cookies_download_file = None
         if cookies_file:
-            cookies_download_file = tempfile.NamedTemporaryFile()
+            cookies_download_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
             cookies_download_file_path = pathlib.Path(cookies_download_file.name)
             if cookies_file.startswith("http"):
                 # URL for downloading cookie file:
                 try:
                     r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                    with open(cookies_download_file_path, "wb") as cfile:
-                        cfile.write(r.content)
+                    cookies_download_file.write(r.content)
+                    cookies_download_file.close()
                     ydl_opts["cookiefile"] = str(cookies_download_file_path)
                 except:
                     logger.debug("download_url_and_send could not download cookies file")
@@ -1043,7 +1045,8 @@ def download_url_and_send(
                     ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
             else:
                 # cookie file local path:
-                shutil.copyfile(cookies_file, cookies_download_file_path)
+                cookies_download_file.write(open(cookies_file, "rb").read())
+                cookies_download_file.close()
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
         # FIXME apply DL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
@@ -1065,6 +1068,7 @@ def download_url_and_send(
             status = "failed"
         if cookies_file:
             cookies_download_file.close()
+            os.unlink(cookies_download_file.name)
         # gc.collect()
 
     if status == "failed":
