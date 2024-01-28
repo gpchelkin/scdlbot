@@ -963,7 +963,7 @@ def download_url_and_send(
             "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
-            # TODO Support ffmpeg_location parameter:
+            # TODO Support ffmpeg_location parameter or just use BIN_PATH here:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "trim_file_name": 32,
         }

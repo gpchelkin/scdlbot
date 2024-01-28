@@ -103,7 +103,7 @@ Those should be available in your ``PATH``:
 -  `Python 3.9+ <https://www.python.org>`__
    (`pyenv <https://github.com/pyenv/pyenv>`__ and `poetry <https://python-poetry.org/>`__ are recommended)
 -  `yt-dlp strongly recommended dependencies <https://github.com/yt-dlp/yt-dlp#strongly-recommended>`__, including:
--  `FFmpeg 6.1+ <https://ffmpeg.org/download.html>`__ (if not running on Heroku/Render)
+-  `FFmpeg 6.1+ <https://ffmpeg.org/download.html>`__ (in your `$PATH`) (if not running on Heroku/Render)
 
    -  `yt-dlp patched builds are highly recommended <https://github.com/yt-dlp/FFmpeg-Builds>`__
    -  otherwise these fresh builds are recommended:
@@ -184,6 +184,7 @@ Using only Bash & Python
 
     # If you've installed package into your system Python,
     # you can also replace 'python -m scdlbot' with just 'scdlbot'
+    # If you use Windows, you _have_ to replace 'python -m scdlbot' with just 'scdlbot'.
 
 Deploying to `Heroku <https://www.heroku.com>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
