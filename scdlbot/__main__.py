@@ -970,7 +970,7 @@ def download_url_and_send(
         if DOMAIN_TT in host:
             download_video = True
             ydl_opts["format"] = "mp4"
-        elif (DOMAIN_TW in host or DOMAIN_TWX in host) and (DOMAIN_YMC not in url.host):
+        elif (DOMAIN_TW in host or DOMAIN_TWX in host) and (DOMAIN_YMC not in host):
             download_video = True
             ydl_opts["format"] = "mp4"
         elif DOMAIN_IG in host:
