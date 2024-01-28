@@ -735,7 +735,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # We still run it for checking YouTube region restriction to avoid fake asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
-            # TikTok: videos
+            # YM: tracks. Note that the domain includes x.com..
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
         elif DOMAIN_TT in url.host:
@@ -746,7 +746,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # Instagram: videos, reels
             # TODO We run it for checking Instagram ban to avoid fake asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
-        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (3 <= url_parts_num <= 3):
+        elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (DOMAIN_YMC not in url.host) and (3 <= url_parts_num <= 3):
             # Twitter: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
@@ -970,7 +970,7 @@ def download_url_and_send(
         if DOMAIN_TT in host:
             download_video = True
             ydl_opts["format"] = "mp4"
-        elif DOMAIN_TW in host or DOMAIN_TWX in host:
+        elif (DOMAIN_TW in host or DOMAIN_TWX in host) and (DOMAIN_YMC not in url.host):
             download_video = True
             ydl_opts["format"] = "mp4"
         elif DOMAIN_IG in host:
