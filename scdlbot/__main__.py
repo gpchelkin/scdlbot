@@ -1211,7 +1211,7 @@ def download_url_and_send(
                     elif DOMAIN_BC in host:
                         source = "Bandcamp"
                     else:
-                        source = url_obj.host.replace(".com", "").replace("www.", "").replace("m.", "")
+                        source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
                     # TODO fix youtube id in []
                     caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", r"\_"), source, url, addition.replace("_", r"\_"))
                     if add_description:
