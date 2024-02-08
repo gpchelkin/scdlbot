@@ -104,7 +104,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.2"
-sphinx-autodoc-typehints = "^1.24"
+sphinx-autodoc-typehints = ">=1.24,<3.0"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
