@@ -42,7 +42,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-python-telegram-bot = { version = "21.0.1", extras = ["webhooks", "job-queue", "http2"] }
+python-telegram-bot = { version = "21.1.1", extras = ["webhooks", "job-queue", "http2"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
@@ -91,7 +91,7 @@ optional = true
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
 isort = "^5.12"
-black = "^24.3.0"
+black = "^24.4.0"
 # make lint:
 wemake-python-styleguide = "^0.19.2"
 doc8 = "^1.1"
@@ -103,8 +103,8 @@ safety = "^3.1"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^7.2"
-sphinx-autodoc-typehints = "^2.0.0"
+sphinx = "^7.3"
+sphinx-autodoc-typehints = "^2.1.0"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
