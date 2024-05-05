@@ -983,7 +983,7 @@ def download_url_and_send(
                         # We need AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio) from Instagram videos.
                         # "FFmpegVideoConvertor" doesn't work here since the original file is already mp4.
                         # We don't touch audio and just copy it here since it's probably OK in original. But we can change 'copy' to 'aac'.
-                        # --use-postprocessor FFmpegCopyStream --ppa copystream:"-codec:v libx264 -crf 22 -preset ultrafast -codec:a copy -f mp4"
+                        # --use-postprocessor FFmpegCopyStream --ppa copystream:"-codec:v libx264 -crf 24 -preset medium -codec:a copy -f mp4"
                         # https://github.com/yt-dlp/yt-dlp/issues/7607
                         # https://github.com/yt-dlp/yt-dlp/issues/5859
                         # https://github.com/yt-dlp/yt-dlp/issues/8904
@@ -992,7 +992,7 @@ def download_url_and_send(
                         {"key": "FFmpegCopyStream"},
                     ],
                     "postprocessor_args": {
-                        "copystream": ["-codec:v", "libx264", "-crf", "22", "-preset", "ultrafast", "-codec:a", "copy", "-f", "mp4"],
+                        "copystream": ["-codec:v", "libx264", "-crf", "24", "-preset", "medium", "-codec:a", "copy", "-f", "mp4"],
                     },
                 }
             )
