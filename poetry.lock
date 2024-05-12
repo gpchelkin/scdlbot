@@ -1884,6 +1884,17 @@ files = [
 ]
 
 [[package]]
+name = "pebble"
+version = "5.0.7"
+description = "Threading and multiprocessing eye-candy."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "Pebble-5.0.7-py3-none-any.whl", hash = "sha256:f1742f2a62e8544e722c7b387211fb1a06038ca8cda322e5d55c84c793fd8d7d"},
+    {file = "Pebble-5.0.7.tar.gz", hash = "sha256:2784c147766f06388cea784084b14bec93fdbaa793830f1983155aa330a2a6e4"},
+]
+
+[[package]]
 name = "pep8-naming"
 version = "0.13.3"
 description = "Check PEP-8 naming conventions, plugin for flake8"
@@ -3204,7 +3215,7 @@ secretstorage = ["cffi", "secretstorage"]
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "f1f158976e38d38a260762accafe7bbe6d451151"
+resolved_reference = "cf212d0a331aba05c32117573f760cdf3af8c62f"
 
 [[package]]
 name = "zipp"
@@ -3224,4 +3235,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ebd87896d0c332ec01edda5c543596c27de736924edf70da2c1a23b0dfa788a3"
+content-hash = "d50f540d8ef1bda0f01f8d4e24b5fb56ca6e879a15e94dd7ed19a3ffd98a4ef9"

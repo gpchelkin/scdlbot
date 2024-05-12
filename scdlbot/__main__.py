@@ -8,6 +8,7 @@ import os
 import pathlib
 import platform
 import random
+import resource
 import shutil
 import tempfile
 import threading
@@ -26,6 +27,7 @@ import requests
 import sdnotify
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
+from pebble import ProcessPool
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
@@ -50,6 +52,16 @@ except ImportError:
 
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
+
+# 512 mebibytes per task:
+# MAX_MEM = 1024 * 1024 * 1024
+
+
+# def pp_initializer(limit):
+#     """Set maximum amount of memory each worker process can allocate."""
+#     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+#     resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
+
 
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_BOT_API = os.getenv("TG_BOT_API", "https://api.telegram.org")
@@ -80,7 +92,9 @@ if platform.system() == "Windows":
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
+# EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
+# EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=5, context=get_context(method=mp_method))
+EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=5, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
@@ -424,7 +438,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     urls_dict = {}
 
     # Get our main running asyncio loop:
-    loop_main = asyncio.get_event_loop()
+    loop_main = asyncio.get_running_loop()
 
     # a) Run heavy task blocking the main running asyncio loop.
     # Needs to have timeout signals in function, but they are bad.
@@ -435,16 +449,16 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # You may add timeout signals in function, but they are bad.
     # If ThreadPoolExecutor - no signals.
     # We monitor EXECUTOR process pool task queue, so we use it.
-    # FIXME maybe don't use wait_for here because it includes pool queue waiting
 
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
         # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
-        urls_dict = await asyncio.wait_for(
-            loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
-            timeout=CHECK_URL_TIMEOUT * 10,
-        )
+        # urls_dict = await asyncio.wait_for(
+        #     loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
+        #     timeout=CHECK_URL_TIMEOUT * 10,
+        # )
+        urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, CHECK_URL_TIMEOUT, message, action, proxy, source_ip, allow_unknown_sites)
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
     except Exception:
@@ -494,7 +508,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                     }
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     # Run heavy task in separate process, "fire and forget":
-                    EXECUTOR.submit(download_url_and_send, **kwargs)
+                    # EXECUTOR.submit(download_url_and_send, **kwargs)
+                    EXECUTOR.schedule(download_url_and_send, kwargs=kwargs, timeout=DL_TIMEOUT)
 
     elif action == "link":
         if "http" not in urls_values:
@@ -598,7 +613,8 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 }
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                 # Run heavy task in separate process, "fire and forget":
-                EXECUTOR.submit(download_url_and_send, **kwargs)
+                # EXECUTOR.submit(download_url_and_send, **kwargs)
+                EXECUTOR.schedule(download_url_and_send, kwargs=kwargs, timeout=DL_TIMEOUT)
 
         elif button_action == "link":
             await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
@@ -806,7 +822,6 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
             cookies_download_file.close()
             ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
-    # FIXME apply CHECK_URL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
     logger.debug("%s starts: %s", cmd_name, url)
     try:
         info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
@@ -1050,7 +1065,6 @@ def download_url_and_send(
                 cookies_download_file.close()
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
-        # FIXME apply DL_TIMEOUT by using a process (as we did before). Maybe use https://github.com/noxdafox/pebble
         logger.debug("%s starts: %s", cmd_name, url)
         try:
             # TODO check result
@@ -1339,7 +1353,9 @@ def download_url_and_send(
 
 
 async def post_shutdown(application: Application) -> None:
-    EXECUTOR.shutdown(wait=False, cancel_futures=True)
+    # EXECUTOR.shutdown(wait=False, cancel_futures=True)
+    EXECUTOR.stop()
+    EXECUTOR.join()
 
 
 async def post_init(application: Application) -> None:
@@ -1434,7 +1450,7 @@ def main():
 
     job_queue = application.job_queue
     job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
-    job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=5)
+    # job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=5)
 
     if WEBHOOK_ENABLE:
         application.run_webhook(
