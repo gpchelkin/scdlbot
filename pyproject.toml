@@ -76,11 +76,12 @@ yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 ##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 ##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
+scdl = { git = "https://github.com/scdl-org/scdl.git", branch = "master" }
 ##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 ##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
 ##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
-bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", rev = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e" }
 ##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
 #fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
 
@@ -105,7 +106,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.3"
-sphinx-autodoc-typehints = "^2.1.0"
+sphinx-autodoc-typehints = "^2.2.2"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"
