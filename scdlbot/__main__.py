@@ -954,7 +954,9 @@ def download_url_and_send(
         try:
             cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=DL_TIMEOUT)
             cmd_retcode = cmd_proc.returncode
-            # listed are common scdl problems for one track with 0 retcode, all its output is always in stderr:
+            # listed are common scdl problems for one track with 0 retcode, all its log output goes to stderr (track may be in stdout):
+            # https://github.com/scdl-org/scdl/issues/493
+            # https://github.com/scdl-org/scdl/pull/494
             if cmd_retcode or (any(err in cmd_stderr for err in ["Error resolving url", "is not streamable", "Failed to get item"]) and ".mp3" not in cmd_stderr):
                 raise ProcessExecutionError(cmd_args, cmd_retcode, cmd_stdout, cmd_stderr)
             logger.debug("%s succeeded: %s", cmd_name, url)
