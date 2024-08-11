@@ -42,7 +42,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-python-telegram-bot = { version = "21.3", extras = ["webhooks", "job-queue", "http2"] }
+python-telegram-bot = { version = "21.4", extras = ["webhooks", "job-queue", "http2"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
@@ -62,10 +62,10 @@ fake-useragent = "^1.5.1"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = "2024.5.27"
+#yt-dlp = "2024.8.6"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
-#scdl = "2.7.12"
+#scdl = "2.11.4"
 #bandcamp-downloader = "0.0.15"
 
 ### For making it work better using latest git revision:
@@ -98,7 +98,7 @@ black = "^24.4.0"
 wemake-python-styleguide = "^0.19.2"
 doc8 = "^1.1"
 nitpick = "^0.35"
-safety = "^3.1"
+safety = "^3.2.4"
 #flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
