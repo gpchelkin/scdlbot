@@ -31,7 +31,7 @@ from pebble import ProcessPool
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
 from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
-from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
+from telegram.ext import AIORateLimiter, Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
 from telegram.helpers import escape_markdown
 from telegram.request import HTTPXRequest
 
@@ -84,7 +84,7 @@ scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
-# TODO try to change to spawn or forkserver to save RAM
+# TODO try to change from fork to spawn or forkserver to save RAM?
 mp_method = "fork"
 if platform.system() == "Windows":
     mp_method = "spawn"
@@ -94,7 +94,7 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
 # EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=5, context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=5, context=get_context(method=mp_method))
+EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=0, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
@@ -1410,12 +1410,13 @@ def main():
         .persistence(persistence)
         .post_init(post_init)
         .post_shutdown(post_shutdown)
-        .concurrent_updates(256)
-        .connection_pool_size(512)
+        .rate_limiter(AIORateLimiter(max_retries=3))
+        .concurrent_updates(WORKERS * 2)
+        .connection_pool_size(WORKERS * 4)
+        .pool_timeout(COMMON_CONNECTION_TIMEOUT)
         .connect_timeout(COMMON_CONNECTION_TIMEOUT)
         .read_timeout(COMMON_CONNECTION_TIMEOUT)
         .write_timeout(COMMON_CONNECTION_TIMEOUT)
-        .pool_timeout(COMMON_CONNECTION_TIMEOUT)
         .build()
     )
 
@@ -1462,7 +1463,7 @@ def main():
             url_path=WEBHOOK_APP_URL_PATH,
             webhook_url=urljoin(WEBHOOK_APP_URL_ROOT, WEBHOOK_APP_URL_PATH),
             secret_token=WEBHOOK_SECRET_TOKEN,
-            max_connections=1024,
+            max_connections=WORKERS * 4,
             cert=WEBHOOK_CERT_FILE,
             key=WEBHOOK_KEY_FILE,
         )
