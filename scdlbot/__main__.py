@@ -996,7 +996,7 @@ def download_url_and_send(
                 {
                     "format": "mp4",
                     "postprocessors": [
-                        # Instagram gives VP9 cideo codec (when downloading with cookies) and it doesn't play in Telegram iOS client.
+                        # Instagram gives VP9 video codec (when downloading with cookies) and it doesn't play in Telegram iOS client.
                         # We need AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio) from Instagram videos.
                         # "FFmpegVideoConvertor" doesn't work here since the original file is already mp4.
                         # We don't touch audio and just copy it here since it's probably OK in original. But we can change 'copy' to 'aac'.
@@ -1009,7 +1009,7 @@ def download_url_and_send(
                         {"key": "FFmpegCopyStream"},
                     ],
                     "postprocessor_args": {
-                        "copystream": ["-codec:v", "libx264", "-crf", "24", "-preset", "veryfast", "-codec:a", "copy", "-f", "mp4"],
+                        "copystream": ["-codec:v", "libx264", "-crf", "24", "-preset", "veryfast", "-codec:a", "copy", "-f", "mp4", "-threads", "1"],
                     },
                 }
             )
@@ -1022,6 +1022,10 @@ def download_url_and_send(
                         {"key": "FFmpegMetadata"},
                         # {"key": "EmbedThumbnail"},
                     ],
+                    "postprocessor_args": {
+                        "ExtractAudio": ["-threads", "1"],
+                        "extractaudio": ["-threads", "1"],
+                    },
                     "noplaylist": True,
                 }
             )
@@ -1124,7 +1128,7 @@ def download_url_and_send(
                             ffinput = ffmpeg.input(file)
                             # https://kkroening.github.io/ffmpeg-python/#ffmpeg.output
                             # We could set audio_bitrate="320k", but we don't need it now
-                            ffmpeg.output(ffinput, file_converted, vn=None).run()
+                            ffmpeg.output(ffinput, file_converted, vn=None, threads=1).run()
                             file = file_converted
                             file_root, file_ext = os.path.splitext(file)
                             file_format = file_ext.replace(".", "").lower()
@@ -1155,9 +1159,9 @@ def download_url_and_send(
                                 file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
                                 ffinput = ffmpeg.input(file)
                                 if i == (parts_number - 1):
-                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position).run()
+                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, threads=1).run()
                                 else:
-                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size).run()
+                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size, threads=1).run()
                                     part_duration = float(ffmpeg.probe(file_part)["format"]["duration"])
                                     cur_position += part_duration
                                 if id3:
@@ -1200,7 +1204,7 @@ def download_url_and_send(
                         bot.send_message(
                             chat_id=chat_id,
                             reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
+                            text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
                             parse_mode="Markdown",
                         )
                     )
@@ -1210,7 +1214,7 @@ def download_url_and_send(
                         bot.send_message(
                             chat_id=chat_id,
                             reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, not enough memory to convert file `{}`..".format(file_name),
+                            text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
                             parse_mode="Markdown",
                         )
                     )
