@@ -53,14 +53,14 @@ except ImportError:
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
 
-# 512 mebibytes per task:
-# MAX_MEM = 1024 * 1024 * 1024
+# Use maximum 2048 mebibytes per task:
+MAX_MEM = 2048 * 1024 * 1024
 
 
-# def pp_initializer(limit):
-#     """Set maximum amount of memory each worker process can allocate."""
-#     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-#     resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
+def pp_initializer(limit):
+    """Set maximum amount of memory each worker process can allocate."""
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
 
 
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
@@ -84,7 +84,7 @@ scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
-# TODO try to change from fork to spawn or forkserver to save RAM?
+# TODO Change from fork to spawn or forkserver?
 mp_method = "fork"
 if platform.system() == "Windows":
     mp_method = "spawn"
@@ -93,8 +93,8 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-# EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=5, context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=0, context=get_context(method=mp_method))
+EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=10, context=get_context(method=mp_method))
+# EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=10, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
@@ -637,26 +637,37 @@ async def unknown_command_callback(update: Update, context: ContextTypes.DEFAULT
 
 
 async def error_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):  # skipcq: PYL-R0201
-    try:
-        raise context.error
-    except Forbidden:
-        # remove update.message.chat_id from conversation list
-        logger.debug(f"Update {update} caused Forbidden error: {context.error}")
-    except BadRequest:
-        # handle malformed requests - read more below!
-        logger.debug(f"Update {update} caused BadRequest error: {context.error}")
-    except TimedOut:
-        # handle slow connection problems
-        logger.debug(f"Update {update} caused TimedOut error: {context.error}")
-    except NetworkError:
-        # handle other connection problems
-        logger.debug(f"Update {update} caused NetworkError error: {context.error}")
-    except ChatMigrated as e:
-        # the chat_id of a group has changed, use e.new_chat_id instead
-        logger.debug(f"Update {update} caused ChatMigrated error: {context.error}")
-    except TelegramError:
-        # handle all other telegram related errors
-        logger.debug(f"Update {update} caused TelegramError error: {context.error}")
+    # https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py#L29
+    """Log the error and send a telegram message to notify the developer."""
+    # Log the error before we do anything else, so we can see it even if something breaks.
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    # traceback.format_exception returns the usual python message about an exception, but as a
+    # list of strings rather than a single string, so we have to join them together.
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_string = "".join(tb_list)
+    logger.debug(tb_string)
+
+    # try:
+    #     raise context.error
+    # except Forbidden:
+    #     # remove update.message.chat_id from conversation list
+    #     logger.debug(f"Update {update} caused Forbidden error: {context.error}")
+    # except BadRequest:
+    #     # handle malformed requests - read more below!
+    #     logger.debug(f"Update {update} caused BadRequest error: {context.error}")
+    # except TimedOut:
+    #     # handle slow connection problems
+    #     logger.debug(f"Update {update} caused TimedOut error: {context.error}")
+    # except NetworkError:
+    #     # handle other connection problems
+    #     logger.debug(f"Update {update} caused NetworkError error: {context.error}")
+    # except ChatMigrated as e:
+    #     # the chat_id of a group has changed, use e.new_chat_id instead
+    #     logger.debug(f"Update {update} caused ChatMigrated error: {context.error}")
+    # except TelegramError:
+    #     # handle all other telegram related errors
+    #     logger.debug(f"Update {update} caused TelegramError error: {context.error}")
 
 
 def init_chat_data(chat_data, mode="dl", flood=True):

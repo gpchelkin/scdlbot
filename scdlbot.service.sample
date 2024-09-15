@@ -23,8 +23,8 @@ EnvironmentFile=/etc/default/scdlbot
 #ExecStartPre=-rm -rf /scdlbothome/scdlbotdata.pickle
 #ExecStart=/opt/pyenv/versions/3.11.5/bin/scdlbot
 ExecStart=/usr/local/bin/scdlbot
-WatchdogSec=300
-WatchdogSignal=SIGKILL
+#WatchdogSec=300
+#WatchdogSignal=SIGKILL
 NotifyAccess=all
 Restart=always
 RestartSec=5
@@ -33,9 +33,7 @@ CPUQuota=250%
 MemoryHigh=3100M
 MemoryMax=3400M
 TasksMax=infinity
-LimitAS=infinity
-LimitRSS=infinity
-LimitNOFILE=65536
+LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target
