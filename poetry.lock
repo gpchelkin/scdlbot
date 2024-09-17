@@ -177,9 +177,9 @@ dev = ["pytest", "requests-cache"]
 
 [package.source]
 type = "git"
-url = "https://github.com/iheanyi/bandcamp-dl.git"
-reference = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e"
-resolved_reference = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e"
+url = "https://github.com/gpchelkin/bandcamp-dl.git"
+reference = "pyproject-poetry"
+resolved_reference = "f501fd1160c473c88d94997b9d16993ceafc0235"
 
 [[package]]
 name = "bandit"
@@ -2670,7 +2670,7 @@ requests = "*"
 soundcloud-v2 = ">=1.5.2"
 termcolor = "*"
 tqdm = "*"
-typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
+typing_extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
 dev = ["music-tag", "mypy", "pytest", "pytest-cov", "pytest-dotenv", "ruff", "types-requests", "types-tqdm"]
@@ -3386,4 +3386,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "287932e0c0701cd973397c07e7a7371cb78b92aba1e3b3739ec923366a749228"
+content-hash = "73b94255c0d092840a5ce0087432a5d6ceedc48e8ef85af5a967ba709daf3282"
