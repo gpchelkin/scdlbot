@@ -42,11 +42,12 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-python-telegram-bot = { version = "21.3", extras = ["webhooks", "job-queue", "http2"] }
+python-telegram-bot = { version = "21.5", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
 requests = { version = "^2.31.0", extras = ["socks"] }
+pebble = "^5.0.7"
 boltons = "^24.0.0"
 mutagen = "^1.47.0"
 plumbum = "^1.8.2"
@@ -61,10 +62,10 @@ fake-useragent = "^1.5.1"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = "2024.5.27"
+#yt-dlp = "2024.8.6"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
-#scdl = "2.7.12"
+#scdl = "2.11.4"
 #bandcamp-downloader = "0.0.15"
 
 ### For making it work better using latest git revision:
@@ -75,11 +76,12 @@ yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
 ##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
 ##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
 ##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-scdl = { git = "https://github.com/flyingrub/scdl.git", branch = "master" }
+scdl = { git = "https://github.com/scdl-org/scdl.git", branch = "master" }
 ##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 ##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
 ##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
-bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", rev = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e" }
 ##bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "demjson3" }
 #fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
 
@@ -91,20 +93,20 @@ optional = true
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
 isort = "^5.12"
-black = "^24.4.0"
+black = "^24.8.0"
 # make lint:
 wemake-python-styleguide = "^0.19.2"
 doc8 = "^1.1"
 nitpick = "^0.35"
-safety = "^3.1"
+safety = "^3.2.7"
 #flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^7.3"
-sphinx-autodoc-typehints = "^2.1.0"
+sphinx = "^7.4"
+sphinx-autodoc-typehints = "^2.3.0"
 m2r2 = "^0.3"
 tomli = "^2.0"
 recommonmark = "^0.7"

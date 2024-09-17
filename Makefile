@@ -27,7 +27,7 @@ update:
 	poetry self lock
 	poetry self install --sync
 	poetry self update
-	poetry self add poetry-plugin-export
+	poetry self add poetry-plugin-export@latest
 	poetry run pip install --upgrade pip setuptools wheel
 	poetry update --with main,dev,docs
 	poetry export --only main --without-hashes -f requirements.txt -o requirements.txt
