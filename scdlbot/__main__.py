@@ -30,7 +30,8 @@ from mutagen.mp3 import EasyMP3 as MP3
 from pebble import ProcessPool
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
 from telegram.constants import ChatAction
-from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
+
+# from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
 from telegram.ext import AIORateLimiter, Application, ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, PicklePersistence, filters
 from telegram.helpers import escape_markdown
 from telegram.request import HTTPXRequest
@@ -84,7 +85,7 @@ scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
-# TODO Change from fork to spawn or forkserver?
+# FIXME consider change from 'fork' to 'spawn' or 'forkserver'
 mp_method = "fork"
 if platform.system() == "Windows":
     mp_method = "spawn"
@@ -203,7 +204,7 @@ logger = logging.getLogger(__name__)
 # Systemd watchdog monitoring:
 SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 
-# TODO randomize User-Agent
+# FIXME randomize User-Agent
 # UA = UserAgent()
 # UA.update()
 
@@ -278,7 +279,7 @@ def get_link_text(urls):
     link_text = ""
     for i, url in enumerate(urls):
         link_text += "[Source Link #{}]({}) | `{}`\n".format(str(i + 1), url, URL(url).host)
-        # TODO long link message split in many
+        # TODO split long link message to multiple ones
         direct_urls = urls[url].splitlines()[:3]
         for idx, direct_url in enumerate(direct_urls):
             if direct_url.startswith("http"):
@@ -573,7 +574,6 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     context.chat_data["settings"]["mode"] = button_action
             elif button_action in ["flood", "allow_unknown_sites"]:
                 # Toggles:
-                # TODO support multiple settings windows
                 current_setting = context.chat_data["settings"][button_action]
                 context.chat_data["settings"][button_action] = not current_setting
                 setting_changed = True
@@ -638,7 +638,7 @@ async def unknown_command_callback(update: Update, context: ContextTypes.DEFAULT
 
 async def error_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):  # skipcq: PYL-R0201
     # https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py#L29
-    """Log the error and send a telegram message to notify the developer."""
+    # TODO send telegram message to bot owner as well
     # Log the error before we do anything else, so we can see it even if something breaks.
     logger.error("Exception while handling an update:", exc_info=context.error)
 
@@ -691,7 +691,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         url_str = url_entities[entity]
         if "://" not in url_str:
             url_str = "http://" + url_str
-        # TODO try except
+        # FIXME try except
         url = URL(url_str)
         if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
             logger.info("Entity URL parsed: %s", url)
@@ -759,7 +759,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             urls_dict[url_text] = "http"
         elif (DOMAIN_YT in url.host or DOMAIN_YT_BE in url.host) and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # We still run it for checking YouTube region restriction to avoid fake asking:
+            # We still run it for checking YouTube region restriction to avoid useless asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
             # YM: tracks. Note that the domain includes x.com..
@@ -771,7 +771,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             urls_dict[url_text] = "http"
         elif DOMAIN_IG in url.host:
             # Instagram: videos, reels
-            # TODO We run it for checking Instagram ban to avoid fake asking:
+            # We run it for checking Instagram ban to avoid useless asking:
             urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
         elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (DOMAIN_YMC not in url.host) and (3 <= url_parts_num <= 3):
             # Twitter: videos
@@ -810,7 +810,7 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
                 logger.debug("download_url_and_send could not download cookies file")
                 pass
         elif cookies_file.startswith("firefox:"):
-            # TODO better handling of env var
+            # TODO handle env var better
             cookies_file_components = cookies_file.split(":", maxsplit=2)
             if len(cookies_file_components) == 3:
                 cookies_sqlite_file = cookies_file_components[2]
@@ -991,7 +991,7 @@ def download_url_and_send(
             "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
-            # TODO Support ffmpeg_location parameter or just use BIN_PATH here:
+            # FIXME support ffmpeg_location parameter or just use BIN_PATH here:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "trim_file_name": 32,
         }
@@ -1059,7 +1059,6 @@ def download_url_and_send(
                     logger.debug("download_url_and_send could not download cookies file")
                     pass
             elif cookies_file.startswith("firefox:"):
-                # TODO better handling of env var
                 cookies_file_components = cookies_file.split(":", maxsplit=2)
                 if len(cookies_file_components) == 3:
                     cookies_sqlite_file = cookies_file_components[2]
@@ -1091,7 +1090,7 @@ def download_url_and_send(
             if download_video:
                 info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
                 if "description" in info_dict and info_dict["description"]:
-                    # TODO better handle right-to-left hashtags https://www.instagram.com/reel/CtZbNhtrJv3/
+                    # TODO handle right-to-left hashtags better (like https://www.instagram.com/reel/CtZbNhtrJv3/)
                     add_description = escape_markdown(info_dict["description"][:800], version=1)
         except Exception as exc:
             print(exc)
@@ -1244,7 +1243,7 @@ def download_url_and_send(
                         source = "Bandcamp"
                     else:
                         source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
-                    # TODO fix youtube id in []
+                    # TODO fix youtube id in [] ?
                     caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", r"\_"), source, url, addition.replace("_", r"\_"))
                     if add_description:
                         caption += "\n\n" + add_description
@@ -1483,7 +1482,12 @@ def main():
             key=WEBHOOK_KEY_FILE,
         )
     else:
-        # TODO await it somehow
+        # TODO await it somehow or change to something like this:
+        # https://docs.python-telegram-bot.org/en/stable/telegram.bot.html
+        # https://docs.python-telegram-bot.org/en/stable/telegram.ext.application.html#telegram.ext.Application.run_polling
+        # https://github.com/python-telegram-bot/python-telegram-bot/discussions/3310
+        # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-requested-design-patterns#running-ptb-alongside-other-asyncio-frameworks
+        # https://docs.python-telegram-bot.org/en/v21.5/examples.customwebhookbot.html
         application.bot.delete_webhook()
         application.run_polling(
             drop_pending_updates=True,
