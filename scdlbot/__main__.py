@@ -1104,7 +1104,13 @@ def download_url_and_send(
                 if "description" in info_dict and info_dict["description"]:
                     # TODO handle right-to-left hashtags better (like https://www.instagram.com/reel/CtZbNhtrJv3/)
                     # TODO format as bold/link/quote
-                    add_description = escape_markdown("\n" + "@ " + info_dict["channel"] + " " + info_dict["uploader"] + "\n\n" + info_dict["description"][:800], version=1)
+                    unescaped_add_description = "\n"
+                    if "channel" in info_dict and info_dict["channel"]:
+                        unescaped_add_description += "@ " + info_dict["channel"]
+                    if "uploader" in info_dict and info_dict["uploader"]:
+                        unescaped_add_description += " " + info_dict["uploader"]
+                    unescaped_add_description += "\n" + info_dict["description"][:800]
+                    add_description = escape_markdown(unescaped_add_description, version=1)
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
