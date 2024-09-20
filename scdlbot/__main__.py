@@ -86,7 +86,7 @@ bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
 BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
 # FIXME consider change from 'fork' to 'spawn' or 'forkserver'
-mp_method = "fork"
+mp_method = "forkserver"
 if platform.system() == "Windows":
     mp_method = "spawn"
 # https://stackoverflow.com/a/66113051
@@ -94,7 +94,7 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=10, context=get_context(method=mp_method))
+EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=0, context=get_context(method=mp_method))
 # EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=10, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
@@ -715,11 +715,13 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
-        # FIXME better check domain in hostname
+        # FIXME better check domain in hostname and support YouTube Music
         unknown_site = not any((site in url_item.host for site in DOMAINS))
         # unshorten soundcloud.app.goo.gl and unknown sites links
         # example: https://soundcloud.app.goo.gl/mBMvG
-        if unknown_site or DOMAIN_SC in url_item.host:
+        # FIXME ?
+        # if unknown_site or DOMAIN_SC in url_item.host:
+        if DOMAIN_SC in url_item.host:
             proxy_arg = None
             if proxy:
                 proxy_arg = {"http": proxy, "https": proxy}
@@ -728,7 +730,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                     requests.head(
                         url_item.to_text(full_quote=True),
                         allow_redirects=True,
-                        timeout=2,
+                        timeout=3,
                         proxies=proxy_arg,
                         # headers={"User-Agent": UA.random},
                         headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
@@ -746,8 +748,10 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         if mode == "link" or unknown_site:
             # We run it if it was explicitly requested as per "link" mode.
             # We run it for links from unknown sites (if they were allowed).
+            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for unknown sites). Link mode will be removed.
             # If it's known site, we need to check it more thoroughly below.
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            urls_dict[url_text] = "http"
         elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
@@ -759,8 +763,10 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             urls_dict[url_text] = "http"
         elif (DOMAIN_YT in url.host or DOMAIN_YT_BE in url.host) and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
             # YouTube: videos and playlists
-            # We still run it for checking YouTube region restriction to avoid useless asking:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            # We still run it for checking YouTube region restriction to avoid useless asking.
+            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking.
+            # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            urls_dict[url_text] = "http"
         elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
             # YM: tracks. Note that the domain includes x.com..
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -769,10 +775,12 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # TikTok: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif DOMAIN_IG in url.host:
+        elif DOMAIN_IG in url.host and (2 <= url_parts_num):
             # Instagram: videos, reels
-            # We run it for checking Instagram ban to avoid useless asking:
-            urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            # We run it for checking Instagram ban to avoid useless asking.
+            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking.
+            # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
+            urls_dict[url_text] = "http"
         elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (DOMAIN_YMC not in url.host) and (3 <= url_parts_num <= 3):
             # Twitter: videos
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -835,7 +843,9 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
 
     logger.debug("%s starts: %s", cmd_name, url)
     try:
-        info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+        # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
+        unsanitized_info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+        info_dict = ydl.YoutubeDL(ydl_opts).sanitize_info(unsanitized_info_dict)
         # TODO actualize checks, fix for youtube playlists
         if "url" in info_dict:
             direct_url = info_dict["url"]
@@ -888,7 +898,7 @@ def download_url_and_send(
     # We can't use asyncio.run_coroutine_threadsafe(coro, loop_main) because it doesn't work (interferes with framework?).
     # So we run additional loop in additional thread and just use it:
     loop_additional = asyncio.new_event_loop()
-    thread_additional = threading.Thread(target=loop_additional.run_forever, name="Async Runner", daemon=True)
+    thread_additional = threading.Thread(target=loop_additional.run_forever, name="Additional Async Runner", daemon=True)
 
     def run_async(coro):
         if not thread_additional.is_alive():
@@ -1084,14 +1094,17 @@ def download_url_and_send(
         logger.debug("%s starts: %s", cmd_name, url)
         try:
             # TODO check result
+            # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
             status = "success"
             if download_video:
-                info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+                unsanitized_info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+                info_dict = ydl.YoutubeDL(ydl_opts).sanitize_info(unsanitized_info_dict)
                 if "description" in info_dict and info_dict["description"]:
                     # TODO handle right-to-left hashtags better (like https://www.instagram.com/reel/CtZbNhtrJv3/)
-                    add_description = escape_markdown(info_dict["description"][:800], version=1)
+                    # TODO format as bold/link/quote
+                    add_description = escape_markdown("\n" + "@ " + info_dict["channel"] + " " + info_dict["uploader"] + "\n\n" + info_dict["description"][:800], version=1)
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
@@ -1246,7 +1259,7 @@ def download_url_and_send(
                     # TODO fix youtube id in [] ?
                     caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", r"\_"), source, url, addition.replace("_", r"\_"))
                     if add_description:
-                        caption += "\n\n" + add_description
+                        caption += add_description
                     # logger.debug(caption)
                     reply_to_message_id_send = reply_to_message_id
                 sent_audio_ids = []
@@ -1371,7 +1384,7 @@ def download_url_and_send(
 async def post_shutdown(application: Application) -> None:
     # EXECUTOR.shutdown(wait=False, cancel_futures=True)
     EXECUTOR.stop()
-    EXECUTOR.join()
+    EXECUTOR.join(timeout=10)
 
 
 async def post_init(application: Application) -> None:
