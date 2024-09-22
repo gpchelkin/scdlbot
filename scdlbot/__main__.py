@@ -54,8 +54,8 @@ except ImportError:
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
 
-# Use maximum 2048 mebibytes per task:
-MAX_MEM = 2048 * 1024 * 1024
+# FIXME Use maximum 1500 mebibytes per task:
+MAX_MEM = 1500 * 1024 * 1024
 
 
 def pp_initializer(limit):
@@ -94,8 +94,9 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=0, context=get_context(method=mp_method))
-# EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=10, context=get_context(method=mp_method))
+# FIXME max_tasks
+EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
+# EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/

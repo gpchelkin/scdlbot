@@ -29,9 +29,11 @@ NotifyAccess=all
 Restart=always
 RestartSec=5
 CPUQuotaPeriodSec=1000ms
+# 3 vCPU:
 CPUQuota=250%
-MemoryHigh=3100M
-MemoryMax=3400M
+# 4 GB RAM:
+MemoryHigh=2500M
+MemoryMax=2700M
 TasksMax=infinity
 LimitNOFILE=1048576
 
