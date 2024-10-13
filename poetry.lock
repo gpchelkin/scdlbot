@@ -820,13 +820,13 @@ files = [
 
 [[package]]
 name = "docutils"
-version = "0.21.2"
+version = "0.20.1"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.7"
 files = [
-    {file = "docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2"},
-    {file = "docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f"},
+    {file = "docutils-0.20.1-py3-none-any.whl", hash = "sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6"},
+    {file = "docutils-0.20.1.tar.gz", hash = "sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b"},
 ]
 
 [[package]]
@@ -1430,14 +1430,18 @@ version = "0.3.3.post2"
 description = "Markdown and reStructuredText in a single file."
 optional = false
 python-versions = ">=3.7"
-files = [
-    {file = "m2r2-0.3.3.post2-py3-none-any.whl", hash = "sha256:86157721eb6eabcd54d4eea7195890cc58fa6188b8d0abea633383cfbb5e11e3"},
-    {file = "m2r2-0.3.3.post2.tar.gz", hash = "sha256:e62bcb0e74b3ce19cda0737a0556b04cf4a43b785072fcef474558f2c1482ca8"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-docutils = ">=0.19"
+docutils = ">=0.19,<0.21"
 mistune = "0.8.4"
+
+[package.source]
+type = "git"
+url = "https://github.com/adrien-berchet/m2r2.git"
+reference = "patch-1"
+resolved_reference = "d8e4f6e567dfe2452070c031a6e1d47046ac8ddf"
 
 [[package]]
 name = "markdown-it-py"
@@ -3225,4 +3229,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "91d7435d86034bc1430e556f96277cd7ec6393a2db0e1917a91638bcd291df7d"
+content-hash = "da2756bb1658ae4c3a2abcd342fead5a96959996c365a1c5a9859c41cebba6a3"

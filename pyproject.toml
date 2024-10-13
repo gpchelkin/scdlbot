@@ -107,7 +107,10 @@ optional = true
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.4"
 sphinx-autodoc-typehints = "^2.3.0"
-m2r2 = "^0.3"
+#m2r2 = "^0.3"
+# https://github.com/CrossNox/m2r2/issues/68
+# https://github.com/CrossNox/m2r2/pull/69
+m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
 tomli = "^2.0"
 recommonmark = "^0.7"
 typing-extensions = "^4.9"
