@@ -8,6 +8,7 @@ import os
 import pathlib
 import platform
 import random
+import re
 import resource
 import shutil
 import tempfile
@@ -245,7 +246,11 @@ DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
 DOMAIN_TWX = "x.com"
-DOMAINS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
+DOMAINS_STRINGS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
+DOMAINS = [rf"^(?:[^\s]+\.)?{re.escape(domain_string)}$" for domain_string in DOMAINS_STRINGS]
+
+AUDIO_FORMATS = ["mp3"]
+VIDEO_FORMATS = ["m4a", "mp4", "webm"]
 
 
 # TODO get rid of these dumb exceptions:
@@ -340,7 +345,7 @@ def url_valid_and_allowed(url, allow_unknown_sites=False):
             return False
     if allow_unknown_sites:
         return True
-    if any((site in host for site in DOMAINS)):
+    if any((re.match(domain, host) for domain in DOMAINS)):
         return True
     else:
         return False
@@ -472,7 +477,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
     urls_values = " ".join(urls_dict.values())
 
-    # Continue only if any good direct url status exist (or if we deal with trusted urls):
+    # Continue only if any good direct url status exist (or if we deal with known sites):
     if action == "dl":
         if not urls_dict:
             if apologize:
@@ -720,22 +725,22 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
-        # FIXME Check domain in hostname better here (e.g netflix.com includes x.com)
-        unknown_site = not any((site in url_item.host for site in DOMAINS))
+        # Check domain in hostname (e.g netflix.com includes x.com)
+        unknown_site = not any((re.match(domain, url_item.host) for domain in DOMAINS))
         # Unshorten soundcloud.app.goo.gl and unknown sites links. Example: https://soundcloud.app.goo.gl/mBMvG
-        # FIXME Unshorten unknown sites links again?
+        # TODO Unshorten unknown sites links again? Because yt-dlp may only support unshortened?
         # if unknown_site or DOMAIN_SC in url_item.host:
         if DOMAIN_SC in url_item.host:
-            proxy_arg = None
+            proxy_args = None
             if proxy:
-                proxy_arg = {"http": proxy, "https": proxy}
+                proxy_args = {"http": proxy, "https": proxy}
             try:
                 url = URL(
                     requests.head(
                         url_item.to_text(full_quote=True),
                         allow_redirects=True,
-                        timeout=3,
-                        proxies=proxy_arg,
+                        timeout=2,
+                        proxies=proxy_args,
                         # headers={"User-Agent": UA.random},
                         headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"},
                     ).url
@@ -744,16 +749,16 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                 url = url_item
         else:
             url = url_item
-        unknown_site = not any((site in url.host for site in DOMAINS))
+        unknown_site = not any((re.match(domain, url.host) for domain in DOMAINS))
         url_text = url.to_text(full_quote=True)
         logger.debug(f"unshortened link: {url_text}")
         # url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
         url_parts_num = len([part for part in url.path_parts if part])
-        if mode == "link" or unknown_site:
+        if unknown_site or mode == "link":
             # We run it if it was explicitly requested as per "link" mode.
             # We run it for links from unknown sites (if they were allowed).
-            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for unknown sites). Link mode will be removed.
-            # If it's known site, we need to check it more thoroughly below.
+            # FIXME For now we avoid extra requests on asking just to improve responsiveness. We are okay with useless asking (for unknown sites). Link mode might be removed.
+            # If it's a known site, we check it more thoroughly below.
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
         elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
@@ -768,7 +773,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         elif ((DOMAIN_YT in url.host) and ("watch" in url.path or "playlist" in url.path)) or (DOMAIN_YT_BE in url.host):
             # YouTube: videos and playlists
             # We still run it for checking YouTube region restriction to avoid useless asking.
-            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for youtube).
+            # FIXME For now we avoid extra requests on asking just to improve responsiveness. We are okay with useless asking (for youtube).
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
         elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
@@ -782,7 +787,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         elif DOMAIN_IG in url.host and (2 <= url_parts_num):
             # Instagram: videos, reels
             # We run it for checking Instagram ban to avoid useless asking.
-            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for instagram).
+            # FIXME For now we avoid extra requests on asking just to improve responsiveness. We are okay with useless asking (for instagram).
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
         elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (DOMAIN_YMC not in url.host) and (3 <= url_parts_num <= 3):
@@ -1098,7 +1103,7 @@ def download_url_and_send(
 
         logger.debug("%s starts: %s", cmd_name, url)
         try:
-            # TODO check result
+            # FIXME Check and proceed even with partial results - e.g. for playlists with only some videos failed (private or more) https://youtube.com/playlist?list=PL2C109776112A2BB3
             # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
@@ -1150,10 +1155,10 @@ def download_url_and_send(
                     file_root, file_ext = os.path.splitext(file)
                     file_format = file_ext.replace(".", "").lower()
                     file_size = os.path.getsize(file)
-                    if file_format not in ["mp3", "m4a", "mp4", "webm"]:
+                    if file_format not in AUDIO_FORMATS + VIDEO_FORMATS:
                         raise FileNotSupportedError(file_format)
                     # We don't convert videos (from tiktok or instagram or twitter):
-                    if file_format in ["m4a", "mp4", "webm"] and not download_video:
+                    if file_format in VIDEO_FORMATS and not download_video:
                         if file_size > MAX_CONVERT_FILE_SIZE:
                             raise FileTooLargeError(file_size)
                         logger.debug("Converting: %s", file)
