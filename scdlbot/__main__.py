@@ -54,7 +54,8 @@ except ImportError:
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
 
-# FIXME Use maximum 1500 mebibytes per task:
+# Use maximum 1500 mebibytes per task:
+# TODO Parametrize?
 MAX_MEM = 1500 * 1024 * 1024
 
 
@@ -83,9 +84,9 @@ DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
 BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
-BCDL_ENABLE = False
+BCDL_ENABLE = True
 WORKERS = int(os.getenv("WORKERS", 2))
-# FIXME consider change from 'fork' to 'spawn' or 'forkserver'
+# TODO 'fork' is prohibited, doesn't work. Maybe change to 'spawn' on all platforms
 mp_method = "forkserver"
 if platform.system() == "Windows":
     mp_method = "spawn"
@@ -94,7 +95,6 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-# FIXME max_tasks
 EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
 # EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
@@ -205,7 +205,9 @@ logger = logging.getLogger(__name__)
 # Systemd watchdog monitoring:
 SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 
-# FIXME randomize User-Agent
+# TODO Randomize User-Agent again
+# https://user-agents.net/download
+# https://user-agents.net/my-user-agent
 # UA = UserAgent()
 # UA.update()
 
@@ -692,13 +694,15 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         url_str = url_entities[entity]
         if "://" not in url_str:
             url_str = "http://" + url_str
-        # FIXME try except
-        url = URL(url_str)
-        if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
-            logger.info("Entity URL parsed: %s", url)
-            urls.append(url)
-        else:
-            logger.info("Entry URL is not valid or blacklisted: %s", url_str)
+        try:
+            url = URL(url_str)
+            if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
+                logger.info("Entity URL parsed: %s", url)
+                urls.append(url)
+            else:
+                logger.info("Entry URL is not valid or blacklisted: %s", url_str)
+        except:
+            logger.info("Entry URL is not valid: %s", url_str)
     text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
     text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
     text_link_entities.update(text_link_caption_entities)
@@ -716,11 +720,10 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
-        # FIXME better check domain in hostname and support YouTube Music
+        # FIXME Check domain in hostname better here (e.g netflix.com includes x.com)
         unknown_site = not any((site in url_item.host for site in DOMAINS))
-        # unshorten soundcloud.app.goo.gl and unknown sites links
-        # example: https://soundcloud.app.goo.gl/mBMvG
-        # FIXME ?
+        # Unshorten soundcloud.app.goo.gl and unknown sites links. Example: https://soundcloud.app.goo.gl/mBMvG
+        # FIXME Unshorten unknown sites links again?
         # if unknown_site or DOMAIN_SC in url_item.host:
         if DOMAIN_SC in url_item.host:
             proxy_arg = None
@@ -734,7 +737,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                         timeout=3,
                         proxies=proxy_arg,
                         # headers={"User-Agent": UA.random},
-                        headers={"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:105.0) Gecko/20100101 Firefox/105.0"},
+                        headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"},
                     ).url
                 )
             except:
@@ -762,10 +765,10 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # Bandcamp: tracks and albums
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
             urls_dict[url_text] = "http"
-        elif (DOMAIN_YT in url.host or DOMAIN_YT_BE in url.host) and (DOMAIN_YT_BE in url.host or "watch" in url.path or "playlist" in url.path):
+        elif ((DOMAIN_YT in url.host) and ("watch" in url.path or "playlist" in url.path)) or (DOMAIN_YT_BE in url.host):
             # YouTube: videos and playlists
             # We still run it for checking YouTube region restriction to avoid useless asking.
-            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking.
+            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for youtube).
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
         elif DOMAIN_YMR in url.host or DOMAIN_YMC in url.host:
@@ -779,7 +782,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         elif DOMAIN_IG in url.host and (2 <= url_parts_num):
             # Instagram: videos, reels
             # We run it for checking Instagram ban to avoid useless asking.
-            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking.
+            # FIXME For now we avoid extra requests on asking just to improve performance. We are okay with useless asking (for instagram).
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
         elif (DOMAIN_TW in url.host or DOMAIN_TWX in url.host) and (DOMAIN_YMC not in url.host) and (3 <= url_parts_num <= 3):
@@ -962,7 +965,7 @@ def download_url_and_send(
                 "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
                 "--overwrite",  # Overwrite tracks that already exist
                 "--group",  # Use album/track Label as iTunes grouping
-                # "--embed-art",  # Embed album art (if available)
+                "--embed-art",  # Embed album art (if available)
                 "--no-slugify",  # Disable slugification of track, album, and artist names
                 url,  # URL of album/track
             )
@@ -1002,8 +1005,9 @@ def download_url_and_send(
             "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
-            # FIXME support ffmpeg_location parameter or just use BIN_PATH here:
+            # TODO Add optional parameter FFMPEG_PATH:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
+            # "ffmpeg_location": "/usr/local/bin/",
             # "trim_file_name": 32,
         }
         if DOMAIN_TT in host:
