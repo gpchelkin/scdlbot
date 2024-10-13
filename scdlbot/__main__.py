@@ -234,9 +234,9 @@ OLD_MSG_TEXT = get_response_text("old_msg.txt")
 # RANT_TEXT_PUBLIC = f"[Start me in PM to read help and learn how to use me](t.me/{TG_BOT_USERNAME}?start=1)"
 
 # Known and supported site domains:
-# support soundcloud.com and soundcloud.app.goo.gl links:
-DOMAIN_SC = "soundcloud"
+DOMAIN_SC = "soundcloud.com"
 DOMAIN_SC_API = "api.soundcloud.com"
+DOMAIN_SC_GOOGL = "soundcloud.app.goo.gl"
 DOMAIN_BC = "bandcamp.com"
 DOMAIN_YT = "youtube.com"
 DOMAIN_YT_BE = "youtu.be"
@@ -246,7 +246,7 @@ DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
 DOMAIN_TWX = "x.com"
-DOMAINS_STRINGS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
+DOMAINS_STRINGS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_SC_GOOGL, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
 DOMAINS = [rf"^(?:[^\s]+\.)?{re.escape(domain_string)}$" for domain_string in DOMAINS_STRINGS]
 
 AUDIO_FORMATS = ["mp3"]
@@ -725,12 +725,12 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
-        # Check domain in hostname (e.g netflix.com includes x.com)
+        # FIXME Check domain in hostname with regex in all places (e.g netflix.com includes x.com)
         unknown_site = not any((re.match(domain, url_item.host) for domain in DOMAINS))
         # Unshorten soundcloud.app.goo.gl and unknown sites links. Example: https://soundcloud.app.goo.gl/mBMvG
         # TODO Unshorten unknown sites links again? Because yt-dlp may only support unshortened?
-        # if unknown_site or DOMAIN_SC in url_item.host:
-        if DOMAIN_SC in url_item.host:
+        # if unknown_site or DOMAIN_SC_GOOGL in url_item.host:
+        if DOMAIN_SC_GOOGL in url_item.host:
             proxy_args = None
             if proxy:
                 proxy_args = {"http": proxy, "https": proxy}
@@ -751,7 +751,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             url = url_item
         unknown_site = not any((re.match(domain, url.host) for domain in DOMAINS))
         url_text = url.to_text(full_quote=True)
-        logger.debug(f"unshortened link: {url_text}")
+        logger.debug(f"Unshortened link: {url_text}")
         # url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
         url_parts_num = len([part for part in url.path_parts if part])
         if unknown_site or mode == "link":
@@ -761,7 +761,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # If it's a known site, we check it more thoroughly below.
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
-        elif DOMAIN_SC in url.host and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
+        elif (DOMAIN_SC in url.host or DOMAIN_SC_GOOGL in url.host) and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -940,9 +940,9 @@ def download_url_and_send(
     cmd_name = ""
     cmd_args = ()
     cmd_input = None
-    if (DOMAIN_SC in host and DOMAIN_SC_API not in host) or (DOMAIN_BC in host and BCDL_ENABLE):
+    if ((DOMAIN_SC in host or DOMAIN_SC_GOOGL in host) and DOMAIN_SC_API not in host) or (DOMAIN_BC in host and BCDL_ENABLE):
         # If link is sc/bc, we try scdl/bcdl first:
-        if DOMAIN_SC in host and DOMAIN_SC_API not in host:
+        if (DOMAIN_SC in host or DOMAIN_SC_GOOGL in host) and DOMAIN_SC_API not in host:
             cmd = scdl_bin
             cmd_name = str(cmd)
             cmd_args = (
@@ -1266,7 +1266,7 @@ def download_url_and_send(
                         file_root, file_ext = os.path.splitext(file_name)
                         file_title = file_root.replace(file_ext, "")
                         addition = ": " + file_title
-                    elif DOMAIN_SC in host:
+                    elif DOMAIN_SC in host or DOMAIN_SC_GOOGL in host:
                         source = "SoundCloud"
                     elif DOMAIN_BC in host:
                         source = "Bandcamp"
