@@ -235,6 +235,7 @@ OLD_MSG_TEXT = get_response_text("old_msg.txt")
 
 # Known and supported site domains:
 DOMAIN_SC = "soundcloud.com"
+DOMAIN_SC_ON = "on.soundcloud.com"
 DOMAIN_SC_API = "api.soundcloud.com"
 DOMAIN_SC_GOOGL = "soundcloud.app.goo.gl"
 DOMAIN_BC = "bandcamp.com"
@@ -246,7 +247,7 @@ DOMAIN_TT = "tiktok.com"
 DOMAIN_IG = "instagram.com"
 DOMAIN_TW = "twitter.com"
 DOMAIN_TWX = "x.com"
-DOMAINS_STRINGS = [DOMAIN_SC, DOMAIN_SC_API, DOMAIN_SC_GOOGL, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
+DOMAINS_STRINGS = [DOMAIN_SC, DOMAIN_SC_ON, DOMAIN_SC_API, DOMAIN_SC_GOOGL, DOMAIN_BC, DOMAIN_YT, DOMAIN_YT_BE, DOMAIN_YMR, DOMAIN_YMC, DOMAIN_TT, DOMAIN_IG, DOMAIN_TW, DOMAIN_TWX]
 DOMAINS = [rf"^(?:[^\s]+\.)?{re.escape(domain_string)}$" for domain_string in DOMAINS_STRINGS]
 
 AUDIO_FORMATS = ["mp3"]
