@@ -706,9 +706,9 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                 logger.info("Entity URL parsed: %s", url)
                 urls.append(url)
             else:
-                logger.info("Entry URL is not valid or blacklisted: %s", url_str)
+                logger.info("Entity URL is not valid or blacklisted: %s", url_str)
         except:
-            logger.info("Entry URL is not valid: %s", url_str)
+            logger.info("Entity URL is not valid: %s", url_str)
     text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
     text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
     text_link_entities.update(text_link_caption_entities)
@@ -718,7 +718,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             logger.info("Entity Text Link parsed: %s", url)
             urls.append(url)
         else:
-            logger.info("Entry Text Link is not valid or blacklisted: %s", url)
+            logger.info("Entity Text Link is not valid or blacklisted: %s", url)
     # If message just some text passed (not isinstance(message, Message)):
     # all_links = find_all_links(message, default_scheme="http")
     # urls = [link for link in all_links if url_valid_and_allowed(link)]
@@ -731,7 +731,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
         # Unshorten soundcloud.app.goo.gl and unknown sites links. Example: https://soundcloud.app.goo.gl/mBMvG
         # TODO Unshorten unknown sites links again? Because yt-dlp may only support unshortened?
         # if unknown_site or DOMAIN_SC_GOOGL in url_item.host:
-        if DOMAIN_SC_GOOGL in url_item.host:
+        if DOMAIN_SC_GOOGL in url_item.host or DOMAIN_SC_ON in url_item.host:
             proxy_args = None
             if proxy:
                 proxy_args = {"http": proxy, "https": proxy}
@@ -762,7 +762,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # If it's a known site, we check it more thoroughly below.
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
-        elif (DOMAIN_SC in url.host or DOMAIN_SC_GOOGL in url.host) and (2 <= url_parts_num <= 4 or DOMAIN_SC_API in url.host) and (not "you" in url.path_parts):
+        elif ((DOMAIN_SC in url.host) and (2 <= url_parts_num <= 4) and (not "you" in url.path_parts)) or (DOMAIN_SC_GOOGL in url.host) or (DOMAIN_SC_API in url.host):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
