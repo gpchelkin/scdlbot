@@ -42,13 +42,13 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-telegram-bot = { version = "21.6", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+python-telegram-bot = { version = "21.7", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
 requests = { version = "^2.31.0", extras = ["socks"] }
 pebble = "^5.0.7"
-boltons = "^24.0.0"
+boltons = "^24.1.0"
 mutagen = "^1.47.0"
 plumbum = "^1.9.0"
 ffmpeg-python = "0.2.0"
@@ -112,7 +112,7 @@ sphinx-autodoc-typehints = "^2.3.0"
 # https://github.com/CrossNox/m2r2/pull/69
 #m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
 myst-parser = "^4.0.0"
-tomli = "^2.0"
+tomli = "^2.1"
 recommonmark = "^0.7"
 typing-extensions = "^4.9"
 

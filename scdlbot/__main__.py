@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import pathlib
+import pickle
 import platform
 import random
 import re
@@ -1435,6 +1436,21 @@ def main():
     #     os.makedirs(config_dir, exist_ok=True)
     #     with open(config_path, 'w') as config_file:
     #         config.write(config_file)
+
+    try:
+        with open(CHAT_STORAGE, "rb") as file:
+            data = pickle.load(file)
+        logger.info(f"Pickle file '{CHAT_STORAGE}' loaded successfully. Can continue loading persistence.")
+    except FileNotFoundError:
+        logger.info(f"The file '{CHAT_STORAGE}' does not exist, it will be created from scratch.")
+    except TypeError as e:
+        logger.info(f"TypeError occurred: {e}. Deleting the file...")
+        os.remove(CHAT_STORAGE)
+        logger.info(f"File '{CHAT_STORAGE}' has been deleted, it will be created from scratch.")
+    except Exception as e:
+        logger.info(f"An unexpected error occurred: {e}. Deleting the file...")
+        os.remove(CHAT_STORAGE)
+        logger.info(f"File '{CHAT_STORAGE}' has been deleted, it will be created from scratch.")
 
     persistence = PicklePersistence(filepath=CHAT_STORAGE)
 
