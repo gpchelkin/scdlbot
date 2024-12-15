@@ -21,6 +21,7 @@ Type=simple
 EnvironmentFile=/etc/default/scdlbot
 #Environment=SYSTEMD_LOG_LEVEL=debug
 #ExecStartPre=-rm -rf /scdlbothome/scdlbotdata.pickle
+#ExecStartPre=/usr/bin/pkill -f python3.11
 #ExecStart=/opt/pyenv/versions/3.11.5/bin/scdlbot
 ExecStart=/usr/local/bin/scdlbot
 WatchdogSec=180
@@ -33,8 +34,8 @@ CPUQuotaPeriodSec=1000ms
 # 3 vCPU:
 CPUQuota=250%
 # 4 GB RAM:
-MemoryHigh=2500M
-MemoryMax=2700M
+MemoryHigh=2800M
+MemoryMax=3000M
 TasksMax=infinity
 LimitNOFILE=1048576
 

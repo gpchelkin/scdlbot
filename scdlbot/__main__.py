@@ -27,6 +27,10 @@ import ffmpeg
 import prometheus_client
 import requests
 import sdnotify
+
+# import gc
+# from boltons.urlutils import find_all_links
+from fake_useragent import UserAgent
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from pebble import ProcessPool
@@ -38,9 +42,6 @@ from telegram.ext import AIORateLimiter, Application, ApplicationBuilder, Callba
 from telegram.helpers import escape_markdown
 from telegram.request import HTTPXRequest
 
-# import gc
-# from boltons.urlutils import find_all_links
-# from fake_useragent import UserAgent
 # from telegram_handler import TelegramHandler
 
 # Support different old versions just in case:
@@ -207,11 +208,11 @@ logger = logging.getLogger(__name__)
 # Systemd watchdog monitoring:
 SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 
-# TODO Randomize User-Agent again
-# https://user-agents.net/download
-# https://user-agents.net/my-user-agent
-# UA = UserAgent()
-# UA.update()
+# Randomize User-Agent:
+# https://github.com/intoli/user-agents/tree/main/src
+## https://user-agents.net/download
+## https://user-agents.net/my-user-agent
+UA = UserAgent(browsers=["Google", "Chrome", "Firefox", "Edge", "Opera", "Safari"], platforms=["desktop"], os=["Windows", "Linux", "Ubuntu", "Mac OS X"])
 
 
 # Text constants from resources:
@@ -727,9 +728,9 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
 
     urls_dict = {}
     for url_item in urls:
-        # FIXME Check domain in hostname with regex in all places (e.g netflix.com includes x.com)
         unknown_site = not any((re.match(domain, url_item.host) for domain in DOMAINS))
         # Unshorten soundcloud.app.goo.gl and unknown sites links. Example: https://soundcloud.app.goo.gl/mBMvG
+        # FIXME spotdl to transform spotify link to youtube music link?
         # TODO Unshorten unknown sites links again? Because yt-dlp may only support unshortened?
         # if unknown_site or DOMAIN_SC_GOOGL in url_item.host:
         if DOMAIN_SC_GOOGL in url_item.host or DOMAIN_SC_ON in url_item.host:
@@ -743,8 +744,8 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                         allow_redirects=True,
                         timeout=2,
                         proxies=proxy_args,
-                        # headers={"User-Agent": UA.random},
-                        headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"},
+                        headers={"User-Agent": UA.random},
+                        # headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"},
                     ).url
                 )
             except:

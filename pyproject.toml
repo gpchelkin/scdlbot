@@ -42,7 +42,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-telegram-bot = { version = "21.7", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+python-telegram-bot = { version = "21.9", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
@@ -54,7 +54,7 @@ plumbum = "^1.9.0"
 ffmpeg-python = "0.2.0"
 prometheus_client = "^0.21.0"
 sdnotify = "^0.3.2"
-fake-useragent = "^1.5.1"
+fake-useragent = "^2.0.3"
 #python-telegram-handler = "^2.2.1"
 #patool = "1.12"
 #pyshorteners = "1.0.1"
