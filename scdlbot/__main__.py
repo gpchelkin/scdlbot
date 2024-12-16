@@ -366,7 +366,7 @@ async def start_help_commands_callback(update: Update, context: ContextTypes.DEF
     # Determine the original command:
     entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
     for entity_value in entities.values():
-        command_name = entity_value.replace("/", "").replace(f"@{context.bot.username}", "")
+        command_name = entity_value.replace("/", "").replace(f"@{context.bot.username}", "").lower()
         break
     logger.debug(command_name)
     BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
