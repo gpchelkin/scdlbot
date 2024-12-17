@@ -212,7 +212,7 @@ SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 # https://github.com/intoli/user-agents/tree/main/src
 ## https://user-agents.net/download
 ## https://user-agents.net/my-user-agent
-UA = UserAgent(browsers=["Google", "Chrome", "Firefox", "Edge", "Opera", "Safari"], platforms=["desktop"], os=["Windows", "Linux", "Ubuntu", "Mac OS X"])
+UA = UserAgent(browsers=["Google", "Chrome", "Firefox", "Edge"], platforms=["desktop"], os=["Windows", "Linux", "Ubuntu"])
 
 
 # Text constants from resources:
@@ -745,7 +745,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
                         timeout=2,
                         proxies=proxy_args,
                         headers={"User-Agent": UA.random},
-                        # headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"},
+                        # headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"},
                     ).url
                 )
             except:
