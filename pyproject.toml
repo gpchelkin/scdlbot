@@ -95,7 +95,7 @@ optional = true
 isort = "^5.12"
 black = "^24.10.0"
 # make lint:
-wemake-python-styleguide = "^0.19.2"
+wemake-python-styleguide = ">=0.19.2,<1.1.0"
 doc8 = "^1.1"
 nitpick = "^0.35"
 safety = "^3.2.7"
