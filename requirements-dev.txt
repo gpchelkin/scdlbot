@@ -78,7 +78,7 @@ ruamel-yaml-clib==0.2.12 ; platform_python_implementation == "CPython" and pytho
 ruamel-yaml==0.18.6 ; python_version >= "3.10" and python_version < "4.0"
 safety-schemas==0.0.10 ; python_version >= "3.10" and python_version < "4.0"
 safety==3.2.13 ; python_version >= "3.10" and python_version < "4.0"
-setuptools==75.6.0 ; python_version >= "3.10" and python_version < "4.0"
+setuptools==75.8.0 ; python_version >= "3.10" and python_version < "4.0"
 shellingham==1.5.4 ; python_version >= "3.10" and python_version < "4.0"
 six==1.17.0 ; python_version >= "3.10" and python_version < "4.0"
 snowballstemmer==2.2.0 ; python_version >= "3.10" and python_version < "4.0"
