@@ -42,7 +42,7 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-telegram-bot = { version = "21.9", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+python-telegram-bot = { version = "21.10", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
@@ -95,7 +95,7 @@ optional = true
 isort = "^5.12"
 black = "^24.10.0"
 # make lint:
-wemake-python-styleguide = "^0.19.2"
+wemake-python-styleguide = "^1.0.0"
 doc8 = "^1.1"
 nitpick = "^0.35"
 safety = "^3.2.7"
@@ -106,7 +106,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.1.3"
-sphinx-autodoc-typehints = "^2.3.0"
+sphinx-autodoc-typehints = "^3.0.1"
 #m2r2 = "^0.3"
 # https://github.com/CrossNox/m2r2/issues/68
 # https://github.com/CrossNox/m2r2/pull/69
