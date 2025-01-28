@@ -92,7 +92,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
-isort = "^5.12"
+isort = ">=5.12,<7.0"
 black = "^24.10.0"
 # make lint:
 wemake-python-styleguide = "^1.0.0"
