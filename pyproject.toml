@@ -92,8 +92,8 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
-isort = "^5.12"
-black = "^24.10.0"
+isort = "^6.0.0"
+black = "^25.1.0"
 # make lint:
 wemake-python-styleguide = "^1.0.0"
 doc8 = "^1.1"
