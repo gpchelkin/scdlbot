@@ -48,7 +48,7 @@ python-telegram-bot = { version = "21.10", extras = ["webhooks", "job-queue", "h
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
 requests = { version = "^2.31.0", extras = ["socks"] }
 pebble = "^5.0.7"
-boltons = "^24.1.0"
+boltons = ">=24.1,<26.0"
 mutagen = "^1.47.0"
 plumbum = "^1.9.0"
 ffmpeg-python = "0.2.0"
