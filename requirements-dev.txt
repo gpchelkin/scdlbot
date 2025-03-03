@@ -1,6 +1,6 @@
 annotated-types==0.7.0 ; python_version >= "3.10" and python_version < "4.0"
 attrs==25.1.0 ; python_version >= "3.10" and python_version < "4.0"
-authlib==1.4.1 ; python_version >= "3.10" and python_version < "4.0"
+authlib==1.5.1 ; python_version >= "3.10" and python_version < "4.0"
 autorepr==0.3.0 ; python_version >= "3.10" and python_version < "4.0"
 black==25.1.0 ; python_version >= "3.10" and python_version < "4.0"
 cattrs==24.1.2 ; python_version >= "3.10" and python_version < "4.0"
