@@ -62,10 +62,10 @@ fake-useragent = "^2.0.3"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = "2024.10.7"
+#yt-dlp = "2025.2.19"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
-#scdl = "2.12.1"
+#scdl = "2.12.4"
 bandcamp-downloader = "0.0.16"
 
 ### For making it work better using latest git revision:
