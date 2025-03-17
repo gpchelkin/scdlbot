@@ -1781,14 +1781,14 @@ unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
 name = "python-telegram-bot"
-version = "21.11.1"
+version = "22.0"
 description = "We have made you a wrapper you can't refuse"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "python_telegram_bot-21.11.1-py3-none-any.whl", hash = "sha256:17f933a7a0569f519d9b672e06d71c29ab3688f1ec575ba59a3ca37922481113"},
-    {file = "python_telegram_bot-21.11.1.tar.gz", hash = "sha256:2abda5202f27a838f35e8140e5292af0f4f8fad6c2e5123b2defadd5f4e8ca02"},
+    {file = "python_telegram_bot-22.0-py3-none-any.whl", hash = "sha256:23237f778655e634f08cfebbada96ed3692c2bdd3c20c122e90a6d606d6a4516"},
+    {file = "python_telegram_bot-22.0.tar.gz", hash = "sha256:acf86f28d86d81cab736177d2988e5bcb27f2248137efd62e02c46e9ba1fe44c"},
 ]
 
 [package.dependencies]
@@ -2981,4 +2981,4 @@ resolved_reference = "bd0a66816934de70312eea1e71c59c13b401dc3a"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "2efb3ebce01790e4c63874f7cb3346ca174244880a27ab99ef86178d0025092e"
+content-hash = "386de09dbf49113fb7815278e38c984b8b9f38411c0156aabcc09950e0081845"
