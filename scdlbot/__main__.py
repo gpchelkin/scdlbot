@@ -1004,7 +1004,7 @@ def download_url_and_send(
     if status == "initial":
         # If link is not sc/bc or scdl/bcdl just failed, we use ydl
         cmd_name = "ydl_download"
-        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L172
+        # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L187
         # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils/_utils.py
         ydl_opts = {
             # https://github.com/yt-dlp/yt-dlp#output-template
