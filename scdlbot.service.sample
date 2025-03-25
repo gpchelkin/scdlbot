@@ -34,8 +34,11 @@ CPUQuotaPeriodSec=1000ms
 # 3 vCPU:
 CPUQuota=250%
 # 4 GB RAM:
-MemoryHigh=2800M
-MemoryMax=3000M
+# https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+# If the value is suffixed with K, M, G or T, the specified memory size is parsed as Kilobytes, Megabytes, Gigabytes, or Terabytes (with the base 1024), respectively
+# https://stackoverflow.com/a/36992829
+MemoryHigh=2900M
+MemoryMax=3100M
 TasksMax=infinity
 LimitNOFILE=1048576
 
