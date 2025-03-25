@@ -152,14 +152,14 @@ dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)"
 
 [[package]]
 name = "bandcamp-downloader"
-version = "0.0.16"
+version = "0.0.17"
 description = "bandcamp-dl downloads albums and tracks from Bandcamp for you"
 optional = false
 python-versions = ">=3.4"
 groups = ["main"]
 files = [
-    {file = "bandcamp_downloader-0.0.16-py3-none-any.whl", hash = "sha256:251b8cdde1ed665ff963387d43f5179862a589ccf82c48ee53eab7a5ff9374fb"},
-    {file = "bandcamp_downloader-0.0.16.tar.gz", hash = "sha256:cb0c7495b1cf021c90d4332beca3e0773a3906eb64c3467da1c18eff2560aa42"},
+    {file = "bandcamp_downloader-0.0.17-py3-none-any.whl", hash = "sha256:fda4e4359287512c517b308d7b3a05b9344d5e09ea74a198808402b94b601a1c"},
+    {file = "bandcamp_downloader-0.0.17.tar.gz", hash = "sha256:d5e47777d0b1a14e49ba72d78ffa9b150e72af51d28e981231a0bd32c1c2e159"},
 ]
 
 [package.dependencies]
@@ -167,6 +167,7 @@ beautifulsoup4 = ">=4.13.0b2"
 demjson3 = ">=3.0.6"
 mutagen = ">=1.47.0"
 requests = ">=2.32.3"
+toml = {version = "*", markers = "python_version < \"3.11\""}
 unicode-slugify = ">=0.1.5"
 urllib3 = ">=2.2.2"
 
@@ -254,14 +255,14 @@ files = [
 
 [[package]]
 name = "cattrs"
-version = "24.1.2"
+version = "24.1.3"
 description = "Composable complex class support for attrs and dataclasses."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "cattrs-24.1.2-py3-none-any.whl", hash = "sha256:67c7495b760168d931a10233f979b28dc04daf853b30752246f4f8471c6d68d0"},
-    {file = "cattrs-24.1.2.tar.gz", hash = "sha256:8028cfe1ff5382df59dd36474a86e02d817b06eaf8af84555441bac915d2ef85"},
+    {file = "cattrs-24.1.3-py3-none-any.whl", hash = "sha256:adf957dddd26840f27ffbd060a6c4dd3b2192c5b7c2c0525ef1bd8131d8a83f5"},
+    {file = "cattrs-24.1.3.tar.gz", hash = "sha256:981a6ef05875b5bb0c7fb68885546186d306f10f0f6718fe9b96c226e68821ff"},
 ]
 
 [package.dependencies]
@@ -2254,7 +2255,7 @@ typing-extensions = ">=4.7.1"
 
 [[package]]
 name = "scdl"
-version = "2.12.3"
+version = "2.12.4"
 description = "Download Music from Souncloud"
 optional = false
 python-versions = ">=3.7"
@@ -2295,14 +2296,14 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "77.0.3"
+version = "78.0.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "setuptools-77.0.3-py3-none-any.whl", hash = "sha256:67122e78221da5cf550ddd04cf8742c8fe12094483749a792d56cd669d6cf58c"},
-    {file = "setuptools-77.0.3.tar.gz", hash = "sha256:583b361c8da8de57403743e756609670de6fb2345920e36dc5c2d914c319c945"},
+    {file = "setuptools-78.0.2-py3-none-any.whl", hash = "sha256:4a612c80e1f1d71b80e4906ce730152e8dec23df439f82731d9d0b608d7b700d"},
+    {file = "setuptools-78.0.2.tar.gz", hash = "sha256:137525e6afb9022f019d6e884a319017f9bf879a0d8783985d32cbc8683cab93"},
 ]
 
 [package.extras]
@@ -2686,11 +2687,12 @@ version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
     {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
 ]
+markers = {main = "python_version < \"3.11\""}
 
 [[package]]
 name = "tomli"
@@ -2822,15 +2824,15 @@ files = [
 
 [[package]]
 name = "tzdata"
-version = "2025.1"
+version = "2025.2"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
 groups = ["main"]
 markers = "platform_system == \"Windows\""
 files = [
-    {file = "tzdata-2025.1-py2.py3-none-any.whl", hash = "sha256:7e127113816800496f027041c570f50bcd464a020098a3b6b199517772303639"},
-    {file = "tzdata-2025.1.tar.gz", hash = "sha256:24894909e88cdb28bd1636c6887801df64cb485bd593f2fd83ef29075a81d694"},
+    {file = "tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8"},
+    {file = "tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9"},
 ]
 
 [[package]]
@@ -2914,20 +2916,20 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "wemake-python-styleguide"
-version = "1.0.0"
+version = "1.1.0"
 description = "The strictest and most opinionated python linter ever"
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["dev"]
 files = [
-    {file = "wemake_python_styleguide-1.0.0-py3-none-any.whl", hash = "sha256:c0cc3fe2a2aa8d7ca76f02bc27bfe344c76ed9652f94859c241b96f0fcefa9ac"},
-    {file = "wemake_python_styleguide-1.0.0.tar.gz", hash = "sha256:00e96dc73faf5471b21d4baa5041f457c19739cf14677832429be69e5f4f7964"},
+    {file = "wemake_python_styleguide-1.1.0-py3-none-any.whl", hash = "sha256:32644cf35f6cd4c49c2d36e7b10336f8fe105250ba79365e27c5fa648bfc0616"},
+    {file = "wemake_python_styleguide-1.1.0.tar.gz", hash = "sha256:a9086e4867560c06fe47deb2101c72d1a1fd7ecb7a3235b297b6e02e9298e71e"},
 ]
 
 [package.dependencies]
 attrs = "*"
 flake8 = ">=7.1,<8.0"
-pygments = ">=2.4,<3.0"
+pygments = ">=2.5,<3.0"
 
 [[package]]
 name = "win32-setctime"
@@ -2947,7 +2949,7 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 
 [[package]]
 name = "yt-dlp"
-version = "2025.3.21"
+version = "2025.3.25"
 description = "A feature-rich command-line audio/video downloader"
 optional = false
 python-versions = ">=3.9"
@@ -2957,7 +2959,7 @@ develop = false
 
 [package.extras]
 build = ["build", "hatchling", "pip", "setuptools (>=71.0.2)", "wheel"]
-curl-cffi = ["curl-cffi (==0.5.10) ; os_name == \"nt\" and implementation_name == \"cpython\"", "curl-cffi (>=0.5.10,!=0.6.*,<0.7.2) ; os_name != \"nt\" and implementation_name == \"cpython\""]
+curl-cffi = ["curl-cffi (>=0.5.10,<0.6.dev0 || ==0.10.*) ; implementation_name == \"cpython\""]
 default = ["brotli ; implementation_name == \"cpython\"", "brotlicffi ; implementation_name != \"cpython\"", "certifi", "mutagen", "pycryptodomex", "requests (>=2.32.2,<3)", "urllib3 (>=1.26.17,<3)", "websockets (>=13.0)"]
 dev = ["autopep8 (>=2.0,<3.0)", "pre-commit", "pytest (>=8.1,<9.0)", "pytest-rerunfailures (>=14.0,<15.0)", "ruff (>=0.11.0,<0.12.0)"]
 pyinstaller = ["pyinstaller (>=6.11.1)"]
@@ -2969,9 +2971,9 @@ test = ["pytest (>=8.1,<9.0)", "pytest-rerunfailures (>=14.0,<15.0)"]
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "b4488a9e128bf826c3ffbf2d2809ce3141016adb"
+resolved_reference = "336b33e72fe0105a33c40c8e5afdff720e17afdb"
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "f8be8ea88237bd856d19383c689982ad20054ec5f8a7eb888833d30e83e7a28c"
+content-hash = "ab4c75a04bf58f15c580b42010d7cc78d5c963b9888b1e040386559a22e6e175"
