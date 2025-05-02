@@ -5,7 +5,7 @@ bandcamp-downloader==0.0.17 ; python_version >= "3.10" and python_version < "4.0
 beautifulsoup4==4.13.4 ; python_version >= "3.10" and python_version < "4.0"
 boltons==25.0.0 ; python_version >= "3.10" and python_version < "4.0"
 certifi==2025.1.31 ; python_version >= "3.10" and python_version < "4.0"
-charset-normalizer==3.4.1 ; python_version >= "3.10" and python_version < "4.0"
+charset-normalizer==3.4.2 ; python_version >= "3.10" and python_version < "4.0"
 colorama==0.4.6 ; python_version >= "3.10" and python_version < "4.0" and platform_system == "Windows"
 dacite==1.9.2 ; python_version >= "3.10" and python_version < "4.0"
 demjson3==3.0.6 ; python_version >= "3.10" and python_version < "4.0"
