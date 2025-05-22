@@ -1060,6 +1060,7 @@ def download_url_and_send(
                         "ExtractAudio": ["-threads", "1"],
                         "extractaudio": ["-threads", "1"],
                     },
+                    # https://old.reddit.com/r/youtubedl/comments/zh61bw/goal_is_to_download_audio_only_and_embed/
                     "writethumbnail": True,
                     "noplaylist": True,
                 }
