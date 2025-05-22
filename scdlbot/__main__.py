@@ -1054,12 +1054,13 @@ def download_url_and_send(
                     "postprocessors": [
                         {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "320"},
                         {"key": "FFmpegMetadata"},
-                        # {"key": "EmbedThumbnail"},
+                        {"key": "EmbedThumbnail", 'already_have_thumbnail': False},
                     ],
                     "postprocessor_args": {
                         "ExtractAudio": ["-threads", "1"],
                         "extractaudio": ["-threads", "1"],
                     },
+                    "writethumbnail": True,
                     "noplaylist": True,
                 }
             )
