@@ -7,8 +7,6 @@ updates:
     time: "12:00"
     timezone: Europe/Moscow
   open-pull-requests-limit: 99
-  reviewers:
-  - gpchelkin
   assignees:
   - gpchelkin
 
@@ -19,7 +17,5 @@ updates:
     time: "12:00"
     timezone: Europe/Moscow
   open-pull-requests-limit: 99
-  reviewers:
-  - gpchelkin
   assignees:
   - gpchelkin
