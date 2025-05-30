@@ -1030,11 +1030,14 @@ def download_url_and_send(
                 {
                     "format": "mp4",
                     "postprocessors": [
-                        # Instagram gives VP9 video codec (when downloading with cookies) and it doesn't play in Telegram iOS client.
-                        # We need AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio) from Instagram videos.
-                        # "FFmpegVideoConvertor" doesn't work here since the original file is already mp4.
-                        # We don't touch audio and just copy it here since it's probably OK in original. But we can change 'copy' to 'aac'.
-                        # --use-postprocessor FFmpegCopyStream --ppa copystream:"-codec:v libx264 -crf 24 -preset veryfast -codec:a copy -f mp4"
+                        # Instagram usually gives VP9 or HEVC (x265/h265) video codec (when downloading with cookies).
+                        #   VP9 doesn't play in Telegram iOS client;
+                        #   # TODO Check and skip converting for HEVC? It seems to be used for 4K videos.
+                        # We need to convert it to AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio) from Instagram videos.
+                        # We went with AVC (x264/h264) for now.
+                        # "FFmpegVideoConvertor" doesn't work here since the original file is already in mp4 format.
+                        # We don't touch audio and just copy it here since it's probably OK in original. But we may want to change 'copy' to 'aac' later.
+                        # yt-dlp --use-postprocessor FFmpegCopyStream --ppa copystream:"-codec:v libx264 -crf 24 -preset veryfast -codec:a copy -f mp4 -threads 1" ...
                         # https://github.com/yt-dlp/yt-dlp/issues/7607
                         # https://github.com/yt-dlp/yt-dlp/issues/5859
                         # https://github.com/yt-dlp/yt-dlp/issues/8904
