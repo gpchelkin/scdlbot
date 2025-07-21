@@ -67,7 +67,7 @@ fake-useragent = "^2.1.0"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 #scdl = "2.12.4"
-bandcamp-downloader = "0.0.17"
+#bandcamp-downloader = "0.0.17"
 
 ### For making it work better using latest git revision:
 yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
@@ -81,7 +81,7 @@ scdl = { git = "https://github.com/scdl-org/scdl.git", branch = "master" }
 ##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
 ##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
 ##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
-#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
 #bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", rev = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e" }
 #bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "pyproject-poetry" }
 #fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
