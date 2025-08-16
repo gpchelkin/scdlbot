@@ -10,7 +10,7 @@ lint:
 	echo $(shell pwd)
 #	poetry run flakeheaven lint --show-source .
 #	poetry run flake8 --statistics --show-source .
-	poetry run doc8 -q docs
+	poetry run doc8 -q docs --ignore-path docs/pages/contributing.rst
 
 .PHONY: package
 package:

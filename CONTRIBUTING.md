@@ -16,7 +16,7 @@ To activate your `virtualenv` run `poetry shell`.
 
 ## One magic command
 
-Run `make test` to run everything we have!
+Run `nox` to run everything we have!
 
 
 ## Tests

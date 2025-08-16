@@ -87,11 +87,11 @@ bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", bran
 #fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
 
 [tool.poetry.group.dev]
-# must be false if tox-poetry is used (it doesn't support groups):
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-# make additional external tools: poetry, tox, (tox-poetry)
+# make additional external tools: poetry, nox
+nox = "^2024.4.15"
 # make format:
 isort = "^6.0.0"
 black = "^25.1.0"
@@ -161,28 +161,3 @@ pycodestyle = ["+*"]
 pyflakes = ["+*"]
 "wemake-python-styleguide" = ["+*"]
 
-[tool.tox]
-# TODO https://github.com/python-poetry/poetry/blob/master/docs/faq.md#is-tox-supported
-legacy_tox_ini = """
-[tox]
-skipsdist = true
-envlist = py39, py310, py311
-
-[gh-actions]
-#tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
-python =
-    3.10: py310
-    3.11: py311
-    3.12: py312
-    3.13: py313
-
-[testenv]
-allowlist_externals =
-    make
-    poetry
-# either use command 'poetry install',
-# or use tox-poetry - it will install main and dev deps to venv with poetry
-commands =
-    poetry install --with main,dev --verbose
-    make test
-"""

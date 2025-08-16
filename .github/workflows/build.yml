@@ -43,9 +43,9 @@ jobs:
         poetry config installer.parallel true
         poetry config installer.modern-installation true
 
-    - name: Install tox
-      run: |
-        pip install --upgrade tox tox-gh-actions
+      - name: Install Nox
+        run: |
+          pip install --upgrade nox
 
-    - name: Test with tox
-      run: tox
+      - name: Test with Nox
+        run: nox
