@@ -764,7 +764,7 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # If it's a known site, we check it more thoroughly below.
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
-        elif ((DOMAIN_SC in url.host) and (2 <= url_parts_num <= 4) and (not "you" in url.path_parts)) or (DOMAIN_SC_GOOGL in url.host) or (DOMAIN_SC_API in url.host):
+        elif ((DOMAIN_SC in url.host) and (2 <= url_parts_num <= 4) and (not "you" in url.path_parts) and (not "likes" in url.path_parts)) or (DOMAIN_SC_GOOGL in url.host) or (DOMAIN_SC_API in url.host):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -1013,6 +1013,7 @@ def download_url_and_send(
             "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
+            "max_filesize": MAX_TG_FILE_SIZE * 3,
             # TODO Add optional parameter FFMPEG_PATH:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "ffmpeg_location": "/usr/local/bin/",
@@ -1165,11 +1166,11 @@ def download_url_and_send(
                     file_size = os.path.getsize(file)
                     if file_format not in AUDIO_FORMATS + VIDEO_FORMATS:
                         raise FileNotSupportedError(file_format)
-                    # We don't convert videos (from tiktok or instagram or twitter):
+                    # We convert if downloaded file is video (except tiktok, instagram, twitter):
                     if file_format in VIDEO_FORMATS and not download_video:
                         if file_size > MAX_CONVERT_FILE_SIZE:
                             raise FileTooLargeError(file_size)
-                        logger.debug("Converting: %s", file)
+                        logger.debug("Converting video format: %s", file)
                         try:
                             file_converted = file.replace(file_ext, ".mp3")
                             ffinput = ffmpeg.input(file)
