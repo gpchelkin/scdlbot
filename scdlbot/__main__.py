@@ -3,6 +3,7 @@
 import asyncio
 import concurrent.futures
 import datetime
+import importlib
 import logging
 import os
 import pathlib
@@ -16,6 +17,8 @@ import tempfile
 import threading
 import time
 import traceback
+from types import ModuleType
+from typing import Any, MutableMapping, Union, cast
 from importlib import resources
 from logging.handlers import SysLogHandler
 from multiprocessing import get_context
@@ -34,7 +37,7 @@ from fake_useragent import UserAgent
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
 from pebble import ProcessPool
-from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, MessageEntity, Update
+from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
 from telegram.constants import ChatAction
 
 # from telegram.error import BadRequest, ChatMigrated, Forbidden, NetworkError, TelegramError, TimedOut
@@ -46,16 +49,24 @@ from telegram.request import HTTPXRequest
 
 # Support different old versions just in case:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-try:
-    import yt_dlp as ydl
-except ImportError:
-    try:
-        import youtube_dl as ydl
-    except ImportError:
-        import youtube_dlc as ydl
+
+
+def _load_downloader_module() -> ModuleType:
+    for candidate in ("yt_dlp", "youtube_dl", "youtube_dlc"):
+        try:
+            return importlib.import_module(candidate)
+        except ImportError:
+            continue
+    raise ImportError("No supported downloader module available")
+
+
+ydl = cast(Any, _load_downloader_module())
+
 
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
+from plumbum.machines.local import LocalCommand
+from telegram.error import TelegramError
 
 from scdlbot.ffprobe import FFprobeError, probe_media
 
@@ -64,10 +75,25 @@ from scdlbot.ffprobe import FFprobeError, probe_media
 MAX_MEM = 1500 * 1024 * 1024
 
 
-def pp_initializer(limit):
-    """Set maximum amount of memory each worker process can allocate."""
-    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
+def require_chat(update: Update) -> Chat:
+    chat = update.effective_chat
+    if chat is None:
+        raise RuntimeError("Update does not contain chat information")
+    return chat
+
+
+def require_message(update: Update) -> Message:
+    message = update.effective_message
+    if message is None:
+        raise RuntimeError("Update does not contain a message")
+    return message
+
+
+def require_chat_data(context: ContextTypes.DEFAULT_TYPE) -> MutableMapping[str, Any]:
+    chat_data = context.chat_data
+    if chat_data is None:
+        raise RuntimeError("Chat data is not available")
+    return chat_data
 
 
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
@@ -100,7 +126,8 @@ if platform.system() == "Windows":
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
+# IMPORTANT: Using Union type hint to avoid undefined Executor type
+EXECUTOR: Union[ProcessPool, concurrent.futures.ProcessPoolExecutor] = ProcessPool(initargs=[MAX_MEM], max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))  # type: ignore[assignment]
 # EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
@@ -111,11 +138,13 @@ MAX_CONVERT_FILE_SIZE = int(os.getenv("MAX_CONVERT_FILE_SIZE", "80_000_000"))
 NO_FLOOD_CHAT_IDS = list(map(int, os.getenv("NO_FLOOD_CHAT_IDS", "0").split(",")))
 COOKIES_FILE = os.getenv("COOKIES_FILE", None)
 PROXIES = []
-if "PROXIES" in os.environ:
-    PROXIES = [None if x == "direct" else x for x in os.getenv("PROXIES").split(",")]
+proxies_env = os.getenv("PROXIES")
+if proxies_env:
+    PROXIES = [None if proxy == "direct" else proxy for proxy in proxies_env.split(",") if proxy]
 SOURCE_IPS = []
-if "SOURCE_IPS" in os.environ:
-    SOURCE_IPS = os.getenv("SOURCE_IPS").split(",")
+source_ips_env = os.getenv("SOURCE_IPS")
+if source_ips_env:
+    SOURCE_IPS = [ip for ip in source_ips_env.split(",") if ip]
 BLACKLIST_TELEGRAM_DOMAINS = [
     "telegram.org",
     "telegram.me",
@@ -130,22 +159,26 @@ BLACKLIST_TELEGRAM_DOMAINS = [
     "contest.com",
     "contest.dev",
 ]
-WHITELIST_DOMAINS = {}
-if "WHITELIST_DOMAINS" in os.environ:
-    WHITELIST_DOMAINS = set(x for x in os.getenv("WHITELIST_DOMAINS").split(","))
-BLACKLIST_DOMAINS = {}
-if "BLACKLIST_DOMAINS" in os.environ:
-    BLACKLIST_DOMAINS = set(x for x in os.getenv("BLACKLIST_DOMAINS").split(","))
-WHITELIST_CHATS = []
-if "WHITELIST_CHATS" in os.environ:
+WHITELIST_DOMAINS: set[str] = set()
+whitelist_domains_env = os.getenv("WHITELIST_DOMAINS")
+if whitelist_domains_env:
+    WHITELIST_DOMAINS = {domain for domain in whitelist_domains_env.split(",") if domain}
+BLACKLIST_DOMAINS: set[str] = set()
+blacklist_domains_env = os.getenv("BLACKLIST_DOMAINS")
+if blacklist_domains_env:
+    BLACKLIST_DOMAINS = {domain for domain in blacklist_domains_env.split(",") if domain}
+WHITELIST_CHATS: set[int] = set()
+whitelist_chats_env = os.getenv("WHITELIST_CHATS")
+if whitelist_chats_env:
     try:
-        WHITELIST_CHATS = set(int(x) for x in os.getenv("WHITELIST_CHATS").split(","))
+        WHITELIST_CHATS = {int(chat_id) for chat_id in whitelist_chats_env.split(",") if chat_id}
     except ValueError:
         raise ValueError("Your whitelisted chats list does not contain valid integers.")
-BLACKLIST_CHATS = []
-if "BLACKLIST_CHATS" in os.environ:
+BLACKLIST_CHATS: set[int] = set()
+blacklist_chats_env = os.getenv("BLACKLIST_CHATS")
+if blacklist_chats_env:
     try:
-        BLACKLIST_CHATS = set(int(x) for x in os.getenv("BLACKLIST_CHATS").split(","))
+        BLACKLIST_CHATS = {int(chat_id) for chat_id in blacklist_chats_env.split(",") if chat_id}
     except ValueError:
         raise ValueError("Your blacklisted chats list does not contain valid integers.")
 
@@ -357,13 +390,10 @@ def url_valid_and_allowed(url, allow_unknown_sites=False):
 
 
 async def start_help_commands_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = None
-    if update.channel_post:
-        message = update.channel_post
-    elif update.message:
-        message = update.message
-    chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
+    chat = require_chat(update)
+    message = require_message(update)
+    chat_id = chat.id
+    chat_type = chat.type
     command_name = "help"
     # Determine the original command:
     entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
@@ -377,38 +407,39 @@ async def start_help_commands_callback(update: Update, context: ContextTypes.DEF
 
 async def settings_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command_name = "settings"
-    chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
+    chat = require_chat(update)
+    chat_id = chat.id
+    chat_type = chat.type
     logger.debug(command_name)
     BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="None").inc()
+    chat_data = require_chat_data(context)
     init_chat_data(
-        chat_data=context.chat_data,
+        chat_data=chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
-    await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(context.chat_data), text=SETTINGS_TEXT)
+    await context.bot.send_message(chat_id=chat_id, parse_mode="Markdown", reply_markup=get_settings_inline_keyboard(chat_data), text=SETTINGS_TEXT)
 
 
 async def dl_link_commands_and_messages_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = None
-    if update.channel_post:
-        message = update.channel_post
-    elif update.message:
-        message = update.message
-    chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
+    chat = require_chat(update)
+    message = require_message(update)
+    chat_id = chat.id
+    chat_type = chat.type
     if not chat_allowed(chat_id):
         await context.bot.send_message(chat_id=chat_id, text="This command isn't allowed in this chat.")
         return
+    chat_data = require_chat_data(context)
     init_chat_data(
-        chat_data=context.chat_data,
+        chat_data=chat_data,
         mode=("dl" if chat_type == Chat.PRIVATE else "ask"),
         flood=(chat_id not in NO_FLOOD_CHAT_IDS),
     )
     # Determine the original command:
     command_entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
-    allow_unknown_sites = context.chat_data["settings"]["allow_unknown_sites"]
-    mode = context.chat_data["settings"]["mode"]
+    settings_data = chat_data["settings"]
+    allow_unknown_sites = settings_data["allow_unknown_sites"]
+    mode = settings_data["mode"]
     command_passed = False
     action = None
     if command_entities:
@@ -472,7 +503,9 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         #     loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
         #     timeout=CHECK_URL_TIMEOUT * 10,
         # )
-        urls_dict = await loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, CHECK_URL_TIMEOUT, message, action, proxy, source_ip, allow_unknown_sites)
+        urls_dict = await loop_main.run_in_executor(
+            cast(Any, EXECUTOR), get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites
+        )  # IMPORTANT: Cast EXECUTOR for type compatibility
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
     except Exception:
@@ -487,7 +520,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         if not urls_dict:
             if apologize:
                 await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
-            await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+            if wait_message_id is not None:
+                await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
         else:
             await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
             for url in urls_dict:
@@ -513,7 +547,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                         },
                         "chat_id": chat_id,
                         "url": url,
-                        "flood": context.chat_data["settings"]["flood"],
+                        "flood": chat_data["settings"]["flood"],
                         "reply_to_message_id": reply_to_message_id,
                         "wait_message_id": wait_message_id,
                         "cookies_file": COOKIES_FILE,
@@ -534,14 +568,15 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
             await context.bot.send_message(
                 chat_id=chat_id, reply_to_message_id=reply_to_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
             )
-        await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
+        if wait_message_id is not None:
+            await context.bot.delete_message(chat_id=chat_id, message_id=wait_message_id)
     elif action == "ask":
         if "http" not in urls_values:
             if apologize:
                 await context.bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=NO_URLS_TEXT, parse_mode="Markdown")
         else:
             url_message_id = str(reply_to_message_id)
-            context.chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
+            chat_data[url_message_id] = {"urls": urls_dict, "source_ip": source_ip, "proxy": proxy}
             question = "🎶 links found, what to do?"
             button_dl = InlineKeyboardButton(text="⬇️ Download", callback_data=" ".join([url_message_id, "dl"]))
             button_link = InlineKeyboardButton(text="🔗️ Get links", callback_data=" ".join([url_message_id, "link"]))
@@ -551,17 +586,26 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
 
 
 async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    button_message = update.callback_query.message
+    callback_query = update.callback_query
+    if callback_query is None:
+        raise RuntimeError("Callback query is required for button handling")
+    button_message = callback_query.message
+    if button_message is None:
+        raise RuntimeError("Callback query message is missing")
     button_message_id = button_message.message_id
-    user_id = update.callback_query.from_user.id
-    chat = update.effective_chat
-    chat_id = update.effective_chat.id
-    chat_type = update.effective_chat.type
+    user_id = callback_query.from_user.id
+    chat = require_chat(update)
+    chat_id = chat.id
+    chat_type = chat.type
+    chat_data = require_chat_data(context)
+    data = callback_query.data
+    if data is None:
+        raise RuntimeError("Callback data is missing")
     # get message id and action from button data:
     # TODO create separate callbacks by callback query data pattern
-    url_message_id, button_action = update.callback_query.data.split()
+    url_message_id, button_action = data.split()
     if not chat_allowed(chat_id):
-        await update.callback_query.answer(text="This command isn't allowed in this chat.")
+        await callback_query.answer(text="This command isn't allowed in this chat.")
         return
     if url_message_id == "settings":
         # button on settings message:
@@ -570,7 +614,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             # logger.debug(chat_member.status)
             if chat_member.status not in [ChatMember.OWNER, ChatMember.ADMINISTRATOR] and user_id != TG_BOT_OWNER_CHAT_ID:
                 logger.debug("settings_fail")
-                await update.callback_query.answer(text="You're not chat admin.")
+                await callback_query.answer(text="You're not chat admin.")
                 return
         command_name = f"settings_{button_action}"
         logger.debug(command_name)
@@ -581,32 +625,32 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
             setting_changed = False
             if button_action in ["dl", "link", "ask"]:
                 # Radio buttons:
-                current_setting = context.chat_data["settings"]["mode"]
+                current_setting = chat_data["settings"]["mode"]
                 if button_action != current_setting:
                     setting_changed = True
-                    context.chat_data["settings"]["mode"] = button_action
+                    chat_data["settings"]["mode"] = button_action
             elif button_action in ["flood", "allow_unknown_sites"]:
                 # Toggles:
-                current_setting = context.chat_data["settings"][button_action]
-                context.chat_data["settings"][button_action] = not current_setting
+                current_setting = chat_data["settings"][button_action]
+                chat_data["settings"][button_action] = not current_setting
                 setting_changed = True
             if setting_changed:
-                await update.callback_query.answer(text="Settings changed")
-                await update.callback_query.edit_message_reply_markup(reply_markup=get_settings_inline_keyboard(context.chat_data))
+                await callback_query.answer(text="Settings changed")
+                await callback_query.edit_message_reply_markup(reply_markup=get_settings_inline_keyboard(chat_data))
             else:
-                await update.callback_query.answer(text="Settings not changed")
+                await callback_query.answer(text="Settings not changed")
 
-    elif url_message_id in context.chat_data:
+    elif url_message_id in chat_data:
         # mode is ask, we got data from button on asking message.
         # if it asked, then we were in prepare_urls:
-        url_message_data = context.chat_data.pop(url_message_id)
+        url_message_data = chat_data.pop(url_message_id)
         urls_dict = url_message_data["urls"]
         command_name = f"{button_action}_msg"
         logger.debug(command_name)
         BOT_REQUESTS.labels(type=command_name, chat_type=chat_type, mode="ask").inc()
         if button_action == "dl":
-            await update.callback_query.answer(text=get_random_wait_text())
-            wait_message = await update.callback_query.edit_message_text(parse_mode="Markdown", text=f"_{get_random_wait_text()}_")
+            await callback_query.answer(text=get_random_wait_text())
+            wait_message = await callback_query.edit_message_text(parse_mode="Markdown", text=f"_{get_random_wait_text()}_")
             for url in urls_dict:
                 kwargs = {
                     "bot_options": {
@@ -617,9 +661,9 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     },
                     "chat_id": chat_id,
                     "url": url,
-                    "flood": context.chat_data["settings"]["flood"],
+                    "flood": chat_data["settings"]["flood"],
                     "reply_to_message_id": url_message_id,
-                    "wait_message_id": wait_message.message_id,
+                    "wait_message_id": wait_message.message_id if wait_message and isinstance(wait_message, Message) else None,  # IMPORTANT: Fix type issue
                     "cookies_file": COOKIES_FILE,
                     "source_ip": url_message_data["source_ip"],
                     "proxy": url_message_data["proxy"],
@@ -630,16 +674,21 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 EXECUTOR.schedule(download_url_and_send, kwargs=kwargs, timeout=DL_TIMEOUT)
 
         elif button_action == "link":
-            await context.bot.send_message(chat_id=chat_id, reply_to_message_id=url_message_id, parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict))
+            await context.bot.send_message(
+                chat_id=chat_id, reply_to_message_id=int(url_message_id), parse_mode="Markdown", disable_web_page_preview=True, text=get_link_text(urls_dict)
+            )  # IMPORTANT: Convert url_message_id to int
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
         elif button_action == "cancel":
             await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
     else:
-        await update.callback_query.answer(text=OLD_MSG_TEXT)
+        await callback_query.answer(text=OLD_MSG_TEXT)
         await context.bot.delete_message(chat_id=chat_id, message_id=button_message_id)
 
 
 async def blacklist_whitelist_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # IMPORTANT: Add null check for effective_chat
+    if update.effective_chat is None:
+        return
     chat_id = update.effective_chat.id
     if not chat_allowed(chat_id):
         await context.bot.leave_chat(chat_id)
@@ -657,7 +706,11 @@ async def error_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):  #
 
     # traceback.format_exception returns the usual python message about an exception, but as a
     # list of strings rather than a single string, so we have to join them together.
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    # IMPORTANT: Add proper type check for context.error
+    if context.error is not None:
+        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    else:
+        tb_list = ["Unknown error occurred"]
     tb_string = "".join(tb_list)
     logger.debug(tb_string)
 
@@ -766,7 +819,11 @@ def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
             # If it's a known site, we check it more thoroughly below.
             # urls_dict[url_text] = ydl_get_direct_urls(url_text, COOKIES_FILE, source_ip, proxy)
             urls_dict[url_text] = "http"
-        elif ((DOMAIN_SC in url.host) and (2 <= url_parts_num <= 4) and (not "you" in url.path_parts) and (not "likes" in url.path_parts)) or (DOMAIN_SC_GOOGL in url.host) or (DOMAIN_SC_API in url.host):
+        elif (
+            ((DOMAIN_SC in url.host) and (2 <= url_parts_num <= 4) and (not "you" in url.path_parts) and (not "likes" in url.path_parts))
+            or (DOMAIN_SC_GOOGL in url.host)
+            or (DOMAIN_SC_API in url.host)
+        ):
             # SoundCloud: tracks, sets and widget pages, no /you/ pages
             # TODO support private sets URLs that have 5 parts
             # We know for sure these links can be downloaded, so we just skip running ydl_get_direct_urls
@@ -881,7 +938,7 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         logger.debug("%s failed: %s", cmd_name, url)
         logger.debug(traceback.format_exc())
         status = "failed"
-    if cookies_file:
+    if cookies_file and cookies_download_file is not None:
         cookies_download_file.close()
         os.unlink(cookies_download_file.name)
 
@@ -941,10 +998,10 @@ def download_url_and_send(
     download_video = False
     status = "initial"
     add_description = ""
-    cmd = None
+    cmd: LocalCommand | None = None
     cmd_name = ""
-    cmd_args = ()
-    cmd_input = None
+    cmd_args: tuple[str, ...] = tuple()
+    cmd_input: str | None = None
     if ((DOMAIN_SC in host or DOMAIN_SC_GOOGL in host) and DOMAIN_SC_API not in host) or (DOMAIN_BC in host and BCDL_ENABLE):
         # If link is sc/bc, we try scdl/bcdl first:
         if (DOMAIN_SC in host or DOMAIN_SC_GOOGL in host) and DOMAIN_SC_API not in host:
@@ -985,7 +1042,12 @@ def download_url_and_send(
         if proxy:
             env = {"http_proxy": proxy, "https_proxy": proxy}
         logger.debug("%s starts: %s", cmd_name, url)
-        cmd_proc = cmd[cmd_args].popen(env=env, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+        if cmd is None:
+            raise RuntimeError("Downloader command is not configured")
+        if not cmd_args:
+            raise RuntimeError("Downloader command arguments are not configured")
+        cmd_with_args = cmd[cmd_args]
+        cmd_proc = cmd_with_args.popen(env=env, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
         try:
             cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=DL_TIMEOUT)
             cmd_retcode = cmd_proc.returncode
@@ -1060,7 +1122,7 @@ def download_url_and_send(
                     "postprocessors": [
                         {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "320"},
                         {"key": "FFmpegMetadata"},
-                        {"key": "EmbedThumbnail", 'already_have_thumbnail': False},
+                        {"key": "EmbedThumbnail", "already_have_thumbnail": False},
                     ],
                     "postprocessor_args": {
                         "ExtractAudio": ["-threads", "1"],
@@ -1137,7 +1199,7 @@ def download_url_and_send(
             logger.debug("%s failed: %s", cmd_name, url)
             logger.debug(traceback.format_exc())
             status = "failed"
-        if cookies_file:
+        if cookies_file and cookies_download_file is not None:
             cookies_download_file.close()
             os.unlink(cookies_download_file.name)
         # gc.collect()
@@ -1433,8 +1495,10 @@ async def callback_watchdog(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def callback_monitor(context: ContextTypes.DEFAULT_TYPE):
-    logger.debug(f"EXECUTOR pending work items: {len(EXECUTOR._pending_work_items)} tasks remain")
-    EXECUTOR_TASKS_REMAINING.set(len(EXECUTOR._pending_work_items))
+    pending_items = getattr(EXECUTOR, "_pending_work_items", None)
+    pending_count = len(pending_items) if pending_items is not None else 0
+    logger.debug(f"EXECUTOR pending work items: {pending_count} tasks remain")
+    EXECUTOR_TASKS_REMAINING.set(pending_count)
 
 
 def main():
@@ -1529,6 +1593,8 @@ def main():
     application.add_error_handler(error_callback)
 
     job_queue = application.job_queue
+    if job_queue is None:
+        raise RuntimeError("Job queue is not initialized")
     job_watchdog = job_queue.run_repeating(callback_watchdog, interval=60, first=10)
     # job_monitor = job_queue.run_repeating(callback_monitor, interval=5, first=5)
 

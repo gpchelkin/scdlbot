@@ -11,7 +11,7 @@ import tempfile
 from typing import Any, Dict
 
 from huey import SqliteHuey
-from huey.exceptions import HueyException, TaskException, TaskTimeout
+from huey.exceptions import HueyException, ResultTimeout, TaskException
 
 logger = logging.getLogger(__name__)
 
@@ -97,12 +97,11 @@ def probe_media(path: str, timeout: int | None = None) -> Dict[str, Any]:
     result = ffprobe_task(path)
     try:
         return result(blocking=True, timeout=resolved_timeout)
-    except TaskTimeout as exc:
+    except ResultTimeout as exc:
         raise FFprobeError(f"ffprobe timed out after {resolved_timeout}s for {path}") from exc
     except TaskException as exc:  # pragma: no cover - depends on task failure
-        # Huey wraps underlying exceptions; surface their message.
-        error = exc.metadata or exc.exception or exc
-        raise FFprobeError(f"ffprobe raised an exception for {path}: {error}") from exc
+        error_meta = exc.metadata or {}
+        error_message = error_meta.get("error") or str(exc) or "unknown error"
+        raise FFprobeError(f"ffprobe raised an exception for {path}: {error_message}") from exc
     except HueyException as exc:  # pragma: no cover - defensive catch-all
         raise FFprobeError(f"Huey failed to execute ffprobe for {path}") from exc
-
