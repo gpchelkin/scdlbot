@@ -1,0 +1,23 @@
+[Unit]
+Description=scdlbot ffmpeg worker (Huey)
+After=network.target
+PartOf=scdlbot.service
+
+[Service]
+User=www-data
+Group=www-data
+Type=simple
+EnvironmentFile=/etc/default/scdlbot
+ExecStart=/usr/local/bin/huey_consumer scdlbot.ffmpeg_worker.huey --workers=2 --worker-type=thread
+Restart=always
+RestartSec=5
+CPUQuotaPeriodSec=1000ms
+CPUQuota=200%
+MemoryHigh=2048M
+MemoryMax=3072M
+TasksMax=infinity
+LimitNOFILE=1048576
+Environment="FFMPEG_HUEY_WORKERS=2"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+[Unit]
+Description=scdlbot ffprobe worker (Huey)
+After=network.target
+PartOf=scdlbot.service
+
+[Service]
+User=www-data
+Group=www-data
+Type=simple
+EnvironmentFile=/etc/default/scdlbot
+ExecStart=/usr/local/bin/huey_consumer scdlbot.ffprobe.huey --workers=2 --worker-type=process
+Restart=always
+RestartSec=5
+CPUQuotaPeriodSec=1000ms
+CPUQuota=100%
+MemoryHigh=1024M
+MemoryMax=1536M
+TasksMax=infinity
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

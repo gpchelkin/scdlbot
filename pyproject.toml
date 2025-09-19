@@ -38,6 +38,7 @@ dependencies = [
     "sdnotify>=0.3.2",
     "fake-useragent>=2.1.0",
     "huey>=2.5.3",
+    "pydantic>=2.0.0",
     # Additional dependencies from requirements.txt
     "aiolimiter>=1.2.1",
     "anyio>=4.9.0",

@@ -1,0 +1,24 @@
+[Unit]
+Description=scdlbot Telegram Bot
+After=network.target
+Wants=scdlbot-ffprobe.service scdlbot-ffmpeg.service
+
+[Service]
+User=www-data
+Group=www-data
+Type=simple
+EnvironmentFile=/etc/default/scdlbot
+ExecStart=/usr/local/bin/scdlbot
+WatchdogSec=180
+NotifyAccess=all
+Restart=always
+RestartSec=5
+CPUQuotaPeriodSec=1000ms
+CPUQuota=320%
+MemoryHigh=6700M
+MemoryMax=7000M
+TasksMax=infinity
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

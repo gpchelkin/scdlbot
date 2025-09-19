@@ -8,8 +8,6 @@ RUN apt-get update && \
     python3-pip \
     git \
     ffmpeg \
-    systemd \
-    systemd-sysv \
     curl \
     wget \
     sudo \
@@ -42,111 +40,68 @@ RUN python3.11 -m pip install --upgrade pip setuptools wheel
 # Install scdlbot package in editable mode with all dependencies
 RUN python3.11 -m pip install -e .
 
-# Create systemd service file for main bot
-RUN cat > /etc/systemd/system/scdlbot.service << 'EOF'
-[Unit]
-Description=scdlbot
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-Type=simple
-EnvironmentFile=/etc/default/scdlbot
-ExecStart=/usr/local/bin/scdlbot
-WatchdogSec=180
-NotifyAccess=all
-Restart=always
-RestartSec=5
-CPUQuotaPeriodSec=1000ms
-CPUQuota=320%
-MemoryHigh=6700M
-MemoryMax=7000M
-TasksMax=infinity
-LimitNOFILE=1048576
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Create systemd service file for Huey ffprobe worker
-RUN cat > /etc/systemd/system/scdlbot-ffprobe.service << 'EOF'
-[Unit]
-Description=scdlbot ffprobe worker (Huey)
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-Type=simple
-EnvironmentFile=/etc/default/scdlbot
-ExecStart=/usr/local/bin/huey_consumer scdlbot.ffprobe.huey --workers=2 --worker-type=process
-Restart=always
-RestartSec=5
-CPUQuotaPeriodSec=1000ms
-CPUQuota=100%
-MemoryHigh=1024M
-MemoryMax=1536M
-TasksMax=infinity
-LimitNOFILE=1048576
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Create a startup script without systemd
-RUN cat > /usr/local/bin/start-scdlbot.sh << 'EOF'
-#!/bin/bash
-set -e
-
-echo "Starting scdlbot without systemd..."
-echo "  - Starting Huey ffprobe worker"
-echo "  - Starting main bot process"
-
-# Source environment variables if they exist
-if [ -f /etc/default/scdlbot ]; then
-    source /etc/default/scdlbot
-fi
-
-# Function to handle shutdown
-cleanup() {
-    echo "Shutting down..."
-    kill $HUEY_PID $BOT_PID 2>/dev/null || true
-    wait $HUEY_PID $BOT_PID 2>/dev/null || true
-    exit 0
-}
-
-# Set up signal handlers
-trap cleanup SIGTERM SIGINT
-
-# Start Huey consumer in background
-echo "Starting Huey ffprobe worker..."
-su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.ffprobe.huey --workers=2 --worker-type=process" &
-HUEY_PID=$!
-echo "Huey worker started with PID $HUEY_PID"
-
-# Give Huey a moment to start
-sleep 2
-
-# Start the main bot
-echo "Starting scdlbot main process..."
-su -s /bin/bash www-data -c "/usr/local/bin/scdlbot" &
-BOT_PID=$!
-echo "Bot started with PID $BOT_PID"
-
-# Wait for both processes
-echo "Services running. Press Ctrl+C to stop."
-wait $HUEY_PID $BOT_PID
-EOF
-
-RUN chmod +x /usr/local/bin/start-scdlbot.sh
+# Create a startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting scdlbot services..."\n\
+echo "  - Starting Huey ffprobe worker"\n\
+echo "  - Starting Huey ffmpeg worker"\n\
+echo "  - Starting Huey download worker"\n\
+echo "  - Starting main bot process"\n\
+\n\
+# Source environment variables if they exist\n\
+if [ -f /etc/default/scdlbot ]; then\n\
+    source /etc/default/scdlbot\n\
+fi\n\
+\n\
+# Function to handle shutdown\n\
+cleanup() {\n\
+    echo "Shutting down..."\n\
+    kill ${FFPROBE_PID:-} ${FFMPEG_PID:-} ${DOWNLOAD_PID:-} ${BOT_PID:-} 2>/dev/null || true\n\
+    wait ${FFPROBE_PID:-} ${FFMPEG_PID:-} ${DOWNLOAD_PID:-} ${BOT_PID:-} 2>/dev/null || true\n\
+    exit 0\n\
+}\n\
+\n\
+# Set up signal handlers\n\
+trap cleanup SIGTERM SIGINT\n\
+\n\
+# Start Huey ffprobe consumer in background\n\
+echo "Starting Huey ffprobe worker..."\n\
+su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.ffprobe.huey --workers=2 --worker-type=process" &\n\
+FFPROBE_PID=$!\n\
+echo "Huey ffprobe worker started with PID $FFPROBE_PID"\n\
+\n\
+# Start Huey ffmpeg consumer in background\n\
+echo "Starting Huey ffmpeg worker..."\n\
+FFMPEG_WORKERS=${FFMPEG_HUEY_WORKERS:-2}\n\
+su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.ffmpeg_worker.huey --workers=$FFMPEG_WORKERS --worker-type=thread" &\n\
+FFMPEG_PID=$!\n\
+echo "Huey ffmpeg worker started with PID $FFMPEG_PID (workers=$FFMPEG_WORKERS)"\n\
+\n\
+# Start Huey download consumer in background\n\
+echo "Starting Huey download worker..."\n\
+DOWNLOAD_WORKERS=${DOWNLOAD_HUEY_WORKERS:-4}\n\
+su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.download_worker.huey --workers=$DOWNLOAD_WORKERS --worker-type=thread" &\n\
+DOWNLOAD_PID=$!\n\
+echo "Huey download worker started with PID $DOWNLOAD_PID (workers=$DOWNLOAD_WORKERS)"\n\
+\n\
+# Give Huey workers a moment to start\n\
+sleep 2\n\
+\n\
+# Start the main bot\n\
+echo "Starting scdlbot main process..."\n\
+su -s /bin/bash www-data -c "/usr/local/bin/scdlbot" &\n\
+BOT_PID=$!\n\
+echo "Bot started with PID $BOT_PID"\n\
+\n\
+# Wait for all processes\n\
+echo "Services running. Press Ctrl+C to stop."\n\
+wait ${FFPROBE_PID:-} ${FFMPEG_PID:-} ${DOWNLOAD_PID:-} ${BOT_PID:-}' > /usr/local/bin/start-scdlbot.sh && \
+    chmod +x /usr/local/bin/start-scdlbot.sh
 
 # Create environment file (will be overridden by docker-compose or kubernetes)
 RUN touch /etc/default/scdlbot
-
-# Enable both systemd services
-RUN systemctl enable scdlbot && \
-    systemctl enable scdlbot-ffprobe
 
 # Expose any necessary ports (adjust as needed)
 EXPOSE 5000
@@ -157,6 +112,9 @@ ENTRYPOINT ["/usr/local/bin/start-scdlbot.sh"]
 # Use standard stop signal
 STOPSIGNAL SIGTERM
 
-# Health check - verify both processes are running
+# Health check - verify all processes are running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD pgrep -f "huey_consumer.*scdlbot.ffprobe" && pgrep -f "/usr/local/bin/scdlbot" || exit 1
+    CMD pgrep -f "huey_consumer.*scdlbot.ffprobe" && \
+        pgrep -f "huey_consumer.*scdlbot.ffmpeg_worker" && \
+        pgrep -f "huey_consumer.*scdlbot.download_worker" && \
+        pgrep -f "/usr/local/bin/scdlbot" || exit 1
