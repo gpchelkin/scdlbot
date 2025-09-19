@@ -1,0 +1,29 @@
+# This is systemd service file for Huey ffprobe worker. How to install service:
+# sudo cp scdlbot-ffprobe.service.sample /etc/systemd/system/scdlbot-ffprobe.service
+# sudo nano /etc/systemd/system/scdlbot-ffprobe.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable scdlbot-ffprobe
+# sudo systemctl restart scdlbot-ffprobe
+# sudo systemctl status scdlbot-ffprobe
+
+[Unit]
+Description=scdlbot ffprobe worker (Huey)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Type=simple
+EnvironmentFile=/etc/default/scdlbot
+ExecStart=/usr/local/bin/huey_consumer scdlbot.ffprobe.huey --workers=2 --worker-type=process
+Restart=always
+RestartSec=5
+CPUQuotaPeriodSec=1000ms
+CPUQuota=100%
+MemoryHigh=1024M
+MemoryMax=1536M
+TasksMax=infinity
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
