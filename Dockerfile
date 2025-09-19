@@ -35,15 +35,12 @@ RUN python3.11 -m pip install --upgrade pip
 WORKDIR /app
 COPY . /app/
 
-# Create inline requirements files and install packages system-wide using the production installation method
-# requirements1.txt - Install pip and scdlbot from local sources
-RUN echo "pip" > /tmp/requirements1.txt && \
-    echo "." >> /tmp/requirements1.txt && \
-    python3.11 -m pip install --upgrade --force-reinstall --upgrade-strategy=eager -r /tmp/requirements1.txt
+# Install the package and its dependencies
+# First install the dependencies from pyproject.toml
+RUN python3.11 -m pip install --upgrade pip setuptools wheel
 
-# requirements2.txt - Install yt-dlp
-RUN echo "yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git@master" > /tmp/requirements2.txt && \
-    python3.11 -m pip install --upgrade --force-reinstall --upgrade-strategy=eager -r /tmp/requirements2.txt
+# Install scdlbot package in editable mode with all dependencies
+RUN python3.11 -m pip install -e .
 
 # Create systemd service file for main bot
 RUN cat > /etc/systemd/system/scdlbot.service << 'EOF'

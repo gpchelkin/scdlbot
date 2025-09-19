@@ -36,7 +36,7 @@ import sdnotify
 from fake_useragent import UserAgent
 from mutagen.id3 import ID3, ID3v1SaveOptions
 from mutagen.mp3 import EasyMP3 as MP3
-from pebble import ProcessPool
+# Removed pebble import - using standard ProcessPoolExecutor instead
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
 from telegram.constants import ChatAction
 
@@ -125,10 +125,7 @@ if platform.system() == "Windows":
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-# EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-# IMPORTANT: Using Union type hint to avoid undefined Executor type
-EXECUTOR: Union[ProcessPool, concurrent.futures.ProcessPoolExecutor] = ProcessPool(initargs=[MAX_MEM], max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))  # type: ignore[assignment]
-# EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
+EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
 # Timeouts: https://www.python-httpx.org/advanced/
@@ -510,9 +507,12 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         #     loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites),
         #     timeout=CHECK_URL_TIMEOUT * 10,
         # )
+        # IMPORTANT: Standard ProcessPoolExecutor passes args correctly
         urls_dict = await loop_main.run_in_executor(
-            cast(Any, EXECUTOR), get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites
-        )  # IMPORTANT: Cast EXECUTOR for type compatibility
+            EXECUTOR,
+            get_direct_urls_dict,
+            message_data, action, proxy, source_ip, allow_unknown_sites
+        )
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
     except Exception as e:
@@ -565,8 +565,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                     }
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     # Run heavy task in separate process, "fire and forget":
-                    # EXECUTOR.submit(download_url_and_send, **kwargs)
-                    EXECUTOR.schedule(download_url_and_send, kwargs=kwargs, timeout=DL_TIMEOUT)
+                    EXECUTOR.submit(download_url_and_send, **kwargs)
 
     elif action == "link":
         if "http" not in urls_values:
@@ -679,8 +678,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 }
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                 # Run heavy task in separate process, "fire and forget":
-                # EXECUTOR.submit(download_url_and_send, **kwargs)
-                EXECUTOR.schedule(download_url_and_send, kwargs=kwargs, timeout=DL_TIMEOUT)
+                EXECUTOR.submit(download_url_and_send, **kwargs)
 
         elif button_action == "link":
             await context.bot.send_message(
@@ -779,10 +777,16 @@ def extract_message_data(message: Message) -> MessageData:
     }
 
 
-def get_direct_urls_dict(message_data: MessageData, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
+def get_direct_urls_dict(message_data: MessageData | Any, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
     # Log function entry for debugging
-    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
-                mode, proxy, source_ip, allow_unknown_sites)
+    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s, message_data type=%s",
+                mode, proxy, source_ip, allow_unknown_sites, type(message_data).__name__)
+
+    # IMPORTANT: Handle case where message_data might be incorrectly serialized
+    if not isinstance(message_data, dict):
+        logger.error("message_data is not a dict but %s: %s", type(message_data).__name__, message_data)
+        return {}
+
     # Extract URLs from the pre-parsed message data
     urls = []
 
@@ -903,6 +907,8 @@ def ydl_get_direct_urls(url, cookies_file=None, source_ip=None, proxy=None):
         "format": "bestaudio/best",
         "noplaylist": True,
         "skip_download": True,
+        # IMPORTANT: Set cache directory to a writable location
+        "cachedir": os.path.join(DL_DIR, ".cache"),
         # "forceprint": {"before_dl":}
     }
     if proxy:
@@ -1113,6 +1119,8 @@ def download_url_and_send(
             "restrictfilenames": True,
             "windowsfilenames": True,
             "max_filesize": MAX_TG_FILE_SIZE * 3,
+            # IMPORTANT: Set cache directory to a writable location
+            "cachedir": os.path.join(download_dir, ".cache"),
             # TODO Add optional parameter FFMPEG_PATH:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "ffmpeg_location": "/usr/local/bin/",
@@ -1514,9 +1522,7 @@ def download_url_and_send(
 
 
 async def post_shutdown(application: Application) -> None:
-    # EXECUTOR.shutdown(wait=False, cancel_futures=True)
-    EXECUTOR.stop()
-    EXECUTOR.join(timeout=10)
+    EXECUTOR.shutdown(wait=False, cancel_futures=True)
 
 
 async def post_init(application: Application) -> None:
