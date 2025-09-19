@@ -2,6 +2,7 @@
 
 import asyncio
 import concurrent.futures
+import contextlib
 import datetime
 import logging
 import os
@@ -98,6 +99,10 @@ MP_CONTEXT = get_context(method=mp_method)
 YT_DLP_CONCURRENCY_LIMIT = min(4, WORKERS) if WORKERS else 4
 YT_DLP_CONCURRENCY_LIMIT = max(1, YT_DLP_CONCURRENCY_LIMIT)
 YT_DLP_SEMAPHORE = MP_CONTEXT.BoundedSemaphore(value=YT_DLP_CONCURRENCY_LIMIT)
+# Cap ffmpeg usage to avoid oversubscribing CPU/IO during conversions
+FFMPEG_CONCURRENCY_LIMIT = min(2, WORKERS) if WORKERS else 2
+FFMPEG_CONCURRENCY_LIMIT = max(1, FFMPEG_CONCURRENCY_LIMIT)
+FFMPEG_SEMAPHORE = MP_CONTEXT.BoundedSemaphore(value=FFMPEG_CONCURRENCY_LIMIT)
 # https://stackoverflow.com/a/66113051
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
@@ -523,6 +528,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                         "source_ip": source_ip,
                         "proxy": proxy,
                         "yt_dlp_semaphore": YT_DLP_SEMAPHORE,
+                        "ffmpeg_semaphore": FFMPEG_SEMAPHORE,
                     }
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     # Run heavy task in separate process, "fire and forget":
@@ -628,6 +634,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     "source_ip": url_message_data["source_ip"],
                     "proxy": url_message_data["proxy"],
                     "yt_dlp_semaphore": YT_DLP_SEMAPHORE,
+                    "ffmpeg_semaphore": FFMPEG_SEMAPHORE,
                 }
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                 # Run heavy task in separate process, "fire and forget":
@@ -904,6 +911,7 @@ def download_url_and_send(
     source_ip=None,
     proxy=None,
     yt_dlp_semaphore=None,
+    ffmpeg_semaphore=None,
 ):
     logger.debug("Entering: download_url_and_send")
     # loop_main = asyncio.get_event_loop()
@@ -925,6 +933,26 @@ def download_url_and_send(
             thread_additional.start()
         future = asyncio.run_coroutine_threadsafe(coro, loop_additional)
         return future.result()
+
+    @contextlib.contextmanager
+    def acquire_ffmpeg_slot():
+        acquired = False
+        try:
+            if ffmpeg_semaphore:
+                ffmpeg_semaphore.acquire()
+                acquired = True
+            yield
+        finally:
+            if acquired:
+                ffmpeg_semaphore.release()
+
+    def run_ffmpeg(stream):
+        with acquire_ffmpeg_slot():
+            return stream.run()
+
+    def probe_ffmpeg(*args, **kwargs):
+        with acquire_ffmpeg_slot():
+            return ffmpeg.probe(*args, **kwargs)
 
     # We must not pass context/bot here, because they need to get serialized/pickled on "fork" (and they cannot be).
     # https://docs.python-telegram-bot.org/en/v20.1/telegram.bot.html
@@ -1192,7 +1220,7 @@ def download_url_and_send(
                             ffinput = ffmpeg.input(file)
                             # https://kkroening.github.io/ffmpeg-python/#ffmpeg.output
                             # We could set audio_bitrate="320k", but we don't need it now
-                            ffmpeg.output(ffinput, file_converted, vn=None, threads=1).run()
+                            run_ffmpeg(ffmpeg.output(ffinput, file_converted, vn=None, threads=1))
                             file = file_converted
                             file_root, file_ext = os.path.splitext(file)
                             file_format = file_ext.replace(".", "").lower()
@@ -1223,10 +1251,12 @@ def download_url_and_send(
                                 file_part = file.replace(file_ext, ".part{}{}".format(str(i + 1), file_ext))
                                 ffinput = ffmpeg.input(file)
                                 if i == (parts_number - 1):
-                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, threads=1).run()
+                                    run_ffmpeg(ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, threads=1))
                                 else:
-                                    ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size, threads=1).run()
-                                    part_duration = float(ffmpeg.probe(file_part)["format"]["duration"])
+                                    run_ffmpeg(
+                                        ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size, threads=1)
+                                    )
+                                    part_duration = float(probe_ffmpeg(file_part)["format"]["duration"])
                                     cur_position += part_duration
                                 if id3:
                                     try:
@@ -1367,8 +1397,9 @@ def download_url_and_send(
                                 break
                             elif download_video:
                                 video = open(file_part, "rb")
-                                duration = int(float(ffmpeg.probe(file_part)["format"]["duration"]))
-                                videostream = next(item for item in ffmpeg.probe(file_part)["streams"] if item["codec_type"] == "video")
+                                probe_data = probe_ffmpeg(file_part)
+                                duration = int(float(probe_data["format"]["duration"]))
+                                videostream = next(item for item in probe_data["streams"] if item["codec_type"] == "video")
                                 width = int(videostream["width"])
                                 height = int(videostream["height"])
                                 video_msg = run_async(
