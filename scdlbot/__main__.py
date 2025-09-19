@@ -438,7 +438,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # Determine the original command:
     command_entities = message.parse_entities(types=[MessageEntity.BOT_COMMAND])
     settings_data = chat_data["settings"]
-    allow_unknown_sites = settings_data["allow_unknown_sites"]
+    allow_unknown_sites = settings_data.get("allow_unknown_sites", False)
     mode = settings_data["mode"]
     command_passed = False
     action = None
@@ -497,6 +497,10 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
 
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
+        # Log the arguments being passed for debugging
+        logger.debug("Calling get_direct_urls_dict with: action=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
+                    action, proxy, source_ip, allow_unknown_sites)
+
         # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
         # urls_dict = await asyncio.wait_for(
@@ -508,8 +512,10 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         )  # IMPORTANT: Cast EXECUTOR for type compatibility
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
-    except Exception:
-        logger.debug("get_direct_urls_dict failed for some unhandled reason")
+    except Exception as e:
+        logger.error("get_direct_urls_dict failed for some unhandled reason: %s", str(e), exc_info=True)
+        # Set default empty dict to continue gracefully
+        urls_dict = {}
     # pool.shutdown(wait=False, cancel_futures=True)
 
     logger.debug(f"prepare_urls: urls dict: {urls_dict}")
@@ -747,7 +753,10 @@ def init_chat_data(chat_data, mode="dl", flood=True):
         chat_data["settings"]["allow_unknown_sites"] = False
 
 
-def get_direct_urls_dict(message, mode, proxy, source_ip, allow_unknown_sites):
+def get_direct_urls_dict(message: Message, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
+    # Log function entry for debugging
+    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
+                mode, proxy, source_ip, allow_unknown_sites)
     # If telegram message passed:
     urls = []
     url_entities = message.parse_entities(types=[MessageEntity.URL])
