@@ -205,6 +205,41 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class YoutubeDLLogger:
+    def __init__(self, base_logger):
+        self._logger = base_logger
+        self._ffmpeg_messages = []
+
+    @staticmethod
+    def _stringify(message):
+        if isinstance(message, bytes):
+            return message.decode("utf-8", "replace")
+        return str(message)
+
+    def debug(self, message):
+        message = self._stringify(message)
+        if "ffmpeg" in message.lower():
+            self._ffmpeg_messages.append(message)
+        self._logger.debug("yt_dlp: %s", message)
+
+    def info(self, message):
+        message = self._stringify(message)
+        self._logger.info("yt_dlp: %s", message)
+
+    def warning(self, message):
+        message = self._stringify(message)
+        self._logger.warning("yt_dlp: %s", message)
+
+    def error(self, message):
+        message = self._stringify(message)
+        self._logger.error("yt_dlp: %s", message)
+
+    def consume_ffmpeg_messages(self):
+        messages = self._ffmpeg_messages[:]
+        self._ffmpeg_messages.clear()
+        return messages
+
 # Systemd watchdog monitoring:
 SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 
@@ -1019,6 +1054,9 @@ def download_url_and_send(
             # "ffmpeg_location": "/usr/local/bin/",
             # "trim_file_name": 32,
         }
+        ydl_logger = YoutubeDLLogger(logger)
+        ydl_opts["logger"] = ydl_logger
+        ydl_opts["verbose"] = True
         if DOMAIN_TT in host:
             download_video = True
             ydl_opts["format"] = "mp4"
@@ -1131,8 +1169,13 @@ def download_url_and_send(
                     unescaped_add_description += "\n" + info_dict["description"][:800]
                     add_description = escape_markdown(unescaped_add_description, version=1)
         except Exception as exc:
-            print(exc)
+            logger.error("ydl_download failed: %s", exc)
             logger.debug("%s failed: %s", cmd_name, url)
+            ffmpeg_messages = ydl_logger.consume_ffmpeg_messages()
+            download_error_cls = getattr(getattr(ydl, "utils", None), "DownloadError", ())
+            if isinstance(exc, download_error_cls) and "Postprocessing: Conversion failed" in str(exc):
+                if ffmpeg_messages:
+                    logger.error("yt_dlp ffmpeg output (stderr/stdout):\n%s", "\n".join(ffmpeg_messages))
             logger.debug(traceback.format_exc())
             status = "failed"
         if cookies_file:
