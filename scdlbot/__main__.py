@@ -57,6 +57,8 @@ except ImportError:
 from boltons.urlutils import URL
 from plumbum import ProcessExecutionError, local
 
+from scdlbot.ffprobe import FFprobeError, probe_media
+
 # Use maximum 1500 mebibytes per task:
 # TODO Parametrize?
 MAX_MEM = 1500 * 1024 * 1024
@@ -1200,7 +1202,7 @@ def download_url_and_send(
                         # https://github.com/c0decracker/video-splitter
                         # https://superuser.com/a/1354956/464797
                         try:
-                            # file_duration = float(ffmpeg.probe(file)['format']['duration'])
+                            # file_duration = float(probe_media(file)["format"]["duration"])
                             part_size = file_size // parts_number
                             cur_position = 0
                             for i in range(parts_number):
@@ -1210,7 +1212,8 @@ def download_url_and_send(
                                     ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, threads=1).run()
                                 else:
                                     ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size, threads=1).run()
-                                    part_duration = float(ffmpeg.probe(file_part)["format"]["duration"])
+                                    probe_result = probe_media(file_part)
+                                    part_duration = float(probe_result["format"]["duration"])
                                     cur_position += part_duration
                                 if id3:
                                     try:
@@ -1351,10 +1354,14 @@ def download_url_and_send(
                                 break
                             elif download_video:
                                 video = open(file_part, "rb")
-                                duration = int(float(ffmpeg.probe(file_part)["format"]["duration"]))
-                                videostream = next(item for item in ffmpeg.probe(file_part)["streams"] if item["codec_type"] == "video")
-                                width = int(videostream["width"])
-                                height = int(videostream["height"])
+                                probe_result = probe_media(file_part)
+                                try:
+                                    duration = int(float(probe_result["format"]["duration"]))
+                                    videostream = next(item for item in probe_result.get("streams", []) if item.get("codec_type") == "video")
+                                    width = int(videostream["width"])
+                                    height = int(videostream["height"])
+                                except (KeyError, StopIteration, TypeError, ValueError) as exc:
+                                    raise FFprobeError(f"ffprobe returned incomplete data for {file_part}") from exc
                                 video_msg = run_async(
                                     bot.send_video(
                                         chat_id=chat_id,
@@ -1375,6 +1382,9 @@ def download_url_and_send(
                                 sent_audio_ids.append(video_msg.video.file_id)
                                 logger.debug("Sending video succeeded: %s", file_name)
                                 break
+                        except FFprobeError as exc:
+                            logger.debug("Sending failed because of ffprobe error: %s (%s)", file_name, exc)
+                            break
                         except TelegramError:
                             ### ??? print(traceback.format_exc())
                             if i == retries - 1:

@@ -228,15 +228,18 @@ Then, if you want to use webhook, start web dyno and stop worker dyno:
 
 ::
 
-    heroku ps:scale web=1 worker=0
+    heroku ps:scale web=1 worker=0 ffprobe=1
     heroku ps:stop worker
 
 If you want to use polling, start worker dyno and stop web dyno:
 
 ::
 
-    heroku ps:scale worker=1 web=0
+    heroku ps:scale worker=1 web=0 ffprobe=1
     heroku ps:stop web
+
+The ``ffprobe`` process type runs a Huey consumer with two process-based workers,
+allowing metadata probes to execute concurrently without blocking the bot.
 
 Some useful commands:
 
