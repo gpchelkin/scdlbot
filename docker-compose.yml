@@ -1,0 +1,57 @@
+x-render-build: &render-build
+  context: .
+  dockerfile: Dockerfile.render
+
+services:
+  bot:
+    image: scdlbot-local
+    build: *render-build
+    platform: linux/amd64
+    command: ["/render/process/worker"]
+    depends_on:
+      ffprobe:
+        condition: service_started
+    env_file:
+      - .env.dev
+    environment:
+      CHAT_STORAGE: /data/chat-state.pickle
+      DL_DIR: /data/downloads
+    volumes:
+      - scdlbot-data:/data
+    restart: unless-stopped
+
+  ffprobe:
+    image: scdlbot-local
+    platform: linux/amd64
+    command: ["/render/process/ffprobe"]
+    env_file:
+      - .env.dev
+    environment:
+      CHAT_STORAGE: /data/chat-state.pickle
+      DL_DIR: /data/downloads
+      FFPROBE_HUEY_DB_FILE: /data/huey-ffprobe.sqlite
+    volumes:
+      - scdlbot-data:/data
+    restart: unless-stopped
+
+  web:
+    image: scdlbot-local
+    platform: linux/amd64
+    profiles: ["webhook"]
+    command: ["/render/process/web"]
+    depends_on:
+      ffprobe:
+        condition: service_started
+    env_file:
+      - .env.dev
+    environment:
+      CHAT_STORAGE: /data/chat-state.pickle
+      DL_DIR: /data/downloads
+    ports:
+      - "5000:5000"
+    volumes:
+      - scdlbot-data:/data
+    restart: unless-stopped
+
+volumes:
+  scdlbot-data:
