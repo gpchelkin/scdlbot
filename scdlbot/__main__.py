@@ -93,12 +93,17 @@ WORKERS = int(os.getenv("WORKERS", 2))
 mp_method = "forkserver"
 if platform.system() == "Windows":
     mp_method = "spawn"
+MP_CONTEXT = get_context(method=mp_method)
+# Ensure yt-dlp work doesn't overwhelm the host even if WORKERS is higher
+YT_DLP_CONCURRENCY_LIMIT = min(4, WORKERS) if WORKERS else 4
+YT_DLP_CONCURRENCY_LIMIT = max(1, YT_DLP_CONCURRENCY_LIMIT)
+YT_DLP_SEMAPHORE = MP_CONTEXT.BoundedSemaphore(value=YT_DLP_CONCURRENCY_LIMIT)
 # https://stackoverflow.com/a/66113051
 # https://superfastpython.com/processpoolexecutor-multiprocessing-context/
 # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
 # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
 # EXECUTOR = concurrent.futures.ProcessPoolExecutor(max_workers=WORKERS, mp_context=get_context(method=mp_method))
-EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
+EXECUTOR = ProcessPool(initializer=pp_initializer, initargs=(MAX_MEM,), max_workers=WORKERS, max_tasks=20, context=MP_CONTEXT)
 # EXECUTOR = ProcessPool(max_workers=WORKERS, max_tasks=20, context=get_context(method=mp_method))
 DL_TIMEOUT = int(os.getenv("DL_TIMEOUT", 300))
 CHECK_URL_TIMEOUT = int(os.getenv("CHECK_URL_TIMEOUT", 30))
@@ -517,6 +522,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                         "cookies_file": COOKIES_FILE,
                         "source_ip": source_ip,
                         "proxy": proxy,
+                        "yt_dlp_semaphore": YT_DLP_SEMAPHORE,
                     }
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                     # Run heavy task in separate process, "fire and forget":
@@ -621,6 +627,7 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     "cookies_file": COOKIES_FILE,
                     "source_ip": url_message_data["source_ip"],
                     "proxy": url_message_data["proxy"],
+                    "yt_dlp_semaphore": YT_DLP_SEMAPHORE,
                 }
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
                 # Run heavy task in separate process, "fire and forget":
@@ -896,6 +903,7 @@ def download_url_and_send(
     cookies_file=None,
     source_ip=None,
     proxy=None,
+    yt_dlp_semaphore=None,
 ):
     logger.debug("Entering: download_url_and_send")
     # loop_main = asyncio.get_event_loop()
@@ -1110,31 +1118,39 @@ def download_url_and_send(
                 cookies_download_file.close()
                 ydl_opts["cookiefile"] = str(cookies_download_file_path)
 
-        logger.debug("%s starts: %s", cmd_name, url)
+        acquired_yt_dlp_slot = False
         try:
-            # FIXME Check and proceed even with partial results - e.g. for playlists with only some videos failed (private or more) https://youtube.com/playlist?list=PL2C109776112A2BB3
-            # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
-            info_dict = ydl.YoutubeDL(ydl_opts).download([url])
-            logger.debug("%s succeeded: %s", cmd_name, url)
-            status = "success"
-            if download_video:
-                unsanitized_info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
-                info_dict = ydl.YoutubeDL(ydl_opts).sanitize_info(unsanitized_info_dict)
-                if "description" in info_dict and info_dict["description"]:
-                    # TODO handle right-to-left hashtags better (like https://www.instagram.com/reel/CtZbNhtrJv3/)
-                    # TODO format as bold/link/quote
-                    unescaped_add_description = "\n"
-                    if "channel" in info_dict and info_dict["channel"]:
-                        unescaped_add_description += "@ " + info_dict["channel"]
-                    if "uploader" in info_dict and info_dict["uploader"]:
-                        unescaped_add_description += " " + info_dict["uploader"]
-                    unescaped_add_description += "\n" + info_dict["description"][:800]
-                    add_description = escape_markdown(unescaped_add_description, version=1)
-        except Exception as exc:
-            print(exc)
-            logger.debug("%s failed: %s", cmd_name, url)
-            logger.debug(traceback.format_exc())
-            status = "failed"
+            if yt_dlp_semaphore:
+                yt_dlp_semaphore.acquire()
+                acquired_yt_dlp_slot = True
+            logger.debug("%s starts: %s", cmd_name, url)
+            try:
+                # FIXME Check and proceed even with partial results - e.g. for playlists with only some videos failed (private or more) https://youtube.com/playlist?list=PL2C109776112A2BB3
+                # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
+                info_dict = ydl.YoutubeDL(ydl_opts).download([url])
+                logger.debug("%s succeeded: %s", cmd_name, url)
+                status = "success"
+                if download_video:
+                    unsanitized_info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
+                    info_dict = ydl.YoutubeDL(ydl_opts).sanitize_info(unsanitized_info_dict)
+                    if "description" in info_dict and info_dict["description"]:
+                        # TODO handle right-to-left hashtags better (like https://www.instagram.com/reel/CtZbNhtrJv3/)
+                        # TODO format as bold/link/quote
+                        unescaped_add_description = "\n"
+                        if "channel" in info_dict and info_dict["channel"]:
+                            unescaped_add_description += "@ " + info_dict["channel"]
+                        if "uploader" in info_dict and info_dict["uploader"]:
+                            unescaped_add_description += " " + info_dict["uploader"]
+                        unescaped_add_description += "\n" + info_dict["description"][:800]
+                        add_description = escape_markdown(unescaped_add_description, version=1)
+            except Exception as exc:
+                print(exc)
+                logger.debug("%s failed: %s", cmd_name, url)
+                logger.debug(traceback.format_exc())
+                status = "failed"
+        finally:
+            if acquired_yt_dlp_slot:
+                yt_dlp_semaphore.release()
         if cookies_file:
             cookies_download_file.close()
             os.unlink(cookies_download_file.name)
