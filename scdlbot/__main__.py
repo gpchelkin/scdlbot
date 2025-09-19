@@ -18,7 +18,7 @@ import threading
 import time
 import traceback
 from types import ModuleType
-from typing import Any, MutableMapping, Union, cast
+from typing import Any, MutableMapping, Union, cast, TypedDict
 from importlib import resources
 from logging.handlers import SysLogHandler
 from multiprocessing import get_context
@@ -495,6 +495,9 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # If ThreadPoolExecutor - no signals.
     # We monitor EXECUTOR process pool task queue, so we use it.
 
+    # IMPORTANT: Extract message data before passing to executor to avoid serialization issues
+    message_data = extract_message_data(message)
+
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
         # Log the arguments being passed for debugging
@@ -504,11 +507,11 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
         # urls_dict = await asyncio.wait_for(
-        #     loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites),
+        #     loop_main.run_in_executor(EXECUTOR, get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites),
         #     timeout=CHECK_URL_TIMEOUT * 10,
         # )
         urls_dict = await loop_main.run_in_executor(
-            cast(Any, EXECUTOR), get_direct_urls_dict, message, action, proxy, source_ip, allow_unknown_sites
+            cast(Any, EXECUTOR), get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites
         )  # IMPORTANT: Cast EXECUTOR for type compatibility
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
@@ -753,17 +756,38 @@ def init_chat_data(chat_data, mode="dl", flood=True):
         chat_data["settings"]["allow_unknown_sites"] = False
 
 
-def get_direct_urls_dict(message: Message, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
-    # Log function entry for debugging
-    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
-                mode, proxy, source_ip, allow_unknown_sites)
-    # If telegram message passed:
-    urls = []
+class MessageData(TypedDict):
+    """Type definition for extracted message data."""
+    url_entities: list[str]
+    text_link_entities: list[str]
+
+
+def extract_message_data(message: Message) -> MessageData:
+    """Extract serializable data from a Telegram Message object."""
+    # IMPORTANT: Extract entities before passing to executor to avoid serialization issues
     url_entities = message.parse_entities(types=[MessageEntity.URL])
     url_caption_entities = message.parse_caption_entities(types=[MessageEntity.URL])
     url_entities.update(url_caption_entities)
-    for entity in url_entities:
-        url_str = url_entities[entity]
+
+    text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
+    text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
+    text_link_entities.update(text_link_caption_entities)
+
+    return {
+        "url_entities": list(url_entities.values()),
+        "text_link_entities": [entity.url for entity in text_link_entities.keys() if hasattr(entity, 'url')]
+    }
+
+
+def get_direct_urls_dict(message_data: MessageData, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
+    # Log function entry for debugging
+    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
+                mode, proxy, source_ip, allow_unknown_sites)
+    # Extract URLs from the pre-parsed message data
+    urls = []
+
+    # Process regular URL entities
+    for url_str in message_data.get("url_entities", []):
         if "://" not in url_str:
             url_str = "http://" + url_str
         try:
@@ -775,16 +799,18 @@ def get_direct_urls_dict(message: Message, mode: str, proxy: str | None, source_
                 logger.info("Entity URL is not valid or blacklisted: %s", url_str)
         except:
             logger.info("Entity URL is not valid: %s", url_str)
-    text_link_entities = message.parse_entities(types=[MessageEntity.TEXT_LINK])
-    text_link_caption_entities = message.parse_caption_entities(types=[MessageEntity.TEXT_LINK])
-    text_link_entities.update(text_link_caption_entities)
-    for entity in text_link_entities:
-        url = URL(entity.url)
-        if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
-            logger.info("Entity Text Link parsed: %s", url)
-            urls.append(url)
-        else:
-            logger.info("Entity Text Link is not valid or blacklisted: %s", url)
+
+    # Process text link entities
+    for entity_url in message_data.get("text_link_entities", []):
+        try:
+            url = URL(entity_url)
+            if url_valid_and_allowed(url, allow_unknown_sites=allow_unknown_sites):
+                logger.info("Entity Text Link parsed: %s", url)
+                urls.append(url)
+            else:
+                logger.info("Entity Text Link is not valid or blacklisted: %s", url)
+        except:
+            logger.info("Entity Text Link is not valid: %s", entity_url)
     # If message just some text passed (not isinstance(message, Message)):
     # all_links = find_all_links(message, default_scheme="http")
     # urls = [link for link in all_links if url_valid_and_allowed(link)]
