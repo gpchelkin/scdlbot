@@ -1,137 +1,123 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "scdlbot"
-version = "0.15.0"
 description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
+version = "0.15.0"
+license = "MIT"
+
+authors = ["George Pchelkin <george@pchelk.in>"]
+
 readme = "README.rst"
-license = {text = "MIT"}
-authors = [
-    {name = "George Pchelkin", email = "george@pchelk.in"},
-]
+
+homepage = "https://github.com/gpchelkin/scdlbot"
+documentation = "https://scdlbot.readthedocs.io"
+repository = "https://github.com/gpchelkin/scdlbot"
+
 keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud", "yandex", "audio", "music", "download"]
+
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
-    "Topic :: Multimedia :: Sound/Audio",
-    "Topic :: Internet",
-    "Operating System :: OS Independent",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-]
-requires-python = ">=3.10"
-dependencies = [
-    # Core dependencies
-    "python-telegram-bot==22.1",
-    "requests[socks]>=2.32.3",
-    "boltons>=25.0.0",
-    "mutagen>=1.47.0",
-    "plumbum>=1.9.0",
-    "ffmpeg-python==0.2.0",
-    "prometheus-client>=0.22.0",
-    "sdnotify>=0.3.2",
-    "fake-useragent>=2.1.0",
-    "huey>=2.5.3",
-    "pydantic>=2.0.0",
-    # Additional dependencies from requirements.txt
-    "aiolimiter>=1.2.1",
-    "anyio>=4.9.0",
-    "apscheduler>=3.11.0",
-    "beautifulsoup4>=4.13.4",
-    "certifi>=2025.7.14",
-    "charset-normalizer>=3.4.2",
-    "colorama>=0.4.6 ; sys_platform == 'win32'",
-    "dacite>=1.9.2",
-    "demjson3>=3.0.6",
-    "docopt-ng>=0.9.0",
-    "exceptiongroup>=1.3.0 ; python_version == '3.10'",
-    "filelock>=3.16.1",
-    "future>=1.0.0",
-    "h11>=0.16.0",
-    "h2>=4.2.0",
-    "hpack>=4.1.0",
-    "httpcore>=1.0.9",
-    "httpx>=0.28.1",
-    "hyperframe>=6.1.0",
-    "idna>=3.10",
-    "pathvalidate>=3.3.1",
-    "pysocks>=1.7.1",
-    "python-dateutil>=2.9.0.post0",
-    "pywin32==311 ; sys_platform == 'win32' and platform_python_implementation != 'PyPy'",
-    "six>=1.17.0",
-    "sniffio>=1.3.1",
-    "soundcloud-v2>=1.6.0",
-    "soupsieve>=2.7",
-    "termcolor>=3.1.0",
-    "toml>=0.10.2 ; python_version == '3.10'",
-    "tornado>=6.5.1",
-    "tqdm>=4.67.1",
-    "typing-extensions>=4.14.1",
-    "tzdata>=2025.2 ; sys_platform == 'win32'",
-    "tzlocal>=5.3.1",
-    "unicode-slugify>=0.1.5",
-    "unidecode>=1.4.0",
-    "urllib3>=2.5.0",
-    # Git dependencies
-    "yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git@master",
-    "scdl @ git+https://github.com/scdl-org/scdl.git@eb555d8993f55618d955cce6e78815b30a6c88ee",
-    "bandcamp-downloader @ git+https://github.com/iheanyi/bandcamp-dl.git@a3fd56d2812c4694a91cb74088313202f0b4964d",
-    "tomli>=2.2.1",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Topic :: Multimedia :: Sound/Audio",
+  "Topic :: Internet",
+  "Operating System :: OS Independent",
+  "Natural Language :: English",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "isort>=6.0.0",
-    "black>=25.1.0",
-    "wemake-python-styleguide>=1.1.0",
-    "doc8>=1.1",
-    "nitpick>=0.35",
-    "safety>=3.3.0",
-]
-docs = [
-    "sphinx>=8.1.3",
-    "sphinx-autodoc-typehints>=3.0.1",
-    "myst-parser>=4.0.0",
-    "tomli>=2.1",
-    "recommonmark>=0.7",
-    "typing-extensions>=4.9",
-]
+include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
 
-[project.urls]
-Homepage = "https://github.com/gpchelkin/scdlbot"
-Documentation = "https://scdlbot.readthedocs.io"
-Repository = "https://github.com/gpchelkin/scdlbot"
-Issues = "https://github.com/gpchelkin/scdlbot/issues"
-Changelog = "https://github.com/gpchelkin/scdlbot/releases"
+[tool.poetry.urls]
+# https://github.com/python-poetry/poetry/blob/master/docs/pyproject.md#urls
+"Issues" = "https://github.com/gpchelkin/scdlbot/issues"
+"CI" = "https://github.com/gpchelkin/scdlbot/actions"
+"Changelog" = "https://github.com/gpchelkin/scdlbot/releases"
+#"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
 
-[project.scripts]
+[tool.poetry.scripts]
 scdlbot = "scdlbot.__main__:main"
 
-[tool.hatch.metadata]
-allow-direct-references = true
+[tool.poetry.dependencies]
+# https://endoflife.date/python
+python = "^3.10"
+python-telegram-bot = { version = "22.1", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+#ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
+# https://python-poetry.org/docs/dependency-specification#path-dependencies
+#ptbcontrib = { path = "../ptbcontrib/", develop = false }
+requests = { version = "^2.32.3", extras = ["socks"] }
+huey = "^2.5.3"
+pebble = "^5.1.1"
+boltons = "^25.0.0"
+mutagen = "^1.47.0"
+plumbum = "^1.9.0"
+ffmpeg-python = "0.2.0"
+prometheus_client = "^0.22.0"
+sdnotify = "^0.3.2"
+fake-useragent = "^2.1.0"
+#python-telegram-handler = "^2.2.1"
+#patool = "1.12"
+#pyshorteners = "1.0.1"
+#transliterate = "1.10.2"
 
-[tool.hatch.build]
-include = [
-    "AUTHORS.rst",
-    "CONTRIBUTING.md",
-    "CHANGELOG.rst",
-    "LICENSE",
-    "README.rst",
-    "tests/*",
-    "docs/*.rst",
-    "docs/conf.py",
-    "docs/Makefile",
-    "docs/*.jpg",
-    "docs/*.png",
-    "docs/*.gif",
-    "scdlbot/texts/*",
-]
+### For publishing to PyPI at release:
+# https://github.com/yt-dlp/yt-dlp/wiki/Forks
+#yt-dlp = "2025.5.22"
+##youtube_dl = "2021.12.17"
+##youtube-dlc = "2020.11.11.post3"
+#scdl = "2.12.4"
+#bandcamp-downloader = "0.0.17"
+
+### For making it work better using latest git revision:
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master" }
+##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
+##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
+##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
+##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
+##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
+##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
+scdl = { git = "https://github.com/scdl-org/scdl.git", branch = "master" }
+##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
+##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
+##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
+bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
+#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", rev = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e" }
+#bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "pyproject-poetry" }
+#fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
+
+[tool.poetry.group.dev]
+# must be false if tox-poetry is used (it doesn't support groups):
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+# make additional external tools: poetry, tox, (tox-poetry)
+# make format:
+isort = "^6.0.0"
+black = "^25.1.0"
+# make lint:
+wemake-python-styleguide = "^1.1.0"
+doc8 = "^1.1"
+nitpick = "^0.35"
+safety = "^3.3.0"
+#flakeheaven = "^3.3"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^8.1.3"
+sphinx-autodoc-typehints = "^3.0.1"
+#m2r2 = "^0.3"
+# https://github.com/CrossNox/m2r2/issues/68
+# https://github.com/CrossNox/m2r2/pull/69
+#m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
+myst-parser = "^4.0.0"
+tomli = "^2.1"
+recommonmark = "^0.7"
+typing-extensions = "^4.9"
+
 
 [tool.isort]
 # isort configuration:
