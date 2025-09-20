@@ -42,6 +42,13 @@ BOT_REQUESTS = prometheus_client.Counter(
     registry=REGISTRY,
 )
 
+COMPLETED_TASKS = prometheus_client.Counter(
+    "huey_tasks_completed_total",
+    "Total completed tasks per queue",
+    ["queue"],
+    registry=REGISTRY,
+)
+
 
 STATE_PENDING = "pending"
 STATE_RUNNING = "running"
@@ -101,7 +108,10 @@ def track_huey_enqueue(queue: str) -> Callable[[F], F]:
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 adjust_queue_state(queue, STATE_PENDING, 1.0)
                 try:
-                    return await func(*args, **kwargs)
+                    result = await func(*args, **kwargs)
+                    adjust_queue_state(queue, STATE_PENDING, -1.0)
+                    increment_completed_tasks(queue)
+                    return result
                 except (ValueError, ValidationError, FileNotFoundError, HueyException):
                     adjust_queue_state(queue, STATE_PENDING, -1.0)
                     raise
@@ -112,7 +122,10 @@ def track_huey_enqueue(queue: str) -> Callable[[F], F]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             adjust_queue_state(queue, STATE_PENDING, 1.0)
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+                adjust_queue_state(queue, STATE_PENDING, -1.0)
+                increment_completed_tasks(queue)
+                return result
             except (ValueError, ValidationError, FileNotFoundError, HueyException):
                 adjust_queue_state(queue, STATE_PENDING, -1.0)
                 raise
@@ -120,6 +133,11 @@ def track_huey_enqueue(queue: str) -> Callable[[F], F]:
         return cast(F, wrapper)
 
     return decorator
+
+
+def increment_completed_tasks(queue: str) -> None:
+    """Increment the completed task counter for the queue."""
+    COMPLETED_TASKS.labels(queue=queue).inc()
 
 
 def consume_huey_result(queue: str, amount: float = 1.0) -> float:
@@ -141,4 +159,6 @@ __all__ = [
     "get_queue_state",
     "track_huey_enqueue",
     "consume_huey_result",
+    "increment_completed_tasks",
+    "COMPLETED_TASKS",
 ]
