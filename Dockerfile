@@ -38,7 +38,7 @@ COPY . /app/
 RUN python3.11 -m pip install --upgrade pip setuptools wheel
 
 # Install scdlbot package in editable mode with all dependencies
-RUN python3.11 -m pip install -e .
+RUN python3.11 -m pip install .
 
 # Create a startup script
 RUN echo '#!/bin/bash\n\
