@@ -22,7 +22,6 @@ from scdlbot.metrics import track_huey_enqueue
 from telegram import Bot
 from telegram.request import HTTPXRequest
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

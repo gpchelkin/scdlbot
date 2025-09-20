@@ -21,10 +21,17 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 # Create www-data user if it doesn't exist
 RUN id -u www-data &>/dev/null || useradd -m -s /bin/bash www-data
 
-# Create necessary directories
+# Create necessary directories with proper permissions
 RUN mkdir -p /opt/pyenv/versions/3.11.5/bin && \
     mkdir -p /etc/default && \
-    mkdir -p /app
+    mkdir -p /app && \
+    mkdir -p /var/www/.config/scdl && \
+    mkdir -p /var/www/.cache && \
+    mkdir -p /tmp/scdlbot && \
+    chown -R www-data:www-data /var/www && \
+    chown -R www-data:www-data /tmp/scdlbot && \
+    chmod -R 755 /var/www && \
+    chmod -R 777 /tmp/scdlbot
 
 # Upgrade pip system-wide
 RUN python3.11 -m pip install --upgrade pip
@@ -72,19 +79,17 @@ su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.ffprobe.huey -
 FFPROBE_PID=$!\n\
 echo "Huey ffprobe worker started with PID $FFPROBE_PID"\n\
 \n\
-# Start Huey ffmpeg consumer in background\n\
+# Start Huey ffmpeg worker using the same entry point as systemd\n\
 echo "Starting Huey ffmpeg worker..."\n\
-FFMPEG_WORKERS=${FFMPEG_HUEY_WORKERS:-2}\n\
-su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.ffmpeg_worker.huey --workers=$FFMPEG_WORKERS --worker-type=thread" &\n\
+su -s /bin/bash www-data -c "python3 -m scdlbot.run_ffmpeg_worker" &\n\
 FFMPEG_PID=$!\n\
-echo "Huey ffmpeg worker started with PID $FFMPEG_PID (workers=$FFMPEG_WORKERS)"\n\
+echo "Huey ffmpeg worker started with PID $FFMPEG_PID"\n\
 \n\
-# Start Huey download consumer in background\n\
+# Start Huey download worker using the same entry point as systemd\n\
 echo "Starting Huey download worker..."\n\
-DOWNLOAD_WORKERS=${DOWNLOAD_HUEY_WORKERS:-4}\n\
-su -s /bin/bash www-data -c "/usr/local/bin/huey_consumer scdlbot.download_worker.huey --workers=$DOWNLOAD_WORKERS --worker-type=thread" &\n\
+su -s /bin/bash www-data -c "python3 -m scdlbot.run_download_worker" &\n\
 DOWNLOAD_PID=$!\n\
-echo "Huey download worker started with PID $DOWNLOAD_PID (workers=$DOWNLOAD_WORKERS)"\n\
+echo "Huey download worker started with PID $DOWNLOAD_PID"\n\
 \n\
 # Give Huey workers a moment to start\n\
 sleep 2\n\
@@ -115,6 +120,6 @@ STOPSIGNAL SIGTERM
 # Health check - verify all processes are running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD pgrep -f "huey_consumer.*scdlbot.ffprobe" && \
-        pgrep -f "huey_consumer.*scdlbot.ffmpeg_worker" && \
-        pgrep -f "huey_consumer.*scdlbot.download_worker" && \
+        pgrep -f "scdlbot.run_ffmpeg_worker" && \
+        pgrep -f "scdlbot.run_download_worker" && \
         pgrep -f "/usr/local/bin/scdlbot" || exit 1

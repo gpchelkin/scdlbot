@@ -14,6 +14,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
+# Suppress verbose debug logs from noisy libraries
+logging.getLogger("hpack").setLevel(logging.WARNING)
+logging.getLogger("hpack.hpack").setLevel(logging.WARNING)
+logging.getLogger("hpack.table").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.INFO)
+logging.getLogger("httpx").setLevel(logging.INFO)
+logging.getLogger("h2").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 

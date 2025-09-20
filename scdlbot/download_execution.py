@@ -138,7 +138,7 @@ async def prepare_download_sends(
     cookies_file: Optional[str] = None,
     source_ip: Optional[str] = None,
     proxy: Optional[str] = None,
-    ) -> DownloadResult:
+) -> DownloadResult:
     """Prepare download and send intents without creating or using bot instance."""
 
     ctx = _require_download_context()
@@ -305,6 +305,8 @@ async def prepare_download_sends(
                 # Local file, no temp needed, just use as is
                 ydl_opts["cookiefile"] = cookies_file
 
+        logging.info("ydl opts: %s", ydl_opts)
+
         try:
             ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
@@ -339,11 +341,7 @@ async def prepare_download_sends(
                 cleanup_paths.append(full_path)  # Add all downloaded files to cleanup
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
-            sends.append(ErrorMessage(
-                chat_id=chat_id,
-                reply_to_message_id=reply_to_message_id,
-                text="*Sorry*, I couldn't download any files from some of the provided links"
-            ))
+            sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I couldn't download any files from some of the provided links"))
         else:
             for file in sorted(file_list):
                 file_name = os.path.split(file)[-1]
@@ -414,40 +412,44 @@ async def prepare_download_sends(
                 except FileNotSupportedError as exc:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
-                        sends.append(ErrorMessage(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name)
-                        ))
+                        sends.append(
+                            ErrorMessage(
+                                chat_id=chat_id,
+                                reply_to_message_id=reply_to_message_id,
+                                text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
+                            )
+                        )
                     continue
                 except FileTooLargeError as exc:
                     logger.debug("Large file for convert: %s", file_name)
-                    sends.append(ErrorMessage(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
-                            file_name,
-                            exc.file_size // 1_000_000,
-                            ctx.max_convert_file_size // 1_000_000,
+                    sends.append(
+                        ErrorMessage(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
+                                file_name,
+                                exc.file_size // 1_000_000,
+                                ctx.max_convert_file_size // 1_000_000,
+                            ),
                         )
-                    ))
+                    )
                     continue
                 except FileSplittedPartiallyError as exc:
                     file_parts = list(exc.file_parts)
                     logger.debug("Splitting failed: %s", file_name)
-                    sends.append(ErrorMessage(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
-                    ))
+                    sends.append(
+                        ErrorMessage(
+                            chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
+                        )
+                    )
                     continue
                 except FileNotConvertedError:
                     logger.debug("Conversion failed: %s", file_name)
-                    sends.append(ErrorMessage(
-                        chat_id=chat_id,
-                        reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
-                    ))
+                    sends.append(
+                        ErrorMessage(
+                            chat_id=chat_id, reply_to_message_id=reply_to_message_id, text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
+                        )
+                    )
                     continue
 
                 caption = None
@@ -465,7 +467,7 @@ async def prepare_download_sends(
                         source = "Bandcamp"
                     else:
                         source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
-                    escaped_username = bot_username.replace('_', r'\_') if bot_username else ""
+                    escaped_username = bot_username.replace("_", r"\_") if bot_username else ""
                     escaped_addition = addition.replace("_", r"\_")
                     if bot_username:
                         caption = "@{} _got it from_ [{}]({}){}".format(escaped_username, source, url, escaped_addition)
@@ -499,15 +501,17 @@ async def prepare_download_sends(
                                 title = ", ".join(mp3["title"])
                             except Exception:
                                 pass
-                            sends.append(SendAudio(
-                                chat_id=chat_id,
-                                reply_to_message_id=reply_to_message_id_send,
-                                file_path=file_part,
-                                duration=duration,
-                                performer=performer,
-                                title=title,
-                                caption=caption_full
-                            ))
+                            sends.append(
+                                SendAudio(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    file_path=file_part,
+                                    duration=duration,
+                                    performer=performer,
+                                    title=title,
+                                    caption=caption_full,
+                                )
+                            )
                             logger.debug("Prepared audio send: %s", file_name_part)
                         except Exception as exc:
                             logger.debug("Failed to prepare audio %s: %s", file_part, exc)
@@ -519,26 +523,23 @@ async def prepare_download_sends(
                             videostream = next(item for item in probe_result.get("streams", []) if item.get("codec_type") == "video")
                             width = int(videostream["width"])
                             height = int(videostream["height"])
-                            sends.append(SendVideo(
-                                chat_id=chat_id,
-                                reply_to_message_id=reply_to_message_id_send,
-                                file_path=file_part,
-                                duration=duration,
-                                width=width,
-                                height=height,
-                                caption=caption_full
-                            ))
+                            sends.append(
+                                SendVideo(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    file_path=file_part,
+                                    duration=duration,
+                                    width=width,
+                                    height=height,
+                                    caption=caption_full,
+                                )
+                            )
                             logger.debug("Prepared video send: %s", file_name_part)
                         except (KeyError, StopIteration, TypeError, ValueError, FFprobeError) as exc:
                             logger.debug("Failed to prepare video %s: %s", file_part, exc)
                             sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=f"Failed to prepare {file_name_part}: {exc}"))
                     else:
-                        sends.append(SendDocument(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id_send,
-                            file_path=file_part,
-                            caption=caption_full
-                        ))
+                        sends.append(SendDocument(chat_id=chat_id, reply_to_message_id=reply_to_message_id_send, file_path=file_part, caption=caption_full))
                         logger.debug("Prepared document send: %s", file_name_part)
 
     return DownloadResult(sends=sends, cleanup_paths=cleanup_paths)
