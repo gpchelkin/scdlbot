@@ -14,6 +14,8 @@ from huey import SqliteHuey
 from huey.exceptions import HueyException, ResultTimeout, TaskException
 from pydantic import BaseModel, Field, field_validator
 
+from scdlbot.metrics import track_huey_enqueue
+
 logger = logging.getLogger(__name__)
 
 
@@ -142,17 +144,10 @@ def convert_video_to_audio_task(request_dict: Dict[str, Any]) -> Dict[str, Any]:
 
         ffmpeg.output(ffinput, request.output_file, **output_args).overwrite_output().run()
 
-        return VideoToAudioResponse(
-            output_file=request.output_file,
-            success=True
-        ).model_dump()
+        return VideoToAudioResponse(output_file=request.output_file, success=True).model_dump()
     except Exception as e:
         logger.error(f"Failed to convert video to audio: {e}")
-        return VideoToAudioResponse(
-            output_file=request.output_file,
-            success=False,
-            error=str(e)
-        ).model_dump()
+        return VideoToAudioResponse(output_file=request.output_file, success=False, error=str(e)).model_dump()
 
 
 @huey.task()
@@ -167,10 +162,7 @@ def split_file_task(request_dict: Dict[str, Any]) -> Dict[str, Any]:
         parts_number = file_size // request.max_size + 1
 
         if parts_number == 1:
-            return FileSplitResponse(
-                parts=[request.input_file],
-                success=True
-            ).model_dump()
+            return FileSplitResponse(parts=[request.input_file], success=True).model_dump()
 
         file_parts = []
         cur_position = 0
@@ -181,26 +173,11 @@ def split_file_task(request_dict: Dict[str, Any]) -> Dict[str, Any]:
 
             if i == (parts_number - 1):
                 # Last part - no size limit
-                ffmpeg.output(
-                    ffinput,
-                    file_part,
-                    codec="copy",
-                    vn=None,
-                    ss=cur_position,
-                    threads=request.threads
-                ).overwrite_output().run()
+                ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, threads=request.threads).overwrite_output().run()
             else:
                 # Other parts - limit by size
                 part_size = request.max_size
-                ffmpeg.output(
-                    ffinput,
-                    file_part,
-                    codec="copy",
-                    vn=None,
-                    ss=cur_position,
-                    fs=part_size,
-                    threads=request.threads
-                ).overwrite_output().run()
+                ffmpeg.output(ffinput, file_part, codec="copy", vn=None, ss=cur_position, fs=part_size, threads=request.threads).overwrite_output().run()
 
                 # Get duration of this part for next iteration
                 probe_result = probe_media(file_part)
@@ -209,31 +186,16 @@ def split_file_task(request_dict: Dict[str, Any]) -> Dict[str, Any]:
 
             file_parts.append(file_part)
 
-        return FileSplitResponse(
-            parts=file_parts,
-            success=True
-        ).model_dump()
+        return FileSplitResponse(parts=file_parts, success=True).model_dump()
     except Exception as e:
         logger.error(f"Failed to split file: {e}")
-        return FileSplitResponse(
-            parts=[],
-            success=False,
-            error=str(e)
-        ).model_dump()
+        return FileSplitResponse(parts=[], success=False, error=str(e)).model_dump()
 
 
-def convert_video_to_audio(
-    input_file: str,
-    output_file: str,
-    audio_bitrate: Optional[str] = None,
-    timeout: Optional[int] = None
-) -> VideoToAudioResponse:
+@track_huey_enqueue(HUEY_QUEUE_NAME)
+def convert_video_to_audio(input_file: str, output_file: str, audio_bitrate: Optional[str] = None, timeout: Optional[int] = None) -> VideoToAudioResponse:
     """Synchronously convert video to audio via Huey."""
-    request = VideoToAudioRequest(
-        input_file=input_file,
-        output_file=output_file,
-        audio_bitrate=audio_bitrate
-    )
+    request = VideoToAudioRequest(input_file=input_file, output_file=output_file, audio_bitrate=audio_bitrate)
 
     resolved_timeout = timeout or FFMPEG_TIMEOUT
 
@@ -255,18 +217,10 @@ def convert_video_to_audio(
         raise FFmpegError(f"Huey failed to execute video conversion") from exc
 
 
-def split_file(
-    input_file: str,
-    max_size: int,
-    output_pattern: str,
-    timeout: Optional[int] = None
-) -> FileSplitResponse:
+@track_huey_enqueue(HUEY_QUEUE_NAME)
+def split_file(input_file: str, max_size: int, output_pattern: str, timeout: Optional[int] = None) -> FileSplitResponse:
     """Synchronously split file via Huey."""
-    request = FileSplitRequest(
-        input_file=input_file,
-        max_size=max_size,
-        output_pattern=output_pattern
-    )
+    request = FileSplitRequest(input_file=input_file, max_size=max_size, output_pattern=output_pattern)
 
     resolved_timeout = timeout or FFMPEG_TIMEOUT
 

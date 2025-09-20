@@ -22,7 +22,7 @@ from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
 from urllib.parse import urljoin
 from uuid import uuid4
 
-import prometheus_client
+from prometheus_client import start_http_server
 import requests
 import sdnotify
 
@@ -58,6 +58,15 @@ from scdlbot.download_execution import (
 
 
 from scdlbot.download_worker import DownloadRequest, download_url_fire_and_forget, huey as download_huey
+from scdlbot.metrics import (
+    BOT_REQUESTS,
+    REGISTRY,
+    STATE_FAILED,
+    STATE_PENDING,
+    STATE_RESULTS,
+    STATE_RUNNING,
+    get_queue_state,
+)
 
 # Use maximum 1500 mebibytes per task:
 # TODO Parametrize?
@@ -172,18 +181,7 @@ WEBHOOK_SECRET_TOKEN = os.getenv("WEBHOOK_SECRET_TOKEN", None)
 # Prometheus metrics:
 METRICS_HOST = os.getenv("METRICS_HOST", "127.0.0.1")
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
-REGISTRY = prometheus_client.CollectorRegistry()
-DOWNLOAD_TASKS_REMAINING = prometheus_client.Gauge(
-    "download_tasks_remaining",
-    "Number of pending download tasks in the Huey queue",
-    registry=REGISTRY,
-)
-BOT_REQUESTS = prometheus_client.Counter(
-    "bot_requests_total",
-    "Value: bot_requests_total",
-    labelnames=["type", "chat_type", "mode"],
-    registry=REGISTRY,
-)
+# The actual metric objects live in scdlbot.metrics.
 
 # Logging:
 logging_handlers = []
@@ -985,18 +983,24 @@ async def callback_watchdog(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def callback_monitor(context: ContextTypes.DEFAULT_TYPE):
-    try:
-        pending_count = sum(1 for _ in download_huey.pending())
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.debug("Failed to obtain download queue size: %s", exc)
-        pending_count = 0
-    logger.debug("Download queue pending tasks: %s", pending_count)
-    DOWNLOAD_TASKS_REMAINING.set(pending_count)
+    queue_name = getattr(download_huey, "name", "download")
+    pending = get_queue_state(queue_name, STATE_PENDING)
+    running = get_queue_state(queue_name, STATE_RUNNING)
+    results = get_queue_state(queue_name, STATE_RESULTS)
+    failed = get_queue_state(queue_name, STATE_FAILED)
+
+    logger.debug(
+        "Download Huey queue metrics | pending: %s, running: %s, results: %s, failed: %s",
+        pending,
+        running,
+        results,
+        failed,
+    )
 
 
 def main():
     # Start exposing Prometheus/OpenMetrics metrics:
-    prometheus_client.start_http_server(addr=METRICS_HOST, port=METRICS_PORT, registry=REGISTRY)
+    start_http_server(addr=METRICS_HOST, port=METRICS_PORT, registry=REGISTRY)
 
     # Maybe we can use token again if we will buy SoundCloud Go+
     # https://github.com/flyingrub/scdl/issues/429

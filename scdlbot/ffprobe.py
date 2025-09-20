@@ -13,6 +13,8 @@ from typing import Any, Dict
 from huey import SqliteHuey
 from huey.exceptions import HueyException, ResultTimeout, TaskException
 
+from scdlbot.metrics import track_huey_enqueue
+
 logger = logging.getLogger(__name__)
 
 
@@ -87,6 +89,7 @@ def ffprobe_task(path: str) -> Dict[str, Any]:
     return data
 
 
+@track_huey_enqueue(HUEY_QUEUE_NAME)
 def probe_media(path: str, timeout: int | None = None) -> Dict[str, Any]:
     """Synchronously probe *path* via Huey and return ffprobe metadata."""
 

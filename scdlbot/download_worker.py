@@ -14,6 +14,7 @@ from huey.exceptions import HueyException, ResultTimeout, TaskException
 from pydantic import BaseModel, Field
 
 from scdlbot.download_execution import download_url_and_send, get_download_context
+from scdlbot.metrics import track_huey_enqueue
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,7 @@ def download_url_and_send_task(request_dict: Dict[str, Any]) -> Dict[str, Any]:
         return DownloadResponse(success=False, error=str(exc)).model_dump()
 
 
+@track_huey_enqueue(HUEY_QUEUE_NAME)
 def download_url_async(request: DownloadRequest, timeout: Optional[int] = None) -> DownloadResponse:
     """Queue a download task and wait for completion (mainly for tests)."""
 
@@ -133,6 +135,7 @@ def download_url_async(request: DownloadRequest, timeout: Optional[int] = None) 
         raise RuntimeError("Huey failed to execute download") from exc
 
 
+@track_huey_enqueue(HUEY_QUEUE_NAME)
 def download_url_fire_and_forget(request: DownloadRequest) -> str:
     """Queue a download task without blocking and return best-effort identifier."""
 
