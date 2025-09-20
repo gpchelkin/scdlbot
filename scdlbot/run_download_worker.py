@@ -23,6 +23,7 @@ def main():
 
     consumer = Consumer(
         huey,
+        worker_type="process",
         workers=HUEY_WORKERS,
         periodic=True,
         check_worker_health=True,

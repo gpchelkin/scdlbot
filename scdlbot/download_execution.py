@@ -466,9 +466,11 @@ async def prepare_download_sends(
                     else:
                         source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
                     escaped_username = bot_username.replace('_', r'\_') if bot_username else ""
-                    username_part = f"@{escaped_username}_ " if bot_username else ""
                     escaped_addition = addition.replace("_", r"\_")
-                    caption = "{}_got it from_ [{}]({}){}".format(username_part, source, url, escaped_addition)
+                    if bot_username:
+                        caption = "@{} _got it from_ [{}]({}){}".format(escaped_username, source, url, escaped_addition)
+                    else:
+                        caption = "got it from [{}]({}){}".format(source, url, escaped_addition)
                     if add_description:
                         caption += add_description
 

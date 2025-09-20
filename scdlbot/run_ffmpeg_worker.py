@@ -24,12 +24,12 @@ def main():
     consumer = Consumer(
         huey,
         workers=HUEY_WORKERS,  # Default is 2, controlled by env var
+        worker_type="process",
         periodic=True,
         initial_delay=0.1,
         backoff=1.15,
         max_delay=10.0,
         scheduler_interval=1,
-        worker_type="thread",  # Use threads for I/O-bound ffmpeg operations
         check_worker_health=True,
         health_check_interval=10,
     )

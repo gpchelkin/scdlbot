@@ -23,6 +23,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 from prometheus_client import start_http_server
+import httpx
 import requests
 import sdnotify
 
@@ -482,9 +483,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         # Log the arguments being passed for debugging
         logger.debug("Calling get_direct_urls_dict with: action=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s", action, proxy, source_ip, allow_unknown_sites)
 
-        # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
-        # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
-        urls_dict = await loop_main.run_in_executor(None, get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites)
+        # Call async function directly
+        urls_dict = await get_direct_urls_dict(message_data, action, proxy, source_ip, allow_unknown_sites)
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
     except Exception as e:
@@ -493,7 +493,7 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
         urls_dict = {}
     # pool.shutdown(wait=False, cancel_futures=True)
 
-    logger.debug(f"prepare_urls: urls dict: {urls_dict}")
+    logger.info(f"prepare_urls: urls dict: {urls_dict}")
     urls_values = " ".join(urls_dict.values())
 
     # Continue only if any good direct url status exist (or if we deal with known sites):
@@ -756,7 +756,7 @@ def extract_message_data(message: Message) -> MessageData:
     }
 
 
-def get_direct_urls_dict(message_data: MessageData | Any, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
+async def get_direct_urls_dict(message_data: MessageData | Any, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
     # Log function entry for debugging
     logger.debug(
         "get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s, message_data type=%s",
@@ -813,22 +813,15 @@ def get_direct_urls_dict(message_data: MessageData | Any, mode: str, proxy: str 
         # TODO Unshorten unknown sites links again? Because yt-dlp may only support unshortened?
         # if unknown_site or DOMAIN_SC_GOOGL in url_item.host:
         if DOMAIN_SC_GOOGL in url_item.host or DOMAIN_SC_ON in url_item.host:
-            proxy_args = None
-            if proxy:
-                proxy_args = {"http": proxy, "https": proxy}
-            try:
-                url = URL(
-                    requests.head(
+            async with httpx.AsyncClient(proxy=proxy if proxy else None, timeout=2.0, follow_redirects=True) as client:
+                try:
+                    response = await client.head(
                         url_item.to_text(full_quote=True),
-                        allow_redirects=True,
-                        timeout=2,
-                        proxies=proxy_args,
                         headers={"User-Agent": UA.random},
-                        # headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"},
-                    ).url
-                )
-            except:
-                url = url_item
+                    )
+                    url = URL(str(response.url))
+                except:
+                    url = url_item
         else:
             url = url_item
         unknown_site = not any((re.match(domain, url.host) for domain in DOMAINS))
