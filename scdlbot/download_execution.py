@@ -608,6 +608,17 @@ def download_url_and_send(
                         logger.debug("Failed to send %s after retries", file_part)
 
     shutil.rmtree(download_dir, ignore_errors=True)
+    if wait_message_id is not None:
+        try:
+            run_async(
+                bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=wait_message_id,
+                )
+            )
+        except Exception:
+            logger.debug("Failed to delete wait message", exc_info=True)
+    run_async(bot.shutdown())
     loop_additional.call_soon_threadsafe(loop_additional.stop)
     if thread_additional.is_alive():
         thread_additional.join(timeout=1)
