@@ -1,0 +1,35 @@
+# This is a sample systemd unit for the Huey download worker. To install:
+# sudo cp scdlbot-downloads.service.sample /etc/systemd/system/scdlbot-downloads.service
+# sudo nano /etc/systemd/system/scdlbot-downloads.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable scdlbot-downloads
+# sudo systemctl restart scdlbot-downloads
+# sudo systemctl status scdlbot-downloads
+
+[Unit]
+Description=SCDLBot Download Worker (Huey)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/default/scdlbot
+# Update to the directory containing the scdlbot installation.
+WorkingDirectory=/scdlbothome
+# Adjust the interpreter path if you manage Python differently.
+ExecStart=/opt/pyenv/versions/3.11.5/bin/python -m scdlbot.run_download_worker
+Restart=on-failure
+RestartSec=5
+
+# Security hardening:
+#NoNewPrivileges=true
+#PrivateTmp=true
+#ProtectHome=read-only
+#ProtectSystem=strict
+#ReadWritePaths=/var/lib/scdlbot
+#ReadOnlyPaths=/opt/scdlbot
+
+[Install]
+WantedBy=multi-user.target

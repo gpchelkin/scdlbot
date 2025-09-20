@@ -1,0 +1,39 @@
+[Unit]
+Description=SCDLBot Download Worker (Huey)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+User=scdlbot
+Group=scdlbot
+WorkingDirectory=/opt/scdlbot
+
+# Environment configuration
+Environment="DOWNLOAD_HUEY_QUEUE=scdlbot-downloads"
+Environment="DOWNLOAD_HUEY_DB_FILE=/var/lib/scdlbot/downloads-huey.sqlite"
+Environment="DOWNLOAD_HUEY_WORKERS=4"
+Environment="DL_DIR=/var/lib/scdlbot/downloads"
+Environment="DOWNLOAD_TIMEOUT=300"
+Environment="COOKIES_FILE=/var/lib/scdlbot/cookies.txt"
+Environment="HTTP_VERSION=1.1"
+Environment="BCDL_ENABLE=1"
+
+# Optional proxy configuration
+#Environment="https_proxy=http://proxy.example.com:8080"
+#Environment="http_proxy=http://proxy.example.com:8080"
+
+ExecStart=/usr/bin/python3 -m scdlbot.run_download_worker
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths=/var/lib/scdlbot
+ReadOnlyPaths=/opt/scdlbot
+
+[Install]
+WantedBy=multi-user.target
