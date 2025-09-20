@@ -206,6 +206,7 @@ async def prepare_download_sends(
         if not cmd_args:
             raise RuntimeError("Downloader command arguments are not configured")
         cmd_with_args = cmd[cmd_args]
+        logger.info("Running command: %s", " ".join(cmd_with_args.argv))
         cmd_proc = cmd_with_args.popen(env=env, stdin=PIPE, stdout=PIPE, stderr=PIPE, universal_newlines=True)
         try:
             cmd_stdout, cmd_stderr = cmd_proc.communicate(input=cmd_input, timeout=ctx.dl_timeout)
