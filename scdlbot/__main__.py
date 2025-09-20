@@ -32,7 +32,7 @@ from fake_useragent import UserAgent
 from mutagen.id3 import ID3  # type: ignore[attr-defined]
 from mutagen.id3 import ID3v1SaveOptions  # type: ignore[attr-defined]
 from mutagen.mp3 import EasyMP3 as MP3
-# Removed pebble import - using standard ProcessPoolExecutor instead
+
 from telegram import Bot, Chat, ChatMember, InlineKeyboardButton, InlineKeyboardMarkup, Message, MessageEntity, Update
 from telegram.constants import ChatAction
 
@@ -57,7 +57,7 @@ from scdlbot.download_execution import (
 )
 
 
-from scdlbot.download_worker import DownloadRequest, download_url_fire_and_forget, huey as download_huey
+from scdlbot.download_worker import DownloadRequest, download_and_send_reply, huey as download_huey
 from scdlbot.metrics import (
     BOT_REQUESTS,
     REGISTRY,
@@ -298,6 +298,7 @@ def setup_download_context() -> None:
 
 setup_download_context()
 
+
 def get_random_wait_text():
     return random.choice(WAIT_BIT_TEXT)
 
@@ -479,16 +480,11 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
     # pool = concurrent.futures.ThreadPoolExecutor()
     try:
         # Log the arguments being passed for debugging
-        logger.debug("Calling get_direct_urls_dict with: action=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s",
-                    action, proxy, source_ip, allow_unknown_sites)
+        logger.debug("Calling get_direct_urls_dict with: action=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s", action, proxy, source_ip, allow_unknown_sites)
 
         # https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
         # https://docs.python.org/3/library/asyncio-task.html#asyncio.wait_for
-        urls_dict = await loop_main.run_in_executor(
-            None,
-            get_direct_urls_dict,
-            message_data, action, proxy, source_ip, allow_unknown_sites
-        )
+        urls_dict = await loop_main.run_in_executor(None, get_direct_urls_dict, message_data, action, proxy, source_ip, allow_unknown_sites)
     except asyncio.TimeoutError:
         logger.debug("get_direct_urls_dict took too much time and was dropped (but still running)")
     except Exception as e:
@@ -540,8 +536,8 @@ async def dl_link_commands_and_messages_callback(update: Update, context: Contex
                         proxy=proxy,
                     )
                     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
-                    task_id = download_url_fire_and_forget(request)
-                    logger.debug("Queued download task %s for %s", task_id, url)
+                    await download_and_send_reply(request, context.bot)
+                    logger.debug("Queued download task for %s", url)
 
     elif action == "link":
         if "http" not in urls_values:
@@ -653,8 +649,8 @@ async def button_press_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     proxy=url_message_data["proxy"],
                 )
                 await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.RECORD_VOICE)
-                task_id = download_url_fire_and_forget(request)
-                logger.debug("Queued download task %s for %s", task_id, url)
+                await download_and_send_reply(request, context.bot)
+                logger.debug("Queued download task for %s", url)
 
         elif button_action == "link":
             await context.bot.send_message(
@@ -732,6 +728,7 @@ def init_chat_data(chat_data, mode="dl", flood=True):
 
 class MessageData(TypedDict):
     """Type definition for extracted message data."""
+
     url_entities: list[str]
     text_link_entities: list[str]
 
@@ -761,8 +758,14 @@ def extract_message_data(message: Message) -> MessageData:
 
 def get_direct_urls_dict(message_data: MessageData | Any, mode: str, proxy: str | None, source_ip: str | None, allow_unknown_sites: bool = False) -> dict[str, str]:
     # Log function entry for debugging
-    logger.debug("get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s, message_data type=%s",
-                mode, proxy, source_ip, allow_unknown_sites, type(message_data).__name__)
+    logger.debug(
+        "get_direct_urls_dict called with: mode=%s, proxy=%s, source_ip=%s, allow_unknown_sites=%s, message_data type=%s",
+        mode,
+        proxy,
+        source_ip,
+        allow_unknown_sites,
+        type(message_data).__name__,
+    )
 
     # IMPORTANT: Handle case where message_data might be incorrectly serialized
     if not isinstance(message_data, dict):

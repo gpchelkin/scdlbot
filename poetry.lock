@@ -1513,18 +1513,6 @@ files = [
 setuptools = "*"
 
 [[package]]
-name = "pebble"
-version = "5.1.1"
-description = "Threading and multiprocessing eye-candy."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "pebble-5.1.1-py3-none-any.whl", hash = "sha256:c262c94159cf6419fd4ac27ff72408650a16d6c3cf000171fb2a0386038c416e"},
-    {file = "pebble-5.1.1.tar.gz", hash = "sha256:4e91a5b8e48b30b26eaa5391ba2cf65fbb3594fba17b88bc0b3351cf849d0305"},
-]
-
-[[package]]
 name = "platformdirs"
 version = "4.3.8"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."

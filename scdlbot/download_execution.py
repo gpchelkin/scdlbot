@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import List
+
 import asyncio
 import logging
 import os
@@ -22,10 +24,10 @@ from mutagen.id3 import ID3v1SaveOptions  # type: ignore[attr-defined]
 from mutagen.mp3 import EasyMP3 as MP3
 from plumbum import ProcessExecutionError
 from plumbum.machines.local import LocalCommand
-from telegram import Bot
 from telegram.constants import ChatAction
 from telegram.helpers import escape_markdown
-from telegram.request import HTTPXRequest
+
+from scdlbot.models import DownloadResult, ErrorMessage, SendAudio, SendVideo, SendDocument, SendIntent
 
 from scdlbot.ffmpeg_worker import FFmpegError, convert_video_to_audio, split_file
 from scdlbot.ffprobe import FFprobeError, probe_media
@@ -127,36 +129,27 @@ def _require_download_context() -> DownloadContext:
     return context
 
 
-async def download_url_and_send(
-    bot_options: Dict[str, Any],
+async def prepare_download_sends(
     chat_id: int,
     url: str,
     flood: bool = False,
     reply_to_message_id: Optional[int] = None,
-    wait_message_id: Optional[int] = None,
+    bot_username: Optional[str] = None,
     cookies_file: Optional[str] = None,
     source_ip: Optional[str] = None,
     proxy: Optional[str] = None,
-    ) -> None:
-    """Execute the legacy download flow and send results back to Telegram."""
+    ) -> DownloadResult:
+    """Prepare download and send intents without creating or using bot instance."""
 
     ctx = _require_download_context()
 
-    logger.debug("Entering: download_url_and_send")
+    logger.debug("Entering: prepare_download_sends")
 
-    bot = Bot(
-        token=bot_options["token"],
-        base_url=bot_options["base_url"],
-        base_file_url=bot_options["base_file_url"],
-        local_mode=bot_options["local_mode"],
-        request=HTTPXRequest(http_version=ctx.http_version),
-        get_updates_request=HTTPXRequest(http_version=ctx.http_version),
-    )
-    await bot.initialize()
-    logger.debug(bot.token)
     download_dir = os.path.join(ctx.dl_dir, str(uuid4()))
-    shutil.rmtree(download_dir, ignore_errors=True)
     os.makedirs(download_dir)
+
+    cleanup_paths = [download_dir]  # Will add individual files; caller cleans all
+
     url_obj = URL(url)
     host = url_obj.host
     download_video = False
@@ -166,6 +159,11 @@ async def download_url_and_send(
     cmd_name = ""
     cmd_args: tuple[str, ...] = tuple()
     cmd_input: str | None = None
+
+    sends: List[SendIntent] = []
+    cookies_temp_path: Optional[str] = None
+    firefox_cookies_sqlite: Optional[str] = None
+
     if ((ctx.domain_sc in host or ctx.domain_sc_googl in host) and ctx.domain_sc_api not in host) or (ctx.domain_bc in host and ctx.bcdl_enable):
         if (ctx.domain_sc in host or ctx.domain_sc_googl in host) and ctx.domain_sc_api not in host:
             cmd = ctx.scdl_bin
@@ -219,9 +217,11 @@ async def download_url_and_send(
         except TimeoutExpired:
             cmd_proc.kill()
             logger.debug("%s took too much time and dropped: %s", cmd_name, url)
+            status = "timeout"
         except ProcessExecutionError:
             logger.debug("%s failed: %s", cmd_name, url)
             logger.debug(traceback.format_exc())
+            status = "failed"
 
     if status == "initial":
         cmd_name = "ydl_download"
@@ -273,37 +273,37 @@ async def download_url_and_send(
             ydl_opts["proxy"] = proxy
         if source_ip:
             ydl_opts["source_address"] = source_ip
-        cookies_download_file = None
         if cookies_file:
-            cookies_download_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
-            cookies_download_file_path = pathlib.Path(cookies_download_file.name)
             if cookies_file.startswith("http"):
                 try:
+                    cookies_temp_path = tempfile.NamedTemporaryFile(mode="wb", delete=False).name
                     r = requests.get(cookies_file, allow_redirects=True, timeout=5)
-                    cookies_download_file.write(r.content)
-                    cookies_download_file.close()
-                    ydl_opts["cookiefile"] = str(cookies_download_file_path)
+                    with open(cookies_temp_path, "wb") as f:
+                        f.write(r.content)
+                    ydl_opts["cookiefile"] = cookies_temp_path
+                    cleanup_paths.append(cookies_temp_path)
                 except Exception:
-                    logger.debug("download_url_and_send could not download cookies file")
+                    logger.debug("prepare_download_sends could not download cookies file")
             elif cookies_file.startswith("firefox:"):
                 cookies_file_components = cookies_file.split(":", maxsplit=2)
                 if len(cookies_file_components) == 3:
                     cookies_sqlite_file = cookies_file_components[2]
-                    cookies_download_sqlite_path = pathlib.Path.home() / ".mozilla" / "firefox" / cookies_file_components[1] / "cookies.sqlite"
+                    firefox_cookies_sqlite = (pathlib.Path.home() / ".mozilla" / "firefox" / cookies_file_components[1] / "cookies.sqlite").as_posix()
                     try:
                         r = requests.get(cookies_sqlite_file, allow_redirects=True, timeout=5)
-                        with open(cookies_download_sqlite_path, "wb") as cfile:
+                        os.makedirs(os.path.dirname(firefox_cookies_sqlite), exist_ok=True)
+                        with open(firefox_cookies_sqlite, "wb") as cfile:
                             cfile.write(r.content)
                         ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
-                        logger.debug("download_url_and_send downloaded cookies.sqlite file")
+                        logger.debug("prepare_download_sends downloaded cookies.sqlite file")
+                        cleanup_paths.append(firefox_cookies_sqlite)
                     except Exception:
-                        logger.debug("download_url_and_send could not download cookies.sqlite file")
+                        logger.debug("prepare_download_sends could not download cookies.sqlite file")
                 else:
                     ydl_opts["cookiesfrombrowser"] = ("firefox", cookies_file_components[1], None, None)
             else:
-                cookies_download_file.write(open(cookies_file, "rb").read())
-                cookies_download_file.close()
-                ydl_opts["cookiefile"] = str(cookies_download_file_path)
+                # Local file, no temp needed, just use as is
+                ydl_opts["cookiefile"] = cookies_file
 
         try:
             ydl.YoutubeDL(ydl_opts).download([url])
@@ -325,37 +325,25 @@ async def download_url_and_send(
             logger.debug("%s failed: %s", cmd_name, url)
             logger.debug(traceback.format_exc())
             status = "failed"
-        if cookies_file and cookies_download_file is not None:
-            cookies_download_file.close()
-            os.unlink(cookies_download_file.name)
 
     if status == "failed":
-        await bot.send_message(
-            chat_id=chat_id,
-            reply_to_message_id=reply_to_message_id,
-            text=ctx.failed_text,
-            parse_mode="Markdown",
-        )
+        sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=ctx.failed_text))
     elif status == "timeout":
-        await bot.send_message(
-            chat_id=chat_id,
-            reply_to_message_id=reply_to_message_id,
-            text=ctx.dl_timeout_text,
-            parse_mode="Markdown",
-        )
+        sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=ctx.dl_timeout_text))
     elif status == "success":
         file_list: list[str] = []
         for directory, _dirs, files in os.walk(download_dir):
             for file in files:
-                file_list.append(os.path.join(directory, file))
+                full_path = os.path.join(directory, file)
+                file_list.append(full_path)
+                cleanup_paths.append(full_path)  # Add all downloaded files to cleanup
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
-            await bot.send_message(
+            sends.append(ErrorMessage(
                 chat_id=chat_id,
                 reply_to_message_id=reply_to_message_id,
-                text="*Sorry*, I couldn't download any files from some of the provided links",
-                parse_mode="Markdown",
-            )
+                text="*Sorry*, I couldn't download any files from some of the provided links"
+            ))
         else:
             for file in sorted(file_list):
                 file_name = os.path.split(file)[-1]
@@ -379,7 +367,11 @@ async def download_url_and_send(
                             )
                             if not result.success:
                                 raise FileNotConvertedError(result.error or "Conversion failed")
+                            # Remove original video from cleanup, add converted
+                            if file in cleanup_paths:
+                                cleanup_paths.remove(file)
                             file = file_converted
+                            cleanup_paths.append(file)
                             file_root, file_ext = os.path.splitext(file)
                             file_format = file_ext.replace(".", "").lower()
                             file_size = os.path.getsize(file)
@@ -405,6 +397,11 @@ async def download_url_and_send(
                             if not result.success:
                                 raise FileSplittedPartiallyError(result.parts or [])
                             file_parts = list(result.parts)
+                            # Add split parts to cleanup, remove original if not used
+                            for part in file_parts:
+                                cleanup_paths.append(part)
+                            if file not in file_parts and file in cleanup_paths:
+                                cleanup_paths.remove(file)
                             if id3:
                                 for file_part in file_parts:
                                     try:
@@ -417,47 +414,44 @@ async def download_url_and_send(
                 except FileNotSupportedError as exc:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
-                        await bot.send_message(
+                        sends.append(ErrorMessage(
                             chat_id=chat_id,
                             reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
-                            parse_mode="Markdown",
-                        )
+                            text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name)
+                        ))
                     continue
                 except FileTooLargeError as exc:
                     logger.debug("Large file for convert: %s", file_name)
-                    await bot.send_message(
+                    sends.append(ErrorMessage(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
                         text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
                             file_name,
                             exc.file_size // 1_000_000,
                             ctx.max_convert_file_size // 1_000_000,
-                        ),
-                        parse_mode="Markdown",
-                    )
+                        )
+                    ))
                     continue
                 except FileSplittedPartiallyError as exc:
                     file_parts = list(exc.file_parts)
                     logger.debug("Splitting failed: %s", file_name)
-                    await bot.send_message(
+                    sends.append(ErrorMessage(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
-                        parse_mode="Markdown",
-                    )
+                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
+                    ))
                     continue
                 except FileNotConvertedError:
                     logger.debug("Conversion failed: %s", file_name)
-                    await bot.send_message(
+                    sends.append(ErrorMessage(
                         chat_id=chat_id,
                         reply_to_message_id=reply_to_message_id,
-                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
-                        parse_mode="Markdown",
-                    )
+                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name)
+                    ))
                     continue
+
                 caption = None
-                reply_to_message_id_send = None
+                reply_to_message_id_send = reply_to_message_id if flood else None
                 if flood:
                     addition = ""
                     if ctx.domain_yt in host or ctx.domain_yt_be in host:
@@ -471,15 +465,16 @@ async def download_url_and_send(
                         source = "Bandcamp"
                     else:
                         source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
-                    caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", r"\_"), source, url, addition.replace("_", r"\_"))
+                    escaped_username = bot_username.replace('_', r'\_') if bot_username else ""
+                    username_part = f"@{escaped_username}_ " if bot_username else ""
+                    escaped_addition = addition.replace("_", r"\_")
+                    caption = "{}_got it from_ [{}]({}){}".format(username_part, source, url, escaped_addition)
                     if add_description:
                         caption += add_description
-                    reply_to_message_id_send = reply_to_message_id
-                sent_audio_ids: list[str] = []
+
                 for index, file_part in enumerate(file_parts):
-                    file_name = os.path.split(file_part)[-1]
-                    logger.debug("Sending: %s", file_name)
-                    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE)
+                    file_name_part = os.path.split(file_part)[-1]
+                    logger.debug("Preparing to send: %s", file_name_part)
                     caption_part = None
                     if len(file_parts) > 1:
                         caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
@@ -490,95 +485,58 @@ async def download_url_and_send(
                             caption_full = caption
                     else:
                         caption_full = caption_part or ""
-                    retries = 3
-                    for attempt in range(retries):
-                        try:
-                            logger.debug("Trying %s time to send file part: %s", attempt + 1, file_part)
-                            if file_part.endswith(".mp3"):
-                                mp3 = MP3(file_part)
-                                duration = round(mp3.info.length)
-                                performer = None
-                                title = None
-                                try:
-                                    performer = ", ".join(mp3["artist"])
-                                    title = ", ".join(mp3["title"])
-                                except Exception:
-                                    pass
-                                audio = open(file_part, "rb")
-                                audio_msg = await bot.send_audio(
-                                    chat_id=chat_id,
-                                    reply_to_message_id=reply_to_message_id_send,
-                                    audio=audio,
-                                    duration=duration,
-                                    performer=performer,
-                                    title=title,
-                                    caption=caption_full,
-                                    parse_mode="Markdown",
-                                    read_timeout=ctx.common_connection_timeout,
-                                    write_timeout=ctx.common_connection_timeout,
-                                    connect_timeout=ctx.common_connection_timeout,
-                                    pool_timeout=ctx.common_connection_timeout,
-                                )
-                                if audio_msg.audio and audio_msg.audio.file_id:
-                                    sent_audio_ids.append(audio_msg.audio.file_id)
-                                logger.debug("Sending audio succeeded: %s", file_name)
-                                break
-                            elif download_video:
-                                video = open(file_part, "rb")
-                                probe_result = probe_media(file_part)
-                                try:
-                                    duration = int(float(probe_result["format"]["duration"]))
-                                    videostream = next(item for item in probe_result.get("streams", []) if item.get("codec_type") == "video")
-                                    width = int(videostream["width"])
-                                    height = int(videostream["height"])
-                                except (KeyError, StopIteration, TypeError, ValueError) as exc:
-                                    raise FFprobeError(f"ffprobe returned incomplete data for {file_part}") from exc
-                                video_msg = await bot.send_video(
-                                    chat_id=chat_id,
-                                    reply_to_message_id=reply_to_message_id_send,
-                                    video=video,
-                                    duration=duration,
-                                    width=width,
-                                    height=height,
-                                    caption=caption_full,
-                                    parse_mode="Markdown",
-                                    supports_streaming=True,
-                                    read_timeout=ctx.common_connection_timeout,
-                                    write_timeout=ctx.common_connection_timeout,
-                                    connect_timeout=ctx.common_connection_timeout,
-                                    pool_timeout=ctx.common_connection_timeout,
-                                )
-                                if video_msg.video and video_msg.video.file_id:
-                                    sent_audio_ids.append(video_msg.video.file_id)
-                                logger.debug("Sending video succeeded: %s", file_name)
-                                break
-                            else:
-                                document = open(file_part, "rb")
-                                await bot.send_document(
-                                    chat_id=chat_id,
-                                    document=document,
-                                    reply_to_message_id=reply_to_message_id_send,
-                                    caption=caption_full,
-                                    parse_mode="Markdown",
-                                    read_timeout=ctx.common_connection_timeout,
-                                    write_timeout=ctx.common_connection_timeout,
-                                    connect_timeout=ctx.common_connection_timeout,
-                                    pool_timeout=ctx.common_connection_timeout,
-                                )
-                                break
-                        except Exception as exc:
-                            logger.debug("Try %s failed to send %s: %s", attempt + 1, file_part, exc)
-                            await asyncio.sleep(3)
-                    else:
-                        logger.debug("Failed to send %s after retries", file_part)
 
-    shutil.rmtree(download_dir, ignore_errors=True)
-    if wait_message_id is not None:
-        try:
-            await bot.delete_message(
-                chat_id=chat_id,
-                message_id=wait_message_id,
-            )
-        except Exception:
-            logger.debug("Failed to delete wait message", exc_info=True)
-    await bot.shutdown()
+                    if file_part.endswith(".mp3"):
+                        try:
+                            mp3 = MP3(file_part)
+                            duration = round(mp3.info.length)
+                            performer = None
+                            title = None
+                            try:
+                                performer = ", ".join(mp3["artist"])
+                                title = ", ".join(mp3["title"])
+                            except Exception:
+                                pass
+                            sends.append(SendAudio(
+                                chat_id=chat_id,
+                                reply_to_message_id=reply_to_message_id_send,
+                                file_path=file_part,
+                                duration=duration,
+                                performer=performer,
+                                title=title,
+                                caption=caption_full
+                            ))
+                            logger.debug("Prepared audio send: %s", file_name_part)
+                        except Exception as exc:
+                            logger.debug("Failed to prepare audio %s: %s", file_part, exc)
+                            sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=f"Failed to prepare {file_name_part}: {exc}"))
+                    elif download_video:
+                        try:
+                            probe_result = probe_media(file_part)
+                            duration = int(float(probe_result["format"]["duration"]))
+                            videostream = next(item for item in probe_result.get("streams", []) if item.get("codec_type") == "video")
+                            width = int(videostream["width"])
+                            height = int(videostream["height"])
+                            sends.append(SendVideo(
+                                chat_id=chat_id,
+                                reply_to_message_id=reply_to_message_id_send,
+                                file_path=file_part,
+                                duration=duration,
+                                width=width,
+                                height=height,
+                                caption=caption_full
+                            ))
+                            logger.debug("Prepared video send: %s", file_name_part)
+                        except (KeyError, StopIteration, TypeError, ValueError, FFprobeError) as exc:
+                            logger.debug("Failed to prepare video %s: %s", file_part, exc)
+                            sends.append(ErrorMessage(chat_id=chat_id, reply_to_message_id=reply_to_message_id, text=f"Failed to prepare {file_name_part}: {exc}"))
+                    else:
+                        sends.append(SendDocument(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id_send,
+                            file_path=file_part,
+                            caption=caption_full
+                        ))
+                        logger.debug("Prepared document send: %s", file_name_part)
+
+    return DownloadResult(sends=sends, cleanup_paths=cleanup_paths)
