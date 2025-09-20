@@ -8,8 +8,6 @@ import os
 import pathlib
 import shutil
 import tempfile
-import threading
-import time
 import traceback
 from dataclasses import dataclass
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
@@ -129,7 +127,7 @@ def _require_download_context() -> DownloadContext:
     return context
 
 
-def download_url_and_send(
+async def download_url_and_send(
     bot_options: Dict[str, Any],
     chat_id: int,
     url: str,
@@ -139,21 +137,12 @@ def download_url_and_send(
     cookies_file: Optional[str] = None,
     source_ip: Optional[str] = None,
     proxy: Optional[str] = None,
-) -> None:
+    ) -> None:
     """Execute the legacy download flow and send results back to Telegram."""
 
     ctx = _require_download_context()
 
     logger.debug("Entering: download_url_and_send")
-
-    loop_additional = asyncio.new_event_loop()
-    thread_additional = threading.Thread(target=loop_additional.run_forever, name="Additional Async Runner", daemon=True)
-
-    def run_async(coro):
-        if not thread_additional.is_alive():
-            thread_additional.start()
-        future = asyncio.run_coroutine_threadsafe(coro, loop_additional)
-        return future.result()
 
     bot = Bot(
         token=bot_options["token"],
@@ -163,7 +152,7 @@ def download_url_and_send(
         request=HTTPXRequest(http_version=ctx.http_version),
         get_updates_request=HTTPXRequest(http_version=ctx.http_version),
     )
-    run_async(bot.initialize())
+    await bot.initialize()
     logger.debug(bot.token)
     download_dir = os.path.join(ctx.dl_dir, str(uuid4()))
     shutil.rmtree(download_dir, ignore_errors=True)
@@ -341,22 +330,18 @@ def download_url_and_send(
             os.unlink(cookies_download_file.name)
 
     if status == "failed":
-        run_async(
-            bot.send_message(
-                chat_id=chat_id,
-                reply_to_message_id=reply_to_message_id,
-                text=ctx.failed_text,
-                parse_mode="Markdown",
-            )
+        await bot.send_message(
+            chat_id=chat_id,
+            reply_to_message_id=reply_to_message_id,
+            text=ctx.failed_text,
+            parse_mode="Markdown",
         )
     elif status == "timeout":
-        run_async(
-            bot.send_message(
-                chat_id=chat_id,
-                reply_to_message_id=reply_to_message_id,
-                text=ctx.dl_timeout_text,
-                parse_mode="Markdown",
-            )
+        await bot.send_message(
+            chat_id=chat_id,
+            reply_to_message_id=reply_to_message_id,
+            text=ctx.dl_timeout_text,
+            parse_mode="Markdown",
         )
     elif status == "success":
         file_list: list[str] = []
@@ -365,13 +350,11 @@ def download_url_and_send(
                 file_list.append(os.path.join(directory, file))
         if not file_list:
             logger.debug("No files in dir: %s", download_dir)
-            run_async(
-                bot.send_message(
-                    chat_id=chat_id,
-                    reply_to_message_id=reply_to_message_id,
-                    text="*Sorry*, I couldn't download any files from some of the provided links",
-                    parse_mode="Markdown",
-                )
+            await bot.send_message(
+                chat_id=chat_id,
+                reply_to_message_id=reply_to_message_id,
+                text="*Sorry*, I couldn't download any files from some of the provided links",
+                parse_mode="Markdown",
             )
         else:
             for file in sorted(file_list):
@@ -434,51 +417,43 @@ def download_url_and_send(
                 except FileNotSupportedError as exc:
                     if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
-                        run_async(
-                            bot.send_message(
-                                chat_id=chat_id,
-                                reply_to_message_id=reply_to_message_id,
-                                text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
-                                parse_mode="Markdown",
-                            )
+                        await bot.send_message(
+                            chat_id=chat_id,
+                            reply_to_message_id=reply_to_message_id,
+                            text="*Sorry*, downloaded file `{}` is in format I could not yet convert or send".format(file_name),
+                            parse_mode="Markdown",
                         )
                     continue
                 except FileTooLargeError as exc:
                     logger.debug("Large file for convert: %s", file_name)
-                    run_async(
-                        bot.send_message(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
-                                file_name,
-                                exc.file_size // 1_000_000,
-                                ctx.max_convert_file_size // 1_000_000,
-                            ),
-                            parse_mode="Markdown",
-                        )
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        reply_to_message_id=reply_to_message_id,
+                        text="*Sorry*, downloaded file `{}` is `{}` MB and it is larger than I could convert (`{} MB`)".format(
+                            file_name,
+                            exc.file_size // 1_000_000,
+                            ctx.max_convert_file_size // 1_000_000,
+                        ),
+                        parse_mode="Markdown",
                     )
                     continue
                 except FileSplittedPartiallyError as exc:
                     file_parts = list(exc.file_parts)
                     logger.debug("Splitting failed: %s", file_name)
-                    run_async(
-                        bot.send_message(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
-                            parse_mode="Markdown",
-                        )
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        reply_to_message_id=reply_to_message_id,
+                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
+                        parse_mode="Markdown",
                     )
                     continue
                 except FileNotConvertedError:
                     logger.debug("Conversion failed: %s", file_name)
-                    run_async(
-                        bot.send_message(
-                            chat_id=chat_id,
-                            reply_to_message_id=reply_to_message_id,
-                            text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
-                            parse_mode="Markdown",
-                        )
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        reply_to_message_id=reply_to_message_id,
+                        text="*Sorry*, I do not have enough resources to convert the file `{}`..".format(file_name),
+                        parse_mode="Markdown",
                     )
                     continue
                 caption = None
@@ -504,7 +479,7 @@ def download_url_and_send(
                 for index, file_part in enumerate(file_parts):
                     file_name = os.path.split(file_part)[-1]
                     logger.debug("Sending: %s", file_name)
-                    run_async(bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE))
+                    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VOICE)
                     caption_part = None
                     if len(file_parts) > 1:
                         caption_part = "Part {} of {}".format(str(index + 1), str(len(file_parts)))
@@ -530,21 +505,19 @@ def download_url_and_send(
                                 except Exception:
                                     pass
                                 audio = open(file_part, "rb")
-                                audio_msg = run_async(
-                                    bot.send_audio(
-                                        chat_id=chat_id,
-                                        reply_to_message_id=reply_to_message_id_send,
-                                        audio=audio,
-                                        duration=duration,
-                                        performer=performer,
-                                        title=title,
-                                        caption=caption_full,
-                                        parse_mode="Markdown",
-                                        read_timeout=ctx.common_connection_timeout,
-                                        write_timeout=ctx.common_connection_timeout,
-                                        connect_timeout=ctx.common_connection_timeout,
-                                        pool_timeout=ctx.common_connection_timeout,
-                                    ),
+                                audio_msg = await bot.send_audio(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    audio=audio,
+                                    duration=duration,
+                                    performer=performer,
+                                    title=title,
+                                    caption=caption_full,
+                                    parse_mode="Markdown",
+                                    read_timeout=ctx.common_connection_timeout,
+                                    write_timeout=ctx.common_connection_timeout,
+                                    connect_timeout=ctx.common_connection_timeout,
+                                    pool_timeout=ctx.common_connection_timeout,
                                 )
                                 if audio_msg.audio and audio_msg.audio.file_id:
                                     sent_audio_ids.append(audio_msg.audio.file_id)
@@ -560,22 +533,20 @@ def download_url_and_send(
                                     height = int(videostream["height"])
                                 except (KeyError, StopIteration, TypeError, ValueError) as exc:
                                     raise FFprobeError(f"ffprobe returned incomplete data for {file_part}") from exc
-                                video_msg = run_async(
-                                    bot.send_video(
-                                        chat_id=chat_id,
-                                        reply_to_message_id=reply_to_message_id_send,
-                                        video=video,
-                                        duration=duration,
-                                        width=width,
-                                        height=height,
-                                        caption=caption_full,
-                                        parse_mode="Markdown",
-                                        supports_streaming=True,
-                                        read_timeout=ctx.common_connection_timeout,
-                                        write_timeout=ctx.common_connection_timeout,
-                                        connect_timeout=ctx.common_connection_timeout,
-                                        pool_timeout=ctx.common_connection_timeout,
-                                    ),
+                                video_msg = await bot.send_video(
+                                    chat_id=chat_id,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    video=video,
+                                    duration=duration,
+                                    width=width,
+                                    height=height,
+                                    caption=caption_full,
+                                    parse_mode="Markdown",
+                                    supports_streaming=True,
+                                    read_timeout=ctx.common_connection_timeout,
+                                    write_timeout=ctx.common_connection_timeout,
+                                    connect_timeout=ctx.common_connection_timeout,
+                                    pool_timeout=ctx.common_connection_timeout,
                                 )
                                 if video_msg.video and video_msg.video.file_id:
                                     sent_audio_ids.append(video_msg.video.file_id)
@@ -583,38 +554,31 @@ def download_url_and_send(
                                 break
                             else:
                                 document = open(file_part, "rb")
-                                run_async(
-                                    bot.send_document(
-                                        chat_id=chat_id,
-                                        document=document,
-                                        reply_to_message_id=reply_to_message_id_send,
-                                        caption=caption_full,
-                                        parse_mode="Markdown",
-                                        read_timeout=ctx.common_connection_timeout,
-                                        write_timeout=ctx.common_connection_timeout,
-                                        connect_timeout=ctx.common_connection_timeout,
-                                        pool_timeout=ctx.common_connection_timeout,
-                                    )
+                                await bot.send_document(
+                                    chat_id=chat_id,
+                                    document=document,
+                                    reply_to_message_id=reply_to_message_id_send,
+                                    caption=caption_full,
+                                    parse_mode="Markdown",
+                                    read_timeout=ctx.common_connection_timeout,
+                                    write_timeout=ctx.common_connection_timeout,
+                                    connect_timeout=ctx.common_connection_timeout,
+                                    pool_timeout=ctx.common_connection_timeout,
                                 )
                                 break
                         except Exception as exc:
                             logger.debug("Try %s failed to send %s: %s", attempt + 1, file_part, exc)
-                            time.sleep(3)
+                            await asyncio.sleep(3)
                     else:
                         logger.debug("Failed to send %s after retries", file_part)
 
     shutil.rmtree(download_dir, ignore_errors=True)
     if wait_message_id is not None:
         try:
-            run_async(
-                bot.delete_message(
-                    chat_id=chat_id,
-                    message_id=wait_message_id,
-                )
+            await bot.delete_message(
+                chat_id=chat_id,
+                message_id=wait_message_id,
             )
         except Exception:
             logger.debug("Failed to delete wait message", exc_info=True)
-    run_async(bot.shutdown())
-    loop_additional.call_soon_threadsafe(loop_additional.stop)
-    if thread_additional.is_alive():
-        thread_additional.join(timeout=1)
+    await bot.shutdown()

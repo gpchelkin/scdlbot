@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import tempfile
@@ -79,16 +80,18 @@ def _run_legacy_download(request: DownloadRequest) -> None:
     """Invoke the original download_url_and_send implementation."""
 
     _ensure_download_context()
-    download_url_and_send(
-        bot_options=request.bot_options,
-        chat_id=request.chat_id,
-        url=request.url,
-        flood=request.flood,
-        reply_to_message_id=request.reply_to_message_id,
-        wait_message_id=request.wait_message_id,
-        cookies_file=request.cookies_file,
-        source_ip=request.source_ip,
-        proxy=request.proxy,
+    asyncio.run(
+        download_url_and_send(
+            bot_options=request.bot_options,
+            chat_id=request.chat_id,
+            url=request.url,
+            flood=request.flood,
+            reply_to_message_id=request.reply_to_message_id,
+            wait_message_id=request.wait_message_id,
+            cookies_file=request.cookies_file,
+            source_ip=request.source_ip,
+            proxy=request.proxy,
+        )
     )
 
 
