@@ -379,7 +379,7 @@ def download_url_and_send(
                 file_parts: list[str] = []
                 try:
                     file_root, file_ext = os.path.splitext(file)
-                    file_format = file_ext.replace('.', '').lower()
+                    file_format = file_ext.replace(".", "").lower()
                     file_size = os.path.getsize(file)
                     if file_format not in list(ctx.audio_formats) + list(ctx.video_formats):
                         raise FileNotSupportedError(file_format)
@@ -388,7 +388,7 @@ def download_url_and_send(
                             raise FileTooLargeError(file_size)
                         logger.debug("Converting video format: %s", file)
                         try:
-                            file_converted = file.replace(file_ext, '.mp3')
+                            file_converted = file.replace(file_ext, ".mp3")
                             result = convert_video_to_audio(
                                 input_file=file,
                                 output_file=file_converted,
@@ -398,7 +398,7 @@ def download_url_and_send(
                                 raise FileNotConvertedError(result.error or "Conversion failed")
                             file = file_converted
                             file_root, file_ext = os.path.splitext(file)
-                            file_format = file_ext.replace('.', '').lower()
+                            file_format = file_ext.replace(".", "").lower()
                             file_size = os.path.getsize(file)
                         except (FFmpegError, Exception) as exc:
                             logger.error("Conversion failed: %s", exc)
@@ -413,7 +413,7 @@ def download_url_and_send(
                         except Exception:
                             pass
                         try:
-                            output_pattern = file.replace(file_ext, '.part{}{}'.format('{}', file_ext))
+                            output_pattern = file.replace(file_ext, ".part{}{}".format("{}", file_ext))
                             result = split_file(
                                 input_file=file,
                                 max_size=ctx.max_tg_file_size,
@@ -432,7 +432,7 @@ def download_url_and_send(
                             logger.error("File splitting failed: %s", exc)
                             raise FileSplittedPartiallyError(file_parts)
                 except FileNotSupportedError as exc:
-                    if not (exc.file_format in ['m3u', 'jpg', 'jpeg', 'png', 'finished', 'tmp']):
+                    if not (exc.file_format in ["m3u", "jpg", "jpeg", "png", "finished", "tmp"]):
                         logger.debug("Unsupported file format: %s", file_name)
                         run_async(
                             bot.send_message(
@@ -484,21 +484,19 @@ def download_url_and_send(
                 caption = None
                 reply_to_message_id_send = None
                 if flood:
-                    addition = ''
+                    addition = ""
                     if ctx.domain_yt in host or ctx.domain_yt_be in host:
-                        source = 'YouTube'
+                        source = "YouTube"
                         file_root, file_ext = os.path.splitext(file_name)
-                        file_title = file_root.replace(file_ext, '')
-                        addition = ': ' + file_title
+                        file_title = file_root.replace(file_ext, "")
+                        addition = ": " + file_title
                     elif ctx.domain_sc in host or ctx.domain_sc_googl in host:
-                        source = 'SoundCloud'
+                        source = "SoundCloud"
                     elif ctx.domain_bc in host:
-                        source = 'Bandcamp'
+                        source = "Bandcamp"
                     else:
-                        source = url_obj.host.replace('.com', '').replace('.ru', '').replace('www.', '').replace('m.', '')
-                    caption = "@{} _got it from_ [{}]({}){}".format(
-                        bot.username.replace('_', r'\_'), source, url, addition.replace('_', r'\_')
-                    )
+                        source = url_obj.host.replace(".com", "").replace(".ru", "").replace("www.", "").replace("m.", "")
+                    caption = "@{} _got it from_ [{}]({}){}".format(bot.username.replace("_", r"\_"), source, url, addition.replace("_", r"\_"))
                     if add_description:
                         caption += add_description
                     reply_to_message_id_send = reply_to_message_id
@@ -516,22 +514,22 @@ def download_url_and_send(
                         else:
                             caption_full = caption
                     else:
-                        caption_full = caption_part or ''
+                        caption_full = caption_part or ""
                     retries = 3
                     for attempt in range(retries):
                         try:
                             logger.debug("Trying %s time to send file part: %s", attempt + 1, file_part)
-                            if file_part.endswith('.mp3'):
+                            if file_part.endswith(".mp3"):
                                 mp3 = MP3(file_part)
                                 duration = round(mp3.info.length)
                                 performer = None
                                 title = None
                                 try:
-                                    performer = ', '.join(mp3['artist'])
-                                    title = ', '.join(mp3['title'])
+                                    performer = ", ".join(mp3["artist"])
+                                    title = ", ".join(mp3["title"])
                                 except Exception:
                                     pass
-                                audio = open(file_part, 'rb')
+                                audio = open(file_part, "rb")
                                 audio_msg = run_async(
                                     bot.send_audio(
                                         chat_id=chat_id,
@@ -541,7 +539,7 @@ def download_url_and_send(
                                         performer=performer,
                                         title=title,
                                         caption=caption_full,
-                                        parse_mode='Markdown',
+                                        parse_mode="Markdown",
                                         read_timeout=ctx.common_connection_timeout,
                                         write_timeout=ctx.common_connection_timeout,
                                         connect_timeout=ctx.common_connection_timeout,
@@ -553,15 +551,13 @@ def download_url_and_send(
                                 logger.debug("Sending audio succeeded: %s", file_name)
                                 break
                             elif download_video:
-                                video = open(file_part, 'rb')
+                                video = open(file_part, "rb")
                                 probe_result = probe_media(file_part)
                                 try:
-                                    duration = int(float(probe_result['format']['duration']))
-                                    videostream = next(
-                                        item for item in probe_result.get('streams', []) if item.get('codec_type') == 'video'
-                                    )
-                                    width = int(videostream['width'])
-                                    height = int(videostream['height'])
+                                    duration = int(float(probe_result["format"]["duration"]))
+                                    videostream = next(item for item in probe_result.get("streams", []) if item.get("codec_type") == "video")
+                                    width = int(videostream["width"])
+                                    height = int(videostream["height"])
                                 except (KeyError, StopIteration, TypeError, ValueError) as exc:
                                     raise FFprobeError(f"ffprobe returned incomplete data for {file_part}") from exc
                                 video_msg = run_async(
@@ -573,7 +569,7 @@ def download_url_and_send(
                                         width=width,
                                         height=height,
                                         caption=caption_full,
-                                        parse_mode='Markdown',
+                                        parse_mode="Markdown",
                                         supports_streaming=True,
                                         read_timeout=ctx.common_connection_timeout,
                                         write_timeout=ctx.common_connection_timeout,
@@ -586,14 +582,14 @@ def download_url_and_send(
                                 logger.debug("Sending video succeeded: %s", file_name)
                                 break
                             else:
-                                document = open(file_part, 'rb')
+                                document = open(file_part, "rb")
                                 run_async(
                                     bot.send_document(
                                         chat_id=chat_id,
                                         document=document,
                                         reply_to_message_id=reply_to_message_id_send,
                                         caption=caption_full,
-                                        parse_mode='Markdown',
+                                        parse_mode="Markdown",
                                         read_timeout=ctx.common_connection_timeout,
                                         write_timeout=ctx.common_connection_timeout,
                                         connect_timeout=ctx.common_connection_timeout,
