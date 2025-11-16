@@ -205,6 +205,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class YoutubeDlLogger:
+    def __init__(self, base_logger):
+        self._base_logger = base_logger
+        self._debug_messages = []
+
+    def debug(self, message):
+        self._debug_messages.append(str(message))
+
+    def info(self, message):
+        self._base_logger.info(message)
+
+    def warning(self, message):
+        self._base_logger.warning(message)
+
+    def error(self, message):
+        self._base_logger.error(message)
+
+    def pop_debug_messages(self):
+        messages = self._debug_messages[:]
+        self._debug_messages.clear()
+        return messages
+
+
 # Systemd watchdog monitoring:
 SYSTEMD_NOTIFIER = sdnotify.SystemdNotifier()
 
@@ -1006,6 +1030,7 @@ def download_url_and_send(
         cmd_name = "ydl_download"
         # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L187
         # https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/utils/_utils.py
+        ydl_logger = YoutubeDlLogger(logger)
         ydl_opts = {
             # https://github.com/yt-dlp/yt-dlp#output-template
             # Default outtmpl is "%(title)s [%(id)s].%(ext)s"
@@ -1014,6 +1039,8 @@ def download_url_and_send(
             "restrictfilenames": True,
             "windowsfilenames": True,
             "max_filesize": MAX_TG_FILE_SIZE * 3,
+            "logger": ydl_logger,
+            "verbose": True,
             # TODO Add optional parameter FFMPEG_PATH:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "ffmpeg_location": "/usr/local/bin/",
@@ -1116,6 +1143,7 @@ def download_url_and_send(
             # https://github.com/yt-dlp/yt-dlp/blob/master/README.md#embedding-examples
             info_dict = ydl.YoutubeDL(ydl_opts).download([url])
             logger.debug("%s succeeded: %s", cmd_name, url)
+            ydl_logger.pop_debug_messages()
             status = "success"
             if download_video:
                 unsanitized_info_dict = ydl.YoutubeDL(ydl_opts).extract_info(url, download=False)
@@ -1133,6 +1161,13 @@ def download_url_and_send(
         except Exception as exc:
             print(exc)
             logger.debug("%s failed: %s", cmd_name, url)
+            debug_messages = ydl_logger.pop_debug_messages()
+            if isinstance(exc, ydl.utils.DownloadError) and "Postprocessing: Conversion failed!" in str(exc):
+                if debug_messages:
+                    logger.debug("yt-dlp verbose output (ffmpeg failure):")
+                    for message in debug_messages:
+                        for line in message.splitlines():
+                            logger.debug("yt-dlp debug: %s", line)
             logger.debug(traceback.format_exc())
             status = "failed"
         if cookies_file:
