@@ -1,5 +1,5 @@
 annotated-types==0.7.0 ; python_version >= "3.10" and python_version < "4.0"
-anyio==4.11.0 ; python_version >= "3.10" and python_version < "4.0"
+anyio==4.12.0 ; python_version >= "3.10" and python_version < "4.0"
 attrs==25.4.0 ; python_version >= "3.10" and python_version < "4.0"
 authlib==1.6.5 ; python_version >= "3.10" and python_version < "4.0"
 autorepr==0.3.0 ; python_version >= "3.10" and python_version < "4.0"
