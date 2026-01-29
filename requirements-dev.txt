@@ -65,7 +65,7 @@ restructuredtext-lint==2.0.2 ; python_version >= "3.11" and python_version < "4.
 rich==14.3.1 ; python_version >= "3.11" and python_version < "4.0"
 ruamel-yaml-clib==0.2.15 ; python_version >= "3.11" and python_version < "4.0"
 ruamel-yaml==0.19.1 ; python_version >= "3.11" and python_version < "4.0"
-safety-schemas==0.0.16 ; python_version >= "3.11" and python_version < "4.0"
+safety-schemas==0.0.18 ; python_version >= "3.11" and python_version < "4.0"
 safety==3.7.0 ; python_version >= "3.11" and python_version < "4.0"
 shellingham==1.5.4 ; python_version >= "3.11" and python_version < "4.0"
 six==1.17.0 ; python_version >= "3.11" and python_version < "4.0"
