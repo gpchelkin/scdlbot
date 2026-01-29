@@ -42,20 +42,20 @@ scdlbot = "scdlbot.__main__:main"
 
 [tool.poetry.dependencies]
 # https://endoflife.date/python
-python = "^3.10"
-python-telegram-bot = { version = "22.5", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+python = "^3.11"
+python-telegram-bot = { version = "22.6", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
-requests = { version = "^2.32.3", extras = ["socks"] }
-pebble = "^5.1.1"
+requests = { version = "^2.32.5", extras = ["socks"] }
+pebble = "^5.2.0"
 boltons = "^25.0.0"
 mutagen = "^1.47.0"
-plumbum = "^1.9.0"
+plumbum = "^1.10.0"
 ffmpeg-python = "0.2.0"
-prometheus_client = "^0.22.0"
+prometheus_client = "^0.24.1"
 sdnotify = "^0.3.2"
-fake-useragent = "^2.1.0"
+fake-useragent = "^2.2.0"
 #python-telegram-handler = "^2.2.1"
 #patool = "1.12"
 #pyshorteners = "1.0.1"
@@ -63,7 +63,7 @@ fake-useragent = "^2.1.0"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = { version = "2025.11.12", extras = ["default"] }
+#yt-dlp = { version = "2026.1.29", extras = ["default"] }
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 scdl = "2.12.4"
@@ -71,6 +71,7 @@ scdl = "2.12.4"
 
 ### For making it work better using latest git revision:
 yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default"] }
+yt-dlp-ejs = ">=0.4.0"
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 ##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
 ##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
@@ -93,29 +94,29 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
-isort = "^6.0.0"
-black = "^25.1.0"
+isort = "^7.0.0"
+black = "^26.1.0"
 # make lint:
-wemake-python-styleguide = "^1.1.0"
-doc8 = "^1.1"
-nitpick = "^0.35"
-safety = "^3.3.0"
+wemake-python-styleguide = "^1.5.0"
+doc8 = "^2.0.0"
+nitpick = "^0.38.1"
+safety = "^3.7.0"
 #flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.1.3"
-sphinx-autodoc-typehints = "^3.0.1"
+sphinx = "^8.2.3"
+sphinx-autodoc-typehints = "^3.5.2"
 #m2r2 = "^0.3"
 # https://github.com/CrossNox/m2r2/issues/68
 # https://github.com/CrossNox/m2r2/pull/69
 #m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
-myst-parser = "^4.0.0"
-tomli = "^2.1"
-recommonmark = "^0.7"
-typing-extensions = "^4.9"
+myst-parser = "^5.0.0"
+tomli = "^2.4.0"
+recommonmark = "^0.7.1"
+typing-extensions = "^4.15.0"
 
 
 [tool.isort]
@@ -166,15 +167,15 @@ pyflakes = ["+*"]
 legacy_tox_ini = """
 [tox]
 skipsdist = true
-envlist = py39, py310, py311
+envlist = py311, py312, py313, py314
 
 [gh-actions]
 #tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
 python =
-    3.10: py310
     3.11: py311
     3.12: py312
     3.13: py313
+    3.14: py314
 
 [testenv]
 allowlist_externals =

@@ -65,7 +65,7 @@ MAX_MEM = 1500 * 1024 * 1024
 def pp_initializer(limit):
     """Set maximum amount of memory each worker process can allocate."""
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
+    # resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
 
 
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
@@ -1014,6 +1014,7 @@ def download_url_and_send(
             "restrictfilenames": True,
             "windowsfilenames": True,
             "max_filesize": MAX_TG_FILE_SIZE * 3,
+            # "js_runtimes": {"node": {}},
             # TODO Add optional parameter FFMPEG_PATH:
             # "ffmpeg_location": "/home/gpchelkin/.local/bin/",
             # "ffmpeg_location": "/usr/local/bin/",
@@ -1033,8 +1034,8 @@ def download_url_and_send(
                     "postprocessors": [
                         # Instagram usually gives VP9 or HEVC (x265/h265) video codec (when downloading with cookies).
                         #   VP9 doesn't play in Telegram iOS client;
-                        #   # TODO Check and skip converting for HEVC? It seems to be used for 4K videos.
-                        # We need to convert it to AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio) from Instagram videos.
+                        #   HEVC seems to be used for 4K (2160*3840) videos, and yt-dlp fails converting them (maybe because of MAX_MEM). TODO Check for HEVC and skip converting?
+                        # We need to convert it to AVC (x264/h264) or HEVC (x265/h265) video (+ AAC audio).
                         # We went with AVC (x264/h264) for now.
                         # "FFmpegVideoConvertor" doesn't work here since the original file is already in mp4 format.
                         # We don't touch audio and just copy it here since it's probably OK in original. But we may want to change 'copy' to 'aac' later.

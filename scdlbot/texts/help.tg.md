@@ -21,7 +21,7 @@ _Send or forward_ a text message containing links and I will:
 [🐝 Channel](https://t.me/ggpchelkin/150) | [🐝 Homepage](https://g.pchelk.in)
 [🌟 Star me on GitHub!](https://github.com/gpchelkin/scdlbot) | [⚠️ Report an issue](https://github.com/gpchelkin/scdlbot/issues)
 💵 Support development:
-[Buy Me a Coffee](https://www.buymeacoffee.com/gpchelkin) | [PayPal](http://paypal.me/gggpchelkin) | [Tinkoff](https://www.tinkoff.ru/rm/pchelkin.georgiy1/wlqpS10725) | [YooMoney](https://yoomoney.ru/to/41001421333857/200)
+[Buy Me a Coffee](https://www.buymeacoffee.com/gpchelkin) | [PayPal](http://paypal.me/gggpchelkin) | [Tinkoff](https://www.tinkoff.ru/rm/r_pNKeBoDLLB.jXIdjrpSop/xqHkU97064) | [YooMoney](https://yoomoney.ru/to/41001421333857/200)
 
 🎶 Inspired by `Electrocircle`: [⚡⚫ Channel](https://t.me/Eklight) | [⚡⚫ Channel 2](https://t.me/electrocircle_online)
 👩🏻‍🎨 Previous logo by [🖼️ Lowonbudget](https://www.behance.net/lowonbudget)
