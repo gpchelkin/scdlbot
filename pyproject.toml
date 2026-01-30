@@ -107,7 +107,7 @@ safety = "^3.7.0"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.2.3"
+sphinx = ">=8.2.3,<10.0.0"
 sphinx-autodoc-typehints = "^3.5.2"
 #m2r2 = "^0.3"
 # https://github.com/CrossNox/m2r2/issues/68
