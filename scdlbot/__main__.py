@@ -87,7 +87,7 @@ DL_DIR = os.path.expanduser(os.getenv("DL_DIR", "/tmp/scdlbot"))
 BIN_PATH = os.getenv("BIN_PATH", "")
 scdl_bin = local[os.path.join(BIN_PATH, "scdl")]
 bcdl_bin = local[os.path.join(BIN_PATH, "bandcamp-dl")]
-BCDL_ENABLE = True
+BCDL_ENABLE = False
 WORKERS = int(os.getenv("WORKERS", 2))
 # TODO 'fork' is prohibited, doesn't work. Maybe change to 'spawn' on all platforms
 mp_method = "forkserver"
