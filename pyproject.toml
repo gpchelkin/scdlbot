@@ -43,17 +43,17 @@ scdlbot = "scdlbot.__main__:main"
 [tool.poetry.dependencies]
 # https://endoflife.date/python
 python = "^3.11"
-python-telegram-bot = { version = "22.6", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
+python-telegram-bot = { version = "22.8", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
 #ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
 # https://python-poetry.org/docs/dependency-specification#path-dependencies
 #ptbcontrib = { path = "../ptbcontrib/", develop = false }
-requests = { version = "^2.32.5", extras = ["socks"] }
+requests = { version = "^2.34.2", extras = ["socks"] }
 pebble = "^5.2.0"
-boltons = "^25.0.0"
+boltons = "^26.0.0"
 mutagen = "^1.47.0"
-plumbum = "^1.10.0"
+plumbum = "^2.0.1"
 ffmpeg-python = "0.2.0"
-prometheus_client = "^0.24.1"
+prometheus_client = "^0.25.0"
 sdnotify = "^0.3.2"
 fake-useragent = "^2.2.0"
 #python-telegram-handler = "^2.2.1"
@@ -63,16 +63,16 @@ fake-useragent = "^2.2.0"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = { version = "2026.1.29", extras = ["default"] }
+#yt-dlp = { version = "2026.6.9", extras = ["default"] }
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 #scdl = "2.12.4"
-scdl = "3.0.4"
+scdl = "3.0.6"
 #bandcamp-downloader = "0.0.17"
 
 ### For making it work better using latest git revision:
 yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default"] }
-yt-dlp-ejs = ">=0.4.0"
+yt-dlp-ejs = ">=0.8.0"
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 ##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
 ##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
@@ -95,13 +95,13 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 # make additional external tools: poetry, tox, (tox-poetry)
 # make format:
-isort = "^7.0.0"
-black = "^26.1.0"
+isort = "^8.0.1"
+black = "^26.5.1"
 # make lint:
-wemake-python-styleguide = "^1.5.0"
+wemake-python-styleguide = "^1.6.2"
 doc8 = "^2.0.0"
 nitpick = "^0.38.1"
-safety = "^3.7.0"
+safety = "^3.8.1"
 #flakeheaven = "^3.3"
 
 [tool.poetry.group.docs]
@@ -114,8 +114,8 @@ sphinx-autodoc-typehints = "^3.5.2"
 # https://github.com/CrossNox/m2r2/issues/68
 # https://github.com/CrossNox/m2r2/pull/69
 #m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
-myst-parser = "^5.0.0"
-tomli = "^2.4.0"
+myst-parser = "^5.1.0"
+tomli = "^2.4.1"
 recommonmark = "^0.7.1"
 typing-extensions = "^4.15.0"
 
