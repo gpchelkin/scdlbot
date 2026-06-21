@@ -6,6 +6,9 @@ on:
     branches: ["release"]
     types: ["completed"]
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
