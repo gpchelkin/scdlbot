@@ -1010,7 +1010,7 @@ def download_url_and_send(
             # https://github.com/yt-dlp/yt-dlp#output-template
             # Default outtmpl is "%(title)s [%(id)s].%(ext)s"
             # Take first 16 symbols of title:
-            "outtmpl": os.path.join(download_dir, "%(title).16s [%(id)s].%(ext)s"),
+            "outtmpl": os.path.join(download_dir, "%(playlist_index|)03d%(playlist_index&_|)s%(title).16s [%(id)s].%(ext)s"),
             "restrictfilenames": True,
             "windowsfilenames": True,
             "max_filesize": MAX_TG_FILE_SIZE * 3,
