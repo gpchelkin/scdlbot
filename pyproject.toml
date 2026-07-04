@@ -63,7 +63,7 @@ fake-useragent = "^2.2.0"
 
 ### For publishing to PyPI at release:
 # https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = { version = "2026.6.9", extras = ["default"] }
+#yt-dlp = { version = "2026.6.9", extras = ["default", "curl-cffi"] }
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 #scdl = "2.12.4"
@@ -71,7 +71,7 @@ scdl = "3.0.6"
 #bandcamp-downloader = "0.0.17"
 
 ### For making it work better using latest git revision:
-yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default"] }
+yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default", "curl-cffi"] }
 yt-dlp-ejs = ">=0.8.0"
 ##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
 ##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
