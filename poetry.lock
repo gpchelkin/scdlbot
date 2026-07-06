@@ -2717,21 +2717,21 @@ typing-extensions = ">=4.7.1"
 
 [[package]]
 name = "scdl"
-version = "3.0.6"
+version = "3.0.7"
 description = "Download Music from Souncloud"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["main"]
 files = [
-    {file = "scdl-3.0.6-py3-none-any.whl", hash = "sha256:35e8999e9f3dde339532f7aaf104a9f98bcdf964c78cb5aab8071491b6fb4c4d"},
-    {file = "scdl-3.0.6.tar.gz", hash = "sha256:900bcad4aa9f54ae9ac505d3901b5c33173b3872cf60d7c8cb2da7fbdecb841e"},
+    {file = "scdl-3.0.7-py3-none-any.whl", hash = "sha256:0140737b5dd8fe31622ec70e60db65db83ee1cfc2fe9991b01487bdcb73b41df"},
+    {file = "scdl-3.0.7.tar.gz", hash = "sha256:de3c2bb9395d559fe3fa2d17d3e116e895fc0b01900193868b6f3de0c4eb9959"},
 ]
 
 [package.dependencies]
 docopt-ng = ">=0.9.0"
 mutagen = ">=1.47.0"
 soundcloud-v2 = ">=1.6.1"
-yt-dlp = {version = ">=2026.6.9", extras = ["curl-cffi"]}
+yt-dlp = {version = ">=2026.7.4", extras = ["curl-cffi"]}
 
 [[package]]
 name = "sdnotify"
@@ -3422,7 +3422,7 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 
 [[package]]
 name = "yt-dlp"
-version = "2026.6.9"
+version = "2026.7.4"
 description = "A feature-rich command-line audio/video downloader"
 optional = false
 python-versions = ">=3.10"
@@ -3456,7 +3456,7 @@ secretstorage = ["secretstorage"]
 type = "git"
 url = "https://github.com/yt-dlp/yt-dlp.git"
 reference = "master"
-resolved_reference = "e8de28e23c1ecb4a12b2c3dec188c07e998c412c"
+resolved_reference = "fdec00e0bf530dc6c3cc7b1dd780e95d9ae460e9"
 
 [[package]]
 name = "yt-dlp-ejs"
@@ -3473,4 +3473,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "2f0cdb3f6889082d3c57e42216be42586ac83deaba2c355de91e4cc5f40dddc5"
+content-hash = "a16c2c4320f021fb7036bec976bf4d0baa34c8118aa21d4335917cd0ae860849"
