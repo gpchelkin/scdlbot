@@ -8,7 +8,7 @@ brotli==1.2.0 ; python_version >= "3.11" and python_version < "4.0" and implemen
 brotlicffi==1.2.0.1 ; python_version >= "3.11" and python_version < "4.0" and implementation_name != "cpython"
 certifi==2026.6.17 ; python_version >= "3.11" and python_version < "4.0"
 cffi==2.0.0 ; python_version >= "3.11" and python_version < "4.0"
-charset-normalizer==3.4.7 ; python_version >= "3.11" and python_version < "4.0"
+charset-normalizer==3.4.8 ; python_version >= "3.11" and python_version < "4.0"
 curl-cffi==0.15.0 ; python_version >= "3.11" and python_version < "4.0"
 dacite==1.9.2 ; python_version >= "3.11" and python_version < "4.0"
 demjson3==3.0.6 ; python_version >= "3.11" and python_version < "4.0"
