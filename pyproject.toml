@@ -67,7 +67,7 @@ fake-useragent = "^2.2.0"
 ##youtube_dl = "2021.12.17"
 ##youtube-dlc = "2020.11.11.post3"
 #scdl = "2.12.4"
-scdl = "3.0.6"
+scdl = "3.0.7"
 #bandcamp-downloader = "0.0.17"
 
 ### For making it work better using latest git revision:
