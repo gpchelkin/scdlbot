@@ -1,5 +1,5 @@
 aiolimiter==1.2.1 ; python_version >= "3.11" and python_version < "4.0"
-anyio==4.14.1 ; python_version >= "3.11" and python_version < "4.0"
+anyio==4.14.2 ; python_version >= "3.11" and python_version < "4.0"
 apscheduler==3.11.3 ; python_version >= "3.11" and python_version < "4.0"
 bandcamp-downloader @ git+https://github.com/iheanyi/bandcamp-dl.git@e8170dc610db289b26700cdca2b48a9466253056 ; python_version >= "3.11" and python_version < "4.0"
 beautifulsoup4==4.15.0 ; python_version >= "3.11" and python_version < "4.0"
