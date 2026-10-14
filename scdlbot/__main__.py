@@ -954,7 +954,7 @@ def download_url_and_send(
                 "-c",  # Continue if a music already exist
                 "--path",
                 download_dir,  # Download the music to a custom path
-                "--onlymp3",  # Download only the mp3 file even if the track is Downloadable
+                # "--onlymp3",  # Download only the mp3 file even if the track is Downloadable. Doesn't work since 10/2026, soundcloud gives m4a.
                 "--addtofile",  # Add the artist name to the filename if it isn't in the filename already
                 "--addtimestamp",
                 # Adds the timestamp of the creation of the track to the title (useful to sort chronologically)
