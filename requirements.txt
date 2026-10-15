@@ -9,7 +9,7 @@ brotlicffi==1.2.0.1 ; python_version >= "3.11" and python_version < "4.0" and im
 certifi==2026.6.17 ; python_version >= "3.11" and python_version < "4.0"
 cffi==2.1.0 ; python_version >= "3.11" and python_version < "4.0"
 charset-normalizer==3.4.9 ; python_version >= "3.11" and python_version < "4.0"
-curl-cffi==0.15.0 ; python_version >= "3.11" and python_version < "4.0"
+curl-cffi==0.16.3 ; python_version >= "3.11" and python_version < "4.0"
 dacite==1.9.2 ; python_version >= "3.11" and python_version < "4.0"
 demjson3==3.0.6 ; python_version >= "3.11" and python_version < "4.0"
 docopt-ng==0.9.0 ; python_version >= "3.11" and python_version < "4.0"
