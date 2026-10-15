@@ -1,4 +1,4 @@
-annotated-doc==0.0.4 ; python_version >= "3.11" and python_version < "4.0"
+annotated-doc==0.0.5 ; python_version >= "3.11" and python_version < "4.0"
 annotated-types==0.7.0 ; python_version >= "3.11" and python_version < "4.0"
 anyio==4.14.1 ; python_version >= "3.11" and python_version < "4.0"
 attrs==26.1.0 ; python_version >= "3.11" and python_version < "4.0"
