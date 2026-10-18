@@ -1,190 +1,70 @@
-[build-system]
-requires = ["poetry-core>=2.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "scdlbot"
-description = "Telegram Bot for downloading MP3 rips of tracks/sets from SoundCloud, Bandcamp, YouTube with tags and artwork"
-version = "0.15.0"
+version = "1.0.0"
+description = "Telegram bot for downloading audio (and some videos) from SoundCloud, Bandcamp, YouTube and many more sites"
 license = "MIT"
-
-authors = ["George Pchelkin <george@pchelk.in>"]
-
-readme = "README.rst"
-
-homepage = "https://github.com/gpchelkin/scdlbot"
-documentation = "https://scdlbot.readthedocs.io"
-repository = "https://github.com/gpchelkin/scdlbot"
-
-keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "mixcloud", "yandex", "audio", "music", "download"]
-
+readme = "README.md"
+authors = [{ name = "George Pchelkin", email = "george@pchelk.in" }]
+requires-python = ">=3.14,<3.16"
+keywords = ["scdlbot", "telegram", "bot", "soundcloud", "bandcamp", "youtube", "yt-dlp", "audio", "music", "download"]
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Developers",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: System Administrators",
   "Topic :: Multimedia :: Sound/Audio",
   "Topic :: Internet",
-  "Operating System :: OS Independent",
+  "Operating System :: POSIX",
   "Natural Language :: English",
 ]
+# These constraints go into the published package metadata (PyPI).
+dependencies = [
+  "python-telegram-bot[webhooks,http2,rate-limiter] (>=22.8,<23)",
+  "yt-dlp[default,curl-cffi] (>=2026.7.4)",
+  "yt-dlp-ejs (>=0.8.0)",
+  "aiosqlite (>=0.21)",
+  "prometheus-client (>=0.25)",
+  "sentry-sdk (>=2.0)",
+]
 
-include = ["AUTHORS.rst", "CONTRIBUTING.md", "CHANGELOG.rst", "LICENSE", "README.rst", "tests/*", "docs/*.rst", "docs/conf.py", "docs/Makefile", "docs/*.jpg", "docs/*.png", "docs/*.gif", "scdlbot/texts/*"]
+[project.urls]
+homepage = "https://github.com/gpchelkin/scdlbot"
+repository = "https://github.com/gpchelkin/scdlbot"
+issues = "https://github.com/gpchelkin/scdlbot/issues"
+changelog = "https://github.com/gpchelkin/scdlbot/releases"
 
-[tool.poetry.urls]
-# https://github.com/python-poetry/poetry/blob/master/docs/pyproject.md#urls
-"Issues" = "https://github.com/gpchelkin/scdlbot/issues"
-"CI" = "https://github.com/gpchelkin/scdlbot/actions"
-"Changelog" = "https://github.com/gpchelkin/scdlbot/releases"
-#"Changelog" = "https://github.com/gpchelkin/scdlbot/blob/master/CHANGELOG.rst"
-
-[tool.poetry.scripts]
+[project.scripts]
 scdlbot = "scdlbot.__main__:main"
 
+[tool.poetry]
+packages = [{ include = "scdlbot" }]
+
 [tool.poetry.dependencies]
-# https://endoflife.date/python
-python = "^3.11"
-python-telegram-bot = { version = "22.8", extras = ["webhooks", "job-queue", "http2", "rate-limiter"] }
-#ptbcontrib = { git = "https://github.com/python-telegram-bot/ptbcontrib.git", branch = "main", extras = ["postgres-persistence"] }
-# https://python-poetry.org/docs/dependency-specification#path-dependencies
-#ptbcontrib = { path = "../ptbcontrib/", develop = false }
-requests = { version = "^2.34.2", extras = ["socks"] }
-pebble = "^5.2.0"
-boltons = "^26.0.0"
-mutagen = "^1.47.0"
-plumbum = "^2.0.1"
-ffmpeg-python = "0.2.0"
-prometheus_client = "^0.25.0"
-sdnotify = "^0.3.2"
-fake-useragent = "^2.2.0"
-#python-telegram-handler = "^2.2.1"
-#patool = "1.12"
-#pyshorteners = "1.0.1"
-#transliterate = "1.10.2"
-
-### For publishing to PyPI at release:
-# https://github.com/yt-dlp/yt-dlp/wiki/Forks
-#yt-dlp = { version = "2026.6.9", extras = ["default", "curl-cffi"] }
-##youtube_dl = "2021.12.17"
-##youtube-dlc = "2020.11.11.post3"
-#scdl = "2.12.4"
-scdl = "3.0.7"
-#bandcamp-downloader = "0.0.17"
-
-### For making it work better using latest git revision:
+# Locally we track yt-dlp master: sites break often and fixes land there first.
+# This only affects the lock file; PyPI metadata uses the [project] constraint above.
 yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default", "curl-cffi"] }
-yt-dlp-ejs = ">=0.8.0"
-##yt-dlp = { git = "https://github.com/pritam20ps05/yt-dlp.git", branch = "instagram_fix" }
-##ytdl-patched = { git = "https://github.com/ytdl-patched/ytdl-patched.git", branch = "ytdlp" }
-##youtube_dl = { git = "https://github.com/l1ving/youtube-dl.git" }
-##youtube_dl = { git = "https://github.com/gilou/youtube-dl.git", branch = "bandcamp_update" }
-##youtube_dl = { git = "https://github.com/gpchelkin/youtube-dl.git", branch = "bandcamp_update" }
-##youtube-dlc = { git = "https://github.com/blackjack4494/yt-dlc.git", branch = "master" }
-#scdl = { git = "https://github.com/scdl-org/scdl.git", branch = "master" }
-##scdl = { git = "https://github.com/gpchelkin/scdl.git", branch = "add_permalink_url_to_filename" }
-##scdl = { git = "https://github.com/def-hash/scdl.git", branch = "user-agent-fix" }
-##scdl = { git = "https://github.com/7x11x13/scdl.git", branch = "master" }
-bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", branch = "master" }
-#bandcamp-downloader = { git = "https://github.com/iheanyi/bandcamp-dl.git", rev = "4eae79a88fd4af159bbdfbaac66ce0d97f64677e" }
-#bandcamp-downloader = { git = "https://github.com/gpchelkin/bandcamp-dl.git", branch = "pyproject-poetry" }
-#fake-useragent = { git = "https://github.com/fake-useragent/fake-useragent.git", tag = "1.1.2" }
-
-[tool.poetry.group.dev]
-# must be false if tox-poetry is used (it doesn't support groups):
-optional = true
 
 [tool.poetry.group.dev.dependencies]
-# make additional external tools: poetry, tox, (tox-poetry)
-# make format:
-isort = "^8.0.1"
-black = "^26.5.1"
-# make lint:
-wemake-python-styleguide = "^1.6.2"
-doc8 = "^2.0.0"
-nitpick = "^0.38.1"
-safety = "^3.8.1"
-#flakeheaven = "^3.3"
+ruff = ">=0.14"
+pytest = ">=9.0"
+pytest-asyncio = ">=1.2"
 
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^8.2.3"
-sphinx-autodoc-typehints = "^3.5.2"
-#m2r2 = "^0.3"
-# https://github.com/CrossNox/m2r2/issues/68
-# https://github.com/CrossNox/m2r2/pull/69
-#m2r2 = { git = "https://github.com/adrien-berchet/m2r2.git", branch = "patch-1" }
-myst-parser = "^5.1.0"
-tomli = "^2.4.1"
-recommonmark = "^0.7.1"
-typing-extensions = "^4.15.0"
-
-
-[tool.isort]
-# isort configuration:
-# https://pycqa.github.io/isort/docs/configuration/options.html
-# https://pycqa.github.io/isort/docs/configuration/profiles.html
-# https://pycqa.github.io/isort/docs/configuration/multi_line_output_modes.html#3-vertical-hanging-indent
-multi_line_output = 3
-include_trailing_comma = true
-use_parentheses = true
-# match flake8 max-line-length:
-line_length = 180
-
-[tool.black]
-# match flake8 max-line-length:
+[tool.ruff]
 line-length = 180
+target-version = "py314"
 
-[tool.nitpick]
-style = "https://raw.githubusercontent.com/wemake-services/wemake-python-styleguide/master/styles/nitpick-style-wemake.toml"
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "ASYNC", "RUF"]
+ignore = [
+  "RUF001", "RUF003",  # emoji and ambiguous unicode in user-facing texts are intended
+  "ASYNC109",  # timeouts passed down to subprocess and Telegram calls on purpose
+  "ASYNC240",  # tiny Path calls are fine
+  "SIM108",  # if/else is often clearer than a long ternary
+]
+per-file-ignores = { "tests/*" = ["RUF059"] }  # tests unpack the whole fixture tuple
 
-[tool.flakeheaven]
-# TODO flakeheaven
-# https://github.com/flakeheaven/flakeheaven
-# https://wemake-python-styleguide.readthedocs.io/en/latest/pages/usage/integrations/flakehell.html
-# https://github.com/wemake-services/wemake-python-styleguide/blob/master/styles/flakehell.toml
-format = "grouped"
-show_source = true
-statistics = false
-doctests = true
-enable_extensions = "G"
-accept_encodings = "utf-8"
-max_complexity = 6
-max_line_length = 180
-ignore = "D100, D104, D401, W504, RST303, RST304, DAR103, DAR203"
-# poetry run flakeheaven baseline > .flakeheaven_baseline
-baseline = ".flakeheaven_baseline"
-[tool.flakeheaven.plugins]
-"flake8-*" = ["+*"]
-mccabe = ["+*"]
-nitpick = ["+*"]
-"pep8-naming" = ["+*"]
-pycodestyle = ["+*"]
-pyflakes = ["+*"]
-"wemake-python-styleguide" = ["+*"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
-[tool.tox]
-# TODO https://github.com/python-poetry/poetry/blob/master/docs/faq.md#is-tox-supported
-legacy_tox_ini = """
-[tox]
-skipsdist = true
-envlist = py311, py312, py313, py314
-
-[gh-actions]
-#tox-gh-actions: run tox only on envs which match github actions workflow python version (one env per job)
-python =
-    3.11: py311
-    3.12: py312
-    3.13: py313
-    3.14: py314
-
-[testenv]
-allowlist_externals =
-    make
-    poetry
-# either use command 'poetry install',
-# or use tox-poetry - it will install main and dev deps to venv with poetry
-commands =
-    poetry install --with main,dev --verbose
-    make test
-"""
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"

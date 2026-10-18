@@ -1,6 +1,21 @@
 Version history
 ===============
 
+1.0.0 (unreleased)
+-----------------------
+Rewritten from scratch.
+
+* one asyncio process: handlers never wait for downloads, so the bot no longer hangs under load
+* job queue with a fixed pool of workers, per-user and global limits, resumes jobs after a restart
+* yt-dlp (as a subprocess) and ffmpeg for everything; scdl and bandcamp-dl are gone
+* audio is sent as m4a or mp3 without re-encoding when possible, with tags and cover art
+* playlists and albums are streamed as Telegram albums of up to 10 tracks, capped at MAX_PLAYLIST_ITEMS
+* /dl as a reply to a message with links; t.co links; image links are ignored
+* SQLite database for chat settings, the queue and stats; owner-only /stats
+* Prometheus metrics, systemd watchdog tied to worker progress, owner alerts, optional Sentry
+* removed the /link mode, Heroku/Render files, Sphinx docs and old lint tooling; mise tasks, ruff and pytest instead
+* requires Python 3.14+
+
 0.15.0 (2023-02-20)
 -----------------------
 * refactor and fix many things
