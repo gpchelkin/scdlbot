@@ -18,7 +18,7 @@ import httpx
 
 from scdlbot.config import Config
 from scdlbot.links import VIDEO
-from scdlbot.media import Item, kill
+from scdlbot.media import Item, kill, oom_first
 
 log = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ FIELDS = "filepath,title,track,artist,uploader,channel,duration,width,height,vco
 # Error codes by yt-dlp output patterns (lowercase), first match wins. Each code has a text in texts/error_<code>.html.
 ERRORS = (
     ("too_large", ("larger than max-filesize",)),
+    ("drm", ("drm protected",)),
     ("live", ("live event", "is live", "premieres in", "is_live", "live stream")),
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
     ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "age-restricted", "inappropriate for some users")),
@@ -127,6 +128,7 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         start_new_session=True, limit=1 << 20, env=os.environ | {"PYTHONUNBUFFERED": "1"},
     )  # fmt: skip
+    oom_first(process)
     tail: deque[str] = deque(maxlen=50)
     stderr = asyncio.create_task(_collect(process.stderr, tail))
     count = 0

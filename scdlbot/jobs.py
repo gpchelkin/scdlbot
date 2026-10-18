@@ -26,35 +26,59 @@ from scdlbot.ytdlp import Cookies, DownloadError, download, to_item
 log = logging.getLogger(__name__)
 
 KNOWN_SITES = {site.name for site in SITES}  # metrics label "other" for the rest, to keep cardinality low
+POOLS = {site.name: site.pool for site in SITES}
 RESUME_MAX_AGE = 3600  # after a restart, re-run queued jobs younger than this
 
 
+def pool_for(site: str) -> str:
+    return POOLS.get(site, "main")
+
+
 class JobQueue:
+    """Jobs wait in per-pool queues, each pool has its own workers.
+
+    YouTube gets a small pool of its own: every YouTube download runs deno (~250 MB) to solve JS challenges,
+    so their number must be limited, without making jobs from other sites wait behind them.
+    """
+
     def __init__(self, cfg: Config, db: DB, bot: Bot, cookies: Cookies):
         self.cfg, self.db, self.bot, self.cookies = cfg, db, bot, cookies
-        self.queue: asyncio.Queue[Job] = asyncio.Queue()
+        self.pools = {"main": cfg.workers, "youtube": cfg.youtube_workers}  # pool name: number of workers
+        self.queues: dict[str, asyncio.Queue[Job]] = {pool: asyncio.Queue() for pool in self.pools}
+        self.busy: Counter[str] = Counter()  # running jobs by pool
         self.active: Counter[int] = Counter()  # queued + running jobs by owner
-        self.busy = 0
         self.last_progress = time.monotonic()
         self.workers: list[asyncio.Task] = []
+
+    def size(self) -> int:
+        return sum(queue.qsize() for queue in self.queues.values())
+
+    def busy_total(self) -> int:
+        return sum(self.busy.values())
+
+    def _update_gauges(self) -> None:
+        for pool, queue in self.queues.items():
+            observe.QUEUE_SIZE.labels(pool).set(queue.qsize())
+            observe.WORKERS_BUSY.labels(pool).set(self.busy[pool])
 
     # Used by handlers
 
     def room_for(self, owner: int, wanted: int) -> tuple[int, str | None]:
         """How many of the wanted jobs this owner may add now, and why not all of them."""
-        if self.queue.qsize() >= self.cfg.max_queue:
+        if self.size() >= self.cfg.max_queue:
             return 0, "queue"
         free = self.cfg.max_user_jobs - self.active[owner]
         return (max(0, min(wanted, free)), None if free >= wanted else "user")
 
-    def waiting(self) -> int:
-        """Jobs ahead of a new one, if all workers are busy."""
-        return self.queue.qsize() + 1 if self.busy >= self.cfg.workers else 0
+    def waiting(self, site: str) -> int:
+        """Jobs ahead of a new one from this site, if all workers of its pool are busy."""
+        pool = pool_for(site)
+        return self.queues[pool].qsize() + 1 if self.busy[pool] >= self.pools[pool] else 0
 
     def put(self, job: Job) -> None:
         self.active[job.owner] += 1
-        self.queue.put_nowait(job)
-        observe.QUEUE_SIZE.set(self.queue.qsize())
+        self.queues[pool_for(job.site)].put_nowait(job)
+        self._update_gauges()
 
     # Lifecycle
 
@@ -66,7 +90,7 @@ class JobQueue:
             log.info("Resumed %d jobs interrupted by restart", len(jobs))
 
     def start(self) -> None:
-        self.workers = [asyncio.create_task(self._worker(), name=f"worker-{n}") for n in range(self.cfg.workers)]
+        self.workers = [asyncio.create_task(self._worker(pool), name=f"{pool}-{n}") for pool, count in self.pools.items() for n in range(count)]
 
     async def stop(self) -> None:
         for worker in self.workers:
@@ -76,16 +100,15 @@ class JobQueue:
     def healthy(self) -> bool:
         """False if there is work but nothing moved for longer than any job may take: then we are stuck."""
         stalled = time.monotonic() - self.last_progress > self.cfg.job_timeout + 60
-        return not (stalled and (self.busy or self.queue.qsize()))
+        return not (stalled and (self.busy_total() or self.size()))
 
     # Workers
 
-    async def _worker(self) -> None:
+    async def _worker(self, pool: str) -> None:
         while True:
-            job = await self.queue.get()
-            observe.QUEUE_SIZE.set(self.queue.qsize())
-            self.busy += 1
-            observe.WORKERS_BUSY.set(self.busy)
+            job = await self.queues[pool].get()
+            self.busy[pool] += 1
+            self._update_gauges()
             try:
                 await self._run(job)
             except asyncio.CancelledError:
@@ -94,8 +117,8 @@ class JobQueue:
             except Exception:
                 log.exception("Job %s crashed: %s", job.id, job.url)
             finally:
-                self.busy -= 1
-                observe.WORKERS_BUSY.set(self.busy)
+                self.busy[pool] -= 1
+                self._update_gauges()
                 self.active[job.owner] -= 1
                 if self.active[job.owner] <= 0:
                     del self.active[job.owner]

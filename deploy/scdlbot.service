@@ -17,7 +17,11 @@ NotifyAccess=main
 WatchdogSec=120
 Restart=always
 RestartSec=5
+# SIGTERM only the bot: it kills its own downloads and puts them back in the queue for after the restart.
+KillMode=mixed
 TimeoutStopSec=30
+# If the kernel kills a download for memory, keep the service running (the default stops the whole unit):
+OOMPolicy=continue
 
 User=www-data
 Group=www-data
@@ -30,8 +34,9 @@ Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/opt/scdlbot/.venv/bin/scdlbot
 
 # Resource limits (3 vCPU, 4 GB RAM box). Downloads run as child processes, so they count here too.
+# No MemoryHigh: without swap it throttles every process in the service, the bot included, until nothing moves.
+# At MemoryMax the kernel kills one process, and downloads are marked to be killed first.
 CPUQuota=250%
-MemoryHigh=2900M
 MemoryMax=3100M
 TasksMax=infinity
 LimitNOFILE=1048576

@@ -1,7 +1,7 @@
 """SQLite storage: chat settings, jobs (the durable queue and raw stats), daily stats.
 
 Timestamps are unix seconds, days are UTC 'YYYY-MM-DD'. Handy queries:
-    sqlite3 scdlbot.sqlite3 "SELECT status, count(*) FROM jobs WHERE created_at > unixepoch('now', '-1 day') GROUP BY 1"
+    sqlite3 scdlbot.sqlite3 "SELECT status, count(*) FROM jobs WHERE created_at > strftime('%s', 'now', '-1 day') GROUP BY 1"
     sqlite3 scdlbot.sqlite3 "SELECT day, count(*) FROM user_days GROUP BY 1 ORDER BY 1 DESC LIMIT 30"
 """
 

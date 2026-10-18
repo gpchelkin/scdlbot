@@ -104,3 +104,12 @@ async def test_limits(setup):
     queue.put(Job(5, "private", 7, 2, "u", "s", "audio", True, "queued"))
     assert queue.room_for(7, 1) == (0, "user")
     assert queue.room_for(8, 1) == (1, None)
+
+
+async def test_youtube_has_its_own_pool(setup):
+    cfg, db, bot, queue, run = setup
+    queue.put(Job(5, "private", 7, 1, "https://youtu.be/x", "YouTube", "audio", True, "queued"))
+    queue.put(Job(5, "private", 8, 2, "https://soundcloud.com/a/b", "SoundCloud", "audio", True, "queued"))
+    assert (queue.queues["youtube"].qsize(), queue.queues["main"].qsize(), queue.size()) == (1, 1, 2)
+    queue.busy["youtube"] = queue.pools["youtube"]  # all YouTube workers busy: new YouTube links wait, others don't
+    assert queue.waiting("YouTube") == 2 and queue.waiting("SoundCloud") == 0

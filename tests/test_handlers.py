@@ -39,7 +39,7 @@ def message(chat: Chat, text: str = LINKS, entities=ENTITIES, message_id: int = 
 async def test_download_mode_in_private_chat(env):
     rt, bot, context = env
     await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
-    assert rt.queue.queue.qsize() == 2
+    assert rt.queue.size() == 2
     assert bot.names() == ["send_message"]  # "wait a bit"
     assert await rt.db.active_users() == {"day": 1, "week": 1, "month": 1}
 
@@ -48,7 +48,7 @@ async def test_ask_mode_in_group_then_press_download(env):
     rt, bot, context = env
     group = Chat(-100, Chat.SUPERGROUP)
     await handlers.links_message(Update(1, message=message(group)), context)
-    assert rt.queue.queue.qsize() == 0
+    assert rt.queue.size() == 0
     name, _, kwargs = bot.calls[-1]
     assert name == "send_message" and kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "ask:dl:10"
 
@@ -57,11 +57,11 @@ async def test_ask_mode_in_group_then_press_download(env):
     query = CallbackQuery("q1", USER, "chat", message=prompt, data="ask:dl:10")
     query.set_bot(bot)
     await handlers.ask_button(Update(2, callback_query=query), context)
-    assert rt.queue.queue.qsize() == 2
+    assert rt.queue.size() == 2
     assert "edit_message_text" in bot.names()
 
     await handlers.ask_button(Update(3, callback_query=query), context)  # pressed again: nothing left to queue
-    assert rt.queue.queue.qsize() == 2
+    assert rt.queue.size() == 2
 
 
 async def test_dl_reply_and_no_links(env):
@@ -69,8 +69,8 @@ async def test_dl_reply_and_no_links(env):
     chat = Chat(-100, Chat.SUPERGROUP)
     command = message(chat, text="/dl", entities=[MessageEntity(MessageEntity.BOT_COMMAND, 0, 3)], message_id=12, reply_to_message=message(chat))
     await handlers.dl_command(Update(1, message=command), context)
-    assert rt.queue.queue.qsize() == 2
-    job = await rt.queue.queue.get()
+    assert rt.queue.size() == 2
+    job = rt.queue.queues["main"].get_nowait()  # the SoundCloud link; youtu.be went to the youtube pool
     assert job.message_id == 10  # files will reply to the message with the links
 
     await handlers.links_message(Update(2, message=message(Chat(7, Chat.PRIVATE), text="https://example.com", entities=[MessageEntity(MessageEntity.URL, 0, 19)])), context)
@@ -82,7 +82,7 @@ async def test_user_limit(env):
     rt.cfg = Config(max_user_jobs=1)
     rt.queue.cfg = rt.cfg
     await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
-    assert rt.queue.queue.qsize() == 1
+    assert rt.queue.size() == 1
     await handlers.links_message(Update(2, message=message(Chat(7, Chat.PRIVATE), message_id=13)), context)
-    assert rt.queue.queue.qsize() == 1
+    assert rt.queue.size() == 1
     assert "downloads in progress" in bot.calls[-1][1][1]

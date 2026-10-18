@@ -16,6 +16,7 @@ from scdlbot.ytdlp import build_command, classify_error, to_item
         ("ERROR: [youtube] x: The uploader has not made this video available in your country", "region"),
         ("ERROR: [youtube] x: This live event will begin in 3 hours", "live"),
         ("[download] File is larger than max-filesize (4907257 bytes > 3145728 bytes). Aborting.", "too_large"),
+        ("ERROR: [soundcloud] 1452743425: This video is DRM protected", "drm"),
         ("ERROR: something else entirely", "failed"),
         ("WARNING: [youtube] Some formats are unavailable", "failed"),  # warnings don't count
     ],

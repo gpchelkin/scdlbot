@@ -22,6 +22,7 @@ class Site:
     kind: str = AUDIO
     path_ok: Callable[[list[str]], bool] = lambda parts: True
     shortener: bool = False  # resolve redirects before downloading, then classify again
+    pool: str = "main"  # worker pool, see jobs.JobQueue
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -40,8 +41,8 @@ SITES = (
     Site("SoundCloud", ("api.soundcloud.com",)),
     Site("SoundCloud", ("soundcloud.com",), path_ok=_sc_path),
     Site("Bandcamp", ("bandcamp.com",), path_ok=lambda p: len(p) == 2),
-    Site("YouTube", ("youtu.be",)),
-    Site("YouTube", ("youtube.com",), path_ok=_yt_path),
+    Site("YouTube", ("youtu.be",), pool="youtube"),
+    Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube"),
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
     Site("TikTok", ("tiktok.com",), kind=VIDEO),
     Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=lambda p: len(p) >= 2),

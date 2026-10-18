@@ -158,3 +158,5 @@ cookies.txt
 # scdlbot runtime data
 *.sqlite3
 *.sqlite3-*
+# server-specific deploy files
+deploy/*.prod-*

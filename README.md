@@ -29,6 +29,8 @@ update → handlers.py (parse links, save a job row, enqueue, reply "wait a bit"
   and the exact command is logged, so you can reproduce any failure in a shell.
 - SQLite ([`db.py`](scdlbot/db.py)) keeps chat settings, the job queue (jobs resume after a restart) and stats.
 - Audio stays in its original m4a or mp3 when possible (no re-encoding); anything else becomes mp3.
+- YouTube downloads have their own small worker pool (`YOUTUBE_WORKERS`): each runs deno (~250 MB) to solve
+  YouTube's JS challenges, so their number is limited without making other sites wait behind them.
 
 | Module | What it does |
 |---|---|
@@ -113,7 +115,7 @@ docker run -d --name scdlbot --restart unless-stopped --env-file .env -v scdlbot
 sqlite3 scdlbot.sqlite3 "SELECT day, sum(jobs) FROM daily GROUP BY day ORDER BY day DESC LIMIT 14"
 sqlite3 scdlbot.sqlite3 "SELECT site, status, sum(jobs) FROM daily WHERE day >= date('now', '-7 day') GROUP BY 1, 2 ORDER BY 3 DESC"
 sqlite3 scdlbot.sqlite3 "SELECT count(DISTINCT user_id) FROM user_days WHERE day > date('now', '-30 day')"   # MAU
-sqlite3 scdlbot.sqlite3 "SELECT error, count(*) FROM jobs WHERE created_at > unixepoch('now', '-1 day') GROUP BY 1"
+sqlite3 scdlbot.sqlite3 "SELECT error, count(*) FROM jobs WHERE created_at > strftime('%s', 'now', '-1 day') GROUP BY 1"
 ```
 
 The database stores Telegram user and chat ids and downloaded URLs; per-download rows are deleted after `JOBS_RETENTION_DAYS`.

@@ -38,6 +38,12 @@ class Item:
         return self.path.stat().st_size
 
 
+def oom_first(process: asyncio.subprocess.Process) -> None:
+    """Out of memory, the kernel should kill this download rather than the bot. Its children (ffmpeg, deno) inherit it."""
+    with contextlib.suppress(OSError):
+        Path(f"/proc/{process.pid}/oom_score_adj").write_text("500")
+
+
 def kill(process: asyncio.subprocess.Process) -> None:
     """Kill a process started with start_new_session=True, together with its children (e.g. ffmpeg under yt-dlp)."""
     if process.returncode is None:
@@ -48,6 +54,7 @@ def kill(process: asyncio.subprocess.Process) -> None:
 async def run(*cmd: str, timeout: float) -> tuple[int, str]:
     """Run a command, return (exit code, stdout). Kills it on timeout or cancellation."""
     process = await asyncio.create_subprocess_exec(*cmd, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, start_new_session=True)
+    oom_first(process)
     try:
         async with asyncio.timeout(timeout):
             stdout, stderr = await process.communicate()

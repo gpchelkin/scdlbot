@@ -93,7 +93,7 @@ async def post_init(app: Application) -> None:
     queue.start()
     rt.tasks = [asyncio.create_task(coro) for coro in (watchdog(rt), housekeeping(rt), refresh_cookies(rt, cookies))]
     observe.sd_notify("READY=1")
-    log.info("@%s is running with %d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
+    log.info("@%s is running with %d+%d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.youtube_workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
 
 
 async def post_stop(app: Application) -> None:
@@ -115,7 +115,8 @@ async def watchdog(rt: Runtime) -> None:
     stuck = False
     while True:
         if rt.queue.healthy():
-            observe.sd_notify(f"WATCHDOG=1\nSTATUS=queue {rt.queue.queue.qsize()}, busy {rt.queue.busy}/{rt.cfg.workers}")
+            status = ", ".join(f"{pool}: queue {q.qsize()}, busy {rt.queue.busy[pool]}/{rt.queue.pools[pool]}" for pool, q in rt.queue.queues.items())
+            observe.sd_notify(f"WATCHDOG=1\nSTATUS={status}")
             stuck = False
         elif not stuck:
             log.error("Workers made no progress for %d seconds, stopping watchdog pings so systemd restarts the bot", rt.cfg.job_timeout + 60)

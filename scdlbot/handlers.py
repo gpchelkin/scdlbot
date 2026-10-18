@@ -73,7 +73,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     sites = await rt.db.top_sites(db.today(6))
     lines = [
         f"<b>Active users</b>: day {users['day']}, week {users['week']}, month {users['month']}",
-        f"<b>Queue</b>: {rt.queue.queue.qsize()} waiting, {rt.queue.busy}/{rt.cfg.workers} workers busy",
+        "<b>Queue</b>: " + ", ".join(f"{pool} {q.qsize()} waiting, {rt.queue.busy[pool]}/{rt.queue.pools[pool]} busy" for pool, q in rt.queue.queues.items()),
         "<b>Jobs today</b>: " + (", ".join(f"{k} {v}" for k, v in today.items()) or "none"),
         "<b>Jobs 7 days</b>: " + (", ".join(f"{k} {v}" for k, v in week.items()) or "none"),
         "<b>Top sites 7 days</b> (done / all):",
@@ -218,7 +218,7 @@ async def enqueue(rt: Runtime, context, chat: Chat, user: User | None, source: M
         text = texts.BUSY if reason == "queue" else texts.USER_LIMIT.format(count=rt.cfg.max_user_jobs)
         await context.bot.send_message(chat.id, text, parse_mode=HTML, reply_parameters=reply_to(source.message_id))
         return
-    waiting = rt.queue.waiting()
+    waiting = rt.queue.waiting(links[0].site)
     wait_text = texts.wait() + (f" <i>(#{waiting} in queue)</i>" if waiting else "")
     wait = await context.bot.send_message(chat.id, wait_text, parse_mode=HTML, reply_parameters=reply_to(source.message_id))
     for link in links[:allowed]:

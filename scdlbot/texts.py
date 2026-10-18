@@ -36,6 +36,7 @@ ERRORS = {
     "timeout": "<b>Sorry</b>, your download was taking too much time, so I needed to stop it.",
     "too_large": "<b>Sorry</b>, this file is too large for me (more than {max_mb} MB).",
     "live": "<b>Sorry</b>, I do not download live streams.",
+    "drm": "<b>Sorry</b>, this track is DRM-protected (e.g. SoundCloud Go+ only), so I can't download it.",
     "region": "<b>Sorry</b>, the uploader has not made this link available in my country.",
     "login": "<b>Sorry</b>, the website wants me to log in or prove I'm not a bot to download this. Please try again later.",
     "unavailable": "<b>Sorry</b>, this link is unavailable: it may be private, deleted or never existed.",

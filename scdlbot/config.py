@@ -42,6 +42,7 @@ class Config:
     db_path: Path = Path("scdlbot.sqlite3")
     dl_dir: Path = Path("/tmp/scdlbot")
     workers: int = 4
+    youtube_workers: int = 2  # YouTube downloads run deno (~250 MB each) to solve JS challenges
     dl_timeout: int = 300  # seconds per downloaded item
     job_timeout: int = 1800  # seconds per whole job (e.g. an album)
     max_tg_file_size: int = 45_000_000
@@ -95,6 +96,7 @@ class Config:
             db_path=Path(_str("DB_PATH", "scdlbot.sqlite3")).expanduser(),
             dl_dir=Path(_str("DL_DIR", "/tmp/scdlbot")).expanduser(),
             workers=max(1, _int("WORKERS", 4)),
+            youtube_workers=max(1, _int("YOUTUBE_WORKERS", 2)),
             dl_timeout=_int("DL_TIMEOUT", 300),
             job_timeout=_int("JOB_TIMEOUT", 1800),
             # Bot API limit is 50 MB; a local Bot API server allows 2000 MB:
