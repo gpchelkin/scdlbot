@@ -25,6 +25,16 @@ DOWNLOAD_ERRORS = Counter("scdlbot_download_errors", "Download errors", ["code"]
 TELEGRAM_ERRORS = Counter("scdlbot_telegram_errors", "Telegram API errors while sending", ["type"])
 REJECTED = Counter("scdlbot_rejected", "Links not accepted because of limits", ["reason"])
 ACTIVE_USERS = Gauge("scdlbot_active_users", "Distinct users who sent links or commands", ["period"])
+USERS_BY_LANGUAGE = Gauge("scdlbot_active_users_by_language", "Distinct users in the last 30 days by Telegram app language", ["lang"])
+
+
+def set_languages(counts: list[tuple[str, int]], top: int = 20) -> None:
+    """Top languages get their own series, the rest is summed up as "other" to keep the number of series small."""
+    USERS_BY_LANGUAGE.clear()  # languages that dropped out of the top must disappear
+    for lang, count in counts[:top]:
+        USERS_BY_LANGUAGE.labels(lang or "unknown").set(count)
+    if rest := sum(count for _, count in counts[top:]):
+        USERS_BY_LANGUAGE.labels("other").set(rest)
 
 
 def start_metrics_server(host: str, port: int) -> None:

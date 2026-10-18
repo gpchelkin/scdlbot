@@ -130,6 +130,7 @@ async def housekeeping(rt: Runtime) -> None:
         try:
             for period, count in (await rt.db.active_users()).items():
                 observe.ACTIVE_USERS.labels(period).set(count)
+            observe.set_languages(await rt.db.languages())
             if run % 12 == 0:
                 await rt.db.prune(rt.cfg.jobs_retention_days)
         except Exception:

@@ -59,7 +59,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     rt = runtime(context)
     observe.UPDATES.labels("help").inc()
     if update.effective_user:
-        await rt.db.touch_user(update.effective_user.id)
+        await rt.db.touch_user(update.effective_user.id, update.effective_user.language_code)
     text = texts.HELP.format(max_items=rt.cfg.max_playlist_items)
     await context.bot.send_message(update.effective_chat.id, text, parse_mode=HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))
 
@@ -71,6 +71,8 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     users = await rt.db.active_users()
     today, week = await rt.db.jobs_by_status(db.today()), await rt.db.jobs_by_status(db.today(6))
     sites = await rt.db.top_sites(db.today(6))
+    month = users["month"] or 1
+    languages = ", ".join(f"{lang or '?'} {count * 100 // month}%" for lang, count in (await rt.db.languages())[:10])
     lines = [
         f"<b>Active users</b>: day {users['day']}, week {users['week']}, month {users['month']}",
         "<b>Queue</b>: " + ", ".join(f"{pool} {q.qsize()} waiting, {rt.queue.busy[pool]}/{rt.queue.pools[pool]} busy" for pool, q in rt.queue.queues.items()),
@@ -78,6 +80,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "<b>Jobs 7 days</b>: " + (", ".join(f"{k} {v}" for k, v in week.items()) or "none"),
         "<b>Top sites 7 days</b> (done / all):",
         *(f"  {site}: {done} / {count}" for site, count, done in sites),
+        f"<b>App languages 30 days</b>: {languages or 'none'}",
     ]
     await context.bot.send_message(update.effective_chat.id, "\n".join(lines), parse_mode=HTML)
 
@@ -174,7 +177,7 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, comma
     mode = "dl" if command else settings.mode
     observe.UPDATES.labels(f"{mode}_{'cmd' if command else 'msg'}").inc()
     if user:
-        await rt.db.touch_user(user.id)
+        await rt.db.touch_user(user.id, user.language_code)
     if not links:
         if (command and (context.args or source is not message)) or (not command and chat.type == Chat.PRIVATE):
             await context.bot.send_message(chat.id, texts.NO_URLS, parse_mode=HTML, reply_parameters=reply_to(message.message_id))

@@ -1,4 +1,7 @@
-from scdlbot.db import DB, Job
+import sqlite3
+
+from scdlbot import observe
+from scdlbot.db import DB, MIGRATIONS, Job
 
 
 def make_job(**kwargs) -> Job:
@@ -43,8 +46,11 @@ async def test_ask_flow_and_stats():
     await db.finish_job(jobs[0])
     assert await db.active_jobs_for_message(-1, 10) == 1
     await db.touch_user(7)
-    await db.touch_user(7)
-    assert await db.active_users() == {"day": 1, "week": 1, "month": 1}
+    await db.touch_user(7, "pt-br")  # language learned later the same day
+    await db.touch_user(8, "en")
+    await db.touch_user(9, "weird_tag!")
+    assert await db.active_users() == {"day": 3, "week": 3, "month": 3}
+    assert await db.languages() == [("", 1), ("en", 1), ("pt", 1)]
     assert await db.top_sites("2000-01-01") == [("YouTube", 1, 1)]
     await db.close()
 
@@ -58,3 +64,21 @@ async def test_resume_after_restart():
     assert [j.status for j in resumed] == ["queued", "queued"]
     assert await db.resume(max_age=-1) == []  # everything is too old now
     await db.close()
+
+
+async def test_migration_from_first_version(tmp_path):
+    path = tmp_path / "old.sqlite3"
+    with sqlite3.connect(path) as conn:  # a database created by the first release
+        conn.executescript(MIGRATIONS[0] + "; PRAGMA user_version = 1;")
+        conn.execute("INSERT INTO user_days (day, user_id) VALUES ('2026-10-18', 1)")
+    db = await DB.open(path)
+    await db.touch_user(2, "en")
+    assert (await db._all("PRAGMA user_version"))[0][0] == len(MIGRATIONS)
+    assert ("en", 1) in await db.languages(days=10_000)
+    await db.close()
+
+
+def test_languages_gauge_keeps_top_and_other():
+    observe.set_languages([("ru", 50), ("en", 30), ("", 5), ("pt", 3), ("es", 2)], top=3)
+    values = {s.labels["lang"]: s.value for s in observe.USERS_BY_LANGUAGE.collect()[0].samples}
+    assert values == {"ru": 50, "en": 30, "unknown": 5, "other": 5}

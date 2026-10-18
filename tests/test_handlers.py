@@ -14,7 +14,7 @@ from scdlbot.ytdlp import Cookies
 
 from .test_jobs import FakeBot
 
-USER = User(7, "Ann", is_bot=False)
+USER = User(7, "Ann", is_bot=False, language_code="ru")
 LINKS = "https://soundcloud.com/a/b https://youtu.be/x"
 ENTITIES = [MessageEntity(MessageEntity.URL, 0, 26), MessageEntity(MessageEntity.URL, 27, 18)]
 
@@ -42,6 +42,7 @@ async def test_download_mode_in_private_chat(env):
     assert rt.queue.size() == 2
     assert bot.names() == ["send_message"]  # "wait a bit"
     assert await rt.db.active_users() == {"day": 1, "week": 1, "month": 1}
+    assert await rt.db.languages() == [("ru", 1)]
 
 
 async def test_ask_mode_in_group_then_press_download(env):
@@ -86,3 +87,14 @@ async def test_user_limit(env):
     await handlers.links_message(Update(2, message=message(Chat(7, Chat.PRIVATE), message_id=13)), context)
     assert rt.queue.size() == 1
     assert "downloads in progress" in bot.calls[-1][1][1]
+
+
+async def test_stats_for_owner_only(env):
+    rt, bot, context = env
+    await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
+    await handlers.stats_command(Update(2, message=message(Chat(7, Chat.PRIVATE), text="/stats", entities=[])), context)
+    assert bot.names() == ["send_message"]  # only the "wait a bit" reply: user 7 is not the owner
+    rt.cfg = Config(owner_id=7)
+    await handlers.stats_command(Update(3, message=message(Chat(7, Chat.PRIVATE), text="/stats", entities=[])), context)
+    text = bot.calls[-1][1][1]
+    assert "month 1" in text and "App languages 30 days</b>: ru 100%" in text

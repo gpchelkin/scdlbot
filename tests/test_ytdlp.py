@@ -17,6 +17,10 @@ from scdlbot.ytdlp import build_command, classify_error, to_item
         ("ERROR: [youtube] x: This live event will begin in 3 hours", "live"),
         ("[download] File is larger than max-filesize (4907257 bytes > 3145728 bytes). Aborting.", "too_large"),
         ("ERROR: [soundcloud] 1452743425: This video is DRM protected", "drm"),
+        (
+            "ERROR: [youtube] 1E3usks-vRs: Video unavailable. This content isn't available, try again later. Your account has been rate-limited by YouTube for up to an hour.",
+            "login",
+        ),
         ("ERROR: something else entirely", "failed"),
         ("WARNING: [youtube] Some formats are unavailable", "failed"),  # warnings don't count
     ],

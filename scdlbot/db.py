@@ -63,6 +63,8 @@ MIGRATIONS = (
         PRIMARY KEY (day, site, kind, status, chat_type)
     ) WITHOUT ROWID;
     """,
+    # Telegram app language of the user (language part of the IETF tag: "en", "ru", "pt"), for stats:
+    "ALTER TABLE user_days ADD COLUMN lang TEXT;",
 )
 
 ACTIVE = ("queued", "running")
@@ -74,6 +76,15 @@ def now() -> int:
 
 def today(days_ago: int = 0) -> str:
     return (datetime.now(UTC) - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
+
+def language(code: str | None) -> str | None:
+    """Telegram gives the user's app language as an IETF tag ("en", "pt-br", "zh-hans"): keep the language part.
+
+    That's the closest thing to a country Telegram tells bots.
+    """
+    lang = (code or "").split("-")[0].lower()
+    return lang if lang.isalpha() and 2 <= len(lang) <= 3 else None
 
 
 @dataclass
@@ -166,8 +177,11 @@ class DB:
     async def chat_left(self, chat_id: int) -> None:
         await self._run("UPDATE chats SET left_at = ? WHERE chat_id = ?", (now(), chat_id))
 
-    async def touch_user(self, user_id: int) -> None:
-        await self._run("INSERT OR IGNORE INTO user_days (day, user_id) VALUES (?, ?)", (today(), user_id))
+    async def touch_user(self, user_id: int, language_code: str | None = None) -> None:
+        await self._run(
+            "INSERT INTO user_days (day, user_id, lang) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET lang = excluded.lang WHERE lang IS NULL AND excluded.lang IS NOT NULL",
+            (today(), user_id, language(language_code)),
+        )
 
     # Jobs
 
@@ -238,6 +252,11 @@ class DB:
             rows = await self._all("SELECT count(DISTINCT user_id) FROM user_days WHERE day > ?", (today(days),))
             result[period] = rows[0][0]
         return result
+
+    async def languages(self, days: int = 30) -> list[tuple[str, int]]:
+        """Distinct users by app language over the last days, most common first ("" if Telegram didn't say)."""
+        rows = await self._all("SELECT coalesce(lang, ''), count(DISTINCT user_id) FROM user_days WHERE day > ? GROUP BY 1 ORDER BY 2 DESC, 1", (today(days),))
+        return [(r[0], r[1]) for r in rows]
 
     async def jobs_by_status(self, since_day: str) -> dict[str, int]:
         rows = await self._all("SELECT status, sum(jobs) FROM daily WHERE day >= ? GROUP BY status ORDER BY 2 DESC", (since_day,))

@@ -105,8 +105,10 @@ docker run -d --name scdlbot --restart unless-stopped --env-file .env -v scdlbot
 
 - Prometheus metrics at `http://METRICS_HOST:METRICS_PORT/metrics`: `scdlbot_jobs_total{site,kind,status}`,
   `scdlbot_job_duration_seconds`, `scdlbot_queue_size`, `scdlbot_workers_busy`, `scdlbot_download_errors_total{code}`,
-  `scdlbot_rejected_total{reason}`, `scdlbot_active_users{period}` and more, plus process CPU/memory.
-- `/stats` in Telegram (owner only): active users, jobs by status, top sites.
+  `scdlbot_rejected_total{reason}`, `scdlbot_active_users{period}`, `scdlbot_active_users_by_language{lang}` and more,
+  plus CPU/memory of the bot's main process.
+- `/stats` in Telegram (owner only): active users, jobs by status, top sites, app languages.
+  Telegram doesn't tell bots users' countries; the language of their Telegram app is the closest thing.
 - Errors (unexpected exceptions only) go to `TG_BOT_OWNER_CHAT_ID`, at most one message per minute, and to `SENTRY_DSN` if set.
 - Logs go to stdout (`journalctl -u scdlbot`). Use `LOGLEVEL=DEBUG` to see yt-dlp output.
 - Or just ask SQLite:

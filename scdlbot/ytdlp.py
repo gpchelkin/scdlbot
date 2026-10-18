@@ -35,7 +35,8 @@ ERRORS = (
     ("drm", ("drm protected",)),
     ("live", ("live event", "is live", "premieres in", "is_live", "live stream")),
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
-    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "age-restricted", "inappropriate for some users")),
+    # Includes YouTube bans and rate limits ("...rate-limited by YouTube for up to an hour"), which also say "unavailable":
+    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "age-restricted", "inappropriate for some users", "rate-limited")),
     ("unavailable", ("unavailable", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available")),
     ("unsupported", ("unsupported url",)),
 )
@@ -126,7 +127,8 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
     log.info("Running: %s", shlex.join(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        start_new_session=True, limit=1 << 20, env=os.environ | {"PYTHONUNBUFFERED": "1"},
+        # TMPDIR: temp files (e.g. yt-dlp's copy of the Firefox cookie DB) go to the job dir, deleted even if yt-dlp is killed
+        start_new_session=True, limit=1 << 20, env=os.environ | {"PYTHONUNBUFFERED": "1", "TMPDIR": str(job_dir)},
     )  # fmt: skip
     oom_first(process)
     tail: deque[str] = deque(maxlen=50)
