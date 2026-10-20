@@ -27,7 +27,9 @@ class Item:
     width: int | None = None
     height: int | None = None
     vcodec: str | None = None
-    uploader: str | None = None
+    author_name: str | None = None  # for videos and photos from social networks
+    author_handle: str | None = None
+    author_url: str | None = None
     description: str | None = None
     playlist_index: int | None = None
     playlist_count: int | None = None

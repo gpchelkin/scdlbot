@@ -7,7 +7,8 @@
 
 Telegram bot that downloads audio of tracks, sets, albums, videos and playlists from SoundCloud, Bandcamp, YouTube
 and [anything yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), with tags and artwork.
-Videos from TikTok, Instagram and X are sent as videos.
+Videos from TikTok, Instagram and X are sent as videos, Instagram photos and carousels as photos and albums,
+with the author (`Author: Name (@handle)`, linked to the profile) and the post's text in the caption.
 
 Send `/help` to [@scdlbot](https://t.me/scdlbot) to see how to use it, or read [the help text](scdlbot/texts/help.html).
 Please report bugs and ideas in [issues](https://github.com/gpchelkin/scdlbot/issues).

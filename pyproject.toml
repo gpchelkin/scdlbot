@@ -20,6 +20,7 @@ dependencies = [
   "python-telegram-bot[webhooks,http2,rate-limiter] (>=22.8,<23)",
   "yt-dlp[default,curl-cffi] (>=2026.7.4)",
   "yt-dlp-ejs (>=0.8.0)",
+  "curl-cffi (>=0.16.1,<0.17)",  # for yt-dlp impersonation (Instagram); 0.15 segfaults on Python 3.15
   "aiosqlite (>=0.21)",
   "prometheus-client (>=0.25)",
   "sentry-sdk (>=2.0)",

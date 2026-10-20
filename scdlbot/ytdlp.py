@@ -7,6 +7,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 import shlex
 import shutil
 import sys
@@ -17,7 +18,7 @@ from pathlib import Path
 import httpx
 
 from scdlbot.config import Config
-from scdlbot.links import VIDEO
+from scdlbot.links import PHOTO, VIDEO, site_by_name
 from scdlbot.media import Item, kill, oom_first
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,10 @@ AUDIO_ARGS = ["-f", "ba[ext=m4a]/ba[ext=mp3]/ba/b", "-x", "--audio-format", "m4a
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
 # Info printed as one JSON line per finished file:
-FIELDS = "filepath,title,track,artist,uploader,channel,duration,width,height,vcodec,description,playlist_index,playlist_count"
+FIELDS = "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count"
+# Posts with photos (Instagram): yt-dlp skips entries without video, but with these options it still saves
+# their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found"):
+PHOTO_ARGS = ["--ignore-no-formats-error", "--write-thumbnail", "--convert-thumbnails", "jpg", "-O", f"before_dl:%(.{{format_id,__files_to_move,{FIELDS}}})j"]
 
 # Error codes by yt-dlp output patterns (lowercase), first match wins. Each code has a text in texts/error_<code>.html.
 ERRORS = (
@@ -37,7 +41,10 @@ ERRORS = (
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
     # Includes YouTube bans and rate limits ("...rate-limited by YouTube for up to an hour"), which also say "unavailable":
     ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "age-restricted", "inappropriate for some users", "rate-limited")),
-    ("unavailable", ("unavailable", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available")),
+    (
+        "unavailable",
+        ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available"),
+    ),
     ("unsupported", ("unsupported url",)),
 )
 
@@ -100,30 +107,46 @@ class Cookies:
         return ["--cookies", str(job_dir / "cookies.txt")]
 
 
-def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str]) -> list[str]:
+def network_args(cfg: Config) -> list[str]:
+    """A proxy and a source address, picked at random for every download."""
+    args = []
+    if cfg.proxies and (proxy := random.choice(cfg.proxies)):
+        args += ["--proxy", proxy]
+    if cfg.source_ips:
+        args += ["--source-address", random.choice(cfg.source_ips)]
+    return args
+
+
+def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False) -> list[str]:
     return [
         sys.executable, "-m", "yt_dlp", "--ignore-config", url,
         "-P", str(job_dir), "-o", "%(playlist_index|)03d%(playlist_index&_|)s%(title).80B [%(id)s].%(ext)s",
         "-O", f"after_move:%(.{{{FIELDS}}})j", "--no-quiet", "--no-progress", "--no-playlist",
         "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size),
         "--ppa", f"ffmpeg:-threads {cfg.ffmpeg_threads}",
-        *(VIDEO_ARGS if kind == VIDEO else AUDIO_ARGS), *extra, *cfg.ytdlp_args,
+        *(VIDEO_ARGS if kind == VIDEO else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *extra, *cfg.ytdlp_args,
     ]  # fmt: skip
 
 
-async def _collect(stream: asyncio.StreamReader, tail: deque[str]) -> None:
+def _remember(text: str, tail: deque[str], errors: list[str]) -> None:
+    tail.append(text)
+    if text.startswith("ERROR") and len(errors) < 100:
+        errors.append(text)
+    log.debug("yt-dlp: %s", text)
+
+
+async def _collect(stream: asyncio.StreamReader, tail: deque[str], errors: list[str]) -> None:
     async for line in stream:
-        text = line.decode(errors="replace").rstrip()
-        tail.append(text)
-        log.debug("yt-dlp: %s", text)
+        _remember(line.decode(errors="replace").rstrip(), tail, errors)
 
 
-async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = ()) -> AsyncIterator[dict]:
+async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = (), photos: bool = False) -> AsyncIterator[dict]:
     """Yield yt-dlp info (with "filepath") for every finished file; raise DownloadError if nothing or not everything was downloaded.
 
+    With photos=True, photos are yielded too, with "_photo": True.
     Use with contextlib.aclosing(), so the process is killed as soon as the caller stops iterating.
     """
-    command = build_command(url, kind, job_dir, cfg, list(extra))
+    command = build_command(url, kind, job_dir, cfg, list(extra), photos)
     log.info("Running: %s", shlex.join(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
@@ -132,8 +155,9 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
     )  # fmt: skip
     oom_first(process)
     tail: deque[str] = deque(maxlen=50)
-    stderr = asyncio.create_task(_collect(process.stderr, tail))
-    count = 0
+    errors: list[str] = []
+    stderr = asyncio.create_task(_collect(process.stderr, tail, errors))
+    count = photo_count = 0
     try:
         while True:
             try:
@@ -145,38 +169,52 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
                 break
             text = line.decode(errors="replace").rstrip()
             if text.startswith("{"):
+                info = json.loads(text)
+                if "filepath" not in info:  # printed before a download (PHOTO_ARGS): only entries without video matter
+                    if info.get("format_id") or not info.get("__files_to_move"):
+                        continue
+                    info["filepath"] = next(iter(info.pop("__files_to_move").values()))
+                    info["_photo"] = True
+                    photo_count += 1
                 count += 1
-                yield json.loads(text)
+                yield info
             else:
-                tail.append(text)
-                log.debug("yt-dlp: %s", text)
+                _remember(text, tail, errors)
         await stderr
         code = await process.wait()
     finally:
         kill(process)
         stderr.cancel()
-    if code or not count:
-        errors = [line for line in tail if line.startswith("ERROR")]
-        raise DownloadError(classify_error(list(tail)), "; ".join(errors)[-500:])
+    if photo_count:  # every saved photo also counts as a failed entry for yt-dlp
+        errors = [line for line in errors if "No video formats found" not in line]
+    if (errors if photo_count else code) or not count:
+        raise DownloadError(classify_error(errors or list(tail)), "; ".join(errors)[-500:])
 
 
-def to_item(info: dict, kind: str) -> Item:
+def to_item(info: dict, kind: str, site: str | None = None) -> Item:
     title = info.get("track") or info.get("title")
     performer = info.get("artist")
     if not performer and title and " - " in title:  # "Artist - Title", common on SoundCloud and YouTube
         performer, title = title.split(" - ", 1)
     uploader = info.get("uploader") or info.get("channel")
     duration = info.get("duration")
+    author_name, author_handle, author_url = uploader, None, None
+    if (known := site_by_name(site or "")) and known.author:
+        author_name = info.get(known.author.name)
+        author_handle = str(info.get(known.author.handle) or "").lstrip("@") or None
+        author_url = known.author.url.format(author_handle) if author_handle else None
     return Item(
         path=Path(info["filepath"]),
-        kind=kind,
+        kind=PHOTO if info.get("_photo") else kind,
         title=title,
         performer=performer or uploader,
         duration=round(duration) if duration else None,
         width=info.get("width"),
         height=info.get("height"),
         vcodec=info.get("vcodec"),
-        uploader=uploader,
+        author_name=author_name,
+        author_handle=author_handle,
+        author_url=author_url,
         description=info.get("description"),
         playlist_index=info.get("playlist_index"),
         playlist_count=info.get("playlist_count"),

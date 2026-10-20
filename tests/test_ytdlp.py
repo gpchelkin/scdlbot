@@ -44,3 +44,55 @@ def test_to_item_splits_artist_from_title():
     assert (item.performer, item.title, item.duration) == ("JK FLESH", "Static Demon", 311)
     item = to_item({"filepath": "/a.mp3", "track": "Nuff Respect", "artist": "Shitmat", "playlist_index": 1, "playlist_count": 3}, "audio")
     assert (item.performer, item.title, item.playlist_index) == ("Shitmat", "Nuff Respect", 1)
+
+
+# Real yt-dlp output (shortened) for an Instagram carousel: photo, video, photo; photos also fail as "No video formats".
+CAROUSEL_OUTPUT = r"""
+import json, sys
+d = sys.argv[1]
+def out(**kw): print(json.dumps(kw), flush=True)
+print("WARNING: No video formats found!", file=sys.stderr)
+out(__files_to_move={f"{d}/001.jpg": f"{d}/001.jpg"}, playlist_index=1, playlist_count=3, channel="gpchelkin", uploader="George Pchelkin")
+print("ERROR: [Instagram] B5P4Ammnc0d: No video formats found!", file=sys.stderr)
+out(format_id="dash-1v+dash-2a", __files_to_move={f"{d}/002.jpg": f"{d}/002.jpg"}, playlist_index=2, playlist_count=3, channel="gpchelkin")
+out(filepath=f"{d}/002.mp4", playlist_index=2, playlist_count=3, vcodec="avc1.4d401f", width=720, height=720, channel="gpchelkin", uploader="George Pchelkin")
+out(__files_to_move={f"{d}/003.jpg": f"{d}/003.jpg"}, playlist_index=3, playlist_count=3, channel="gpchelkin", uploader="George Pchelkin")
+print("ERROR: [Instagram] B5P4AmqHj0c: No video formats found!", file=sys.stderr)
+sys.exit(int(sys.argv[2]))
+"""
+
+
+async def run_fake_ytdlp(monkeypatch, tmp_path, exit_code=1, extra_error=None):
+    import sys
+
+    from scdlbot import ytdlp
+
+    script = CAROUSEL_OUTPUT + (f'print("{extra_error}", file=sys.stderr)\n' if extra_error else "")
+    script = script.replace("sys.exit(int(sys.argv[2]))\n", "") + "sys.exit(int(sys.argv[2]))\n"
+    monkeypatch.setattr(ytdlp, "build_command", lambda *a, **k: [sys.executable, "-c", script, str(tmp_path), str(exit_code)])
+    return [info async for info in ytdlp.download("https://www.instagram.com/p/x/", "video", tmp_path, Config(), photos=True)]
+
+
+async def test_download_yields_photos_and_videos_in_order(monkeypatch, tmp_path):
+    infos = await run_fake_ytdlp(monkeypatch, tmp_path)  # exit code 1 only because of the photos: not an error
+    assert [(Path(i["filepath"]).name, bool(i.get("_photo"))) for i in infos] == [("001.jpg", True), ("002.mp4", False), ("003.jpg", True)]
+    items = [to_item(info, "video", "Instagram") for info in infos]
+    assert [i.kind for i in items] == ["photo", "video", "photo"]
+    assert (items[0].author_name, items[0].author_handle, items[0].author_url) == ("George Pchelkin", "gpchelkin", "https://www.instagram.com/gpchelkin/")
+
+
+async def test_download_still_reports_real_errors_next_to_photos(monkeypatch, tmp_path):
+    from scdlbot.ytdlp import DownloadError
+
+    with pytest.raises(DownloadError) as error:
+        await run_fake_ytdlp(monkeypatch, tmp_path, extra_error="ERROR: [Instagram] zzz: This content isn't available to everyone")
+    assert error.value.code == "unavailable"
+
+
+def test_to_item_authors_per_site():
+    x = to_item({"filepath": "/a.mp4", "uploader": "NASA", "uploader_id": "NASA"}, "video", "X")
+    assert (x.author_name, x.author_handle, x.author_url) == ("NASA", "NASA", "https://x.com/NASA")
+    tiktok = to_item({"filepath": "/a.mp4", "uploader": "leenabhushan", "channel": "Leena"}, "video", "TikTok")
+    assert (tiktok.author_name, tiktok.author_handle, tiktok.author_url) == ("Leena", "leenabhushan", "https://www.tiktok.com/@leenabhushan")
+    other = to_item({"filepath": "/a.mp4", "uploader": "Someone"}, "video", "vimeo.com")
+    assert (other.author_name, other.author_handle, other.author_url) == ("Someone", None, None)

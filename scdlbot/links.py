@@ -12,7 +12,16 @@ from scdlbot.config import Config
 
 log = logging.getLogger(__name__)
 
-AUDIO, VIDEO = "audio", "video"
+AUDIO, VIDEO, PHOTO = "audio", "video", "photo"
+
+
+@dataclass(frozen=True)
+class Author:
+    """Which yt-dlp fields hold the author of a post on a site, for "Author: Name (@handle)" in captions."""
+
+    name: str  # field with the display name
+    handle: str  # field with the @handle
+    url: str  # profile URL, {} is replaced by the handle
 
 
 @dataclass(frozen=True)
@@ -23,6 +32,8 @@ class Site:
     path_ok: Callable[[list[str]], bool] = lambda parts: True
     shortener: bool = False  # resolve redirects before downloading, then classify again
     pool: str = "main"  # worker pool, see jobs.JobQueue
+    author: Author | None = None
+    photos: bool = False  # posts may have photos too (yt-dlp only downloads videos by default)
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -32,6 +43,11 @@ def _sc_path(parts: list[str]) -> bool:
 
 def _yt_path(parts: list[str]) -> bool:
     return bool(parts) and parts[0] in ("watch", "playlist", "shorts")
+
+
+def _ig_path(parts: list[str]) -> bool:
+    # Posts, reels and stories, but not pages of a reel's audio track:
+    return len(parts) >= 2 and parts[:2] != ["reels", "audio"]
 
 
 # Known sites. The first matching row wins, so keep shorteners above their main domain.
@@ -44,9 +60,9 @@ SITES = (
     Site("YouTube", ("youtu.be",), pool="youtube"),
     Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube"),
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
-    Site("TikTok", ("tiktok.com",), kind=VIDEO),
-    Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=lambda p: len(p) >= 2),
-    Site("X", ("x.com", "twitter.com"), kind=VIDEO, path_ok=lambda p: len(p) == 3),
+    Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}")),
+    Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=_ig_path, author=Author("uploader", "channel", "https://www.instagram.com/{}/"), photos=True),
+    Site("X", ("x.com", "twitter.com"), kind=VIDEO, path_ok=lambda p: len(p) == 3, author=Author("uploader", "uploader_id", "https://x.com/{}")),
     Site("X", ("t.co",), shortener=True),
 )
 
@@ -54,6 +70,11 @@ TELEGRAM_DOMAINS = frozenset(
     ["telegram.org", "telegram.me", "t.me", "telegram.dog", "telegra.ph", "te.legra.ph", "graph.org", "tdesktop.com", "telesco.pe", "contest.com", "contest.dev"]
 )
 IGNORED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".bmp", ".pdf", ".txt", ".html")
+
+
+def site_by_name(name: str) -> Site | None:
+    """The main row of a known site (not its shortener), None for unknown sites."""
+    return next((site for site in SITES if site.name == name and not site.shortener), None)
 
 
 @dataclass(frozen=True)

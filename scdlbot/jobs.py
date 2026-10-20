@@ -5,7 +5,6 @@ Pipeline: yt-dlp downloads -> ffmpeg fixes (h264, split) -> Telegram upload, fil
 
 import asyncio
 import logging
-import random
 import shutil
 import time
 from collections import Counter
@@ -18,10 +17,10 @@ from telegram.error import Forbidden, TelegramError
 from scdlbot import observe, texts
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
-from scdlbot.links import SITES, VIDEO
+from scdlbot.links import SITES, VIDEO, site_by_name
 from scdlbot.media import ensure_h264, split
 from scdlbot.sender import Sender
-from scdlbot.ytdlp import Cookies, DownloadError, download, to_item
+from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
 
 log = logging.getLogger(__name__)
 
@@ -171,19 +170,15 @@ class JobQueue:
 
     async def _download(self, job: Job, job_dir, sender: Sender) -> int | None:
         """Download and send files one by one. Returns the playlist size, if it was a playlist."""
-        extra = self.cookies.args(job_dir)
-        proxy = random.choice(self.cfg.proxies) if self.cfg.proxies else None
-        if proxy:
-            extra += ["--proxy", proxy]
-        if self.cfg.source_ips:
-            extra += ["--source-address", random.choice(self.cfg.source_ips)]
+        extra = self.cookies.args(job_dir) + network_args(self.cfg)
+        photos = bool((site := site_by_name(job.site)) and site.photos)
         total = None
-        async with aclosing(download(job.url, job.kind, job_dir, self.cfg, extra)) as infos:
+        async with aclosing(download(job.url, job.kind, job_dir, self.cfg, extra, photos)) as infos:
             async for info in infos:
                 self.last_progress = time.monotonic()
-                item = to_item(info, job.kind)
+                item = to_item(info, job.kind, job.site)
                 total = item.playlist_count
-                if job.kind == VIDEO:
+                if item.kind == VIDEO:
                     item = await ensure_h264(item, self.cfg)
                 parts = await split(item, self.cfg)
                 if not parts:

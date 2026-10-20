@@ -11,9 +11,9 @@ from pathlib import Path
 import httpx
 
 from scdlbot.config import Config
-from scdlbot.links import AUDIO, VIDEO, classify
+from scdlbot.links import AUDIO, VIDEO, classify, site_by_name
 from scdlbot.media import ensure_h264, split
-from scdlbot.ytdlp import Cookies, DownloadError, download, to_item
+from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
 
 
 async def fetch(url: str, kind: str | None, cfg: Config) -> None:
@@ -24,11 +24,13 @@ async def fetch(url: str, kind: str | None, cfg: Config) -> None:
     cookies = Cookies(cfg)
     async with httpx.AsyncClient() as client:
         await cookies.refresh(client)
+    site = link.site if link else None
+    photos = bool((known := site_by_name(site or "")) and known.photos)
     try:
-        async with aclosing(download(url, kind, out, cfg, cookies.args(out))) as infos:
+        async with aclosing(download(url, kind, out, cfg, cookies.args(out) + network_args(cfg), photos)) as infos:
             async for info in infos:
-                item = to_item(info, kind)
-                if kind == VIDEO:
+                item = to_item(info, kind, site)
+                if item.kind == VIDEO:
                     item = await ensure_h264(item, cfg)
                 for part in await split(item, cfg):
                     print(json.dumps(asdict(part) | {"path": str(part.path), "size": part.size}, ensure_ascii=False))
