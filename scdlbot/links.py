@@ -37,8 +37,9 @@ class Site:
 
 
 def _sc_path(parts: list[str]) -> bool:
-    # Tracks, sets, private links and user pages, but not "/you/..." or likes:
-    return 2 <= len(parts) <= 5 and not {"you", "likes", "discover", "search", "stream"} & set(parts)
+    # Tracks, sets, private links and user pages (tracks, reposts, likes: capped by MAX_PLAYLIST_ITEMS like any playlist),
+    # but not "/you/..." (the logged-in user's own pages) or site sections:
+    return 2 <= len(parts) <= 5 and not {"you", "discover", "search", "stream"} & set(parts)
 
 
 def _yt_path(parts: list[str]) -> bool:
@@ -112,9 +113,8 @@ def classify(url: str, cfg: Config, unknown_sites: bool) -> Link | None:
     path_parts = [p for p in parts.path.split("/") if p]
     for site in SITES:
         if any(_host_matches(host, d) for d in site.domains):
-            if site.path_ok(path_parts):
-                return Link(url, site.name, site.kind, site.shortener)
-            break
+            # A known site's rules apply even when unknown sites are allowed:
+            return Link(url, site.name, site.kind, site.shortener) if site.path_ok(path_parts) else None
     if unknown_sites:
         return Link(url, host, AUDIO)
     return None

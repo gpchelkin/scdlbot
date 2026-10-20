@@ -10,6 +10,7 @@ import signal
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from scdlbot import observe
 from scdlbot.config import Config
 
 log = logging.getLogger(__name__)
@@ -80,12 +81,15 @@ async def ensure_h264(item: Item, cfg: Config) -> Item:
     video = next((s for s in info.get("streams", []) if s.get("codec_type") == "video"), None)
     if not video or video.get("codec_name") == "h264":
         return item
+    codec = str(video.get("codec_name"))
+    log.info("Re-encoding %s (%s %sx%s) to h264", item.path.name, codec, video.get("width"), video.get("height"))
     output = item.path.with_name(item.path.stem + ".h264.mp4")
     code, _ = await run(
         "ffmpeg", "-v", "error", "-y", "-i", str(item.path),
         "-c:v", "libx264", "-crf", "24", "-preset", "veryfast", "-c:a", "copy", "-movflags", "+faststart", "-threads", str(cfg.ffmpeg_threads),
         str(output), timeout=cfg.dl_timeout,
     )  # fmt: skip
+    observe.REENCODES.labels(codec, "failed" if code else "ok").inc()
     if code:
         return item  # send it as is, better than nothing
     item.path.unlink(missing_ok=True)

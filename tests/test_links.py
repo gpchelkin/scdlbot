@@ -14,6 +14,7 @@ CFG = Config()
     [
         ("https://soundcloud.com/falling-ethics/jk-flesh-static-demon", "SoundCloud", AUDIO),
         ("m.soundcloud.com/artist/sets/album", "SoundCloud", AUDIO),
+        ("https://soundcloud.com/artist/likes", "SoundCloud", AUDIO),
         ("https://soundcloud.com/artist/sets/album/s-PrIvAtE", "SoundCloud", AUDIO),
         ("https://on.soundcloud.com/AbCdE", "SoundCloud", AUDIO),
         ("https://shitmat.bandcamp.com/track/amen-babylon-2016-mix", "Bandcamp", AUDIO),
@@ -48,6 +49,11 @@ def test_known_sites(url, site, kind):
 )
 def test_rejected(url):
     assert classify(url, CFG, unknown_sites=False) is None
+
+
+def test_known_site_rules_apply_with_unknown_sites_too():
+    for url in ("https://soundcloud.com/you/likes", "https://www.youtube.com/@channel", "https://x.com/user", "https://www.instagram.com/reels/audio/123/"):
+        assert classify(url, CFG, unknown_sites=True) is None, url
 
 
 def test_unknown_sites():
