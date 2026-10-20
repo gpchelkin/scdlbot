@@ -46,6 +46,11 @@ def _yt_path(parts: list[str]) -> bool:
     return bool(parts) and parts[0] in ("watch", "playlist", "shorts")
 
 
+def _x_path(parts: list[str]) -> bool:
+    # /user/status/123, also with /video/1 or /photo/1 after it (that's where t.co links lead):
+    return len(parts) >= 3 and parts[1] == "status"
+
+
 def _ig_path(parts: list[str]) -> bool:
     # Posts, reels and stories, but not pages of a reel's audio track:
     return len(parts) >= 2 and parts[:2] != ["reels", "audio"]
@@ -63,8 +68,8 @@ SITES = (
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
     Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}")),
     Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=_ig_path, author=Author("uploader", "channel", "https://www.instagram.com/{}/"), photos=True),
-    Site("X", ("x.com", "twitter.com"), kind=VIDEO, path_ok=lambda p: len(p) == 3, author=Author("uploader", "uploader_id", "https://x.com/{}")),
-    Site("X", ("t.co",), shortener=True),
+    Site("X", ("x.com", "twitter.com"), kind=VIDEO, path_ok=_x_path, author=Author("uploader", "uploader_id", "https://x.com/{}")),
+    Site("X", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
 )
 
 TELEGRAM_DOMAINS = frozenset(
@@ -136,10 +141,14 @@ def find_links(message: Message, cfg: Config, unknown_sites: bool) -> list[Link]
     return links
 
 
+# t.co answers browsers with a JavaScript page instead of a redirect, so don't look like one:
+RESOLVER_USER_AGENT = "scdlbot (+https://github.com/gpchelkin/scdlbot)"
+
+
 async def resolve(link: Link, cfg: Config, client: httpx.AsyncClient, unknown_sites: bool) -> Link | None:
     """Follow redirects of a short link (t.co, on.soundcloud.com) and classify where it leads."""
     try:
-        response = await client.head(link.url, follow_redirects=True, timeout=5)
+        response = await client.head(link.url, follow_redirects=True, timeout=5, headers={"User-Agent": RESOLVER_USER_AGENT})
     except httpx.HTTPError as exc:
         log.info("Could not resolve %s: %s", link.url, exc)
         return link  # yt-dlp may still manage it

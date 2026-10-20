@@ -4,7 +4,7 @@ import pytest
 from telegram import Chat, Message, MessageEntity
 
 from scdlbot.config import Config
-from scdlbot.links import AUDIO, VIDEO, classify, find_links
+from scdlbot.links import AUDIO, VIDEO, classify, find_links, resolve
 
 CFG = Config()
 
@@ -25,6 +25,9 @@ CFG = Config()
         ("https://www.instagram.com/reel/CtZbNhtrJv3/", "Instagram", VIDEO),
         ("https://x.com/user/status/123", "X", VIDEO),
         ("https://twitter.com/user/status/123", "X", VIDEO),
+        ("https://twitter.com/thecybergunny/status/1783930694407790959/video/1", "X", VIDEO),
+        ("https://x.com/i/status/123", "X", VIDEO),
+        ("https://t.co/NjDC0orve0", "X", VIDEO),
         ("https://music.yandex.com/album/1/track/2", "Yandex Music", AUDIO),
     ],
 )
@@ -101,3 +104,23 @@ def test_config_from_env(monkeypatch):
     assert cfg.no_flood_chat_ids == {-100123, -100456}
     assert cfg.max_convert_file_size == 350_000_000
     assert cfg.ytdlp_args == ("--js-runtimes", "node", "--impersonate", "chrome")
+
+
+async def test_resolve_t_co_like_a_non_browser():
+    import httpx
+
+    seen_agents = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen_agents.append(request.headers["user-agent"])
+        if request.url.host == "t.co":  # real t.co: browsers get a 200 JavaScript page, anything else a redirect
+            if "Firefox" in request.headers["user-agent"]:
+                return httpx.Response(200, html="<meta http-equiv=refresh>")
+            return httpx.Response(301, headers={"location": "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"})
+        return httpx.Response(200)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"User-Agent": "Mozilla/5.0 Firefox/140.0"}) as client:
+        link = await resolve(classify("https://t.co/NjDC0orve0", CFG, False), CFG, client, unknown_sites=False)
+    assert link is not None and (link.site, link.kind, link.shortener) == ("X", VIDEO, False)
+    assert link.url == "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"
+    assert "Firefox" not in seen_agents[0]
