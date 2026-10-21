@@ -48,6 +48,7 @@ class JobQueue:
         self.active: Counter[int] = Counter()  # queued + running jobs by owner
         self.last_progress = time.monotonic()
         self.workers: list[asyncio.Task] = []
+        self.last_errors: dict[str, str] = {}  # site: the latest download error, for owner alerts
 
     def size(self) -> int:
         return sum(queue.qsize() for queue in self.queues.values())
@@ -138,6 +139,7 @@ class JobQueue:
                     total = await self._download(job, job_dir, sender)
             except DownloadError as exc:
                 error = exc.code
+                self.last_errors[job.site] = str(exc)
                 log.info("Job %s: %s", job.id, exc)
             except TimeoutError:
                 error = "timeout"

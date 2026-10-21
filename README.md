@@ -111,6 +111,8 @@ docker run -d --name scdlbot --restart unless-stopped --env-file .env -v scdlbot
 - `/stats` in Telegram (owner only): active users, jobs by status, top sites, app languages.
   Telegram doesn't tell bots users' countries; the language of their Telegram app is the closest thing.
 - Errors (unexpected exceptions only) go to `TG_BOT_OWNER_CHAT_ID`, at most one message per minute, and to `SENTRY_DSN` if set.
+- When a site starts failing (e.g. YouTube logged out, SoundCloud blocked the IP), `TG_BOT_OWNER_CHAT_ID` gets a message,
+  and another one when it recovers (`ALERT_*` settings in `.env.sample`).
 - Logs go to stdout (`journalctl -u scdlbot`). Use `LOGLEVEL=DEBUG` to see yt-dlp output.
 - Or just ask SQLite:
 

@@ -117,10 +117,17 @@ async def test_resolve_t_co_like_a_non_browser():
             if "Firefox" in request.headers["user-agent"]:
                 return httpx.Response(200, html="<meta http-equiv=refresh>")
             return httpx.Response(301, headers={"location": "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"})
+        if request.url.host == "on.soundcloud.com":
+            return httpx.Response(302, headers={"location": "https://soundcloud.com/dynamq/squingylive"})
         return httpx.Response(200)
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"User-Agent": "Mozilla/5.0 Firefox/140.0"}) as client:
         link = await resolve(classify("https://t.co/NjDC0orve0", CFG, False), CFG, client, unknown_sites=False)
-    assert link is not None and (link.site, link.kind, link.shortener) == ("X", VIDEO, False)
-    assert link.url == "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"
-    assert "Firefox" not in seen_agents[0]
+        assert link is not None and (link.site, link.kind, link.shortener) == ("X", VIDEO, False)
+        assert link.url == "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"
+        assert seen_agents[0] == "curl/8.5.0"  # a generic tool, nothing that identifies the bot
+
+        seen_agents.clear()
+        link = await resolve(classify("https://on.soundcloud.com/7Fw1d", CFG, False), CFG, client, unknown_sites=False)
+        assert link is not None and link.url == "https://soundcloud.com/dynamq/squingylive"
+        assert seen_agents[0] == "Mozilla/5.0 Firefox/140.0"  # other short links keep the usual browser user agent

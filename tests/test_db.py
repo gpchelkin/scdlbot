@@ -82,3 +82,14 @@ def test_languages_gauge_keeps_top_and_other():
     observe.set_languages([("ru", 50), ("en", 30), ("", 5), ("pt", 3), ("es", 2)], top=3)
     values = {s.labels["lang"]: s.value for s in observe.USERS_BY_LANGUAGE.collect()[0].samples}
     assert values == {"ru": 50, "en": 30, "unknown": 5, "other": 5}
+
+
+async def test_recent_results():
+    db = await DB.open(":memory:")
+    for status, error in (("done", None), ("done", None), ("failed", "login"), ("queued", None)):
+        job = await db.add_job(make_job(status=status))
+        job.error = error
+        if status != "queued":
+            await db.finish_job(job)
+    assert sorted(await db.recent_results(0), key=str) == sorted([("YouTube", None, 2), ("YouTube", "login", 1)], key=str)
+    await db.close()

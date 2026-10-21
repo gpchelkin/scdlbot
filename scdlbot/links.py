@@ -141,14 +141,16 @@ def find_links(message: Message, cfg: Config, unknown_sites: bool) -> list[Link]
     return links
 
 
-# t.co answers browsers with a JavaScript page instead of a redirect, so don't look like one:
-RESOLVER_USER_AGENT = "scdlbot (+https://github.com/gpchelkin/scdlbot)"
+# t.co answers browsers with a JavaScript page instead of a redirect, but gives a plain command-line tool a real one.
+# Other short links redirect fine with the usual browser user agent of our HTTP client.
+RESOLVER_USER_AGENTS = {"t.co": "curl/8.5.0"}
 
 
 async def resolve(link: Link, cfg: Config, client: httpx.AsyncClient, unknown_sites: bool) -> Link | None:
     """Follow redirects of a short link (t.co, on.soundcloud.com) and classify where it leads."""
     try:
-        response = await client.head(link.url, follow_redirects=True, timeout=5, headers={"User-Agent": RESOLVER_USER_AGENT})
+        user_agent = RESOLVER_USER_AGENTS.get(urlsplit(link.url).hostname or "")
+        response = await client.head(link.url, follow_redirects=True, timeout=5, headers={"User-Agent": user_agent} if user_agent else None)
     except httpx.HTTPError as exc:
         log.info("Could not resolve %s: %s", link.url, exc)
         return link  # yt-dlp may still manage it

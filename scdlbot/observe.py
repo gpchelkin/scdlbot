@@ -6,6 +6,8 @@ import logging
 import os
 import socket
 import time
+from collections import Counter as Tally
+from collections import defaultdict
 
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
 from telegram import Bot
@@ -106,3 +108,39 @@ def init_sentry(dsn: str) -> None:
         # The default logging integration turns ERROR logs into Sentry events.
         sentry_sdk.init(dsn=dsn, send_default_pii=False)
         log.info("Sentry enabled")
+
+
+# Error codes that point at a problem with the site or with us (logged out, IP blocked, site changed),
+# rather than with the link (deleted, private, DRM, too large...):
+INFRA_ERRORS = frozenset({"login", "failed", "timeout", "send"})
+
+
+class SiteWatch:
+    """Notices when many downloads from one site fail at once, e.g. YouTube logged us out or SoundCloud blocked our IP."""
+
+    def __init__(self, min_jobs: int, ratio: float, window: int, repeat: int = 3600):
+        self.min_jobs, self.ratio, self.window, self.repeat = min_jobs, ratio, window, repeat
+        self.down: dict[str, float] = {}  # failing sites: when the owner was last told
+
+    def check(self, results: list[tuple[str, str | None, int]], now: float, last_errors: dict[str, str]) -> list[str]:
+        """Messages for the owner, given (site, error code, jobs) of the last window."""
+        by_site: dict[str, Tally] = defaultdict(Tally)
+        for site, error, count in results:
+            by_site[site][error] += count
+        messages = []
+        for site, codes in sorted(by_site.items()):
+            total = sum(codes.values())
+            failed = sum(count for code, count in codes.items() if code in INFRA_ERRORS)
+            summary = f"{failed} of {total} downloads ({failed / total:.0%}) failed in the last {self.window // 60} min"
+            if total >= self.min_jobs and failed / total >= self.ratio:
+                if now - self.down.get(site, float("-inf")) >= self.repeat:
+                    self.down[site] = now
+                    reasons = ", ".join(f"{code} {count}" for code, count in codes.most_common() if code in INFRA_ERRORS)
+                    text = f"⚠️ <b>{html.escape(site)}</b>: {summary}: {reasons}."
+                    if last_error := last_errors.get(site):
+                        text += f"\nLast error: <code>{html.escape(last_error[:400])}</code>"
+                    messages.append(text)
+            elif site in self.down and total >= 5 and failed / total < self.ratio / 2:
+                del self.down[site]
+                messages.append(f"✅ <b>{html.escape(site)}</b> is back to normal: {summary}.")
+        return messages

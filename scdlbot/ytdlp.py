@@ -39,8 +39,10 @@ ERRORS = (
     ("drm", ("drm protected",)),
     ("live", ("live event", "is live", "premieres in", "is_live", "live stream")),
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
+    # Age or audience limits (YouTube "confirm your age", Instagram "can't be seen by certain audiences"), before "login":
+    ("restricted", ("age-restricted", "inappropriate for some users", "confirm your age", "certain audiences", "isn't available to everyone")),
     # Includes YouTube bans and rate limits ("...rate-limited by YouTube for up to an hour"), which also say "unavailable":
-    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "age-restricted", "inappropriate for some users", "rate-limited")),
+    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "rate-limited")),
     (
         "unavailable",
         ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available"),

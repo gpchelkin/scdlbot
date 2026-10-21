@@ -17,6 +17,8 @@ from scdlbot.ytdlp import build_command, classify_error, to_item
         ("ERROR: [youtube] x: This live event will begin in 3 hours", "live"),
         ("[download] File is larger than max-filesize (4907257 bytes > 3145728 bytes). Aborting.", "too_large"),
         ("ERROR: [soundcloud] 1452743425: This video is DRM protected", "drm"),
+        ("ERROR: [Instagram] Dd6dW9HxKkh: This content isn't available to everyone: It can't be seen by certain audiences.", "restricted"),
+        ("ERROR: [youtube] x: Sign in to confirm your age. This video may be inappropriate for some users.", "restricted"),
         (
             "ERROR: [youtube] 1E3usks-vRs: Video unavailable. This content isn't available, try again later. Your account has been rate-limited by YouTube for up to an hour.",
             "login",
@@ -85,7 +87,7 @@ async def test_download_still_reports_real_errors_next_to_photos(monkeypatch, tm
     from scdlbot.ytdlp import DownloadError
 
     with pytest.raises(DownloadError) as error:
-        await run_fake_ytdlp(monkeypatch, tmp_path, extra_error="ERROR: [Instagram] zzz: This content isn't available to everyone")
+        await run_fake_ytdlp(monkeypatch, tmp_path, extra_error="ERROR: [Instagram] zzz: Video unavailable")
     assert error.value.code == "unavailable"
 
 

@@ -16,6 +16,11 @@ def _int(name: str, default: int) -> int:
     return int(value) if value else default  # int() accepts "45_000_000"
 
 
+def _float(name: str, default: float) -> float:
+    value = _str(name)
+    return float(value) if value else default
+
+
 def _bool(name: str, default: bool) -> bool:
     value = _str(name).lower()
     return value in ("1", "true", "yes", "on") if value else default
@@ -78,6 +83,11 @@ class Config:
     loglevel: str = "INFO"
     sentry_dsn: str = ""
     jobs_retention_days: int = 90
+    # Tell the owner when a site starts failing (logged out, IP blocked...): at least this many downloads
+    # in the window, and at least this share of them failed for reasons that aren't the link's fault:
+    alert_window: int = 1800
+    alert_min_jobs: int = 20
+    alert_failure_ratio: float = 0.2  # normal is under 5%; a SoundCloud 403 wave on 2026-10-19 reached 22%
 
     @classmethod
     def from_env(cls) -> Config:
@@ -131,6 +141,9 @@ class Config:
             loglevel=_str("LOGLEVEL", "INFO").upper(),
             sentry_dsn=_str("SENTRY_DSN"),
             jobs_retention_days=_int("JOBS_RETENTION_DAYS", 90),
+            alert_window=_int("ALERT_WINDOW", 1800),
+            alert_min_jobs=_int("ALERT_MIN_JOBS", 20),
+            alert_failure_ratio=_float("ALERT_FAILURE_RATIO", 0.2),
         )
 
     def chat_allowed(self, chat_id: int) -> bool:

@@ -262,6 +262,14 @@ class DB:
         rows = await self._all("SELECT status, sum(jobs) FROM daily WHERE day >= ? GROUP BY status ORDER BY 2 DESC", (since_day,))
         return {r[0]: r[1] for r in rows}
 
+    async def recent_results(self, since: int) -> list[tuple[str, str | None, int]]:
+        """(site, error code, jobs) for jobs created since then and already finished."""
+        rows = await self._all(
+            "SELECT site, error, count(*) FROM jobs WHERE status IN ('done', 'partial', 'failed', 'timeout') AND created_at > ? GROUP BY site, error",
+            (since,),
+        )
+        return [(r[0], r[1], r[2]) for r in rows]
+
     async def top_sites(self, since_day: str, limit: int = 10) -> list[tuple[str, int, int]]:
         rows = await self._all(
             "SELECT site, sum(jobs), sum(CASE WHEN status = 'done' THEN jobs ELSE 0 END) FROM daily WHERE day >= ? GROUP BY site ORDER BY 2 DESC LIMIT ?",

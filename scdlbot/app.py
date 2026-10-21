@@ -4,10 +4,12 @@ import asyncio
 import itertools
 import logging
 import shutil
+import time
 from urllib.parse import urljoin
 
 import httpx
 from telegram import MessageEntity, Update
+from telegram.constants import ParseMode
 from telegram.ext import (
     AIORateLimiter,
     Application,
@@ -98,7 +100,7 @@ async def post_init(app: Application) -> None:
     observe.start_metrics_server(cfg.metrics_host, cfg.metrics_port)
     await queue.resume()
     queue.start()
-    rt.tasks = [asyncio.create_task(coro) for coro in (watchdog(rt), housekeeping(rt), refresh_cookies(rt, cookies))]
+    rt.tasks = [asyncio.create_task(coro) for coro in (watchdog(rt), housekeeping(rt), refresh_cookies(rt, cookies), watch_sites(rt, app.bot))]
     observe.sd_notify("READY=1")
     log.info("@%s is running with %d+%d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.youtube_workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
 
@@ -143,6 +145,22 @@ async def housekeeping(rt: Runtime) -> None:
         except Exception:
             log.exception("Housekeeping failed")
         await asyncio.sleep(300)
+
+
+async def watch_sites(rt: Runtime, bot) -> None:
+    """Every 5 minutes: tell the owner when a site starts failing a lot, and when it recovers."""
+    if not rt.cfg.owner_id:
+        return
+    watch = observe.SiteWatch(rt.cfg.alert_min_jobs, rt.cfg.alert_failure_ratio, rt.cfg.alert_window)
+    while True:
+        await asyncio.sleep(300)
+        try:
+            results = await rt.db.recent_results(int(time.time()) - rt.cfg.alert_window)
+            for text in watch.check(results, time.monotonic(), rt.queue.last_errors):
+                log.warning("Site alert: %s", text)
+                await bot.send_message(rt.cfg.owner_id, text, parse_mode=ParseMode.HTML)
+        except Exception as exc:
+            log.warning("Site watch failed: %s", exc)  # not an error: that would alert the owner about the alerting
 
 
 async def refresh_cookies(rt: Runtime, cookies: Cookies) -> None:
