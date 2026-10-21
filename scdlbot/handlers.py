@@ -11,6 +11,7 @@ from telegram import (
     InlineKeyboardMarkup,
     LinkPreviewOptions,
     Message,
+    MessageEntity,
     ReplyParameters,
     Update,
     User,
@@ -60,7 +61,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     observe.UPDATES.labels("help").inc()
     if update.effective_user:
         await rt.db.touch_user(update.effective_user.id, update.effective_user.language_code)
-    text = texts.HELP.format(max_items=rt.cfg.max_playlist_items)
+    text = texts.HELP.format(max_items=rt.cfg.max_playlist_items, bot=context.bot.username)
     await context.bot.send_message(update.effective_chat.id, text, parse_mode=HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))
 
 
@@ -146,11 +147,28 @@ async def settings_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
 async def links_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await handle_links(update, context, command=False)
+    # "@bot <links>" is an explicit request, like /dl:
+    await handle_links(update, context, trigger="mention" if mentions_bot(update.effective_message, context.bot) else "msg")
 
 
 async def dl_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await handle_links(update, context, command=True)
+    await handle_links(update, context, trigger="cmd")
+
+
+async def mention_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """ "@bot" in reply to a message with links: e.g. the links were sent while the bot was down or not in the chat yet."""
+    if mentions_bot(update.effective_message, context.bot):
+        await handle_links(update, context, trigger="mention")
+
+
+def mentions_bot(message: Message, bot) -> bool:
+    username = f"@{bot.username}".lower()
+    types = [MessageEntity.MENTION, MessageEntity.TEXT_MENTION]
+    for entities in (message.parse_entities(types), message.parse_caption_entities(types)):
+        for entity, text in entities.items():
+            if text.lower() == username or (entity.user and entity.user.id == bot.id):
+                return True
+    return False
 
 
 def is_own_forward(message: Message, bot_id: int) -> bool:
@@ -158,11 +176,13 @@ def is_own_forward(message: Message, bot_id: int) -> bool:
     return origin is not None and getattr(getattr(origin, "sender_user", None), "id", None) == bot_id
 
 
-async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, command: bool) -> None:
+async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, trigger: str) -> None:
+    """trigger: "msg" (a message with links), "cmd" (/dl) or "mention" (@bot). The last two download right away, whatever the mode."""
     rt = runtime(context)
     message, chat, user = update.effective_message, update.effective_chat, update.effective_user
+    explicit = trigger != "msg"
     if not rt.cfg.chat_allowed(chat.id):
-        if command:
+        if explicit:
             await message.reply_text(texts.NOT_ALLOWED)
         return
     if is_own_forward(message, context.bot.id):
@@ -170,16 +190,16 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, comma
     settings = await chat_settings(rt, chat)
     source = message
     links = find_links(message, rt.cfg, settings.unknown_sites)
-    if command and not links and message.reply_to_message:  # "/dl" in reply to a message with links
+    if explicit and not links and message.reply_to_message:  # "/dl" or "@bot" in reply to a message with links
         source = message.reply_to_message
         links = find_links(source, rt.cfg, settings.unknown_sites)
     links = await resolve_short_links(rt, links, settings.unknown_sites)
-    mode = "dl" if command else settings.mode
-    observe.UPDATES.labels(f"{mode}_{'cmd' if command else 'msg'}").inc()
+    mode = "dl" if explicit else settings.mode
+    observe.UPDATES.labels(f"{mode}_{trigger}").inc()
     if user:
         await rt.db.touch_user(user.id, user.language_code)
     if not links:
-        if (command and (context.args or source is not message)) or (not command and chat.type == Chat.PRIVATE):
+        if (explicit and (context.args or source is not message)) or (not explicit and chat.type == Chat.PRIVATE):
             await context.bot.send_message(chat.id, texts.NO_URLS, parse_mode=HTML, reply_parameters=reply_to(message.message_id))
         return
     if mode == "ask":

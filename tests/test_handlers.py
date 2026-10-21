@@ -98,3 +98,29 @@ async def test_stats_for_owner_only(env):
     await handlers.stats_command(Update(3, message=message(Chat(7, Chat.PRIVATE), text="/stats", entities=[])), context)
     text = bot.calls[-1][1][1]
     assert "month 1" in text and "App languages 30 days</b>: ru 100%" in text
+
+
+async def test_mention_in_reply_downloads_now_even_in_ask_mode(env):
+    rt, bot, context = env
+    group = Chat(-100, Chat.SUPERGROUP)  # Ask mode by default
+    mention = message(group, text="@ScdlBot please", entities=[MessageEntity(MessageEntity.MENTION, 0, 8)], message_id=12, reply_to_message=message(group))
+    await handlers.mention_reply(Update(1, message=mention), context)
+    assert rt.queue.size() == 2  # both links of the replied message, no Ask prompt
+    assert rt.queue.queues["main"].get_nowait().message_id == 10  # files reply to the message with the links
+
+
+async def test_mention_with_links_skips_ask(env):
+    rt, bot, context = env
+    group = Chat(-100, Chat.SUPERGROUP)
+    text = "@scdlbot " + LINKS
+    entities = [MessageEntity(MessageEntity.MENTION, 0, 8), *(MessageEntity(e.type, e.offset + 9, e.length) for e in ENTITIES)]
+    await handlers.links_message(Update(1, message=message(group, text=text, entities=entities)), context)
+    assert rt.queue.size() == 2
+
+
+async def test_other_mentions_are_ignored(env):
+    rt, bot, context = env
+    group = Chat(-100, Chat.SUPERGROUP)
+    mention = message(group, text="@someone look", entities=[MessageEntity(MessageEntity.MENTION, 0, 8)], message_id=12, reply_to_message=message(group))
+    await handlers.mention_reply(Update(1, message=mention), context)
+    assert rt.queue.size() == 0 and bot.calls == []

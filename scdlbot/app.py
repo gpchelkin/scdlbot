@@ -33,6 +33,12 @@ ALLOWED_UPDATES = [Update.MESSAGE, Update.CHANNEL_POST, Update.CALLBACK_QUERY, U
 
 LINKS = filters.Entity(MessageEntity.URL) | filters.Entity(MessageEntity.TEXT_LINK)
 CAPTION_LINKS = filters.CaptionEntity(MessageEntity.URL) | filters.CaptionEntity(MessageEntity.TEXT_LINK)
+MENTIONS = (
+    filters.Entity(MessageEntity.MENTION)
+    | filters.Entity(MessageEntity.TEXT_MENTION)
+    | filters.CaptionEntity(MessageEntity.MENTION)
+    | filters.CaptionEntity(MessageEntity.TEXT_MENTION)
+)
 
 
 def build(cfg: Config) -> Application:
@@ -64,6 +70,7 @@ def build(cfg: Config) -> Application:
     app.add_handler(CommandHandler("dl", handlers.dl_command, filters=not_edited & ~filters.FORWARDED))
     app.add_handler(CommandHandler("stats", handlers.stats_command, filters=not_edited))
     app.add_handler(MessageHandler(not_edited & ~filters.COMMAND & ((filters.TEXT & LINKS) | (filters.CAPTION & CAPTION_LINKS)), handlers.links_message))
+    app.add_handler(MessageHandler(not_edited & ~filters.COMMAND & filters.REPLY & MENTIONS, handlers.mention_reply))  # "@bot" in reply to links
     app.add_handler(CallbackQueryHandler(handlers.settings_button, pattern=r"^settings:(dl|ask|captions|unknown_sites|close)$"))
     app.add_handler(CallbackQueryHandler(handlers.ask_button, pattern=r"^ask:(dl|no):-?\d+$"))
     app.add_handler(CallbackQueryHandler(handlers.old_button))
