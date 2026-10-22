@@ -73,7 +73,7 @@ def build(cfg: Config) -> Application:
     app.add_handler(CommandHandler("stats", handlers.stats_command, filters=not_edited))
     app.add_handler(MessageHandler(not_edited & ~filters.COMMAND & ((filters.TEXT & LINKS) | (filters.CAPTION & CAPTION_LINKS)), handlers.links_message))
     app.add_handler(MessageHandler(not_edited & ~filters.COMMAND & filters.REPLY & MENTIONS, handlers.mention_reply))  # "@bot" in reply to links
-    app.add_handler(CallbackQueryHandler(handlers.settings_button, pattern=r"^settings:(dl|ask|captions|unknown_sites|close)$"))
+    app.add_handler(CallbackQueryHandler(handlers.settings_button, pattern=r"^settings:(dl|ask|captions|unknown_sites|mp3|close)$"))
     app.add_handler(CallbackQueryHandler(handlers.ask_button, pattern=r"^ask:(dl|no):-?\d+$"))
     app.add_handler(CallbackQueryHandler(handlers.old_button))
     app.add_handler(ChatMemberHandler(handlers.my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
@@ -92,7 +92,7 @@ async def post_init(app: Application) -> None:
     http = httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"})
     cookies = Cookies(cfg)
     await cookies.refresh(http)
-    queue = JobQueue(cfg, db, app.bot, cookies)
+    queue = JobQueue(cfg, db, app.bot, cookies, http)
     rt = Runtime(cfg, db, queue, http)
     app.bot_data["runtime"] = rt
     if cfg.owner_id:

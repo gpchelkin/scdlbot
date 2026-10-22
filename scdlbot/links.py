@@ -46,7 +46,7 @@ def _yt_path(parts: list[str]) -> bool:
     return bool(parts) and parts[0] in ("watch", "playlist", "shorts")
 
 
-def _x_path(parts: list[str]) -> bool:
+def _twitter_path(parts: list[str]) -> bool:
     # /user/status/123, also with /video/1 or /photo/1 after it (that's where t.co links lead):
     return len(parts) >= 3 and parts[1] == "status"
 
@@ -68,8 +68,8 @@ SITES = (
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
     Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}")),
     Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=_ig_path, author=Author("uploader", "channel", "https://www.instagram.com/{}/"), photos=True),
-    Site("X", ("x.com", "twitter.com"), kind=VIDEO, path_ok=_x_path, author=Author("uploader", "uploader_id", "https://x.com/{}")),
-    Site("X", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
+    Site("Twitter", ("twitter.com", "x.com"), kind=VIDEO, path_ok=_twitter_path, author=Author("uploader", "uploader_id", "https://twitter.com/{}")),
+    Site("Twitter", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
 )
 
 TELEGRAM_DOMAINS = frozenset(

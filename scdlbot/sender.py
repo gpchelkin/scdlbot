@@ -4,7 +4,7 @@ import asyncio
 import html
 import logging
 
-from telegram import Bot, InputMediaAudio, InputMediaPhoto, InputMediaVideo, ReplyParameters
+from telegram import Bot, InputMediaAudio, InputMediaPhoto, InputMediaVideo, LinkPreviewOptions, ReplyParameters
 from telegram.constants import ParseMode
 from telegram.error import BadRequest, Forbidden, NetworkError, TelegramError
 
@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 ALBUM_SIZE = 10  # Telegram's limit for media groups
 DESCRIPTION_LIMIT = 700  # captions are limited to 1024 characters
+TEXT_LIMIT = 3500  # messages to 4096
 
 
 class Sender:
@@ -84,13 +85,35 @@ class Sender:
         # A local Bot API server reads the file from disk by its file:// URI, the cloud one needs it uploaded:
         return item.path if self.cfg.local_mode else item.path.read_bytes()
 
+    def _source(self) -> str:
+        return f'@{html.escape(self.bot.username)} <i>got it from</i> <a href="{html.escape(self.job.url)}">{html.escape(self.job.site)}</a>'
+
+    async def send_text(self, item: Item) -> None:
+        """A post without media, like a text-only tweet: its text is the content, so it goes out even without captions."""
+        lines = [self._source()] if self.job.captions else []
+        if author := author_line(item):
+            lines.append(author)
+        lines.append(f"<blockquote expandable>{html.escape((item.description or '').strip()[:TEXT_LIMIT])}</blockquote>")
+        try:
+            await self.bot.send_message(
+                self.job.chat_id, "\n".join(lines), parse_mode=ParseMode.HTML, reply_parameters=self.reply, link_preview_options=LinkPreviewOptions(is_disabled=True)
+            )
+        except Forbidden:
+            raise
+        except TelegramError as exc:
+            log.warning("Job %s: could not send text: %s", self.job.id, exc)
+            observe.TELEGRAM_ERRORS.labels(type(exc).__name__).inc()
+            self.failed += 1
+        else:
+            self.sent += 1
+            observe.ITEMS_SENT.labels("text").inc()
+
     def _caption(self, item: Item, first: bool = True) -> str | None:
         lines = []
         if item.part:
             lines.append(f"Part {item.part[0]} of {item.part[1]}")
         if first and self.job.captions and not self.sent:  # source info once per job
-            source = f'<a href="{html.escape(self.job.url)}">{html.escape(self.job.site)}</a>'
-            lines.append(f"@{html.escape(self.bot.username)} <i>got it from</i> {source}")
+            lines.append(self._source())
             if item.kind != AUDIO:  # audio has performer and title tags instead
                 if author := author_line(item):
                     lines.append(author)

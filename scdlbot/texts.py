@@ -37,6 +37,7 @@ ERRORS = {
     "too_large": "<b>Sorry</b>, this file is too large for me (more than {max_mb} MB).",
     "live": "<b>Sorry</b>, I do not download live streams.",
     "drm": "<b>Sorry</b>, this track is DRM-protected (e.g. SoundCloud Go+ only), so I can't download it.",
+    "no_media": "<b>Sorry</b>, there's no video in this post, and I couldn't get its photos or text right now. Please try again later.",
     "region": "<b>Sorry</b>, the uploader has not made this link available in my country.",
     "restricted": "<b>Sorry</b>, this is age-restricted or limited to certain audiences, so the website won't give it to me.",
     "login": "<b>Sorry</b>, the website wants me to log in or prove I'm not a bot to download this. Please try again later.",

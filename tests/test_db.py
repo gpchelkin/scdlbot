@@ -93,3 +93,14 @@ async def test_recent_results():
             await db.finish_job(job)
     assert sorted(await db.recent_results(0), key=str) == sorted([("YouTube", None, 2), ("YouTube", "login", 1)], key=str)
     await db.close()
+
+
+async def test_always_mp3_setting_goes_to_jobs():
+    db = await DB.open(":memory:")
+    assert (await db.touch_chat(1, "private", default_captions=True)).mp3 is False
+    await db.set_chat(1, mp3=True)
+    assert (await db.touch_chat(1, "private", default_captions=True)).mp3 is True
+    job = await db.add_job(make_job(mp3=True))
+    (row,) = await db._all("SELECT mp3 FROM jobs WHERE id = ?", (job.id,))
+    assert row[0] == 1
+    await db.close()

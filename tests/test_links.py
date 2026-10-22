@@ -23,11 +23,11 @@ CFG = Config()
         ("https://www.youtube.com/playlist?list=PL6D1DFED7726BF7AC", "YouTube", AUDIO),
         ("https://www.tiktok.com/@user/video/123", "TikTok", VIDEO),
         ("https://www.instagram.com/reel/CtZbNhtrJv3/", "Instagram", VIDEO),
-        ("https://x.com/user/status/123", "X", VIDEO),
-        ("https://twitter.com/user/status/123", "X", VIDEO),
-        ("https://twitter.com/thecybergunny/status/1783930694407790959/video/1", "X", VIDEO),
-        ("https://x.com/i/status/123", "X", VIDEO),
-        ("https://t.co/NjDC0orve0", "X", VIDEO),
+        ("https://x.com/user/status/123", "Twitter", VIDEO),
+        ("https://twitter.com/user/status/123", "Twitter", VIDEO),
+        ("https://twitter.com/thecybergunny/status/1783930694407790959/video/1", "Twitter", VIDEO),
+        ("https://x.com/i/status/123", "Twitter", VIDEO),
+        ("https://t.co/NjDC0orve0", "Twitter", VIDEO),
         ("https://music.yandex.com/album/1/track/2", "Yandex Music", AUDIO),
     ],
 )
@@ -123,7 +123,7 @@ async def test_resolve_t_co_like_a_non_browser():
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler), headers={"User-Agent": "Mozilla/5.0 Firefox/140.0"}) as client:
         link = await resolve(classify("https://t.co/NjDC0orve0", CFG, False), CFG, client, unknown_sites=False)
-        assert link is not None and (link.site, link.kind, link.shortener) == ("X", VIDEO, False)
+        assert link is not None and (link.site, link.kind, link.shortener) == ("Twitter", VIDEO, False)
         assert link.url == "https://twitter.com/thecybergunny/status/1783930694407790959/video/1"
         assert seen_agents[0] == "curl/8.5.0"  # a generic tool, nothing that identifies the bot
 

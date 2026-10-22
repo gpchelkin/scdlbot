@@ -92,9 +92,15 @@ async def test_download_still_reports_real_errors_next_to_photos(monkeypatch, tm
 
 
 def test_to_item_authors_per_site():
-    x = to_item({"filepath": "/a.mp4", "uploader": "NASA", "uploader_id": "NASA"}, "video", "X")
-    assert (x.author_name, x.author_handle, x.author_url) == ("NASA", "NASA", "https://x.com/NASA")
+    x = to_item({"filepath": "/a.mp4", "uploader": "NASA", "uploader_id": "NASA"}, "video", "Twitter")
+    assert (x.author_name, x.author_handle, x.author_url) == ("NASA", "NASA", "https://twitter.com/NASA")
     tiktok = to_item({"filepath": "/a.mp4", "uploader": "leenabhushan", "channel": "Leena"}, "video", "TikTok")
     assert (tiktok.author_name, tiktok.author_handle, tiktok.author_url) == ("Leena", "leenabhushan", "https://www.tiktok.com/@leenabhushan")
     other = to_item({"filepath": "/a.mp4", "uploader": "Someone"}, "video", "vimeo.com")
     assert (other.author_name, other.author_handle, other.author_url) == ("Someone", None, None)
+
+
+def test_build_command_always_mp3():
+    command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [], mp3=True)
+    assert command[command.index("--audio-format") + 1] == "mp3" and "320K" in command
+    assert build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [])[13:] != command[13:]

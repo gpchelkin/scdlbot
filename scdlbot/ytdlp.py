@@ -25,6 +25,8 @@ log = logging.getLogger(__name__)
 
 # Keep m4a (AAC) and mp3 as they are, convert anything else (opus, vorbis...) to mp3:
 AUDIO_ARGS = ["-f", "ba[ext=m4a]/ba[ext=mp3]/ba/b", "-x", "--audio-format", "m4a>m4a/mp3>mp3/mp3", "--audio-quality", "0", "--embed-metadata", "--embed-thumbnail"]
+# "Always MP3" setting: the best audio, converted to 320 kbps mp3 like the old bot did, for players that don't know m4a:
+MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "320K", "--embed-metadata", "--embed-thumbnail"]
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
 # Info printed as one JSON line per finished file:
@@ -37,6 +39,7 @@ PHOTO_ARGS = ["--ignore-no-formats-error", "--write-thumbnail", "--convert-thumb
 ERRORS = (
     ("too_large", ("larger than max-filesize",)),
     ("drm", ("drm protected",)),
+    ("no_media", ("no video could be found in this tweet", "is not a video")),  # if Twitter's embed endpoint couldn't give photos or text either
     ("live", ("live event", "is live", "premieres in", "is_live", "live stream")),
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
     # Age or audience limits (YouTube "confirm your age", Instagram "can't be seen by certain audiences"), before "login":
@@ -119,14 +122,14 @@ def network_args(cfg: Config) -> list[str]:
     return args
 
 
-def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False) -> list[str]:
+def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False, mp3: bool = False) -> list[str]:
     return [
         sys.executable, "-m", "yt_dlp", "--ignore-config", url,
         "-P", str(job_dir), "-o", "%(playlist_index|)03d%(playlist_index&_|)s%(title).80B [%(id)s].%(ext)s",
         "-O", f"after_move:%(.{{{FIELDS}}})j", "--no-quiet", "--no-progress", "--no-playlist",
         "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size),
         "--ppa", f"ffmpeg:-threads {cfg.ffmpeg_threads}",
-        *(VIDEO_ARGS if kind == VIDEO else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *extra, *cfg.ytdlp_args,
+        *(VIDEO_ARGS if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *extra, *cfg.ytdlp_args,
     ]  # fmt: skip
 
 
@@ -142,13 +145,13 @@ async def _collect(stream: asyncio.StreamReader, tail: deque[str], errors: list[
         _remember(line.decode(errors="replace").rstrip(), tail, errors)
 
 
-async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = (), photos: bool = False) -> AsyncIterator[dict]:
+async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = (), photos: bool = False, mp3: bool = False) -> AsyncIterator[dict]:
     """Yield yt-dlp info (with "filepath") for every finished file; raise DownloadError if nothing or not everything was downloaded.
 
     With photos=True, photos are yielded too, with "_photo": True.
     Use with contextlib.aclosing(), so the process is killed as soon as the caller stops iterating.
     """
-    command = build_command(url, kind, job_dir, cfg, list(extra), photos)
+    command = build_command(url, kind, job_dir, cfg, list(extra), photos, mp3)
     log.info("Running: %s", shlex.join(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,

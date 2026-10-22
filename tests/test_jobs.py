@@ -29,7 +29,7 @@ class FakeBot:
 
 
 def fake_download(count: int, error: str | None = None, delay: float = 0, playlist_count: int | None = None):
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
         for n in range(count):
             await asyncio.sleep(delay)
             path = job_dir / f"{n}.m4a"
@@ -118,7 +118,7 @@ async def test_youtube_has_its_own_pool(setup):
 def fake_instagram_post(kinds: str):
     """kinds like "pvp": photo, video, photo; one entry each, as yt-dlp.download yields them."""
 
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
         assert photos  # Instagram asks for photos
         for n, k in enumerate(kinds, start=1):
             path = job_dir / f"{n:03d}.{'jpg' if k == 'p' else 'mp4'}"
@@ -168,3 +168,26 @@ def test_author_line():
     assert line(author_handle="a_b") == "Author: <code>@a_b</code>"
     assert line(author_name="Tom & Jerry") == "Author: <b>Tom &amp; Jerry</b>"
     assert line() is None
+
+
+async def test_twitter_photos_and_text_via_embed_endpoint(tmp_path):
+    import httpx
+
+    from tests.test_twitter import PHOTO_TWEET, client_for
+
+    text_only = PHOTO_TWEET | {"text": "just words", "display_text_range": [0, 10], "mediaDetails": []}
+    cfg = Config(dl_dir=tmp_path / "dl")
+    db = await DB.open(":memory:")
+    bot = FakeBot()
+    async with client_for({"111": PHOTO_TWEET, "222": text_only}) as http:
+        queue = JobQueue(cfg, db, bot, Cookies(cfg), http)
+        for twid in ("111", "222"):
+            job = await db.add_job(Job(5, "private", 7, 10, f"https://x.com/u/status/{twid}", "Twitter", "video", True, "queued"))
+            await queue._run(job)
+            assert job.status == "done"
+    album, text = bot.calls[0], bot.calls[1]
+    assert album[0] == "send_media_group" and [type(m).__name__ for m in album[1][1]] == ["InputMediaPhoto", "InputMediaPhoto"]
+    assert "got it from</i> <a" in album[1][1][0].caption and ">Twitter</a>" in album[1][1][0].caption
+    assert text[0] == "send_message" and "just words" in text[1][1] and "@hairball1952" in text[1][1]
+    await db.close()
+    assert isinstance(http, httpx.AsyncClient)

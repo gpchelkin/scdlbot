@@ -65,6 +65,8 @@ MIGRATIONS = (
     """,
     # Telegram app language of the user (language part of the IETF tag: "en", "ru", "pt"), for stats:
     "ALTER TABLE user_days ADD COLUMN lang TEXT;",
+    # "Always MP3" chat setting, copied to each job when it's created:
+    "ALTER TABLE chats ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0; ALTER TABLE jobs ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0;",
 )
 
 ACTIVE = ("queued", "running")
@@ -99,6 +101,7 @@ class Job:
     captions: bool
     status: str
     wait_message_id: int | None = None
+    mp3: bool = False  # convert audio to mp3 even when the original is m4a
     id: int | None = None
     created_at: int = 0
     started_at: int | None = None
@@ -125,6 +128,7 @@ class ChatSettings:
     mode: str  # "dl" | "ask"
     captions: bool
     unknown_sites: bool
+    mp3: bool = False
 
 
 class DB:
@@ -159,17 +163,18 @@ class DB:
         (row,) = await self._all(
             "INSERT INTO chats (chat_id, type, first_seen, last_seen) VALUES (?, ?, ?, ?) "
             "ON CONFLICT (chat_id) DO UPDATE SET type = excluded.type, last_seen = excluded.last_seen, left_at = NULL "
-            "RETURNING mode, captions, unknown_sites",
+            "RETURNING mode, captions, unknown_sites, mp3",
             (chat_id, chat_type, now(), now()),
         )
         return ChatSettings(
             mode=row["mode"] or ("dl" if chat_type == "private" else "ask"),
             captions=default_captions if row["captions"] is None else bool(row["captions"]),
             unknown_sites=bool(row["unknown_sites"]),
+            mp3=bool(row["mp3"]),
         )
 
-    async def set_chat(self, chat_id: int, *, mode: str | None = None, captions: bool | None = None, unknown_sites: bool | None = None) -> None:
-        values = {"mode": mode, "captions": captions, "unknown_sites": unknown_sites}
+    async def set_chat(self, chat_id: int, *, mode: str | None = None, captions: bool | None = None, unknown_sites: bool | None = None, mp3: bool | None = None) -> None:
+        values = {"mode": mode, "captions": captions, "unknown_sites": unknown_sites, "mp3": mp3}
         for column, value in values.items():
             if value is not None:
                 await self._run(f"UPDATE chats SET {column} = ? WHERE chat_id = ?", (value, chat_id))

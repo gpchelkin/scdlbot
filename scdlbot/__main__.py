@@ -16,7 +16,7 @@ from scdlbot.media import ensure_h264, split
 from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
 
 
-async def fetch(url: str, kind: str | None, cfg: Config) -> None:
+async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False) -> None:
     link = classify(url, cfg, unknown_sites=True)
     kind = kind or (link.kind if link else AUDIO)
     out = Path("downloads").absolute()
@@ -27,7 +27,7 @@ async def fetch(url: str, kind: str | None, cfg: Config) -> None:
     site = link.site if link else None
     photos = bool((known := site_by_name(site or "")) and known.photos)
     try:
-        async with aclosing(download(url, kind, out, cfg, cookies.args(out) + network_args(cfg), photos)) as infos:
+        async with aclosing(download(url, kind, out, cfg, cookies.args(out) + network_args(cfg), photos, mp3)) as infos:
             async for info in infos:
                 item = to_item(info, kind, site)
                 if item.kind == VIDEO:
@@ -45,6 +45,7 @@ def main() -> None:
     fetch_parser = commands.add_parser("fetch", help="download one URL into ./downloads like the bot does")
     fetch_parser.add_argument("url")
     fetch_parser.add_argument("--kind", choices=[AUDIO, VIDEO], help="override audio/video detection")
+    fetch_parser.add_argument("--mp3", action="store_true", help="convert audio to mp3, like the Always MP3 setting")
     args = parser.parse_args()
 
     cfg = Config.from_env()
@@ -53,7 +54,7 @@ def main() -> None:
         logging.getLogger(noisy).setLevel(max(logging.WARNING, logging.getLogger().level))
 
     if args.command == "fetch":
-        asyncio.run(fetch(args.url, args.kind, cfg))
+        asyncio.run(fetch(args.url, args.kind, cfg, args.mp3))
     else:
         from scdlbot.app import run
 

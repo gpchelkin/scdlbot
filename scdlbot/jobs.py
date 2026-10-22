@@ -10,11 +10,12 @@ import time
 from collections import Counter
 from contextlib import aclosing, suppress
 
+import httpx
 from telegram import Bot, ReplyParameters
 from telegram.constants import ParseMode
 from telegram.error import Forbidden, TelegramError
 
-from scdlbot import observe, texts
+from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.links import SITES, VIDEO, site_by_name
@@ -40,8 +41,8 @@ class JobQueue:
     so their number must be limited, without making jobs from other sites wait behind them.
     """
 
-    def __init__(self, cfg: Config, db: DB, bot: Bot, cookies: Cookies):
-        self.cfg, self.db, self.bot, self.cookies = cfg, db, bot, cookies
+    def __init__(self, cfg: Config, db: DB, bot: Bot, cookies: Cookies, http: httpx.AsyncClient | None = None):
+        self.cfg, self.db, self.bot, self.cookies, self.http = cfg, db, bot, cookies, http
         self.pools = {"main": cfg.workers, "youtube": cfg.youtube_workers}  # pool name: number of workers
         self.queues: dict[str, asyncio.Queue[Job]] = {pool: asyncio.Queue() for pool in self.pools}
         self.busy: Counter[str] = Counter()  # running jobs by pool
@@ -172,10 +173,19 @@ class JobQueue:
 
     async def _download(self, job: Job, job_dir, sender: Sender) -> int | None:
         """Download and send files one by one. Returns the playlist size, if it was a playlist."""
+        if job.site == "Twitter" and self.http and (tweet := await twitter.fetch(job.url, self.http)) and not tweet.has_video:
+            # yt-dlp only knows videos: photos and text-only tweets come from Twitter's embed endpoint
+            if not tweet.photos:
+                await sender.send_text(twitter.text_item(tweet, job_dir))
+                return None
+            for item in await twitter.photo_items(tweet, job_dir, self.http):
+                await sender.add(item)
+            return None
         extra = self.cookies.args(job_dir) + network_args(self.cfg)
         photos = bool((site := site_by_name(job.site)) and site.photos)
         total = None
-        async with aclosing(download(job.url, job.kind, job_dir, self.cfg, extra, photos)) as infos:
+        url = twitter.for_ytdlp(job.url) if job.site == "Twitter" else job.url
+        async with aclosing(download(url, job.kind, job_dir, self.cfg, extra, photos, bool(job.mp3))) as infos:
             async for info in infos:
                 self.last_progress = time.monotonic()
                 item = to_item(info, job.kind, job.site)

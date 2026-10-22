@@ -100,6 +100,7 @@ def settings_keyboard(settings: ChatSettings) -> InlineKeyboardMarkup:
         [
             [radio("dl", "Download"), radio("ask", "Ask")],
             [toggle("unknown_sites", settings.unknown_sites, "Unknown sites"), toggle("captions", settings.captions, "Captions")],
+            [toggle("mp3", settings.mp3, "Always MP3")],
             [InlineKeyboardButton("❌ Close settings", callback_data="settings:close")],
         ]
     )
@@ -136,6 +137,8 @@ async def settings_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await rt.db.set_chat(chat.id, captions=not settings.captions)
     elif action == "unknown_sites":
         await rt.db.set_chat(chat.id, unknown_sites=not settings.unknown_sites)
+    elif action == "mp3":
+        await rt.db.set_chat(chat.id, mp3=not settings.mp3)
     else:
         await query.answer(texts.SETTINGS_NOT_CHANGED)
         return
@@ -230,6 +233,7 @@ def new_job(chat: Chat, user: User | None, source: Message, link: Link, settings
         captions=settings.captions,
         status=status,
         wait_message_id=wait_message_id,
+        mp3=settings.mp3,
     )
 
 
