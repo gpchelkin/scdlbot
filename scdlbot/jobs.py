@@ -18,8 +18,8 @@ from telegram.error import Forbidden, TelegramError
 from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
-from scdlbot.links import SITES, VIDEO, site_by_name
-from scdlbot.media import ensure_h264, split
+from scdlbot.links import PHOTO, SITES, VIDEO, site_by_name
+from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.sender import Sender
 from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
 
@@ -192,6 +192,8 @@ class JobQueue:
                 total = item.playlist_count
                 if item.kind == VIDEO:
                     item = await ensure_h264(item, self.cfg)
+                elif item.kind == PHOTO:
+                    item = await ensure_jpeg(item, self.cfg)
                 parts = await split(item, self.cfg)
                 if not parts:
                     log.warning("Job %s: could not split %s", job.id, item.path.name)

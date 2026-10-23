@@ -25,15 +25,18 @@ log = logging.getLogger(__name__)
 
 # Keep m4a (AAC) and mp3 as they are, convert anything else (opus, vorbis...) to mp3:
 AUDIO_ARGS = ["-f", "ba[ext=m4a]/ba[ext=mp3]/ba/b", "-x", "--audio-format", "m4a>m4a/mp3>mp3/mp3", "--audio-quality", "0", "--embed-metadata", "--embed-thumbnail"]
-# "Always MP3" setting: the best audio, converted to 320 kbps mp3 like the old bot did, for players that don't know m4a:
-MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "320K", "--embed-metadata", "--embed-thumbnail"]
+# "Always MP3" setting, for players that don't know m4a: the best audio, converted to VBR V2 mp3 (~200 kbps on average).
+# LAME picks the bitrate per frame; the sources are 128-160 kbps AAC/Opus, so CBR 320 would only make files ~1.6x bigger.
+MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "2", "--embed-metadata", "--embed-thumbnail"]
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
 # Info printed as one JSON line per finished file:
 FIELDS = "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count"
 # Posts with photos (Instagram): yt-dlp skips entries without video, but with these options it still saves
-# their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found"):
-PHOTO_ARGS = ["--ignore-no-formats-error", "--write-thumbnail", "--convert-thumbnails", "jpg", "-O", f"before_dl:%(.{{format_id,__files_to_move,{FIELDS}}})j"]
+# their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found").
+# No --convert-thumbnails: yt-dlp would convert webp/heic photos only after printing their path, and delete that file;
+# media.ensure_jpeg converts them instead.
+PHOTO_ARGS = ["--ignore-no-formats-error", "--write-thumbnail", "-O", f"before_dl:%(.{{format_id,__files_to_move,{FIELDS}}})j"]
 
 # Error codes by yt-dlp output patterns (lowercase), first match wins. Each code has a text in texts/error_<code>.html.
 ERRORS = (

@@ -11,8 +11,8 @@ from pathlib import Path
 import httpx
 
 from scdlbot.config import Config
-from scdlbot.links import AUDIO, VIDEO, classify, site_by_name
-from scdlbot.media import ensure_h264, split
+from scdlbot.links import AUDIO, PHOTO, VIDEO, classify, site_by_name
+from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
 
 
@@ -32,6 +32,8 @@ async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False) -> N
                 item = to_item(info, kind, site)
                 if item.kind == VIDEO:
                     item = await ensure_h264(item, cfg)
+                elif item.kind == PHOTO:
+                    item = await ensure_jpeg(item, cfg)
                 for part in await split(item, cfg):
                     print(json.dumps(asdict(part) | {"path": str(part.path), "size": part.size}, ensure_ascii=False))
     except DownloadError as exc:

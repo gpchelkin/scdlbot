@@ -73,6 +73,18 @@ async def probe(path: Path) -> dict:
     return json.loads(out) if code == 0 and out else {}
 
 
+async def ensure_jpeg(item: Item, cfg: Config) -> Item:
+    """Telegram takes JPEG and PNG photos; Instagram also serves WebP and HEIC."""
+    if item.path.suffix.lower() in (".jpg", ".jpeg", ".png"):
+        return item
+    output = item.path.with_suffix(".jpg")
+    code, _ = await run("ffmpeg", "-v", "error", "-y", "-i", str(item.path), "-q:v", "2", "-threads", str(cfg.ffmpeg_threads), str(output), timeout=60)
+    if code or not output.exists():
+        return item  # try sending it as it is
+    item.path.unlink(missing_ok=True)
+    return replace(item, path=output)
+
+
 async def ensure_h264(item: Item, cfg: Config) -> Item:
     """Telegram iOS can't play VP9 and chokes on HEVC, so re-encode anything that isn't h264."""
     if item.vcodec and item.vcodec.startswith(("avc1", "h264")):

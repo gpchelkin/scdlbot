@@ -102,5 +102,5 @@ def test_to_item_authors_per_site():
 
 def test_build_command_always_mp3():
     command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [], mp3=True)
-    assert command[command.index("--audio-format") + 1] == "mp3" and "320K" in command
+    assert command[command.index("--audio-format") + 1] == "mp3" and command[command.index("--audio-quality") + 1] == "2"
     assert build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [])[13:] != command[13:]

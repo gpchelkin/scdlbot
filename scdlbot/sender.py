@@ -35,7 +35,7 @@ class Sender:
             await self._send([item])
             return
         # Without a local Bot API server albums are uploaded from memory, so keep them small:
-        if self.album and not self.cfg.local_mode and sum(i.size for i in self.album) + item.size > self.cfg.max_tg_file_size:
+        if self.album and not self.cfg.local_mode and sum(_size(i) for i in (*self.album, item)) > self.cfg.max_tg_file_size:
             await self.flush()
         self.album.append(item)
         if len(self.album) == ALBUM_SIZE:
@@ -47,6 +47,12 @@ class Sender:
             await self._send(items)
 
     async def _send(self, items: list[Item]) -> None:
+        if missing := [item for item in items if not item.path.exists()]:  # shouldn't happen, but must not crash the job
+            log.warning("Job %s: %d file(s) disappeared before sending: %s", self.job.id, len(missing), missing[0].path.name)
+            self.failed += len(missing)
+            items = [item for item in items if item.path.exists()]
+            if not items:
+                return
         sizes = [item.size for item in items]
         size = sum(sizes)
         timeout = 30 + size / 1_000_000  # uploads may be slow: give at least 1 MB/s
@@ -157,3 +163,11 @@ def author_line(item: Item) -> str | None:
     if name and name.lstrip("@").lower() != item.author_handle.lower():
         return f"Author: <b>{html.escape(name)}</b> ({handle})"
     return f"Author: {handle}"
+
+
+def _size(item: Item) -> int:
+    """Size of a file that may have disappeared (then _send skips it)."""
+    try:
+        return item.size
+    except FileNotFoundError:
+        return 0
