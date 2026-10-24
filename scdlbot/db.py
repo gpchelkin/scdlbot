@@ -67,6 +67,8 @@ MIGRATIONS = (
     "ALTER TABLE user_days ADD COLUMN lang TEXT;",
     # "Always MP3" chat setting, copied to each job when it's created:
     "ALTER TABLE chats ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0; ALTER TABLE jobs ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0;",
+    # 1: the row was added from an outside list of user IDs (users of the old bot), not by the bot itself; it stays 1 after they come back:
+    "ALTER TABLE chats ADD COLUMN imported INTEGER NOT NULL DEFAULT 0;",
 )
 
 ACTIVE = ("queued", "running")

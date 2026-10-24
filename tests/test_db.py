@@ -75,6 +75,8 @@ async def test_migration_from_first_version(tmp_path):
     await db.touch_user(2, "en")
     assert (await db._all("PRAGMA user_version"))[0][0] == len(MIGRATIONS)
     assert ("en", 1) in await db.languages(days=10_000)
+    await db.touch_chat(3, "private", default_captions=True)
+    assert (await db._all("SELECT imported FROM chats WHERE chat_id = 3"))[0][0] == 0
     await db.close()
 
 
