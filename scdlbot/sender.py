@@ -11,7 +11,7 @@ from telegram.error import BadRequest, Forbidden, NetworkError, TelegramError
 from scdlbot import observe
 from scdlbot.config import Config
 from scdlbot.db import Job
-from scdlbot.links import AUDIO, PHOTO, VIDEO
+from scdlbot.links import AUDIO, PHOTO, VIDEO, clean_url
 from scdlbot.media import Item
 
 log = logging.getLogger(__name__)
@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 ALBUM_SIZE = 10  # Telegram's limit for media groups
 DESCRIPTION_LIMIT = 700  # captions are limited to 1024 characters
 TEXT_LIMIT = 3500  # messages to 4096
+# Telegram's format for source attribution: a link over two zero-width spaces at the very start of the caption
+HIDDEN_LINK = '<a href="{}">\u200b\u200b</a>'
 
 
 class Sender:
@@ -91,12 +93,19 @@ class Sender:
         # A local Bot API server reads the file from disk by its file:// URI, the cloud one needs it uploaded:
         return item.path if self.cfg.local_mode else item.path.read_bytes()
 
-    def _source(self) -> str:
-        return f'@{html.escape(self.bot.username)} <i>got it from</i> <a href="{html.escape(self.job.url)}">{html.escape(self.job.site)}</a>'
+    def _url(self, item: Item, playlist: bool = False) -> str:
+        """Where an item came from: the link that was sent, or with NORMALIZE_URLS the post's (or playlist's) clean link."""
+        if not self.cfg.normalize_urls:
+            return self.job.url
+        return (playlist and item.playlist_url) or item.source_url or clean_url(self.job.url, self.job.site)
+
+    def _source(self, item: Item) -> str:
+        url = html.escape(self._url(item, playlist=True))
+        return f'@{html.escape(self.bot.username)} <i>got it from</i> <a href="{url}">{html.escape(self.job.site)}</a>'
 
     async def send_text(self, item: Item) -> None:
         """A post without media, like a text-only tweet: its text is the content, so it goes out even without captions."""
-        lines = [self._source()] if self.job.captions else []
+        lines = [self._source(item)] if self.job.captions else []
         if author := author_line(item):
             lines.append(author)
         lines.append(f"<blockquote expandable>{html.escape((item.description or '').strip()[:TEXT_LIMIT])}</blockquote>")
@@ -119,13 +128,16 @@ class Sender:
         if item.part:
             lines.append(f"Part {item.part[0]} of {item.part[1]}")
         if first and self.job.captions and not self.sent:  # source info once per job
-            lines.append(self._source())
+            lines.append(self._source(item))
             if item.kind != AUDIO:  # audio has performer and title tags instead
                 if author := author_line(item):
                     lines.append(author)
                 if description := (item.description or "").strip()[:DESCRIPTION_LIMIT]:
                     lines.append(f"<blockquote expandable>{html.escape(description)}</blockquote>")
-        return "\n".join(lines) or None
+        caption = "\n".join(lines)
+        if self.cfg.hidden_source_links:  # on every file, even in albums and with captions off
+            caption = HIDDEN_LINK.format(html.escape(self._url(item))) + caption
+        return caption or None
 
     async def _send_one(self, item: Item, timeout: float) -> None:
         common = {"caption": self._caption(item), "parse_mode": ParseMode.HTML, "duration": item.duration, "reply_parameters": self.reply}

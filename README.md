@@ -7,7 +7,7 @@
 
 Telegram bot that downloads audio of tracks, sets, albums, videos and playlists from SoundCloud, Bandcamp, YouTube
 and [anything yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), with tags and artwork.
-Videos from TikTok, Instagram and Twitter are sent as videos, Instagram and Twitter photos as photos and albums,
+Videos from TikTok, Instagram, Twitter and YouTube Shorts are sent as videos, Instagram and Twitter photos as photos and albums,
 text-only tweets as text,
 with the author (`Author: Name (@handle)`, linked to the profile) and the post's text in the caption.
 
@@ -73,6 +73,12 @@ mise run update        # update dependencies, including yt-dlp from its master b
 ## Configuration
 
 Environment variables, all documented in [`.env.sample`](.env.sample). Only `TG_BOT_TOKEN` is required.
+
+Source links: every sent file's caption starts with an invisible link to where it came from (`HIDDEN_SOURCE_LINKS`),
+in the format Telegram asked big downloader bots to use in February 2026
+([leak](https://t.me/adurovleaks/978)); Telegram then shows those files in link previews of the same URL
+([leak](https://t.me/adurovleaks/990)). Links in captions are cleaned up (`NORMALIZE_URLS`): yt-dlp's canonical link
+of the post or track, without share tracking (`?si=`, `?igsh=`, TikTok's `u_code`…) and with short links expanded.
 
 In @BotFather: set the commands from [`telegram_settings/commands.txt`](telegram_settings/commands.txt),
 and disable privacy mode if the bot should react to plain messages with links in groups (otherwise it only sees commands).

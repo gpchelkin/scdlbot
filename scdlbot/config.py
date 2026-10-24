@@ -57,6 +57,13 @@ class Config:
     max_user_jobs: int = 5
     ffmpeg_threads: int = 1
     ytdlp_args: tuple[str, ...] = ()
+    # Source links in captions: the post's own link without share tracking (?si=, ?igsh=, TikTok's u_code...),
+    # short links expanded, each playlist item linked to itself:
+    normalize_urls: bool = True
+    # Every sent file's caption starts with an invisible link to its source (two zero-width spaces), as Telegram asked
+    # big downloader bots to do by 2026-02-12 (hashtag #storage_update): https://t.me/adurovleaks/978
+    # Telegram then shows those files in link previews of the same URL: https://t.me/adurovleaks/990
+    hidden_source_links: bool = True
 
     no_flood_chat_ids: frozenset[int] = frozenset()
     cookies_file: str = ""
@@ -117,6 +124,8 @@ class Config:
             max_user_jobs=max(1, _int("MAX_USER_JOBS", 5)),
             ffmpeg_threads=_int("FFMPEG_THREADS", 1),
             ytdlp_args=tuple(shlex.split(_str("YTDLP_ARGS"))),
+            normalize_urls=_bool("NORMALIZE_URLS", True),
+            hidden_source_links=_bool("HIDDEN_SOURCE_LINKS", True),
             no_flood_chat_ids=_ints("NO_FLOOD_CHAT_IDS"),
             cookies_file=_str("COOKIES_FILE"),
             cookies_refresh=_int("COOKIES_REFRESH", 600),

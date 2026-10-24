@@ -4,7 +4,7 @@ import pytest
 from telegram import Chat, Message, MessageEntity
 
 from scdlbot.config import Config
-from scdlbot.links import AUDIO, VIDEO, classify, find_links, resolve
+from scdlbot.links import AUDIO, VIDEO, classify, clean_url, find_links, resolve
 
 CFG = Config()
 
@@ -21,6 +21,8 @@ CFG = Config()
         ("youtu.be/Mdzy5RKn434", "YouTube", AUDIO),
         ("https://music.youtube.com/watch?v=abc", "YouTube", AUDIO),
         ("https://www.youtube.com/playlist?list=PL6D1DFED7726BF7AC", "YouTube", AUDIO),
+        ("https://www.youtube.com/shorts/hYBkmz_q9jc", "YouTube", VIDEO),
+        ("https://m.youtube.com/shorts/hYBkmz_q9jc?feature=share", "YouTube", VIDEO),
         ("https://www.tiktok.com/@user/video/123", "TikTok", VIDEO),
         ("https://www.instagram.com/reel/CtZbNhtrJv3/", "Instagram", VIDEO),
         ("https://x.com/user/status/123", "Twitter", VIDEO),
@@ -43,6 +45,7 @@ def test_known_sites(url, site, kind):
         "https://soundcloud.com/you/likes",
         "https://soundcloud.com/artist",  # profile page
         "https://www.youtube.com/@channel",
+        "https://www.youtube.com/shorts",
         "https://bandcamp.com",
         "https://x.com/user",
         "https://t.me/channel/123",
@@ -131,3 +134,24 @@ async def test_resolve_t_co_like_a_non_browser():
         link = await resolve(classify("https://on.soundcloud.com/7Fw1d", CFG, False), CFG, client, unknown_sites=False)
         assert link is not None and link.url == "https://soundcloud.com/dynamq/squingylive"
         assert seen_agents[0] == "Mozilla/5.0 Firefox/140.0"  # other short links keep the usual browser user agent
+
+
+@pytest.mark.parametrize(
+    ("url", "site", "handle", "clean"),
+    [
+        # Short links lead to a page without the user and with the sharer's codes:
+        (
+            "https://www.tiktok.com/@/video/7597891508473482499?_r=1&_d=secCgYIASAH&u_code=f1c9b84ahfdihl&share_item_id=7597891508473482499&utm_source=short_fallback",
+            "TikTok", "cooper5087", "https://www.tiktok.com/@cooper5087/video/7597891508473482499",
+        ),
+        ("https://www.tiktok.com/@cooper5087/video/7597891508473482499?is_from_webapp=1", "TikTok", None, "https://www.tiktok.com/@cooper5087/video/7597891508473482499"),
+        ("https://www.tiktok.com/@user/photo/123?_t=x", "TikTok", "user", "https://www.tiktok.com/@user/photo/123"),
+        ("https://x.com/SpaceX/status/1732824684683784516/photo/2?s=20&t=abc", "Twitter", "SpaceX", "https://x.com/SpaceX/status/1732824684683784516"),
+        ("https://www.instagram.com/reel/DAh2ZZjxk1x/?igsh=MWQ1ZGUxMzBkMA==", "Instagram", "someone", "https://www.instagram.com/reel/DAh2ZZjxk1x/"),
+        # yt-dlp's webpage_url is clean already for YouTube and SoundCloud; unknown sites stay as they are:
+        ("https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube", None, "https://www.youtube.com/watch?v=jNQXAC9IVRw"),
+        ("https://example.com/watch?id=5&utm_source=x", "example.com", None, "https://example.com/watch?id=5&utm_source=x"),
+    ],
+)  # fmt: skip
+def test_clean_url(url, site, handle, clean):
+    assert clean_url(url, site, handle) == clean

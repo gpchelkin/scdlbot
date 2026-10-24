@@ -31,6 +31,8 @@ class Item:
     author_name: str | None = None  # for videos and photos from social networks
     author_handle: str | None = None
     author_url: str | None = None
+    source_url: str | None = None  # the post or track, cleaned up (links.clean_url)
+    playlist_url: str | None = None  # the playlist, album or carousel it's from
     description: str | None = None
     playlist_index: int | None = None
     playlist_count: int | None = None

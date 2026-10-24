@@ -100,6 +100,17 @@ def test_to_item_authors_per_site():
     assert (other.author_name, other.author_handle, other.author_url) == ("Someone", None, None)
 
 
+def test_to_item_source_urls():
+    info = {
+        "filepath": "/a.mp4", "uploader": "cooper5087", "channel": "Cooper",
+        "webpage_url": "https://www.tiktok.com/@/video/7597891508473482499?_r=1&u_code=f1c9b84ahfdihl",
+    }  # fmt: skip
+    assert to_item(info, "video", "TikTok").source_url == "https://www.tiktok.com/@cooper5087/video/7597891508473482499"
+    track = {"filepath": "/a.m4a", "webpage_url": "https://soundcloud.com/a/t1", "playlist_webpage_url": "https://soundcloud.com/a/sets/s"}
+    assert (to_item(track, "audio", "SoundCloud").source_url, to_item(track, "audio", "SoundCloud").playlist_url) == (track["webpage_url"], track["playlist_webpage_url"])
+    assert to_item({"filepath": "/a.m4a"}, "audio", "SoundCloud").source_url is None
+
+
 def test_build_command_always_mp3():
     command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [], mp3=True)
     assert command[command.index("--audio-format") + 1] == "mp3" and command[command.index("--audio-quality") + 1] == "2"

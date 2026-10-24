@@ -137,7 +137,7 @@ def fake_instagram_post(kinds: str):
 
 async def test_instagram_carousel_goes_out_as_one_album_with_author(setup):
     cfg, db, bot, queue, run = setup
-    job = await run(fake_instagram_post("ppvp"), url="https://www.instagram.com/gpchelkin/p/B5P4ApFHE6_/", site="Instagram", kind="video")
+    job = await run(fake_instagram_post("ppvp"), url="https://www.instagram.com/gpchelkin/p/B5P4ApFHE6_/?igsh=MWQ1ZGUx", site="Instagram", kind="video")
     assert (job.status, job.items) == ("done", 4)
     name, args, kwargs = bot.calls[0]
     assert name == "send_media_group"
@@ -146,7 +146,10 @@ async def test_instagram_carousel_goes_out_as_one_album_with_author(setup):
     caption = media[0].caption
     assert 'Author: <b>George Pchelkin</b> (<a href="https://www.instagram.com/gpchelkin/">@gpchelkin</a>)' in caption
     assert "<blockquote expandable>Апшеронская &lt;узкоколейка&gt;</blockquote>" in caption
-    assert all(m.caption is None for m in media[1:])
+    # Every file starts with the invisible source link, without the sharer's tracking; the rest only on the first:
+    hidden = '<a href="https://www.instagram.com/gpchelkin/p/B5P4ApFHE6_/">\u200b\u200b</a>'
+    assert caption.startswith(hidden + "@scdlbot <i>got it from</i>")
+    assert all(m.caption == hidden for m in media[1:])
 
 
 async def test_instagram_single_photo(setup):
@@ -155,6 +158,21 @@ async def test_instagram_single_photo(setup):
     assert job.status == "done"
     assert bot.names()[0] == "send_photo"
     assert "@gpchelkin" in bot.calls[0][2]["caption"]
+
+
+async def test_source_links_follow_settings(tmp_path):
+    from scdlbot.media import Item
+    from scdlbot.sender import Sender
+
+    url = "https://youtu.be/jNQXAC9IVRw?si=AbC"
+    item = Item(tmp_path / "a.m4a", "audio", source_url="https://www.youtube.com/watch?v=jNQXAC9IVRw")
+    no_captions = Job(5, "private", 7, 10, url, "YouTube", "audio", False, "running", id=1)
+    caption = Sender(FakeBot(), Config(), no_captions)._caption(item)
+    assert caption == '<a href="https://www.youtube.com/watch?v=jNQXAC9IVRw">\u200b\u200b</a>'
+    assert Sender(FakeBot(), Config(hidden_source_links=False), no_captions)._caption(item) is None
+    with_captions = Job(5, "private", 7, 10, url, "YouTube", "audio", True, "running", id=1)
+    caption = Sender(FakeBot(), Config(normalize_urls=False, hidden_source_links=False), with_captions)._caption(item)
+    assert caption == f'@scdlbot <i>got it from</i> <a href="{url}">YouTube</a>'
 
 
 def test_author_line():

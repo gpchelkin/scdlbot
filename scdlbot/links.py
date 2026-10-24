@@ -1,6 +1,7 @@
 """Find links in Telegram messages and decide what (and whether) to download."""
 
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urlsplit, urlunsplit
@@ -34,6 +35,9 @@ class Site:
     pool: str = "main"  # worker pool, see jobs.JobQueue
     author: Author | None = None
     photos: bool = False  # posts may have photos too (yt-dlp only downloads videos by default)
+    # The post's link without share tracking, from yt-dlp's webpage_url and the author's @handle (NORMALIZE_URLS).
+    # None: yt-dlp's webpage_url is clean already (YouTube, SoundCloud) or we can't tell what's junk (unknown sites).
+    clean_url: Callable[[str, str | None], str] | None = None
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -43,7 +47,11 @@ def _sc_path(parts: list[str]) -> bool:
 
 
 def _yt_path(parts: list[str]) -> bool:
-    return bool(parts) and parts[0] in ("watch", "playlist", "shorts")
+    return bool(parts) and parts[0] in ("watch", "playlist")
+
+
+def _yt_shorts_path(parts: list[str]) -> bool:
+    return len(parts) >= 2 and parts[0] == "shorts"
 
 
 def _twitter_path(parts: list[str]) -> bool:
@@ -56,7 +64,23 @@ def _ig_path(parts: list[str]) -> bool:
     return len(parts) >= 2 and parts[:2] != ["reels", "audio"]
 
 
-# Known sites. The first matching row wins, so keep shorteners above their main domain.
+def _without_query(url: str, handle: str | None = None) -> str:
+    """Posts on these sites are identified by the path; the query is share tracking (?igsh=..., ?s=20&t=..., ?_r=1&_t=...)."""
+    return urlunsplit(urlsplit(url)._replace(query="", fragment=""))
+
+
+def _twitter_url(url: str, handle: str | None = None) -> str:
+    return re.sub(r"/(?:photo|video)/\d+/?$", "", _without_query(url))  # the tweet, not its media #N
+
+
+def _tiktok_url(url: str, handle: str | None = None) -> str:
+    # Short links (vt.tiktok.com/...) lead to "/@/video/ID?u_code=...&share_item_id=...": no user, and the sharer's codes
+    if handle and (match := re.match(r"/@[^/]*/(video|photo)/(\d+)", urlsplit(url).path)):
+        return f"https://www.tiktok.com/@{handle}/{match[1]}/{match[2]}"
+    return _without_query(url)
+
+
+# Known sites. For each link the first row whose domain and path match wins, so keep shorteners above their main domain.
 # To support a new site, add a row; anything yt-dlp supports works with "Unknown sites" enabled anyway.
 SITES = (
     Site("SoundCloud", ("on.soundcloud.com",), shortener=True),
@@ -64,11 +88,27 @@ SITES = (
     Site("SoundCloud", ("soundcloud.com",), path_ok=_sc_path),
     Site("Bandcamp", ("bandcamp.com",), path_ok=lambda p: len(p) == 2),
     Site("YouTube", ("youtu.be",), pool="youtube"),
+    Site("YouTube", ("youtube.com",), kind=VIDEO, path_ok=_yt_shorts_path, pool="youtube"),  # shorts are videos, like reels
     Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube"),
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
-    Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}")),
-    Site("Instagram", ("instagram.com",), kind=VIDEO, path_ok=_ig_path, author=Author("uploader", "channel", "https://www.instagram.com/{}/"), photos=True),
-    Site("Twitter", ("twitter.com", "x.com"), kind=VIDEO, path_ok=_twitter_path, author=Author("uploader", "uploader_id", "https://twitter.com/{}")),
+    Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}"), clean_url=_tiktok_url),
+    Site(
+        "Instagram",
+        ("instagram.com",),
+        kind=VIDEO,
+        path_ok=_ig_path,
+        photos=True,
+        author=Author("uploader", "channel", "https://www.instagram.com/{}/"),
+        clean_url=_without_query,
+    ),
+    Site(
+        "Twitter",
+        ("twitter.com", "x.com"),
+        kind=VIDEO,
+        path_ok=_twitter_path,
+        author=Author("uploader", "uploader_id", "https://twitter.com/{}"),
+        clean_url=_twitter_url,
+    ),
     Site("Twitter", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
 )
 
@@ -81,6 +121,12 @@ IGNORED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", 
 def site_by_name(name: str) -> Site | None:
     """The main row of a known site (not its shortener), None for unknown sites."""
     return next((site for site in SITES if site.name == name and not site.shortener), None)
+
+
+def clean_url(url: str, site: str, handle: str | None = None) -> str:
+    """A post's link for captions, without share tracking that identifies who shared it (see Site.clean_url)."""
+    known = site_by_name(site)
+    return known.clean_url(url, handle) if known and known.clean_url else url
 
 
 @dataclass(frozen=True)
@@ -116,11 +162,10 @@ def classify(url: str, cfg: Config, unknown_sites: bool) -> Link | None:
         return None
     url = urlunsplit((parts.scheme, parts.netloc.lower(), parts.path, parts.query, ""))  # drop #fragment
     path_parts = [p for p in parts.path.split("/") if p]
-    for site in SITES:
-        if any(_host_matches(host, d) for d in site.domains):
-            # A known site's rules apply even when unknown sites are allowed:
-            return Link(url, site.name, site.kind, site.shortener) if site.path_ok(path_parts) else None
-    if unknown_sites:
+    sites = [site for site in SITES if any(_host_matches(host, d) for d in site.domains)]
+    if site := next((site for site in sites if site.path_ok(path_parts)), None):
+        return Link(url, site.name, site.kind, site.shortener)
+    if unknown_sites and not sites:  # a known site's rules apply even when unknown sites are allowed
         return Link(url, host, AUDIO)
     return None
 

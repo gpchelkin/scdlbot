@@ -18,7 +18,7 @@ from pathlib import Path
 import httpx
 
 from scdlbot.config import Config
-from scdlbot.links import PHOTO, VIDEO, site_by_name
+from scdlbot.links import PHOTO, VIDEO, clean_url, site_by_name
 from scdlbot.media import Item, kill, oom_first
 
 log = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "2",
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
 # Info printed as one JSON line per finished file:
-FIELDS = "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count"
+FIELDS = "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url"
 # Posts with photos (Instagram): yt-dlp skips entries without video, but with these options it still saves
 # their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found").
 # No --convert-thumbnails: yt-dlp would convert webp/heic photos only after printing their path, and delete that file;
@@ -211,6 +211,7 @@ def to_item(info: dict, kind: str, site: str | None = None) -> Item:
         author_name = info.get(known.author.name)
         author_handle = str(info.get(known.author.handle) or "").lstrip("@") or None
         author_url = known.author.url.format(author_handle) if author_handle else None
+    source_url, playlist_url = info.get("webpage_url"), info.get("playlist_webpage_url")
     return Item(
         path=Path(info["filepath"]),
         kind=PHOTO if info.get("_photo") else kind,
@@ -223,6 +224,8 @@ def to_item(info: dict, kind: str, site: str | None = None) -> Item:
         author_name=author_name,
         author_handle=author_handle,
         author_url=author_url,
+        source_url=clean_url(source_url, site or "", author_handle) if source_url else None,
+        playlist_url=clean_url(playlist_url, site or "", author_handle) if playlist_url else None,
         description=info.get("description"),
         playlist_index=info.get("playlist_index"),
         playlist_count=info.get("playlist_count"),
