@@ -131,3 +131,41 @@ sqlite3 scdlbot.sqlite3 "SELECT error, count(*) FROM jobs WHERE created_at > str
 ```
 
 The database stores Telegram user and chat ids and downloaded URLs; per-download rows are deleted after `JOBS_RETENTION_DAYS`.
+[PRIVACY.md](PRIVACY.md) is the privacy policy of [@scdlbot](https://t.me/scdlbot) only. If you run your own bot, write your own
+(Telegram requires one, see [§4 of its terms for bot developers](https://telegram.org/tos/bot-developers)) and set its URL in
+`PRIVACY_POLICY_URL` (for `/privacy` and `/help`) and in @BotFather. Until you do, Telegram's
+[Standard Privacy Policy for bots](https://telegram.org/privacy-tpa) applies to your bot, and `/privacy` links to it.
+
+## History
+
+The name tells where it started: **scdl**bot was a [SoundCloud](https://soundcloud.com) downloader bot built on
+[scdl](https://github.com/scdl-org/scdl). Its first version, from January 2016, was a 70-line script that ran
+`scdl --onlymp3` for every link it got and sent the mp3 back. In 2017 it learned Bandcamp with
+[bandcamp-dl](https://github.com/Evolution0/bandcamp-dl), and YouTube and many more sites with
+[youtube-dl](https://github.com/ytdl-org/youtube-dl), replaced by its fork [yt-dlp](https://github.com/yt-dlp/yt-dlp) in 2021.
+In 2026 the bot was rewritten from scratch, and yt-dlp now does all the downloading.
+
+Many thanks to the authors of scdl, bandcamp-dl, youtube-dl and yt-dlp: this bot wouldn't exist without them.
+
+## Disclaimer
+
+**The software.** scdlbot is open-source software under the [MIT License](LICENSE), provided "as is", without warranty of any kind.
+Like [yt-dlp](https://github.com/yt-dlp/yt-dlp) that it's built on, it's a tool:
+
+- It only processes links that its users send it: it doesn't search, suggest or host anything.
+- It doesn't circumvent DRM: DRM-protected tracks (e.g. SoundCloud Go+) are refused. Like yt-dlp, it doesn't support sites that serve only
+  DRM-protected content or exist for copyright infringement ([yt-dlp's policy](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#is-the-website-primarily-used-for-piracy)).
+- It doesn't keep files: the server deletes each file right after sending it to Telegram, so nothing is stored long-term.
+
+**Instances.** Anyone can run their own bot with this code. Whoever runs a bot is its operator and is solely responsible for it:
+its settings and changes to the code, how it's used, following the law, [Telegram's terms](https://telegram.org/tos/bot-developers)
+and the terms of the sites it downloads from, and its privacy policy (see [Monitoring and stats](#monitoring-and-stats)).
+The developers of scdlbot don't run, control or answer for any bot other than @scdlbot.
+
+**@scdlbot.** [@scdlbot](https://t.me/scdlbot) is the bot run by the developer, George Pchelkin ([@gpchelkin](https://t.me/gpchelkin)),
+under its own [Privacy Policy](PRIVACY.md):
+
+- It only downloads what anyone can stream for free on the site, in a web browser: no paid subscriptions, paywalls or premium content.
+- It's meant for personal use. Users are responsible for respecting the rights of creators and the terms of the sites they download from.
+- **Rights holders:** write to [@gpchelkin](https://t.me/gpchelkin). Downloads from specific sites or in specific chats can be blocked
+  right away, and blocking specific links, channels or accounts can easily be added on request.

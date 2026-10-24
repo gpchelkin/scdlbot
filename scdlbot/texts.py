@@ -10,6 +10,7 @@ def _load(name: str) -> str:
 
 HELP = _load("help.html")
 SETTINGS = _load("settings.html")
+PRIVACY = _load("privacy.html")
 
 WAIT = ("⏳ Wait a bit..", "⏳ Wait a beat..", "⏳ Wait a beet..")
 ASK = "🎶 links found, what to do?"

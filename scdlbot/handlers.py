@@ -1,5 +1,6 @@
 """Telegram update handlers. They stay fast: parse, write a row, enqueue, reply. Downloads happen in jobs.py."""
 
+import html
 import logging
 from dataclasses import dataclass, field
 
@@ -53,7 +54,7 @@ def reply_to(message_id: int) -> ReplyParameters:
     return ReplyParameters(message_id, allow_sending_without_reply=True)
 
 
-# /start, /help, /stats
+# /start, /help, /privacy, /stats
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -61,7 +62,16 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     observe.UPDATES.labels("help").inc()
     if update.effective_user:
         await rt.db.touch_user(update.effective_user.id, update.effective_user.language_code)
-    text = texts.HELP.format(max_items=rt.cfg.max_playlist_items, bot=context.bot.username)
+    text = texts.HELP.format(max_items=rt.cfg.max_playlist_items, bot=context.bot.username, privacy_url=html.escape(rt.cfg.privacy_policy_url))
+    await context.bot.send_message(update.effective_chat.id, text, parse_mode=HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))
+
+
+async def privacy_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Telegram requires every bot to make its privacy policy easy to find: https://t.me/BotNews/96"""
+    rt = runtime(context)
+    observe.UPDATES.labels("privacy").inc()
+    days = rt.cfg.jobs_retention_days
+    text = texts.PRIVACY.format(links_kept=f"for {days} days" if days > 0 else "indefinitely", privacy_url=html.escape(rt.cfg.privacy_policy_url))
     await context.bot.send_message(update.effective_chat.id, text, parse_mode=HTML, link_preview_options=LinkPreviewOptions(is_disabled=True))
 
 

@@ -124,3 +124,17 @@ async def test_other_mentions_are_ignored(env):
     mention = message(group, text="@someone look", entities=[MessageEntity(MessageEntity.MENTION, 0, 8)], message_id=12, reply_to_message=message(group))
     await handlers.mention_reply(Update(1, message=mention), context)
     assert rt.queue.size() == 0 and bot.calls == []
+
+
+async def test_privacy_command_and_help_link_to_the_policy(env):
+    rt, bot, context = env
+    chat = Chat(7, Chat.PRIVATE)
+    await handlers.privacy_command(Update(1, message=message(chat, text="/privacy", entities=[])), context)
+    assert 'href="https://telegram.org/privacy-tpa"' in bot.calls[-1][1][1]  # Telegram's standard policy, until the operator sets one
+    rt.cfg = Config(privacy_policy_url="https://example.com/privacy?a=1&b=2", jobs_retention_days=30)
+    await handlers.privacy_command(Update(2, message=message(chat, text="/privacy", entities=[])), context)
+    await handlers.help_command(Update(3, message=message(chat, text="/help", entities=[])), context)
+    privacy, help_text = bot.calls[-2][1][1], bot.calls[-1][1][1]
+    policy = 'href="https://example.com/privacy?a=1&amp;b=2"'
+    assert policy in privacy and "README.md#disclaimer" in privacy and "for 30 days" in privacy
+    assert policy in help_text and "/privacy" in help_text and "electrocircle_online" in help_text

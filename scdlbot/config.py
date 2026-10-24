@@ -43,6 +43,9 @@ class Config:
     tg_api: str = "https://api.telegram.org"
     local_mode: bool = False
     owner_id: int = 0
+    # The privacy policy of this bot, written by whoever runs it, for /privacy and /help. Without one, Telegram's
+    # Standard Privacy Policy for bots applies (https://telegram.org/tos/bot-developers, section 4), so /privacy links to that.
+    privacy_policy_url: str = "https://telegram.org/privacy-tpa"
 
     db_path: Path = Path("scdlbot.sqlite3")
     dl_dir: Path = Path("/tmp/scdlbot")
@@ -110,6 +113,7 @@ class Config:
             tg_api=tg_api,
             local_mode=local_mode,
             owner_id=_int("TG_BOT_OWNER_CHAT_ID", 0),
+            privacy_policy_url=_str("PRIVACY_POLICY_URL") or cls.privacy_policy_url,
             db_path=Path(_str("DB_PATH", "scdlbot.sqlite3")).expanduser(),
             dl_dir=Path(_str("DL_DIR", "/tmp/scdlbot")).expanduser(),
             workers=max(1, _int("WORKERS", 4)),

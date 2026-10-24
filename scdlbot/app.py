@@ -69,6 +69,7 @@ def build(cfg: Config) -> Application:
     not_edited = ~filters.UpdateType.EDITED
     app.add_handler(CommandHandler(["start", "help"], handlers.help_command, filters=not_edited))
     app.add_handler(CommandHandler("settings", handlers.settings_command, filters=not_edited))
+    app.add_handler(CommandHandler("privacy", handlers.privacy_command, filters=not_edited))
     app.add_handler(CommandHandler("dl", handlers.dl_command, filters=not_edited & ~filters.FORWARDED))
     app.add_handler(CommandHandler("stats", handlers.stats_command, filters=not_edited))
     app.add_handler(MessageHandler(not_edited & ~filters.COMMAND & ((filters.TEXT & LINKS) | (filters.CAPTION & CAPTION_LINKS)), handlers.links_message))
