@@ -1,4 +1,4 @@
-dl - + <links> required! download now
-link - + <links> required! get direct url
-settings - change default mode and spam
+dl - <links> or reply to a message with links: download now
+settings - change mode and captions
 help - show the help message
+privacy - privacy policy and disclaimer

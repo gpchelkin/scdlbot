@@ -1,6 +1,0 @@
-{
-  "buildpacks": [
-    "https://github.com/gpchelkin/heroku-buildpack-ffmpeg-latest",
-    "heroku/python"
-  ]
-}
