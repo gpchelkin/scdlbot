@@ -88,7 +88,8 @@ SITES = (
     Site("SoundCloud", ("soundcloud.com",), path_ok=_sc_path),
     Site("Bandcamp", ("bandcamp.com",), path_ok=lambda p: len(p) == 2),
     Site("YouTube", ("youtu.be",), pool="youtube"),
-    Site("YouTube", ("youtube.com",), kind=VIDEO, path_ok=_yt_shorts_path, pool="youtube"),  # shorts are videos, like reels
+    # Shorts are videos, like reels (shorts behind other YouTube links are re-downloaded as videos, see jobs):
+    Site("YouTube", ("youtube.com",), kind=VIDEO, path_ok=_yt_shorts_path, pool="youtube"),
     Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube"),
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
     Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}"), clean_url=_tiktok_url),

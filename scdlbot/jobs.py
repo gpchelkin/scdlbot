@@ -9,6 +9,7 @@ import shutil
 import time
 from collections import Counter
 from contextlib import aclosing, suppress
+from pathlib import Path
 
 import httpx
 from telegram import Bot, ReplyParameters
@@ -18,7 +19,7 @@ from telegram.error import Forbidden, TelegramError
 from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
-from scdlbot.links import PHOTO, SITES, VIDEO, site_by_name
+from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.sender import Sender
 from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
@@ -184,10 +185,16 @@ class JobQueue:
         extra = self.cookies.args(job_dir) + network_args(self.cfg)
         photos = bool((site := site_by_name(job.site)) and site.photos)
         total = None
+        short = False
         url = twitter.for_ytdlp(job.url) if job.site == "Twitter" else job.url
         async with aclosing(download(url, job.kind, job_dir, self.cfg, extra, photos, bool(job.mp3))) as infos:
             async for info in infos:
                 self.last_progress = time.monotonic()
+                if job.kind == AUDIO and info.get("media_type") == "short" and info.get("playlist_index") is None:
+                    # A short behind a youtu.be or watch?v= link: only yt-dlp can tell, so get it again as a video
+                    Path(info["filepath"]).unlink(missing_ok=True)
+                    short = True
+                    break
                 item = to_item(info, job.kind, job.site)
                 total = item.playlist_count
                 if item.kind == VIDEO:
@@ -200,6 +207,9 @@ class JobQueue:
                     sender.failed += 1
                 for part in parts:
                     await sender.add(part)
+        if short:
+            job.kind = VIDEO  # counted as a video in stats too
+            return await self._download(job, job_dir, sender)
         return total
 
     async def _report(self, job: Job, total: int | None) -> None:

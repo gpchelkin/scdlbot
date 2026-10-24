@@ -175,6 +175,21 @@ async def test_source_links_follow_settings(tmp_path):
     assert caption == f'@scdlbot <i>got it from</i> <a href="{url}">YouTube</a>'
 
 
+async def test_short_behind_a_youtu_be_link_goes_out_as_video(setup):
+    cfg, db, bot, queue, run = setup
+    kinds = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+        kinds.append(kind)
+        path = job_dir / ("short.mp4" if kind == "video" else "short.m4a")
+        path.write_bytes(b"x" * 100)
+        yield {"filepath": str(path), "title": "Short", "duration": 20, "media_type": "short", "vcodec": "avc1.4D401F"}
+
+    job = await run(download)  # https://youtu.be/x, audio
+    assert (job.status, job.kind, kinds) == ("done", "video", ["audio", "video"])
+    assert bot.names() == ["send_video", "delete_message"]
+
+
 def test_author_line():
     from scdlbot.media import Item
     from scdlbot.sender import author_line

@@ -31,7 +31,9 @@ MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "2",
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
 # Info printed as one JSON line per finished file:
-FIELDS = "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url"
+FIELDS = (
+    "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url,media_type"
+)
 # Posts with photos (Instagram): yt-dlp skips entries without video, but with these options it still saves
 # their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found").
 # No --convert-thumbnails: yt-dlp would convert webp/heic photos only after printing their path, and delete that file;
