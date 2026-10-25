@@ -41,7 +41,9 @@ ERRORS = {
     "no_media": "<b>Sorry</b>, there's no video in this post, and I couldn't get its photos or text right now. Please try again later.",
     "region": "<b>Sorry</b>, the uploader has not made this link available in my country.",
     "restricted": "<b>Sorry</b>, this is age-restricted or limited to certain audiences, so the website won't give it to me.",
-    "login": "<b>Sorry</b>, the website wants me to log in or prove I'm not a bot to download this. Please try again later.",
+    "login": "<b>Sorry</b>, the website wants me to log in to download this.",
+    "blocked": "<b>Sorry</b>, the website is limiting my downloads right now. Please try again later.",
+    "network": "<b>Sorry</b>, I couldn't connect to the website. Please try again later.",
     "unavailable": "<b>Sorry</b>, this link is unavailable: it may be private, deleted or never existed.",
     "unsupported": "<b>Sorry</b>, I can't download from this link, see /help for supported sites.",
 }

@@ -8,7 +8,8 @@ from scdlbot import jobs as jobs_module
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.jobs import JobQueue
-from scdlbot.ytdlp import Cookies, DownloadError
+from scdlbot.routes import RoutePool, from_env
+from scdlbot.ytdlp import DownloadError
 
 
 class FakeBot:
@@ -49,7 +50,7 @@ async def setup(tmp_path, monkeypatch):
     cfg = Config(dl_dir=tmp_path / "dl", max_playlist_items=12, job_timeout=5, workers=2, max_user_jobs=2)
     db = await DB.open(":memory:")
     bot = FakeBot()
-    queue = JobQueue(cfg, db, bot, Cookies(cfg))
+    queue = JobQueue(cfg, db, bot, RoutePool(*from_env(cfg)))
 
     async def run(download, **job_fields) -> Job:
         monkeypatch.setattr(jobs_module, "download", download)
@@ -204,6 +205,8 @@ def test_author_line():
 
 
 async def test_twitter_photos_and_text_via_embed_endpoint(tmp_path):
+    from contextlib import nullcontext
+
     import httpx
 
     from tests.test_twitter import PHOTO_TWEET, client_for
@@ -213,7 +216,7 @@ async def test_twitter_photos_and_text_via_embed_endpoint(tmp_path):
     db = await DB.open(":memory:")
     bot = FakeBot()
     async with client_for({"111": PHOTO_TWEET, "222": text_only}) as http:
-        queue = JobQueue(cfg, db, bot, Cookies(cfg), http)
+        queue = JobQueue(cfg, db, bot, RoutePool(*from_env(cfg)), http_client=lambda route: nullcontext(http))
         for twid in ("111", "222"):
             job = await db.add_job(Job(5, "private", 7, 10, f"https://x.com/u/status/{twid}", "Twitter", "video", True, "queued"))
             await queue._run(job)
@@ -224,3 +227,47 @@ async def test_twitter_photos_and_text_via_embed_endpoint(tmp_path):
     assert text[0] == "send_message" and "just words" in text[1][1] and "@hairball1952" in text[1][1]
     await db.close()
     assert isinstance(http, httpx.AsyncClient)
+
+
+def two_routes(queue: JobQueue) -> None:
+    from scdlbot.routes import Route
+
+    queue.routes.update([Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187")], {})
+
+
+def blocked_through(route_arg: str, then_items: int = 1):
+    """A download that the site blocks when it goes through the given route (seen in yt-dlp's arguments)."""
+    calls = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+        calls.append(list(extra))
+        if route_arg in extra:
+            raise DownloadError("blocked", "ERROR: [soundcloud] x: HTTP Error 403: Forbidden")
+        async for info in fake_download(then_items)(url, kind, job_dir, cfg, extra):
+            yield info
+
+    download.calls = calls
+    return download
+
+
+async def test_blocked_download_is_tried_again_through_another_route(setup):
+    cfg, db, bot, queue, run = setup
+    two_routes(queue)
+    queue.routes.turns["SoundCloud"] = 1  # fra1 is next
+    download = blocked_through("http://127.0.0.1:3187")
+    job = await run(download, site="SoundCloud", url="https://soundcloud.com/a/b")
+    assert (job.status, job.route) == ("done", "fin1")
+    assert [call[:2] for call in download.calls] == [["--proxy", "http://127.0.0.1:3187"], ["--source-address", "0.0.0.0"]]
+    (row,) = await db._all("SELECT route FROM jobs WHERE id = ?", (job.id,))
+    assert row[0] == "fin1"
+    results = {(route, code) for _, _, route, code in queue.routes.attempts}
+    assert results == {("fra1", "blocked"), ("fin1", None)}  # both tries count for the routes' health
+
+
+async def test_other_errors_and_partly_sent_jobs_are_not_tried_again(setup):
+    cfg, db, bot, queue, run = setup
+    two_routes(queue)
+    job = await run(fake_download(0, error="unavailable"), site="SoundCloud", url="https://soundcloud.com/a/b")
+    assert (job.status, job.error) == ("failed", "unavailable")
+    job = await run(fake_download(2, error="blocked"), site="SoundCloud", url="https://soundcloud.com/a/sets/s")
+    assert (job.status, job.error) == ("partial", "blocked")  # 2 tracks went out already: no second try

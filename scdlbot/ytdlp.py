@@ -7,7 +7,6 @@ import asyncio
 import json
 import logging
 import os
-import random
 import shlex
 import shutil
 import sys
@@ -49,8 +48,29 @@ ERRORS = (
     ("region", ("not available in your country", "not made this video available in your country", "geo restrict", "blocked it in your country", "from your location")),
     # Age or audience limits (YouTube "confirm your age", Instagram "can't be seen by certain audiences"), before "login":
     ("restricted", ("age-restricted", "inappropriate for some users", "confirm your age", "certain audiences", "isn't available to everyone")),
-    # Includes YouTube bans and rate limits ("...rate-limited by YouTube for up to an hour"), which also say "unavailable":
-    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "rate-limited")),
+    # The site limits or blocks our IP: bot checks, rate limits ("This content isn't available, try again later.
+    # Your account has been rate-limited by YouTube for up to an hour"), HTTP 403/429. Before "login" and "unavailable":
+    (
+        "blocked",
+        ("not a bot", "rate-limited", "rate limit", "try again later", "too many requests", "http error 429", "http error 403", "ip address is blocked"),
+    ),
+    # Can't reach the site through this route: no IPv6 address, proxy down, connection refused or reset:
+    (
+        "network",
+        (
+            "failed to resolve",
+            "name or service not known",
+            "temporary failure in name resolution",
+            "network is unreachable",
+            "connection refused",
+            "connection reset",
+            "unable to connect to proxy",
+            "proxyerror",
+            "could not bind",
+            "couldn't connect",
+        ),
+    ),
+    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video")),
     (
         "unavailable",
         ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available"),
@@ -74,21 +94,24 @@ def classify_error(lines: list[str]) -> str:
 
 
 class Cookies:
-    """COOKIES_FILE: a local cookies.txt, a URL to download it from, or firefox:PROFILE[:URL_OF_COOKIES_SQLITE]."""
+    """A local cookies.txt, a URL to download it from (to download_to), or firefox:PROFILE[:URL_OF_COOKIES_SQLITE].
 
-    def __init__(self, cfg: Config):
+    PROFILE is the path of a Firefox profile directory, or a profile name in ~/.mozilla/firefox.
+    """
+
+    def __init__(self, spec: str, download_to: Path):
         self.url = None
         self.file: Path | None = None
         self.browser = None
-        spec = cfg.cookies_file
         if spec.startswith("firefox:"):
             _, profile, *url = spec.split(":", 2)
             self.browser = f"firefox:{profile}"
-            self.file = Path.home() / ".mozilla" / "firefox" / profile / "cookies.sqlite"
+            directory = Path(profile) if Path(profile).is_absolute() else Path.home() / ".mozilla" / "firefox" / profile
+            self.file = directory / "cookies.sqlite"
             self.url = url[0] if url else None
         elif spec.startswith(("http://", "https://")):
             self.url = spec
-            self.file = cfg.db_path.parent / "cookies.txt"
+            self.file = download_to
         elif spec:
             self.file = Path(spec).expanduser()
 
@@ -117,22 +140,12 @@ class Cookies:
         return ["--cookies", str(job_dir / "cookies.txt")]
 
 
-def network_args(cfg: Config) -> list[str]:
-    """A proxy and a source address, picked at random for every download."""
-    args = []
-    if cfg.proxies and (proxy := random.choice(cfg.proxies)):
-        args += ["--proxy", proxy]
-    if cfg.source_ips:
-        args += ["--source-address", random.choice(cfg.source_ips)]
-    return args
-
-
 def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False, mp3: bool = False) -> list[str]:
     return [
         sys.executable, "-m", "yt_dlp", "--ignore-config", url,
         "-P", str(job_dir), "-o", "%(playlist_index|)03d%(playlist_index&_|)s%(title).80B [%(id)s].%(ext)s",
         "-O", f"after_move:%(.{{{FIELDS}}})j", "--no-quiet", "--no-progress", "--no-playlist",
-        "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size),
+        "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size), "--cache-dir", str(cfg.cache_dir),
         "--ppa", f"ffmpeg:-threads {cfg.ffmpeg_threads}",
         *(VIDEO_ARGS if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *extra, *cfg.ytdlp_args,
     ]  # fmt: skip
@@ -160,8 +173,10 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
     log.info("Running: %s", shlex.join(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        # TMPDIR: temp files (e.g. yt-dlp's copy of the Firefox cookie DB) go to the job dir, deleted even if yt-dlp is killed
-        start_new_session=True, limit=1 << 20, env=os.environ | {"PYTHONUNBUFFERED": "1", "TMPDIR": str(job_dir)},
+        # TMPDIR: temp files (e.g. yt-dlp's copy of the Firefox cookie DB) go to the job dir, deleted even if yt-dlp is killed.
+        # DENO_DIR: deno's cache (yt-dlp runs deno for YouTube), next to yt-dlp's own, instead of ~/.cache.
+        start_new_session=True, limit=1 << 20,
+        env=os.environ | {"PYTHONUNBUFFERED": "1", "TMPDIR": str(job_dir), "DENO_DIR": str(cfg.cache_dir / "deno")},
     )  # fmt: skip
     oom_first(process)
     tail: deque[str] = deque(maxlen=50)

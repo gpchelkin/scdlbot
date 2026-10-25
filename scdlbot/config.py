@@ -69,10 +69,13 @@ class Config:
     hidden_source_links: bool = True
 
     no_flood_chat_ids: frozenset[int] = frozenset()
+    # Routes (proxies, source IPs, cookies) come from this TOML file, see routes.py; without it, from the 3 settings below:
+    routes_file: Path | None = None
     cookies_file: str = ""
-    cookies_refresh: int = 600
     proxies: tuple[str | None, ...] = ()  # None means a direct connection
     source_ips: tuple[str, ...] = ()
+    cookies_refresh: int = 600
+    route_exclusion: int = 7200  # seconds a route is left out for a site that keeps blocking it
     whitelist_domains: frozenset[str] = frozenset()
     blacklist_domains: frozenset[str] = frozenset()
     whitelist_chats: frozenset[int] = frozenset()
@@ -131,8 +134,10 @@ class Config:
             normalize_urls=_bool("NORMALIZE_URLS", True),
             hidden_source_links=_bool("HIDDEN_SOURCE_LINKS", True),
             no_flood_chat_ids=_ints("NO_FLOOD_CHAT_IDS"),
+            routes_file=Path(_str("ROUTES_FILE")).expanduser() if _str("ROUTES_FILE") else None,
             cookies_file=_str("COOKIES_FILE"),
             cookies_refresh=_int("COOKIES_REFRESH", 600),
+            route_exclusion=_int("ROUTE_EXCLUSION", 7200),
             # "PROXIES=,http://a,http://b" means: direct, a or b (empty item or "direct" is a direct connection)
             proxies=tuple(None if x.strip() in ("", "direct") else x.strip() for x in proxies.split(",")) if proxies else (),
             source_ips=tuple(_list("SOURCE_IPS")),
@@ -158,6 +163,11 @@ class Config:
             alert_min_jobs=_int("ALERT_MIN_JOBS", 20),
             alert_failure_ratio=_float("ALERT_FAILURE_RATIO", 0.2),
         )
+
+    @property
+    def cache_dir(self) -> Path:
+        """yt-dlp's and deno's caches (YouTube player code and the like), kept across restarts."""
+        return self.dl_dir / "cache"
 
     def chat_allowed(self, chat_id: int) -> bool:
         if self.whitelist_chats and chat_id not in self.whitelist_chats:

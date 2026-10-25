@@ -10,7 +10,7 @@ from scdlbot.config import Config
 from scdlbot.db import DB
 from scdlbot.handlers import Runtime
 from scdlbot.jobs import JobQueue
-from scdlbot.ytdlp import Cookies
+from scdlbot.routes import RoutePool, from_env
 
 from .test_jobs import FakeBot
 
@@ -24,7 +24,7 @@ async def env():
     cfg = Config(max_user_jobs=5)
     db = await DB.open(":memory:")
     bot = FakeBot()
-    queue = JobQueue(cfg, db, bot, Cookies(cfg))
+    queue = JobQueue(cfg, db, bot, RoutePool(*from_env(cfg)))
     rt = Runtime(cfg, db, queue, httpx.AsyncClient())
     context = SimpleNamespace(bot=bot, bot_data={"runtime": rt}, args=[])
     yield rt, bot, context

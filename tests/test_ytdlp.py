@@ -12,7 +12,13 @@ from scdlbot.ytdlp import build_command, classify_error, to_item
         ("ERROR: [youtube] aaaaaaaaaaa: This video is unavailable", "unavailable"),
         ("ERROR: [generic] nothing: Unable to download webpage: HTTP Error 404: Not Found", "unavailable"),
         ("ERROR: [generic] Unsupported URL: https://example.com/", "unsupported"),
-        ("ERROR: [youtube] x: Sign in to confirm you're not a bot. Use --cookies-from-browser", "login"),
+        ("ERROR: [youtube] x: Sign in to confirm you're not a bot. Use --cookies-from-browser", "blocked"),
+        ("ERROR: [youtube] x: Private video. Sign in if you've been granted access to this video", "login"),
+        ("ERROR: [soundcloud] a/b: Unable to download JSON metadata: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)", "blocked"),
+        ("ERROR: [instagram:story] x: Unable to download webpage: HTTP Error 429: Too Many Requests", "blocked"),
+        ("ERROR: [TikTok] 1: Your IP address is blocked from accessing this post", "blocked"),
+        ("ERROR: [soundcloud] a/b: Unable to download JSON metadata: HTTPSConnection(host='api-v2.soundcloud.com', port=443): Failed to resolve", "network"),
+        ("ERROR: [TikTok] 1: Unable to download webpage: Failed to perform, curl: (45) Could not bind to '::' with errno 11", "network"),
         ("ERROR: [youtube] x: The uploader has not made this video available in your country", "region"),
         ("ERROR: [youtube] x: This live event will begin in 3 hours", "live"),
         ("[download] File is larger than max-filesize (4907257 bytes > 3145728 bytes). Aborting.", "too_large"),
@@ -21,7 +27,7 @@ from scdlbot.ytdlp import build_command, classify_error, to_item
         ("ERROR: [youtube] x: Sign in to confirm your age. This video may be inappropriate for some users.", "restricted"),
         (
             "ERROR: [youtube] 1E3usks-vRs: Video unavailable. This content isn't available, try again later. Your account has been rate-limited by YouTube for up to an hour.",
-            "login",
+            "blocked",
         ),
         ("ERROR: something else entirely", "failed"),
         ("WARNING: [youtube] Some formats are unavailable", "failed"),  # warnings don't count
@@ -39,6 +45,7 @@ def test_build_command():
     assert audio[-4:] == ["--proxy", "http://p", "--js-runtimes", "node"]
     video = build_command("https://x.com/u/status/1", "video", Path("/tmp/job"), cfg, [])
     assert "-x" not in video and "--merge-output-format" in video
+    assert video[video.index("--cache-dir") + 1] == str(cfg.dl_dir / "cache")  # not ~/.cache, so HOME isn't needed
 
 
 def test_to_item_splits_artist_from_title():

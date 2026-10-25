@@ -41,6 +41,7 @@ update → handlers.py (parse links, save a job row, enqueue, reply "wait a bit"
 | [`handlers.py`](scdlbot/handlers.py) | Telegram commands, messages and buttons |
 | [`jobs.py`](scdlbot/jobs.py) | job queue, workers and the download → send pipeline |
 | [`ytdlp.py`](scdlbot/ytdlp.py) | yt-dlp command line, output parsing, error codes, cookies |
+| [`routes.py`](scdlbot/routes.py) | routes (proxies, source IPs, cookies): which job goes where, retries, leaving out blocked routes |
 | [`media.py`](scdlbot/media.py) | ffmpeg / ffprobe |
 | [`sender.py`](scdlbot/sender.py) | uploads to Telegram, captions, albums |
 | [`db.py`](scdlbot/db.py) | SQLite schema and queries |
@@ -64,6 +65,7 @@ Other tasks (`mise tasks`):
 
 ```bash
 mise run fetch https://soundcloud.com/artist/track   # download one link into ./downloads exactly like the bot, without Telegram
+mise run fetch --route fin1 https://soundcloud.com/artist/track   # the same through one route (see Routes below)
 mise run test
 mise run lint
 mise run fmt
@@ -73,6 +75,22 @@ mise run update        # update dependencies, including yt-dlp from its master b
 ## Configuration
 
 Environment variables, all documented in [`.env.sample`](.env.sample). Only `TG_BOT_TOKEN` is required.
+
+### Routes
+
+Downloads go out through *routes*: a proxy or a source IP address of the server, each with its own cookies.
+They are set in a TOML file (`ROUTES_FILE`, see [`deploy/routes.sample.toml`](deploy/routes.sample.toml)), which also says
+which sites use which routes, e.g. YouTube only through the route with its logged-in account.
+`systemctl reload scdlbot` applies changes to the file without a restart.
+Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, like in earlier versions.
+
+- Each site takes its routes in turn, and one download makes all its requests through one route.
+- If a site blocks a download (bot check, HTTP 403/429) or the route can't connect, it's tried once more through another route.
+- A route that a site keeps blocking is left out for that site for `ROUTE_EXCLUSION` seconds (2 hours), and the owner is told;
+  if all routes of a site are left out, all of them are used anyway.
+- Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,
+  and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`.
+- `scdlbot fetch --route NAME URL` downloads through one route, to check it.
 
 Source links: every sent file's caption starts with an invisible link to where it came from (`HIDDEN_SOURCE_LINKS`),
 in the format Telegram asked big downloader bots to use in February 2026

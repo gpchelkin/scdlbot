@@ -4,6 +4,7 @@ import asyncio
 import itertools
 import logging
 import shutil
+import signal
 import time
 from urllib.parse import urljoin
 
@@ -21,12 +22,12 @@ from telegram.ext import (
     filters,
 )
 
-from scdlbot import handlers, observe
+from scdlbot import handlers, observe, routes
 from scdlbot.config import Config
 from scdlbot.db import DB
 from scdlbot.handlers import Runtime
 from scdlbot.jobs import JobQueue
-from scdlbot.ytdlp import Cookies
+from scdlbot.routes import RoutePool, RouteWatch
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ MENTIONS = (
 )
 
 
-def build(cfg: Config) -> Application:
+def build(cfg: Config, pool: RoutePool) -> Application:
     http_version = "1.1" if cfg.local_mode else "2"
     app = (
         ApplicationBuilder()
@@ -66,6 +67,7 @@ def build(cfg: Config) -> Application:
         .build()
     )
     app.bot_data["cfg"] = cfg
+    app.bot_data["routes"] = pool
     not_edited = ~filters.UpdateType.EDITED
     app.add_handler(CommandHandler(["start", "help"], handlers.help_command, filters=not_edited))
     app.add_handler(CommandHandler("settings", handlers.settings_command, filters=not_edited))
@@ -86,14 +88,16 @@ async def post_init(app: Application) -> None:
     cfg: Config = app.bot_data["cfg"]
     # Leftovers of jobs killed by a crash. Only our numbered job dirs, in case DL_DIR points somewhere shared:
     cfg.dl_dir.mkdir(parents=True, exist_ok=True)
+    cfg.cache_dir.mkdir(exist_ok=True)
     for path in cfg.dl_dir.iterdir():
         if path.is_dir() and path.name.isdigit():
             shutil.rmtree(path, ignore_errors=True)
     db = await DB.open(cfg.db_path)
-    http = httpx.AsyncClient(headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"})
-    cookies = Cookies(cfg)
-    await cookies.refresh(http)
-    queue = JobQueue(cfg, db, app.bot, cookies, http)
+    http = httpx.AsyncClient(headers={"User-Agent": routes.BROWSER_UA})
+    pool: RoutePool = app.bot_data["routes"]
+    for cookies in pool.cookies():
+        await cookies.refresh(http)
+    queue = JobQueue(cfg, db, app.bot, pool)
     rt = Runtime(cfg, db, queue, http)
     app.bot_data["runtime"] = rt
     if cfg.owner_id:
@@ -101,9 +105,11 @@ async def post_init(app: Application) -> None:
     observe.start_metrics_server(cfg.metrics_host, cfg.metrics_port)
     await queue.resume()
     queue.start()
-    rt.tasks = [asyncio.create_task(coro) for coro in (watchdog(rt), housekeeping(rt), refresh_cookies(rt, cookies), watch_sites(rt, app.bot))]
+    rt.tasks = [asyncio.create_task(coro) for coro in (watchdog(rt), housekeeping(rt), refresh_cookies(rt), watch_sites(rt, app.bot))]
+    asyncio.get_running_loop().add_signal_handler(signal.SIGHUP, lambda: rt.tasks.append(asyncio.create_task(reload_routes(rt))))
     observe.sd_notify("READY=1")
     log.info("@%s is running with %d+%d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.youtube_workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
+    log.info("Routes: %s", describe_routes(pool))
 
 
 async def post_stop(app: Application) -> None:
@@ -149,34 +155,63 @@ async def housekeeping(rt: Runtime) -> None:
 
 
 async def watch_sites(rt: Runtime, bot) -> None:
-    """Every 5 minutes: tell the owner when a site starts failing a lot, and when it recovers."""
-    if not rt.cfg.owner_id:
-        return
-    watch = observe.SiteWatch(rt.cfg.alert_min_jobs, rt.cfg.alert_failure_ratio, rt.cfg.alert_window)
+    """Every 5 minutes: leave out routes that a site keeps blocking, tell the owner about that,
+    and when a site starts failing a lot whatever the route (and when it recovers)."""
+    cfg = rt.cfg
+    site_watch = observe.SiteWatch(cfg.alert_min_jobs, cfg.alert_failure_ratio, cfg.alert_window)
+    route_watch = RouteWatch(rt.queue.routes, cfg.alert_min_jobs, cfg.alert_failure_ratio, cfg.route_exclusion)
     while True:
         await asyncio.sleep(300)
         try:
-            results = await rt.db.recent_results(int(time.time()) - rt.cfg.alert_window)
-            for text in watch.check(results, time.monotonic(), rt.queue.last_errors):
+            messages = route_watch.check(time.time())
+            results = await rt.db.recent_results(int(time.time()) - cfg.alert_window)
+            messages += site_watch.check(results, time.monotonic(), rt.queue.last_errors)
+            for text in messages:
                 log.warning("Site alert: %s", text)
-                await bot.send_message(rt.cfg.owner_id, text, parse_mode=ParseMode.HTML)
+                if cfg.owner_id:
+                    await bot.send_message(cfg.owner_id, text, parse_mode=ParseMode.HTML)
         except Exception as exc:
             log.warning("Site watch failed: %s", exc)  # not an error: that would alert the owner about the alerting
 
 
-async def refresh_cookies(rt: Runtime, cookies: Cookies) -> None:
-    if not cookies.url:
-        return
+async def refresh_cookies(rt: Runtime) -> None:
+    """Cookies that come from a URL are downloaded again every COOKIES_REFRESH seconds."""
     while True:
         await asyncio.sleep(rt.cfg.cookies_refresh)
+        for cookies in rt.queue.routes.cookies():
+            await cookies.refresh(rt.http)
+
+
+def describe_routes(pool: RoutePool) -> str:
+    sites = "; ".join(f"{site}: {', '.join(names)}" for site, names in pool.sites.items())
+    return ", ".join(route.describe() for route in pool.routes.values()) + (f"; {sites}" if sites else "")
+
+
+async def reload_routes(rt: Runtime) -> None:
+    """On SIGHUP (systemctl reload scdlbot): read ROUTES_FILE again. Running jobs keep the route they have."""
+    if not rt.cfg.routes_file:
+        log.info("SIGHUP: no ROUTES_FILE to reload")
+        return
+    try:
+        new_routes, sites = routes.load(rt.cfg)
+    except routes.RoutesError as exc:
+        log.error("Routes not reloaded, still using the old ones: %s", exc)  # an error, so the owner hears about it
+        return
+    rt.queue.routes.update(new_routes, sites)
+    for cookies in rt.queue.routes.cookies():
         await cookies.refresh(rt.http)
+    log.info("Routes reloaded: %s", describe_routes(rt.queue.routes))
 
 
 def run(cfg: Config) -> None:
     if not cfg.token:
         raise SystemExit("TG_BOT_TOKEN is not set")
     observe.init_sentry(cfg.sentry_dsn)
-    app = build(cfg)
+    try:
+        pool = RoutePool(*routes.load(cfg), window=cfg.alert_window)
+    except routes.RoutesError as exc:
+        raise SystemExit(f"Routes: {exc}") from None
+    app = build(cfg, pool)
     common = {"allowed_updates": ALLOWED_UPDATES, "drop_pending_updates": cfg.drop_pending_updates}
     if cfg.webhook:
         app.run_webhook(

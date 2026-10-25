@@ -69,6 +69,8 @@ MIGRATIONS = (
     "ALTER TABLE chats ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0; ALTER TABLE jobs ADD COLUMN mp3 INTEGER NOT NULL DEFAULT 0;",
     # 1: the row was added from an outside list of user IDs (users of the old bot), not by the bot itself; it stays 1 after they come back:
     "ALTER TABLE chats ADD COLUMN imported INTEGER NOT NULL DEFAULT 0;",
+    # The route (proxy or source IP, see routes.py) the job's download went through, the last one if it was tried again:
+    "ALTER TABLE jobs ADD COLUMN route TEXT;",
 )
 
 ACTIVE = ("queued", "running")
@@ -104,6 +106,7 @@ class Job:
     status: str
     wait_message_id: int | None = None
     mp3: bool = False  # convert audio to mp3 even when the original is m4a
+    route: str | None = None
     id: int | None = None
     created_at: int = 0
     started_at: int | None = None
@@ -214,13 +217,13 @@ class DB:
 
     async def start_job(self, job: Job) -> None:
         job.status, job.started_at = "running", now()
-        await self._run("UPDATE jobs SET status = ?, started_at = ? WHERE id = ?", (job.status, job.started_at, job.id))
+        await self._run("UPDATE jobs SET status = ?, started_at = ?, route = ? WHERE id = ?", (job.status, job.started_at, job.route, job.id))
 
     async def finish_job(self, job: Job) -> None:
         job.finished_at = now()
         await self._run(
-            "UPDATE jobs SET status = ?, error = ?, items = ?, bytes = ?, finished_at = ? WHERE id = ?",
-            (job.status, job.error, job.items, job.bytes, job.finished_at, job.id),
+            "UPDATE jobs SET status = ?, error = ?, items = ?, bytes = ?, finished_at = ?, route = ? WHERE id = ?",
+            (job.status, job.error, job.items, job.bytes, job.finished_at, job.route, job.id),
         )
         await self._run(
             "INSERT INTO daily (day, site, kind, status, chat_type, jobs, items, bytes) VALUES (?, ?, ?, ?, ?, 1, ?, ?) "

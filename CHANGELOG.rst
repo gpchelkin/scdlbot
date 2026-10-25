@@ -14,6 +14,8 @@ Rewritten from scratch.
 * SQLite database for chat settings, the queue and stats; owner-only /stats
 * Prometheus metrics, systemd watchdog tied to worker progress, owner alerts, optional Sentry
 * removed the /link mode, Heroku/Render files, Sphinx docs and old lint tooling; mise tasks, ruff and pytest instead
+* routes: proxies and source IPs with their own cookies, per-site route lists, round robin, retry through another route,
+  routes left out while a site blocks them (ROUTES_FILE, reloaded on SIGHUP); no need for HOME anymore
 * requires Python 3.14+
 
 0.15.0 (2023-02-20)

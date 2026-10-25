@@ -16,14 +16,18 @@ from telegram.constants import ParseMode
 log = logging.getLogger(__name__)
 
 UPDATES = Counter("scdlbot_updates", "Handled updates", ["type"])
-JOBS = Counter("scdlbot_jobs", "Finished download jobs", ["site", "kind", "status"])
+JOBS = Counter("scdlbot_jobs", "Finished download jobs", ["site", "kind", "status", "route"])
 JOB_SECONDS = Histogram("scdlbot_job_duration_seconds", "Time from job start to finish", ["kind"], buckets=(5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600))
 QUEUE_WAIT_SECONDS = Histogram("scdlbot_queue_wait_seconds", "Time jobs wait in the queue", buckets=(1, 5, 10, 30, 60, 120, 300, 600, 1800))
 QUEUE_SIZE = Gauge("scdlbot_queue_size", "Jobs waiting in the queue", ["pool"])
 WORKERS_BUSY = Gauge("scdlbot_workers_busy", "Workers running a job", ["pool"])
 ITEMS_SENT = Counter("scdlbot_items_sent", "Files sent", ["kind"])
 BYTES_SENT = Counter("scdlbot_bytes_sent", "Bytes sent", ["kind"])
-DOWNLOAD_ERRORS = Counter("scdlbot_download_errors", "Download errors", ["code"])
+DOWNLOAD_ERRORS = Counter("scdlbot_download_errors", "Download errors of finished jobs", ["code", "site", "route"])
+# Every try of a download (a job tries again through another route if the first one is blocked), "ok" or the error code:
+ROUTE_ATTEMPTS = Counter("scdlbot_route_attempts", "Downloads tried through each route", ["site", "route", "result"])
+ROUTE_RETRIES = Counter("scdlbot_route_retries", "Downloads tried again through another route after failing through this one", ["site", "route", "code"])
+ROUTE_UP = Gauge("scdlbot_route_up", "1 if the route is used for the site, 0 if it's left out after too many errors", ["site", "route"])
 REENCODES = Counter("scdlbot_video_reencodes", "Videos re-encoded to h264 (Telegram iOS plays neither VP9 nor some HEVC)", ["codec", "result"])
 TELEGRAM_ERRORS = Counter("scdlbot_telegram_errors", "Telegram API errors while sending", ["type"])
 REJECTED = Counter("scdlbot_rejected", "Links not accepted because of limits", ["reason"])
@@ -112,7 +116,7 @@ def init_sentry(dsn: str) -> None:
 
 # Error codes that point at a problem with the site or with us (logged out, IP blocked, site changed),
 # rather than with the link (deleted, private, DRM, too large...):
-INFRA_ERRORS = frozenset({"login", "failed", "timeout", "send"})
+INFRA_ERRORS = frozenset({"login", "blocked", "network", "failed", "timeout", "send"})
 
 
 class SiteWatch:

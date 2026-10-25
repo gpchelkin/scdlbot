@@ -32,6 +32,8 @@ WorkingDirectory=/var/lib/scdlbot
 # ffmpeg, ffprobe and deno must be in PATH:
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/opt/scdlbot/.venv/bin/scdlbot
+# systemctl reload scdlbot: read ROUTES_FILE again without a restart
+ExecReload=/bin/kill -HUP $MAINPID
 
 # Resource limits (3 vCPU, 4 GB RAM box). Downloads run as child processes, so they count here too.
 # No MemoryHigh: without swap it throttles every process in the service, the bot included, until nothing moves.

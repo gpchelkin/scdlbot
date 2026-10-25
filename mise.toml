@@ -16,8 +16,11 @@ run = "poetry run scdlbot"
 [tasks.fetch]
 description = "Download one URL exactly like the bot does, without Telegram (into ./downloads)"
 env = { _.file = ".env-dev" }
-usage = 'arg "<url>" help="Link to download"'
-run = 'poetry run scdlbot fetch "${usage_url}"'
+usage = """
+arg "<url>" help="Link to download"
+flag "--route <route>" help="Download through this route of ROUTES_FILE"
+"""
+run = 'poetry run scdlbot fetch "${usage_url}" ${usage_route:+--route "$usage_route"}'
 
 [tasks.lint]
 description = "Check code style"

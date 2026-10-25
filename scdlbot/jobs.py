@@ -8,7 +8,8 @@ import logging
 import shutil
 import time
 from collections import Counter
-from contextlib import aclosing, suppress
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager, aclosing, suppress
 from pathlib import Path
 
 import httpx
@@ -21,12 +22,12 @@ from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
+from scdlbot.routes import RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
-from scdlbot.ytdlp import Cookies, DownloadError, download, network_args, to_item
+from scdlbot.ytdlp import DownloadError, download, to_item
 
 log = logging.getLogger(__name__)
 
-KNOWN_SITES = {site.name for site in SITES}  # metrics label "other" for the rest, to keep cardinality low
 POOLS = {site.name: site.pool for site in SITES}
 RESUME_MAX_AGE = 3600  # after a restart, re-run queued jobs younger than this
 
@@ -42,8 +43,11 @@ class JobQueue:
     so their number must be limited, without making jobs from other sites wait behind them.
     """
 
-    def __init__(self, cfg: Config, db: DB, bot: Bot, cookies: Cookies, http: httpx.AsyncClient | None = None):
-        self.cfg, self.db, self.bot, self.cookies, self.http = cfg, db, bot, cookies, http
+    def __init__(
+        self, cfg: Config, db: DB, bot: Bot, routes: RoutePool,
+        http_client: Callable[[Route], AbstractAsyncContextManager[httpx.AsyncClient]] = Route.http_client,
+    ):  # fmt: skip
+        self.cfg, self.db, self.bot, self.routes, self.http_client = cfg, db, bot, routes, http_client
         self.pools = {"main": cfg.workers, "youtube": cfg.youtube_workers}  # pool name: number of workers
         self.queues: dict[str, asyncio.Queue[Job]] = {pool: asyncio.Queue() for pool in self.pools}
         self.busy: Counter[str] = Counter()  # running jobs by pool
@@ -129,6 +133,8 @@ class JobQueue:
     async def _run(self, job: Job) -> None:
         started = time.monotonic()
         observe.QUEUE_WAIT_SECONDS.observe(max(0, time.time() - job.created_at))
+        route = self.routes.pick(job.site)
+        job.route = route.name
         await self.db.start_job(job)
         self.last_progress = time.monotonic()
         job_dir = self.cfg.dl_dir / str(job.id)
@@ -138,13 +144,14 @@ class JobQueue:
         try:
             try:
                 async with asyncio.timeout(self.cfg.job_timeout):
-                    total = await self._download(job, job_dir, sender)
+                    total = await self._download_through(job, job_dir, sender, route)
             except DownloadError as exc:
                 error = exc.code
                 self.last_errors[job.site] = str(exc)
                 log.info("Job %s: %s", job.id, exc)
             except TimeoutError:
                 error = "timeout"
+                self.routes.record(job.site, job.route or "", "timeout")
             await sender.flush()  # send what we've got, even after an error
         except Forbidden as exc:
             log.info("Job %s: bot can't write to chat %s: %s", job.id, job.chat_id, exc)
@@ -163,26 +170,52 @@ class JobQueue:
         job.items, job.bytes = sender.sent, sender.bytes
         await self.db.finish_job(job)
 
-        observe.JOBS.labels(job.site if job.site in KNOWN_SITES else "other", job.kind, job.status).inc()
+        observe.JOBS.labels(site_label(job.site), job.kind, job.status, job.route).inc()
         observe.JOB_SECONDS.labels(job.kind).observe(time.monotonic() - started)
         if job.error:
-            observe.DOWNLOAD_ERRORS.labels(job.error).inc()
-        log.info("Job %s %s in %.0fs: %s, %d files, error %s", job.id, job.status, time.monotonic() - started, job.url, job.items, job.error)
+            observe.DOWNLOAD_ERRORS.labels(job.error, site_label(job.site), job.route).inc()
+        log.info("Job %s %s in %.0fs via %s: %s, %d files, error %s", job.id, job.status, time.monotonic() - started, job.route, job.url, job.items, job.error)
         if job.status != "cancelled":
             await self._report(job, total)
             await self._delete_wait_message(job)
 
-    async def _download(self, job: Job, job_dir, sender: Sender) -> int | None:
+    async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
+        """Download through the job's route. If the site blocks it or it can't connect before anything was sent,
+        try once more through another route of the site."""
+        try:
+            total = await self._download(job, job_dir, sender, route)
+        except DownloadError as exc:
+            self.routes.record(job.site, route.name, exc.code, str(exc))
+            other = self.routes.pick(job.site, avoid=route.name)
+            if exc.code not in RETRY_ERRORS or other.name == route.name or sender.sent or sender.failed or sender.album:
+                raise
+            log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.name, other.name)
+            observe.ROUTE_RETRIES.labels(site_label(job.site), route.name, exc.code).inc()
+            shutil.rmtree(job_dir, ignore_errors=True)
+            job_dir.mkdir(parents=True)
+            job.route = other.name
+            try:
+                total = await self._download(job, job_dir, sender, other)
+            except DownloadError as again:
+                self.routes.record(job.site, other.name, again.code, str(again))
+                raise
+            route = other
+        self.routes.record(job.site, route.name, None)
+        return total
+
+    async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
         """Download and send files one by one. Returns the playlist size, if it was a playlist."""
-        if job.site == "Twitter" and self.http and (tweet := await twitter.fetch(job.url, self.http)) and not tweet.has_video:
-            # yt-dlp only knows videos: photos and text-only tweets come from Twitter's embed endpoint
-            if not tweet.photos:
-                await sender.send_text(twitter.text_item(tweet, job_dir))
-                return None
-            for item in await twitter.photo_items(tweet, job_dir, self.http):
-                await sender.add(item)
-            return None
-        extra = self.cookies.args(job_dir) + network_args(self.cfg)
+        if job.site == "Twitter":
+            async with self.http_client(route) as client:
+                if (tweet := await twitter.fetch(job.url, client)) and not tweet.has_video:
+                    # yt-dlp only knows videos: photos and text-only tweets come from Twitter's embed endpoint
+                    if not tweet.photos:
+                        await sender.send_text(twitter.text_item(tweet, job_dir))
+                        return None
+                    for item in await twitter.photo_items(tweet, job_dir, client):
+                        await sender.add(item)
+                    return None
+        extra = route.ytdlp_args(job_dir)
         photos = bool((site := site_by_name(job.site)) and site.photos)
         total = None
         short = False
@@ -209,7 +242,7 @@ class JobQueue:
                     await sender.add(part)
         if short:
             job.kind = VIDEO  # counted as a video in stats too
-            return await self._download(job, job_dir, sender)
+            return await self._download(job, job_dir, sender, route)
         return total
 
     async def _report(self, job: Job, total: int | None) -> None:
