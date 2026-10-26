@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from scdlbot.config import Config
-from scdlbot.ytdlp import build_command, classify_error, to_item
+from scdlbot.ytdlp import build_command, classify_error, command_for_logs, to_item
 
 
 @pytest.mark.parametrize(
@@ -122,3 +122,10 @@ def test_build_command_always_mp3():
     command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [], mp3=True)
     assert command[command.index("--audio-format") + 1] == "mp3" and command[command.index("--audio-quality") + 1] == "2"
     assert build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [])[13:] != command[13:]
+
+
+def test_logged_command_leaves_out_proxy_passwords():
+    command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), ["--proxy", "http://user:secret@10.0.0.1:3128"])
+    line = command_for_logs(command)
+    assert "--proxy http://10.0.0.1:3128" in line and "secret" not in line
+    assert command_for_logs(["yt-dlp", "--proxy", "socks5://u:p@[2a01::1]:1080", "u"]) == "yt-dlp --proxy 'socks5://[2a01::1]:1080' u"

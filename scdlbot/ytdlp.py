@@ -13,6 +13,7 @@ import sys
 from collections import deque
 from collections.abc import AsyncIterator
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -140,6 +141,18 @@ class Cookies:
         return ["--cookies", str(job_dir / "cookies.txt")]
 
 
+def url_for_logs(url: str) -> str:
+    """A proxy URL fit for logs and alerts: http://user:pw@host:port becomes http://host:port."""
+    parts = urlsplit(url)
+    host = f"[{parts.hostname}]" if ":" in (parts.hostname or "") else parts.hostname
+    return f"{parts.scheme}://{host}{f':{parts.port}' if parts.port else ''}"
+
+
+def command_for_logs(command: list[str]) -> str:
+    """The command as a shell line to reproduce it by hand, with the proxy's user and password left out."""
+    return shlex.join(url_for_logs(arg) if previous == "--proxy" else arg for previous, arg in zip(["", *command[:-1]], command, strict=True))
+
+
 def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False, mp3: bool = False) -> list[str]:
     return [
         sys.executable, "-m", "yt_dlp", "--ignore-config", url,
@@ -170,7 +183,7 @@ async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[
     Use with contextlib.aclosing(), so the process is killed as soon as the caller stops iterating.
     """
     command = build_command(url, kind, job_dir, cfg, list(extra), photos, mp3)
-    log.info("Running: %s", shlex.join(command))
+    log.info("Running: %s", command_for_logs(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         # TMPDIR: temp files (e.g. yt-dlp's copy of the Firefox cookie DB) go to the job dir, deleted even if yt-dlp is killed.

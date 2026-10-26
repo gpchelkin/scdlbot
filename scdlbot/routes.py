@@ -24,7 +24,7 @@ import httpx
 from scdlbot import observe
 from scdlbot.config import Config
 from scdlbot.links import SITES
-from scdlbot.ytdlp import Cookies
+from scdlbot.ytdlp import Cookies, url_for_logs
 
 log = logging.getLogger(__name__)
 
@@ -67,17 +67,12 @@ class Route:
         return httpx.AsyncClient(transport=transport, headers={"User-Agent": BROWSER_UA})
 
     def describe(self) -> str:
-        how = [f"proxy {_without_password(self.proxy)}" if self.proxy else "direct"]
+        how = [f"proxy {url_for_logs(self.proxy)}" if self.proxy else "direct"]
         if self.source_address:
             how.append(f"from {self.source_address}")
         if self.cookies:
             how.append("with cookies")
         return f"{self.name} ({', '.join(how)})"
-
-
-def _without_password(url: str) -> str:
-    parts = urlsplit(url)
-    return f"{parts.scheme}://{parts.hostname}{f':{parts.port}' if parts.port else ''}"
 
 
 def make_route(name: str, proxy: str | None, source_address: str | None, cookies: str, cookies_dir: Path) -> Route:
