@@ -46,6 +46,7 @@ def test_build_command():
     video = build_command("https://x.com/u/status/1", "video", Path("/tmp/job"), cfg, [])
     assert "-x" not in video and "--merge-output-format" in video
     assert video[video.index("--cache-dir") + 1] == str(cfg.dl_dir / "cache")  # not ~/.cache, so HOME isn't needed
+    assert video[video.index("--extractor-args") + 1] == "generic:impersonate"  # pages behind Cloudflare
 
 
 def test_to_item_splits_artist_from_title():

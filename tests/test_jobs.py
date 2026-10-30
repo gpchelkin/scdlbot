@@ -271,3 +271,48 @@ async def test_other_errors_and_partly_sent_jobs_are_not_tried_again(setup):
     assert (job.status, job.error) == ("failed", "unavailable")
     job = await run(fake_download(2, error="blocked"), site="SoundCloud", url="https://soundcloud.com/a/sets/s")
     assert (job.status, job.error) == ("partial", "blocked")  # 2 tracks went out already: no second try
+
+
+def with_login_route(queue: JobQueue, cookies_file: Path) -> None:
+    from scdlbot.routes import Route
+    from scdlbot.ytdlp import Cookies
+
+    cookies_file.write_text("# Netscape HTTP Cookie File\n")
+    login = Route("fin1-login", source_address="0.0.0.0", cookies=Cookies(str(cookies_file), cookies_file))
+    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187"), login]
+    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, {"Instagram": ["fin1-login"]})
+
+
+def needs_login():
+    """A download the site blocks through the proxy, and gives only to logged-in users (with --cookies)."""
+    calls = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+        calls.append("login" if "--cookies" in extra else "fra1" if "--proxy" in extra else "fin1")
+        if "--proxy" in extra:
+            raise DownloadError("blocked", "ERROR: [Instagram] x: HTTP Error 429: Too Many Requests")
+        if "--cookies" not in extra:
+            raise DownloadError("restricted", "ERROR: [Instagram] x: It can't be seen by certain audiences.")
+        async for info in fake_download(1)(url, kind, job_dir, cfg, extra):
+            yield info
+
+    download.calls = calls
+    return download
+
+
+async def test_downloads_for_logged_in_users_go_through_the_login_route(setup):
+    cfg, db, bot, queue, run = setup
+    with_login_route(queue, cfg.dl_dir.parent / "instagram-cookies.txt")
+    queue.routes.turns["Instagram"] = 1  # fra1 is next: blocked, then fin1: restricted, then the login route
+    download = needs_login()
+    job = await run(download, site="Instagram", url="https://www.instagram.com/reel/x/", kind="video")
+    assert (job.status, job.route, download.calls) == ("done", "fin1-login", ["fra1", "fin1", "login"])
+    assert {(route, code) for _, _, route, code in queue.routes.attempts} == {("fra1", "blocked"), ("fin1", "restricted"), ("fin1-login", None)}
+
+
+async def test_sites_without_login_routes_are_not_tried_again(setup):
+    cfg, db, bot, queue, run = setup
+    with_login_route(queue, cfg.dl_dir.parent / "instagram-cookies.txt")
+    queue.routes.turns["TikTok"] = 0  # fin1: restricted, and TikTok has no login route
+    job = await run(needs_login(), site="TikTok", url="https://www.tiktok.com/@u/video/1", kind="video")
+    assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")

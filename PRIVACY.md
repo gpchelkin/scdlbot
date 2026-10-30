@@ -1,6 +1,6 @@
 # Privacy Policy of @scdlbot
 
-Last updated: 2026-10-24
+Last updated: 2026-10-30
 
 This policy covers only the Telegram bot [@scdlbot](https://t.me/scdlbot), run by George Pchelkin ([@gpchelkin](https://t.me/gpchelkin)).
 It replaces Telegram's [Standard Privacy Policy for bots](https://telegram.org/privacy-tpa).
@@ -34,7 +34,7 @@ Statistics derived from this data (e.g. number of downloads per site and day) co
 - **Websites you link to** receive a request for that link from the bot's server, directly or through a proxy server.
   They get only the link, never anything about you.
 - **Telegram** delivers all messages and files, under [Telegram's Privacy Policy](https://telegram.org/privacy).
-- Error reports, which may include a link, go to the developer's own Telegram account.
+- Error reports, which may include a link, go to the creator's own Telegram account.
 
 ## Your rights
 

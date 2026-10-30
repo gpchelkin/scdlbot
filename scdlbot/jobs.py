@@ -22,7 +22,7 @@ from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
-from scdlbot.routes import RETRY_ERRORS, Route, RoutePool, site_label
+from scdlbot.routes import LOGIN_ERRORS, RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
 from scdlbot.ytdlp import DownloadError, download, to_item
 
@@ -180,28 +180,35 @@ class JobQueue:
             await self._delete_wait_message(job)
 
     async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
-        """Download through the job's route. If the site blocks it or it can't connect before anything was sent,
-        try once more through another route of the site."""
-        try:
-            total = await self._download(job, job_dir, sender, route)
-        except DownloadError as exc:
-            self.routes.record(job.site, route.name, exc.code, str(exc))
-            other = self.routes.pick(job.site, avoid=route.name)
-            if exc.code not in RETRY_ERRORS or other.name == route.name or sender.sent or sender.failed or sender.album:
-                raise
-            log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.name, other.name)
-            observe.ROUTE_RETRIES.labels(site_label(job.site), route.name, exc.code).inc()
-            shutil.rmtree(job_dir, ignore_errors=True)
-            job_dir.mkdir(parents=True)
-            job.route = other.name
+        """Download through the job's route. If it fails before anything was sent, try once more:
+        through another route of the site if the site blocked it or it couldn't connect,
+        and through a login route of the site ([login] in the routes file) if the site wants a login."""
+        tried_other = tried_login = False
+        while True:
             try:
-                total = await self._download(job, job_dir, sender, other)
-            except DownloadError as again:
-                self.routes.record(job.site, other.name, again.code, str(again))
-                raise
-            route = other
-        self.routes.record(job.site, route.name, None)
-        return total
+                total = await self._download(job, job_dir, sender, route)
+            except DownloadError as exc:
+                self.routes.record(job.site, route.name, exc.code, str(exc))
+                if sender.sent or sender.failed or sender.album:
+                    raise
+                other = None
+                if exc.code in RETRY_ERRORS and not tried_other:
+                    tried_other = True
+                    other = self.routes.pick(job.site, avoid=route.name)
+                elif exc.code in LOGIN_ERRORS and not tried_login:
+                    tried_login = True
+                    other = self.routes.pick_login(job.site, avoid=route.name)
+                if not other or other.name == route.name:
+                    raise
+                log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.name, other.name)
+                observe.ROUTE_RETRIES.labels(site_label(job.site), route.name, exc.code).inc()
+                shutil.rmtree(job_dir, ignore_errors=True)
+                job_dir.mkdir(parents=True)
+                route = other
+                job.route = route.name
+            else:
+                self.routes.record(job.site, route.name, None)
+                return total
 
     async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
         """Download and send files one by one. Returns the playlist size, if it was a playlist."""

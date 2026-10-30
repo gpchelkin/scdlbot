@@ -17,12 +17,12 @@ def load(text: str):
 
 
 def test_sample_file_is_valid():
-    found, sites = parse(tomllib.loads(SAMPLE.read_text()), Path("/data"))
+    found, sites, login = parse(tomllib.loads(SAMPLE.read_text()), Path("/data"))
     assert [route.name for route in found] == ["fin1", "fra1", "fin1-v6"]
     fra1 = found[1]
     assert fra1.ytdlp_args(Path("/job"))[:2] == ["--proxy", "http://127.0.0.1:3187"]
     assert fra1.cookies.browser == "firefox:/var/lib/scdlbot/firefox/abcd1234.default-release"  # a full path, no HOME needed
-    assert sites["YouTube"] == ["fra1"] and "SoundCloud" not in sites
+    assert sites["YouTube"] == ["fra1"] and "SoundCloud" not in sites and login == {}
 
 
 @pytest.mark.parametrize(
@@ -45,19 +45,19 @@ def test_mistakes_are_reported(text, error):
 
 
 def test_domains_and_default_are_valid_sites():
-    _, sites = load('[[routes]]\nname = "a"\n[sites]\n"mixcloud.com" = ["a"]\ndefault = ["a"]')
+    _, sites, _ = load('[[routes]]\nname = "a"\n[sites]\n"mixcloud.com" = ["a"]\ndefault = ["a"]')
     assert sites == {"mixcloud.com": ["a"], "default": ["a"]}
 
 
 def test_routes_from_old_settings():
     cfg = Config(proxies=(None, "http://user:pw@10.0.0.1:3128"), source_ips=("0.0.0.0",), cookies_file="/c.txt")
-    found, sites = from_env(cfg)
+    found, sites, login = from_env(cfg)
     assert [(route.name, route.proxy, route.source_address) for route in found] == [
         ("direct", None, "0.0.0.0"),
         ("10.0.0.1:3128", "http://user:pw@10.0.0.1:3128", "0.0.0.0"),
     ]
     assert found[1].describe() == "10.0.0.1:3128 (proxy http://10.0.0.1:3128, from 0.0.0.0, with cookies)"  # no password
-    assert from_env(Config())[0] == [Route("direct")] and sites == {}
+    assert from_env(Config())[0] == [Route("direct")] and sites == login == {}
 
 
 def test_round_robin_per_site_within_its_routes():
@@ -154,3 +154,33 @@ async def test_reload_applies_a_good_file_and_keeps_routes_on_a_broken_one(tmp_p
     await reload_routes(rt)
     assert list(pool.routes) == ["fin2"]  # the broken file changed nothing
     assert "Routes not reloaded, still using the old ones: [sites]: unknown site 'Youtube', did you mean 'YouTube'?" in caplog.text
+
+
+LOGIN = (
+    SAMPLE.read_text().replace("# [[routes]]", "[[routes]]").replace('# name = "fin1-login"', 'name = "fin1-login"')
+    .replace("# source_address", "source_address").replace("# cookies", "cookies").replace("# [login]", "[login]")
+    .replace('# Instagram = ["fin1-login"]', 'Instagram = ["fin1-login"]')
+)  # fmt: skip
+
+
+def test_sample_login_route_when_uncommented():
+    found, sites, login = load(LOGIN)
+    assert login == {"Instagram": ["fin1-login"]} and found[-1].cookies.file == Path("/etc/scdlbot/instagram-cookies.txt")
+    pool = RoutePool(found, sites, login)
+    assert pool.pick_login("Instagram").name == "fin1-login" and pool.pick_login("TikTok") is None
+    assert "fin1-login" not in {route.name for route in pool.allowed("TikTok")}  # [sites] default doesn't have it
+    no_lists = RoutePool(found, {}, login)
+    assert [route.name for route in no_lists.allowed("TikTok")] == ["fin1", "fra1", "fin1-v6"]  # never for anonymous downloads
+
+
+@pytest.mark.parametrize(
+    ("text", "error"),
+    [
+        ('[[routes]]\nname = "a"\n[login]\nInstagram = ["a"]', "route a has no cookies"),
+        ('[[routes]]\nname = "a"\ncookies = "/c.txt"\n[login]\ndefault = ["a"]', "[login]: unknown site 'default'"),
+        ('[[routes]]\nname = "a"\ncookies = "/c.txt"\n[login]\ninstagram = ["a"]', "did you mean 'Instagram'"),
+    ],
+)
+def test_login_mistakes_are_reported(text, error):
+    with pytest.raises(RoutesError, match=re.escape(error)):
+        load(text)

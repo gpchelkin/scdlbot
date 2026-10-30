@@ -30,6 +30,8 @@ AUDIO_ARGS = ["-f", "ba[ext=m4a]/ba[ext=mp3]/ba/b", "-x", "--audio-format", "m4a
 MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "2", "--embed-metadata", "--embed-thumbnail"]
 # Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
 VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
+# Unknown sites behind Cloudflare's bot check: the generic extractor fetches the page like a browser (curl_cffi):
+GENERIC_ARGS = ["--extractor-args", "generic:impersonate"]
 # Info printed as one JSON line per finished file:
 FIELDS = (
     "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url,media_type"
@@ -160,7 +162,8 @@ def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[s
         "-O", f"after_move:%(.{{{FIELDS}}})j", "--no-quiet", "--no-progress", "--no-playlist",
         "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size), "--cache-dir", str(cfg.cache_dir),
         "--ppa", f"ffmpeg:-threads {cfg.ffmpeg_threads}",
-        *(VIDEO_ARGS if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *extra, *cfg.ytdlp_args,
+        *(VIDEO_ARGS if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *GENERIC_ARGS,
+        *extra, *cfg.ytdlp_args,
     ]  # fmt: skip
 
 

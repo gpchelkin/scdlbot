@@ -15,6 +15,10 @@
 #   cookies         for sites that need a login: a cookies.txt path, a URL to download it from (every COOKIES_REFRESH
 #                   seconds), or firefox:PROFILE_DIR[:URL_OF_COOKIES_SQLITE] with the full path of a Firefox profile.
 #                   Keep a logged-in account on one route: a session jumping between IPs looks hijacked.
+#
+# Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories, posts it answers with
+# "empty media response") can go once more through a route with that site's cookies, listed in [login] below.
+# Most downloads stay anonymous that way, so the account sees only a few requests a day.
 
 [[routes]]
 name = "fin1"
@@ -29,6 +33,12 @@ cookies = "firefox:/var/lib/scdlbot/firefox/abcd1234.default-release"
 name = "fin1-v6"
 source_address = "::"
 
+# A route only for logging in to Instagram (in [login], and in no [sites] list):
+# [[routes]]
+# name = "fin1-login"
+# source_address = "0.0.0.0"
+# cookies = "/etc/scdlbot/instagram-cookies.txt"   # or firefox:/var/lib/scdlbot/firefox/PROFILE
+
 # Which routes each site may use, as the bot names sites: SoundCloud, Bandcamp, YouTube, Yandex Music, TikTok, Instagram,
 # Twitter (see SITES in scdlbot/links.py), or the domain of any other site, e.g. "mixcloud.com".
 # "default" is for every site not listed; without it, those sites use all routes.
@@ -36,3 +46,7 @@ source_address = "::"
 YouTube = ["fra1"]                       # logged in: keep the account on one IP
 Instagram = ["fin1", "fra1", "fin1-v6"]  # one of the few sites that works over IPv6
 default = ["fin1", "fra1"]               # SoundCloud, Bandcamp and Twitter have no IPv6 addresses
+
+# Routes with a site's cookies, for the downloads that site gives only to logged-in users. Each must have cookies.
+# [login]
+# Instagram = ["fin1-login"]

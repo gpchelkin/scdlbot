@@ -88,6 +88,9 @@ Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, li
 - If a site blocks a download (bot check, HTTP 403/429) or the route can't connect, it's tried once more through another route.
 - A route that a site keeps blocking is left out for that site for `ROUTE_EXCLUSION` seconds (2 hours), and the owner is told;
   if all routes of a site are left out, all of them are used anyway.
+- Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories) go once more through
+  the site's login routes (`[login]` in the routes file): routes with an account's cookies that anonymous downloads never use,
+  so the account only sees the few downloads that need it.
 - Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,
   and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`.
 - `scdlbot fetch --route NAME URL` downloads through one route, to check it.
@@ -178,9 +181,9 @@ Like [yt-dlp](https://github.com/yt-dlp/yt-dlp) that it's built on, it's a tool:
 **Instances.** Anyone can run their own bot with this code. Whoever runs a bot is its operator and is solely responsible for it:
 its settings and changes to the code, how it's used, following the law, [Telegram's terms](https://telegram.org/tos/bot-developers)
 and the terms of the sites it downloads from, and its privacy policy (see [Monitoring and stats](#monitoring-and-stats)).
-The developers of scdlbot don't run, control or answer for any bot other than @scdlbot.
+The creator of scdlbot doesn't run, control or answer for any bot other than @scdlbot.
 
-**@scdlbot.** [@scdlbot](https://t.me/scdlbot) is the bot run by the developer, George Pchelkin ([@gpchelkin](https://t.me/gpchelkin)),
+**@scdlbot.** [@scdlbot](https://t.me/scdlbot) is the bot run by its creator, George Pchelkin ([@gpchelkin](https://t.me/gpchelkin)),
 under its own [Privacy Policy](PRIVACY.md):
 
 - It only downloads what anyone can stream for free on the site, in a web browser: no paid subscriptions, paywalls or premium content.

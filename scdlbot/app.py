@@ -184,7 +184,8 @@ async def refresh_cookies(rt: Runtime) -> None:
 
 def describe_routes(pool: RoutePool) -> str:
     sites = "; ".join(f"{site}: {', '.join(names)}" for site, names in pool.sites.items())
-    return ", ".join(route.describe() for route in pool.routes.values()) + (f"; {sites}" if sites else "")
+    login = "; ".join(f"{site} login: {', '.join(names)}" for site, names in pool.login.items())
+    return "; ".join(part for part in (", ".join(route.describe() for route in pool.routes.values()), sites, login) if part)
 
 
 async def reload_routes(rt: Runtime) -> None:
@@ -193,11 +194,11 @@ async def reload_routes(rt: Runtime) -> None:
         log.info("SIGHUP: no ROUTES_FILE to reload")
         return
     try:
-        new_routes, sites = routes.load(rt.cfg)
+        new_routes, sites, login = routes.load(rt.cfg)
     except routes.RoutesError as exc:
         log.error("Routes not reloaded, still using the old ones: %s", exc)  # an error, so the owner hears about it
         return
-    rt.queue.routes.update(new_routes, sites)
+    rt.queue.routes.update(new_routes, sites, login)
     for cookies in rt.queue.routes.cookies():
         await cookies.refresh(rt.http)
     log.info("Routes reloaded: %s", describe_routes(rt.queue.routes))
