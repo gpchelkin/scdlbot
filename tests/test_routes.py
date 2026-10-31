@@ -193,8 +193,10 @@ def test_login_route_that_keeps_failing_is_left_out_until_reload():
     for _ in range(routes.LOGIN_STREAK - 1):
         pool.record("Instagram", "fin1-login", "login", "ERROR: [Instagram] x: Instagram sent an empty media response.")
     pool.record("Instagram", "fin1-login", None)  # one success: the account works
-    for _ in range(routes.LOGIN_STREAK - 1):
+    for _ in range(routes.LOGIN_STREAK - 2):
         pool.record("Instagram", "fin1-login", "restricted")
+    pool.record("Instagram", "fin1-login", "failed")  # Instagram's 401 "Please wait a few minutes", as yt-dlp reports it
+    pool.record("Instagram", "fin1-login", "unavailable")  # the post is gone: says nothing about the account
     assert watch.check(pool.attempts[-1][0] + 1) == []
     pool.record("Instagram", "fin1-login", "login", "ERROR: [Instagram] x: Instagram sent an empty media response.")
     now = pool.attempts[-1][0] + 1

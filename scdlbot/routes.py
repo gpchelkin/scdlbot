@@ -38,10 +38,13 @@ RETRY_ERRORS = frozenset({"blocked", "network"})
 ROUTE_ERRORS = RETRY_ERRORS | {"timeout"}
 # Errors that a logged-in account may not get (Instagram's "empty media response", age and audience limits, stories):
 LOGIN_ERRORS = frozenset({"login", "restricted"})
-# A login route whose last this many downloads all failed like that is probably logged out (or under a security check):
+# A login route whose last this many downloads all failed is probably logged out, blocked or under a security check:
 # it's left out for its site for a day, or until the routes file is reloaded with new cookies. Not just a few in a row:
 # even a logged-in account can't see private posts of accounts it doesn't follow.
+# Besides login errors, a blocked session may look like anything: Instagram's "Please wait a few minutes before you
+# try again" (HTTP 401) comes out of yt-dlp as "Failed to parse JSON", code "failed".
 LOGIN_STREAK = 8
+LOGIN_STREAK_ERRORS = LOGIN_ERRORS | ROUTE_ERRORS | {"failed"}
 LOGIN_EXCLUSION = 24 * 3600
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,31}")
 PROXY_SCHEMES = ("http", "https", "socks4", "socks4a", "socks5", "socks5h")
@@ -240,7 +243,7 @@ class RoutePool:
         if code and error:
             self.last_errors[(site, route)] = error
         if route in self.login.get(site, ()):
-            if code in LOGIN_ERRORS:
+            if code in LOGIN_STREAK_ERRORS:
                 self.login_failures[(site, route)] += 1
             elif code is None:
                 self.login_failures[(site, route)] = 0
@@ -323,7 +326,7 @@ class RouteWatch:
         until = datetime.fromtimestamp(now + LOGIN_EXCLUSION, UTC).strftime("%Y-%m-%d %H:%M UTC")
         text = (
             f"🔑 <b>{html.escape(site)}</b> login route <b>{html.escape(name)}</b>: the last {failures} downloads that needed a login "
-            f"failed through it too. Its account is probably logged out or under a security check: log in again, export new cookies "
+            f"failed through it too. Its account is probably logged out, blocked or under a security check: log in again, export new cookies "
             f"and reload (systemctl reload scdlbot). Until then it's left out, at most until {until}."
         )
         if last := self.pool.last_errors.get((site, name)):
