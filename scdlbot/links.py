@@ -38,6 +38,8 @@ class Site:
     # The post's link without share tracking, from yt-dlp's webpage_url and the author's @handle (NORMALIZE_URLS).
     # None: yt-dlp's webpage_url is clean already (YouTube, SoundCloud) or we can't tell what's junk (unknown sites).
     clean_url: Callable[[str, str | None], str] | None = None
+    # Links the site shows only to logged-in users: they go straight to the site's login routes ([login] in the routes file)
+    login_only: Callable[[list[str]], bool] = lambda parts: False
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -62,6 +64,10 @@ def _twitter_path(parts: list[str]) -> bool:
 def _ig_path(parts: list[str]) -> bool:
     # Posts, reels and stories, but not pages of a reel's audio track:
     return len(parts) >= 2 and parts[:2] != ["reels", "audio"]
+
+
+def _ig_stories(parts: list[str]) -> bool:
+    return parts[:1] == ["stories"]
 
 
 def _without_query(url: str, handle: str | None = None) -> str:
@@ -101,6 +107,7 @@ SITES = (
         photos=True,
         author=Author("uploader", "channel", "https://www.instagram.com/{}/"),
         clean_url=_without_query,
+        login_only=_ig_stories,
     ),
     Site(
         "Twitter",
@@ -122,6 +129,12 @@ IGNORED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", 
 def site_by_name(name: str) -> Site | None:
     """The main row of a known site (not its shortener), None for unknown sites."""
     return next((site for site in SITES if site.name == name and not site.shortener), None)
+
+
+def needs_login(url: str, site: str) -> bool:
+    """A link the site shows only to logged-in users (Instagram stories): trying it anonymously first is pointless."""
+    known = site_by_name(site)
+    return bool(known and known.login_only([part for part in urlsplit(url).path.split("/") if part]))
 
 
 def clean_url(url: str, site: str, handle: str | None = None) -> str:

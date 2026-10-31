@@ -4,7 +4,7 @@ import pytest
 from telegram import Chat, Message, MessageEntity
 
 from scdlbot.config import Config
-from scdlbot.links import AUDIO, VIDEO, classify, clean_url, find_links, resolve
+from scdlbot.links import AUDIO, VIDEO, classify, clean_url, find_links, needs_login, resolve
 
 CFG = Config()
 
@@ -155,3 +155,9 @@ async def test_resolve_t_co_like_a_non_browser():
 )  # fmt: skip
 def test_clean_url(url, site, handle, clean):
     assert clean_url(url, site, handle) == clean
+
+
+def test_links_only_for_logged_in_users():
+    assert needs_login("https://www.instagram.com/stories/moda_center/4019824129981216758?utm_source=ig_story_item_share", "Instagram")
+    assert not needs_login("https://www.instagram.com/reel/DezbaVWtsM3/", "Instagram")
+    assert not needs_login("https://example.com/stories/x/1", "example.com")

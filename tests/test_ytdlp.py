@@ -14,6 +14,7 @@ from scdlbot.ytdlp import build_command, classify_error, command_for_logs, to_it
         ("ERROR: [generic] Unsupported URL: https://example.com/", "unsupported"),
         ("ERROR: [youtube] x: Sign in to confirm you're not a bot. Use --cookies-from-browser", "blocked"),
         ("ERROR: [youtube] x: Private video. Sign in if you've been granted access to this video", "login"),
+        ("ERROR: [instagram:story] 4019824129981216758: Unable to extract user id; please report this issue on", "login"),
         ("ERROR: [soundcloud] a/b: Unable to download JSON metadata: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)", "blocked"),
         ("ERROR: [instagram:story] x: Unable to download webpage: HTTP Error 429: Too Many Requests", "blocked"),
         ("ERROR: [TikTok] 1: Your IP address is blocked from accessing this post", "blocked"),

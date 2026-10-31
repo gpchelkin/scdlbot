@@ -19,6 +19,7 @@
 # Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories, posts it answers with
 # "empty media response") can go once more through a route with that site's cookies, listed in [login] below.
 # Most downloads stay anonymous that way, so the account sees only a few requests a day.
+# Instagram stories, which Instagram never shows anonymously, go straight to the login routes.
 
 [[routes]]
 name = "fin1"

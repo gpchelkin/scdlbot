@@ -20,7 +20,7 @@ from telegram.error import Forbidden, TelegramError
 from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
-from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, site_by_name
+from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, needs_login, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.routes import LOGIN_ERRORS, RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
@@ -133,7 +133,8 @@ class JobQueue:
     async def _run(self, job: Job) -> None:
         started = time.monotonic()
         observe.QUEUE_WAIT_SECONDS.observe(max(0, time.time() - job.created_at))
-        route = self.routes.pick(job.site)
+        login_only = needs_login(job.url, job.site)
+        route = (login_only and self.routes.pick_login(job.site)) or self.routes.pick(job.site)
         job.route = route.name
         await self.db.start_job(job)
         self.last_progress = time.monotonic()
@@ -144,7 +145,7 @@ class JobQueue:
         try:
             try:
                 async with asyncio.timeout(self.cfg.job_timeout):
-                    total = await self._download_through(job, job_dir, sender, route)
+                    total = await self._download_through(job, job_dir, sender, route, login_only)
             except DownloadError as exc:
                 error = exc.code
                 self.last_errors[job.site] = str(exc)
@@ -179,10 +180,11 @@ class JobQueue:
             await self._report(job, total)
             await self._delete_wait_message(job)
 
-    async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
+    async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route, login_only: bool = False) -> int | None:
         """Download through the job's route. If it fails before anything was sent, try once more:
         through another route of the site if the site blocked it or it couldn't connect,
-        and through a login route of the site ([login] in the routes file) if the site wants a login."""
+        and through a login route of the site ([login] in the routes file) if the site wants a login.
+        Links only for logged-in users (login_only) start on a login route and stay on login routes."""
         tried_other = tried_login = False
         while True:
             try:
@@ -194,7 +196,7 @@ class JobQueue:
                 other = None
                 if exc.code in RETRY_ERRORS and not tried_other:
                     tried_other = True
-                    other = self.routes.pick(job.site, avoid=route.name)
+                    other = self.routes.pick_login(job.site, avoid=route.name) if login_only else self.routes.pick(job.site, avoid=route.name)
                 elif exc.code in LOGIN_ERRORS and not tried_login:
                     tried_login = True
                     other = self.routes.pick_login(job.site, avoid=route.name)

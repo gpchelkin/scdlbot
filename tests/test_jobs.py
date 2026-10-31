@@ -316,3 +316,18 @@ async def test_sites_without_login_routes_are_not_tried_again(setup):
     queue.routes.turns["TikTok"] = 0  # fin1: restricted, and TikTok has no login route
     job = await run(needs_login(), site="TikTok", url="https://www.tiktok.com/@u/video/1", kind="video")
     assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")
+
+
+async def test_stories_go_straight_to_the_login_route(setup):
+    cfg, db, bot, queue, run = setup
+    with_login_route(queue, cfg.dl_dir.parent / "instagram-cookies.txt")
+    download = needs_login()
+    job = await run(download, site="Instagram", url="https://www.instagram.com/stories/moda_center/4019824129981216758", kind="video")
+    assert (job.status, job.route, download.calls) == ("done", "fin1-login", ["login"])  # no anonymous try first
+
+
+async def test_stories_without_login_routes_still_go_anonymous(setup):
+    cfg, db, bot, queue, run = setup
+    two_routes(queue)
+    job = await run(needs_login(), site="Instagram", url="https://www.instagram.com/stories/moda_center/1", kind="video")
+    assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")

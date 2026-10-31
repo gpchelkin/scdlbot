@@ -90,7 +90,8 @@ Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, li
   if all routes of a site are left out, all of them are used anyway.
 - Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories) go once more through
   the site's login routes (`[login]` in the routes file): routes with an account's cookies that anonymous downloads never use,
-  so the account only sees the few downloads that need it. When the last 8 downloads through a login route all failed
+  so the account only sees the few downloads that need it. Instagram stories, which Instagram never shows anonymously,
+  go straight to the login routes. When the last 8 downloads through a login route all failed
   that way too, its account is probably logged out: the route is left out for a day (or until a reload) and the owner is told.
   [`tools/instagram_cookies.py`](tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
 - Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,

@@ -73,7 +73,8 @@ ERRORS = (
             "couldn't connect",
         ),
     ),
-    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video")),
+    # "Unable to extract user id": Instagram stories without a login, with the stories fix of yt-dlp PR 17885
+    ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "unable to extract user id")),
     (
         "unavailable",
         ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available"),
