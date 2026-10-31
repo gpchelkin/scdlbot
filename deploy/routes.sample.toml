@@ -33,7 +33,9 @@ cookies = "firefox:/var/lib/scdlbot/firefox/abcd1234.default-release"
 name = "fin1-v6"
 source_address = "::"
 
-# A route only for logging in to Instagram (in [login], and in no [sites] list):
+# A route only for logging in to Instagram (in [login], and in no [sites] list). tools/instagram_cookies.py makes
+# cookies.txt files from accounts bought "with cookies"; use one account per IP. A login route that keeps failing
+# (its account logged out) is left out for a day, or until the next reload, and the owner is told.
 # [[routes]]
 # name = "fin1-login"
 # source_address = "0.0.0.0"

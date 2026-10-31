@@ -158,7 +158,7 @@ async def test_reload_applies_a_good_file_and_keeps_routes_on_a_broken_one(tmp_p
 
 LOGIN = (
     SAMPLE.read_text().replace("# [[routes]]", "[[routes]]").replace('# name = "fin1-login"', 'name = "fin1-login"')
-    .replace("# source_address", "source_address").replace("# cookies", "cookies").replace("# [login]", "[login]")
+    .replace("# source_address", "source_address").replace("# cookies = ", "cookies = ").replace("# [login]", "[login]")
     .replace('# Instagram = ["fin1-login"]', 'Instagram = ["fin1-login"]')
 )  # fmt: skip
 
@@ -184,3 +184,25 @@ def test_sample_login_route_when_uncommented():
 def test_login_mistakes_are_reported(text, error):
     with pytest.raises(RoutesError, match=re.escape(error)):
         load(text)
+
+
+def test_login_route_that_keeps_failing_is_left_out_until_reload():
+    found, sites, login = load(LOGIN.replace('Instagram = ["fin1-login"]', 'Instagram = ["fin1-login", "fra1"]'))
+    pool = RoutePool(found, sites, login)
+    watch = RouteWatch(pool, min_jobs=20, ratio=0.2, exclusion=7200)
+    for _ in range(routes.LOGIN_STREAK - 1):
+        pool.record("Instagram", "fin1-login", "login", "ERROR: [Instagram] x: Instagram sent an empty media response.")
+    pool.record("Instagram", "fin1-login", None)  # one success: the account works
+    for _ in range(routes.LOGIN_STREAK - 1):
+        pool.record("Instagram", "fin1-login", "restricted")
+    assert watch.check(pool.attempts[-1][0] + 1) == []
+    pool.record("Instagram", "fin1-login", "login", "ERROR: [Instagram] x: Instagram sent an empty media response.")
+    now = pool.attempts[-1][0] + 1
+    (message,) = watch.check(now)
+    assert message.startswith("🔑 <b>Instagram</b> login route <b>fin1-login</b>: the last 8 downloads that needed a login failed")
+    assert "empty media response" in message
+    assert pool.excluded("Instagram", "fin1-login", now + 23 * 3600)
+    assert {pool.pick_login("Instagram").name for _ in range(3)} == {"fra1"}  # the other account
+    assert routes.observe.ROUTE_UP.labels("Instagram", "fin1-login")._value.get() == 0
+    pool.update(found, sites, {"Instagram": ["fin1-login", "fra1"]})  # reloaded with new cookies
+    assert not pool.excluded("Instagram", "fin1-login")

@@ -38,6 +38,11 @@ RETRY_ERRORS = frozenset({"blocked", "network"})
 ROUTE_ERRORS = RETRY_ERRORS | {"timeout"}
 # Errors that a logged-in account may not get (Instagram's "empty media response", age and audience limits, stories):
 LOGIN_ERRORS = frozenset({"login", "restricted"})
+# A login route whose last this many downloads all failed like that is probably logged out (or under a security check):
+# it's left out for its site for a day, or until the routes file is reloaded with new cookies. Not just a few in a row:
+# even a logged-in account can't see private posts of accounts it doesn't follow.
+LOGIN_STREAK = 8
+LOGIN_EXCLUSION = 24 * 3600
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,31}")
 PROXY_SCHEMES = ("http", "https", "socks4", "socks4a", "socks5", "socks5h")
 
@@ -175,6 +180,7 @@ class RoutePool:
         self.turns: Counter[str] = Counter()  # round robin position of each site
         self.attempts: deque[tuple[float, str, str, str | None]] = deque()  # (time, site, route, error code or None)
         self.last_errors: dict[tuple[str, str], str] = {}
+        self.login_failures: Counter[tuple[str, str]] = Counter()  # (site, login route): failures in a row
         self.update(routes, sites, login or {})
 
     def update(self, routes: list[Route], sites: dict[str, list[str]], login: dict[str, list[str]] | None = None) -> None:
@@ -182,7 +188,10 @@ class RoutePool:
         self.routes = {route.name: route for route in routes}
         self.sites = sites
         self.login = login or {}
-        self.exclusions = {key: until for key, until in self.exclusions.items() if key[1] in self.routes}
+        # A reload is how new cookies come in, so login routes get another chance:
+        login_routes = {name for names in self.login.values() for name in names}
+        self.exclusions = {key: until for key, until in self.exclusions.items() if key[1] in self.routes and key[1] not in login_routes}
+        self.login_failures.clear()
         self.set_gauges()
 
     def cookies(self) -> list[Cookies]:
@@ -230,6 +239,11 @@ class RoutePool:
             self.attempts.popleft()
         if code and error:
             self.last_errors[(site, route)] = error
+        if route in self.login.get(site, ()):
+            if code in LOGIN_ERRORS:
+                self.login_failures[(site, route)] += 1
+            elif code is None:
+                self.login_failures[(site, route)] = 0
         observe.ROUTE_ATTEMPTS.labels(site_label(site), route, code or "ok").inc()
 
     def stats(self, since: float) -> dict[tuple[str, str], Counter]:
@@ -245,6 +259,9 @@ class RoutePool:
         for site in [*sorted(SITE_NAMES | {s for s in self.sites if s != DEFAULT}), "other"]:
             for route in self.allowed(site):
                 observe.ROUTE_UP.labels(site, route.name).set(0 if self.excluded(site, route.name, now) else 1)
+        for site, names in self.login.items():
+            for name in names:
+                observe.ROUTE_UP.labels(site, name).set(0 if self.excluded(site, name, now) else 1)
 
 
 class RouteWatch:
@@ -285,6 +302,12 @@ class RouteWatch:
                 pool.exclusions[(site, name)] = now + self.exclusion
                 messages.append(self._message(site, name, codes, ROUTE_ERRORS, now))
 
+        for (site, name), failures in sorted(pool.login_failures.items()):
+            if failures >= LOGIN_STREAK and not pool.excluded(site, name, now):
+                pool.exclusions[(site, name)] = now + LOGIN_EXCLUSION
+                pool.login_failures[(site, name)] = 0
+                messages.append(self._login_message(site, name, failures, now))
+
         for site in sorted({site for site, _ in stats} | self.fail_open):
             allowed = pool.allowed(site)
             if all(pool.excluded(site, route.name, now) for route in allowed):
@@ -295,6 +318,17 @@ class RouteWatch:
                 self.fail_open.discard(site)
         pool.set_gauges(now)
         return messages
+
+    def _login_message(self, site: str, name: str, failures: int, now: float) -> str:
+        until = datetime.fromtimestamp(now + LOGIN_EXCLUSION, UTC).strftime("%Y-%m-%d %H:%M UTC")
+        text = (
+            f"🔑 <b>{html.escape(site)}</b> login route <b>{html.escape(name)}</b>: the last {failures} downloads that needed a login "
+            f"failed through it too. Its account is probably logged out or under a security check: log in again, export new cookies "
+            f"and reload (systemctl reload scdlbot). Until then it's left out, at most until {until}."
+        )
+        if last := self.pool.last_errors.get((site, name)):
+            text += f"\nLast error: <code>{html.escape(last[:400])}</code>"
+        return text
 
     def _worse(self, codes: Counter, others: list[Counter], bad_codes: set[str] | frozenset[str]) -> bool:
         total, bad = sum(codes.values()), sum(count for code, count in codes.items() if code in bad_codes)
