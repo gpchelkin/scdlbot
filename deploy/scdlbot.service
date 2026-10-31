@@ -1,0 +1,47 @@
+# systemd service for scdlbot. Install:
+#   sudo cp deploy/scdlbot.service /etc/systemd/system/scdlbot.service
+#   sudo cp .env.sample /etc/default/scdlbot && sudo nano /etc/default/scdlbot
+#   sudo systemctl daemon-reload && sudo systemctl enable --now scdlbot
+#   journalctl -u scdlbot -f
+
+[Unit]
+Description=scdlbot Telegram bot
+Wants=network-online.target
+After=network-online.target telegram-bot-api.service
+
+[Service]
+# The bot reports READY=1 when started and pings the watchdog only while its workers make progress,
+# so systemd restarts it if it ever gets stuck.
+Type=notify
+NotifyAccess=main
+WatchdogSec=120
+Restart=always
+RestartSec=5
+# SIGTERM only the bot: it kills its own downloads and puts them back in the queue for after the restart.
+KillMode=mixed
+TimeoutStopSec=30
+# If the kernel kills a download for memory, keep the service running (the default stops the whole unit):
+OOMPolicy=continue
+
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/default/scdlbot
+# DB_PATH is relative to this directory unless set to an absolute path:
+StateDirectory=scdlbot
+WorkingDirectory=/var/lib/scdlbot
+# ffmpeg, ffprobe and deno must be in PATH:
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/scdlbot/.venv/bin/scdlbot
+# systemctl reload scdlbot: read ROUTES_FILE again without a restart
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Resource limits (3 vCPU, 4 GB RAM box). Downloads run as child processes, so they count here too.
+# No MemoryHigh: without swap it throttles every process in the service, the bot included, until nothing moves.
+# At MemoryMax the kernel kills one process, and downloads are marked to be killed first.
+CPUQuota=250%
+MemoryMax=3100M
+TasksMax=infinity
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,39 @@
+# Dev tasks: `mise tasks` lists them, `mise run <task>` runs one.
+# Python comes from pyenv (.python-version), poetry from its own installer, ffmpeg from the system.
+
+[tools]
+deno = "2"  # JS runtime yt-dlp needs for YouTube
+
+[tasks.install]
+description = "Create .venv with pyenv's Python and install all dependencies"
+run = ['poetry env use "$(pyenv which python)"', "poetry sync"]
+
+[tasks.dev]
+description = "Run the bot locally with settings from .env-dev"
+env = { _.file = ".env-dev" }
+run = "poetry run scdlbot"
+
+[tasks.fetch]
+description = "Download one URL exactly like the bot does, without Telegram (into ./downloads)"
+env = { _.file = ".env-dev" }
+usage = """
+arg "<url>" help="Link to download"
+flag "--route <route>" help="Download through this route of ROUTES_FILE"
+"""
+run = 'poetry run scdlbot fetch "${usage_url}" ${usage_route:+--route "$usage_route"}'
+
+[tasks.lint]
+description = "Check code style"
+run = ["poetry run ruff check .", "poetry run ruff format --check ."]
+
+[tasks.fmt]
+description = "Fix code style"
+run = ["poetry run ruff check --fix .", "poetry run ruff format ."]
+
+[tasks.test]
+description = "Run tests"
+run = "poetry run pytest"
+
+[tasks.update]
+description = "Update dependencies (yt-dlp from master too)"
+run = "poetry update"
