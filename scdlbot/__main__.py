@@ -14,7 +14,7 @@ from scdlbot import routes
 from scdlbot.config import Config
 from scdlbot.links import AUDIO, PHOTO, VIDEO, classify, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
-from scdlbot.ytdlp import DownloadError, download, to_item
+from scdlbot.ytdlp import DownloadError, download, to_item, video_height
 
 
 async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, route_name: str | None = None) -> None:
@@ -37,7 +37,8 @@ async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, rout
             await route.cookies.refresh(client)
     photos = bool((known := site_by_name(site)) and known.photos)
     try:
-        async with aclosing(download(url, kind, out, cfg, route.ytdlp_args(out), photos, mp3)) as infos:
+        height = video_height(link.kind if link else AUDIO)
+        async with aclosing(download(url, kind, out, cfg, route.ytdlp_args(out), photos, mp3, height=height)) as infos:
             async for info in infos:
                 item = to_item(info, kind, site)
                 if item.kind == VIDEO:

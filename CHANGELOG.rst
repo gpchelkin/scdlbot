@@ -17,6 +17,11 @@ Rewritten from scratch.
 * routes: proxies and source IPs with their own cookies, per-site route lists, round robin, retry through another route,
   routes left out while a site blocks them, login routes for downloads that need an account (ROUTES_FILE, reloaded on SIGHUP);
   no need for HOME anymore
+* modes Auto (was Download), Auto + ask about video (the new default in private chats), and Ask: YouTube videos come
+  as video (480p) on request, with the 🎵 Audio / 🎬 Video buttons or the /video command
+  (chats on Auto, private ones by default and groups by choice, are switched to Auto + ask about video once,
+  marked in chats.previous_mode)
+* longer timeouts by default, for long videos: DL_TIMEOUT 35 minutes per file, JOB_TIMEOUT 40 minutes per job
 * requires Python 3.14+
 
 0.15.0 (2023-02-20)

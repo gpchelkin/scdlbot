@@ -161,3 +161,12 @@ def test_links_only_for_logged_in_users():
     assert needs_login("https://www.instagram.com/stories/moda_center/4019824129981216758?utm_source=ig_story_item_share", "Instagram")
     assert not needs_login("https://www.instagram.com/reel/DezbaVWtsM3/", "Instagram")
     assert not needs_login("https://example.com/stories/x/1", "example.com")
+
+
+def test_which_links_have_a_video_besides_the_audio():
+    def video(url):
+        return classify(url, CFG, unknown_sites=True).video
+
+    assert video("https://www.youtube.com/watch?v=jNQXAC9IVRw") and video("https://youtu.be/x") and video("https://vimeo.com/76979871")
+    assert not video("https://soundcloud.com/a/b") and not video("https://www.youtube.com/shorts/x")  # audio only / video already
+    assert not video("https://www.tiktok.com/@u/video/1")

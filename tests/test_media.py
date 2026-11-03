@@ -37,3 +37,26 @@ async def test_sender_skips_files_that_disappeared(tmp_path):
     await sender.flush()
     assert (sender.sent, sender.failed) == (1, 1)
     assert bot.names() == ["send_photo"]
+
+
+async def test_long_videos_are_not_re_encoded(tmp_path):
+    from scdlbot.media import ensure_h264
+
+    item = Item(tmp_path / "long.mp4", "video", vcodec="vp9", duration=3600)
+    assert await ensure_h264(item, Config()) is item  # sent as it is, without even probing the file
+
+
+async def test_re_encode_that_runs_out_of_time_sends_the_original(tmp_path, monkeypatch):
+    from scdlbot import media
+
+    async def probe(path):
+        return {"streams": [{"codec_type": "video", "codec_name": "vp9"}]}
+
+    async def run(*cmd, timeout):
+        assert timeout == 1200  # as long as the video, more than DL_TIMEOUT
+        raise TimeoutError
+
+    monkeypatch.setattr(media, "probe", probe)
+    monkeypatch.setattr(media, "run", run)
+    item = Item(tmp_path / "twenty_minutes.webm", "video", vcodec="vp9", duration=1200)
+    assert await media.ensure_h264(item, Config(dl_timeout=300)) is item

@@ -30,7 +30,7 @@ class FakeBot:
 
 
 def fake_download(count: int, error: str | None = None, delay: float = 0, playlist_count: int | None = None):
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
         for n in range(count):
             await asyncio.sleep(delay)
             path = job_dir / f"{n}.m4a"
@@ -119,7 +119,7 @@ async def test_youtube_has_its_own_pool(setup):
 def fake_instagram_post(kinds: str):
     """kinds like "pvp": photo, video, photo; one entry each, as yt-dlp.download yields them."""
 
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
         assert photos  # Instagram asks for photos
         for n, k in enumerate(kinds, start=1):
             path = job_dir / f"{n:03d}.{'jpg' if k == 'p' else 'mp4'}"
@@ -180,7 +180,7 @@ async def test_short_behind_a_youtu_be_link_goes_out_as_video(setup):
     cfg, db, bot, queue, run = setup
     kinds = []
 
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
         kinds.append(kind)
         path = job_dir / ("short.mp4" if kind == "video" else "short.m4a")
         path.write_bytes(b"x" * 100)
@@ -239,7 +239,7 @@ def blocked_through(route_arg: str, then_items: int = 1):
     """A download that the site blocks when it goes through the given route (seen in yt-dlp's arguments)."""
     calls = []
 
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
         calls.append(list(extra))
         if route_arg in extra:
             raise DownloadError("blocked", "ERROR: [soundcloud] x: HTTP Error 403: Forbidden")
@@ -287,7 +287,7 @@ def needs_login():
     """A download the site blocks through the proxy, and gives only to logged-in users (with --cookies)."""
     calls = []
 
-    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False):
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
         calls.append("login" if "--cookies" in extra else "fra1" if "--proxy" in extra else "fin1")
         if "--proxy" in extra:
             raise DownloadError("blocked", "ERROR: [Instagram] x: HTTP Error 429: Too Many Requests")
@@ -331,3 +331,32 @@ async def test_stories_without_login_routes_still_go_anonymous(setup):
     two_routes(queue)
     job = await run(needs_login(), site="Instagram", url="https://www.instagram.com/stories/moda_center/1", kind="video")
     assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")
+
+
+def recording_download(vcodec: str = "avc1.4D401F"):
+    """A one-video download that remembers the kind and height it was asked for."""
+    asked = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
+        asked.append((kind, options.get("height")))
+        path = job_dir / "v.mp4"
+        path.write_bytes(b"x" * 100)
+        yield {"filepath": str(path), "title": "Clip", "duration": 60, "vcodec": vcodec, "width": 854, "height": 480}
+
+    download.asked = asked
+    return download
+
+
+async def test_videos_of_audio_sites_are_480p_and_short_videos_720p(setup):
+    cfg, db, bot, queue, run = setup
+    download = recording_download()
+    await run(download, kind="video", url="https://www.youtube.com/watch?v=jNQXAC9IVRw")
+    await run(download, kind="video", site="TikTok", url="https://www.tiktok.com/@u/video/1")
+    assert download.asked == [("video", 480), ("video", 720)]
+    assert [name for name in bot.names() if name.startswith("send_")] == ["send_video", "send_video"]
+
+
+async def test_video_of_an_audio_only_site_goes_out_as_audio(setup):
+    cfg, db, bot, queue, run = setup
+    job = await run(recording_download(vcodec="none"), kind="video", site="mixcloud.com", url="https://www.mixcloud.com/dj/set/")
+    assert job.status == "done" and bot.names()[0] == "send_audio"

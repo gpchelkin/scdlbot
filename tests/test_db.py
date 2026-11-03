@@ -22,7 +22,7 @@ def make_job(**kwargs) -> Job:
 async def test_chat_settings_defaults_and_updates():
     db = await DB.open(":memory:")
     settings = await db.touch_chat(1, "private", default_captions=True)
-    assert (settings.mode, settings.captions, settings.unknown_sites) == ("dl", True, False)
+    assert (settings.mode, settings.captions, settings.unknown_sites) == ("ask_video", True, False)
     settings = await db.touch_chat(-5, "supergroup", default_captions=False)
     assert (settings.mode, settings.captions) == ("ask", False)
     await db.set_chat(-5, mode="dl", captions=True, unknown_sites=True)
@@ -77,6 +77,35 @@ async def test_migration_from_first_version(tmp_path):
     assert ("en", 1) in await db.languages(days=10_000)
     await db.touch_chat(3, "private", default_captions=True)
     assert (await db._all("SELECT imported FROM chats WHERE chat_id = 3"))[0][0] == 0
+    await db.close()
+
+
+async def test_chats_on_auto_get_asked_about_video_and_can_be_switched_back(tmp_path):
+    path = tmp_path / "v5.sqlite3"
+    chats = [
+        (-1, "group", "dl"), (-2, "supergroup", "dl"), (-3, "supergroup", "ask"), (-4, "supergroup", None), (-5, "channel", "dl"), (-6, "channel", None),
+        (6, "private", "dl"), (7, "private", None), (8, "private", "ask"),
+    ]  # fmt: skip
+    with sqlite3.connect(path) as conn:  # before Auto + ask about video
+        conn.executescript("; ".join(MIGRATIONS[:5]) + "; PRAGMA user_version = 5;")
+        conn.executemany("INSERT INTO chats (chat_id, type, mode, first_seen, last_seen) VALUES (?, ?, ?, 0, 0)", chats)
+    db = await DB.open(path)
+    rows = await db._all("SELECT chat_id, mode, previous_mode FROM chats ORDER BY chat_id")
+    assert [tuple(row) for row in rows] == [
+        (-6, None, None),  # channels and groups were on Ask by default
+        (-5, "dl", None),  # a channel would get questions under its posts
+        (-4, None, None),
+        (-3, "ask", None),
+        (-2, "ask_video", "dl"),
+        (-1, "ask_video", "dl"),
+        (6, "ask_video", "dl"),
+        (7, "ask_video", "dl"),  # Auto was the default in private chats
+        (8, "ask", None),
+    ]
+    await db.set_chat(-2, mode="ask_video")  # now it's the chat's own choice
+    await db._run("UPDATE chats SET mode = previous_mode, previous_mode = NULL WHERE previous_mode IS NOT NULL")  # undo, see MIGRATIONS
+    rows = await db._all("SELECT chat_id, mode, previous_mode FROM chats WHERE chat_id IN (-2, -1, 7) ORDER BY chat_id")
+    assert [tuple(row) for row in rows] == [(-2, "ask_video", None), (-1, "dl", None), (7, "dl", None)]
     await db.close()
 
 

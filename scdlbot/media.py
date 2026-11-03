@@ -88,8 +88,13 @@ async def ensure_jpeg(item: Item, cfg: Config) -> Item:
 
 
 async def ensure_h264(item: Item, cfg: Config) -> Item:
-    """Telegram iOS can't play VP9 and chokes on HEVC, so re-encode anything that isn't h264."""
+    """Telegram iOS can't play VP9 and chokes on HEVC, so re-encode anything that isn't h264.
+    One CPU core re-encodes 480p about 8 times faster than it plays (hetbot, 2026-11): 30 minutes take ~4 minutes.
+    Videos longer than MAX_REENCODE_DURATION are sent as they are: they play everywhere but on iOS."""
     if item.vcodec and item.vcodec.startswith(("avc1", "h264")):
+        return item
+    if (item.duration or 0) > cfg.max_reencode_duration:
+        log.info("Not re-encoding %s (%s): longer than %d s", item.path.name, item.vcodec, cfg.max_reencode_duration)
         return item
     info = await probe(item.path)
     video = next((s for s in info.get("streams", []) if s.get("codec_type") == "video"), None)
@@ -98,13 +103,17 @@ async def ensure_h264(item: Item, cfg: Config) -> Item:
     codec = str(video.get("codec_name"))
     log.info("Re-encoding %s (%s %sx%s) to h264", item.path.name, codec, video.get("width"), video.get("height"))
     output = item.path.with_name(item.path.stem + ".h264.mp4")
-    code, _ = await run(
-        "ffmpeg", "-v", "error", "-y", "-i", str(item.path),
-        "-c:v", "libx264", "-crf", "24", "-preset", "veryfast", "-c:a", "copy", "-movflags", "+faststart", "-threads", str(cfg.ffmpeg_threads),
-        str(output), timeout=cfg.dl_timeout,
-    )  # fmt: skip
-    observe.REENCODES.labels(codec, "failed" if code else "ok").inc()
-    if code:
+    try:
+        code, _ = await run(
+            "ffmpeg", "-v", "error", "-y", "-i", str(item.path),
+            "-c:v", "libx264", "-crf", "24", "-preset", "veryfast", "-c:a", "copy", "-movflags", "+faststart", "-threads", str(cfg.ffmpeg_threads),
+            str(output), timeout=max(cfg.dl_timeout, item.duration or 0),  # up to the video's duration: plenty, even for 720p
+        )  # fmt: skip
+        result = "failed" if code else "ok"
+    except TimeoutError:
+        result = "timeout"
+    observe.REENCODES.labels(codec, result).inc()
+    if result != "ok":
         return item  # send it as is, better than nothing
     item.path.unlink(missing_ok=True)
     return replace(item, path=output, vcodec="h264", width=video.get("width"), height=video.get("height"))

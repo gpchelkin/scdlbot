@@ -2,7 +2,7 @@
 
 import html
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import httpx
 from telegram import (
@@ -25,7 +25,7 @@ from scdlbot import db, observe, texts
 from scdlbot.config import Config
 from scdlbot.db import DB, ChatSettings, Job
 from scdlbot.jobs import JobQueue
-from scdlbot.links import Link, find_links, resolve
+from scdlbot.links import VIDEO, Link, classify, find_links, resolve
 
 log = logging.getLogger(__name__)
 HTML = ParseMode.HTML
@@ -108,7 +108,9 @@ def settings_keyboard(settings: ChatSettings) -> InlineKeyboardMarkup:
 
     return InlineKeyboardMarkup(
         [
-            [radio("dl", "Download"), radio("ask", "Ask")],
+            [radio("dl", "Auto")],
+            [radio("ask_video", "Auto + ask about video")],
+            [radio("ask", "Ask")],
             [toggle("unknown_sites", settings.unknown_sites, "Unknown sites"), toggle("captions", settings.captions, "Captions")],
             [toggle("mp3", settings.mp3, "Always MP3")],
             [InlineKeyboardButton("❌ Close settings", callback_data="settings:close")],
@@ -119,8 +121,11 @@ def settings_keyboard(settings: ChatSettings) -> InlineKeyboardMarkup:
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     rt = runtime(context)
     observe.UPDATES.labels("settings").inc()
-    settings = await chat_settings(rt, update.effective_chat)
-    await context.bot.send_message(update.effective_chat.id, texts.SETTINGS, parse_mode=HTML, reply_markup=settings_keyboard(settings))
+    chat = update.effective_chat
+    settings = await chat_settings(rt, chat)
+    here = " (like this one)"
+    text = texts.SETTINGS.format(private=here if chat.type == Chat.PRIVATE else "", group=here if chat.type in (Chat.GROUP, Chat.SUPERGROUP) else "")
+    await context.bot.send_message(chat.id, text, parse_mode=HTML, reply_markup=settings_keyboard(settings))
 
 
 async def settings_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -141,7 +146,7 @@ async def settings_button(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await query.message.delete()
         return
     settings = await chat_settings(rt, chat)
-    if action in ("dl", "ask") and action != settings.mode:
+    if action in ("dl", "ask_video", "ask") and action != settings.mode:
         await rt.db.set_chat(chat.id, mode=action)
     elif action == "captions":
         await rt.db.set_chat(chat.id, captions=not settings.captions)
@@ -168,6 +173,11 @@ async def dl_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await handle_links(update, context, trigger="cmd")
 
 
+async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/video: like /dl, but links with a video (YouTube) come as video, like the 🎬 button."""
+    await handle_links(update, context, trigger="video")
+
+
 async def mention_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """ "@bot" in reply to a message with links: e.g. the links were sent while the bot was down or not in the chat yet."""
     if mentions_bot(update.effective_message, context.bot):
@@ -190,7 +200,8 @@ def is_own_forward(message: Message, bot_id: int) -> bool:
 
 
 async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, trigger: str) -> None:
-    """trigger: "msg" (a message with links), "cmd" (/dl) or "mention" (@bot). The last two download right away, whatever the mode."""
+    """trigger: "msg" (a message with links), "cmd" (/dl), "video" (/video) or "mention" (@bot).
+    All but "msg" download right away, whatever the mode."""
     rt = runtime(context)
     message, chat, user = update.effective_message, update.effective_chat, update.effective_user
     explicit = trigger != "msg"
@@ -207,6 +218,8 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, trigg
         source = message.reply_to_message
         links = find_links(source, rt.cfg, settings.unknown_sites)
     links = await resolve_short_links(rt, links, settings.unknown_sites)
+    if trigger == "video":
+        links = [replace(link, kind=VIDEO) if link.video else link for link in links]
     mode = "dl" if explicit else settings.mode
     observe.UPDATES.labels(f"{mode}_{trigger}").inc()
     if user:
@@ -215,10 +228,12 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE, trigg
         if (explicit and (context.args or source is not message)) or (not explicit and chat.type == Chat.PRIVATE):
             await context.bot.send_message(chat.id, texts.NO_URLS, parse_mode=HTML, reply_parameters=reply_to(message.message_id))
         return
-    if mode == "ask":
-        await ask(rt, context, chat, user, source, links, settings)
-    else:
-        await enqueue(rt, context, chat, user, source, links, settings)
+    # Video only on request: links with a video (YouTube) come as audio, unless someone presses 🎬 Video
+    asked = links if mode == "ask" else [link for link in links if link.video] if mode == "ask_video" else []
+    if rest := [link for link in links if link not in asked]:
+        await enqueue(rt, context, chat, user, source, rest, settings)
+    if asked:
+        await ask(rt, context, chat, user, source, asked, settings)
 
 
 async def resolve_short_links(rt: Runtime, links: list[Link], unknown_sites: bool) -> list[Link]:
@@ -263,12 +278,19 @@ async def enqueue(rt: Runtime, context, chat: Chat, user: User | None, source: M
 
 
 async def ask(rt: Runtime, context, chat: Chat, user: User | None, source: Message, links: list[Link], settings: ChatSettings) -> None:
+    """Save the links as "asked" jobs and offer buttons; links with a video (YouTube) get a choice of audio or video."""
     for link in links:
         await rt.db.add_job(new_job(chat, user, source, link, settings, "asked"))
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("⬇️ Download", callback_data=f"ask:dl:{source.message_id}"), InlineKeyboardButton("❌", callback_data=f"ask:no:{source.message_id}")]]
-    )
-    await context.bot.send_message(chat.id, texts.ASK, reply_markup=keyboard, reply_parameters=reply_to(source.message_id))
+    no = InlineKeyboardButton("❌", callback_data=f"ask:no:{source.message_id}")
+    if any(link.video for link in links):
+        buttons = [
+            InlineKeyboardButton("🎵 Audio", callback_data=f"ask:dl:{source.message_id}"),
+            InlineKeyboardButton("🎬 Video", callback_data=f"ask:video:{source.message_id}"),
+            no,
+        ]
+    else:
+        buttons = [InlineKeyboardButton("⬇️ Download", callback_data=f"ask:dl:{source.message_id}"), no]
+    await context.bot.send_message(chat.id, texts.ASK, reply_markup=InlineKeyboardMarkup([buttons]), reply_parameters=reply_to(source.message_id))
 
 
 async def ask_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -279,7 +301,7 @@ async def ask_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if not rt.cfg.chat_allowed(chat.id):
         await query.answer(texts.NOT_ALLOWED)
         return
-    if action != "dl":
+    if action not in ("dl", "video"):
         await rt.db.cancel_asked(chat.id, int(message_id))
         await query.answer()
         await delete_quietly(query.message)
@@ -289,6 +311,10 @@ async def ask_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await query.answer(texts.OLD_MESSAGE)
         await delete_quietly(query.message)
         return
+    if action == "video":  # links with a video get it; the rest (SoundCloud, TikTok...) as usual
+        for job in jobs:
+            if (link := classify(job.url, rt.cfg, unknown_sites=True)) and link.video:
+                await rt.db.set_kind(job, VIDEO)
     allowed, reason = rt.queue.room_for(jobs[0].owner, len(jobs))
     for job in jobs[allowed:]:
         job.status, job.error = "rejected", reason

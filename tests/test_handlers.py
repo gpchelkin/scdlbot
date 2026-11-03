@@ -36,11 +36,16 @@ def message(chat: Chat, text: str = LINKS, entities=ENTITIES, message_id: int = 
     return Message(message_id, datetime.now(UTC), chat, from_user=USER, text=text, entities=entities, **kwargs)
 
 
-async def test_download_mode_in_private_chat(env):
+async def auto_mode(rt: Runtime, chat: Chat) -> None:
+    await rt.db.touch_chat(chat.id, chat.type, default_captions=True)
+    await rt.db.set_chat(chat.id, mode="dl")
+
+
+async def test_private_chats_download_and_ask_about_video_by_default(env):
     rt, bot, context = env
     await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
-    assert rt.queue.size() == 2
-    assert bot.names() == ["send_message"]  # "wait a bit"
+    assert rt.queue.size() == 1  # SoundCloud; the YouTube link waits for 🎵 or 🎬
+    assert bot.names() == ["send_message", "send_message"]  # "wait a bit", then the question
     assert await rt.db.active_users() == {"day": 1, "week": 1, "month": 1}
     assert await rt.db.languages() == [("ru", 1)]
 
@@ -82,6 +87,7 @@ async def test_user_limit(env):
     rt, bot, context = env
     rt.cfg = Config(max_user_jobs=1)
     rt.queue.cfg = rt.cfg
+    await auto_mode(rt, Chat(7, Chat.PRIVATE))
     await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
     assert rt.queue.size() == 1
     await handlers.links_message(Update(2, message=message(Chat(7, Chat.PRIVATE), message_id=13)), context)
@@ -91,6 +97,7 @@ async def test_user_limit(env):
 
 async def test_stats_for_owner_only(env):
     rt, bot, context = env
+    await auto_mode(rt, Chat(7, Chat.PRIVATE))
     await handlers.links_message(Update(1, message=message(Chat(7, Chat.PRIVATE))), context)
     await handlers.stats_command(Update(2, message=message(Chat(7, Chat.PRIVATE), text="/stats", entities=[])), context)
     assert bot.names() == ["send_message"]  # only the "wait a bit" reply: user 7 is not the owner
@@ -138,3 +145,73 @@ async def test_privacy_command_and_help_link_to_the_policy(env):
     policy = 'href="https://example.com/privacy?a=1&amp;b=2"'
     assert policy in privacy and "README.md#disclaimer" in privacy and "for 30 days" in privacy
     assert policy in help_text and "/privacy" in help_text and "electrocircle_online" in help_text
+
+
+def queued(rt: Runtime) -> list[tuple[str, str]]:
+    return sorted((job.site, job.kind) for queue in rt.queue.queues.values() for job in list(queue._queue))
+
+
+def buttons(bot) -> list[str]:
+    return [button.callback_data for button in bot.calls[-1][2]["reply_markup"].inline_keyboard[0]]
+
+
+async def press(rt: Runtime, bot, context, chat: Chat, data: str) -> None:
+    prompt = message(chat, text="🎶 links found, what to do?", entities=[], message_id=99)
+    prompt.set_bot(bot)
+    query = CallbackQuery("q1", USER, "chat", message=prompt, data=data)
+    query.set_bot(bot)
+    await handlers.ask_button(Update(3, callback_query=query), context)
+
+
+async def test_video_only_on_request(env):
+    rt, bot, context = env
+    private, group = Chat(7, Chat.PRIVATE), Chat(-100, Chat.SUPERGROUP)
+    await auto_mode(rt, private)
+    await handlers.links_message(Update(1, message=message(private)), context)
+    assert queued(rt) == [("SoundCloud", "audio"), ("YouTube", "audio")]
+
+    command = message(private, text="/video", entities=[MessageEntity(MessageEntity.BOT_COMMAND, 0, 6)], message_id=12, reply_to_message=message(private))
+    await handlers.video_command(Update(5, message=command), context)
+    assert queued(rt) == [("SoundCloud", "audio"), ("SoundCloud", "audio"), ("YouTube", "audio"), ("YouTube", "video")]
+
+    await handlers.links_message(Update(2, message=message(group, message_id=20)), context)  # Ask by default in groups
+    assert buttons(bot) == ["ask:dl:20", "ask:video:20", "ask:no:20"]
+    await press(rt, bot, context, group, "ask:video:20")
+    rows = await rt.db._all("SELECT site, kind FROM jobs WHERE message_id = 20 ORDER BY site")
+    assert [tuple(row) for row in rows] == [("SoundCloud", "audio"), ("YouTube", "video")]  # only the link that has a video
+
+    sc = "https://soundcloud.com/a/b"
+    await handlers.links_message(Update(4, message=message(group, text=sc, entities=[MessageEntity(MessageEntity.URL, 0, len(sc))], message_id=30)), context)
+    assert buttons(bot) == ["ask:dl:30", "ask:no:30"]  # audio only: nothing to choose
+
+
+async def test_auto_and_ask_about_video_mode(env):
+    rt, bot, context = env
+    group = Chat(-100, Chat.SUPERGROUP)
+    await rt.db.touch_chat(group.id, group.type, default_captions=True)
+    await rt.db.set_chat(group.id, mode="ask_video")
+    await handlers.links_message(Update(1, message=message(group, message_id=20)), context)
+    assert queued(rt) == [("SoundCloud", "audio")]  # downloaded right away
+    assert bot.names() == ["send_message", "send_message"]  # "wait a bit", then the question about the YouTube link
+    assert buttons(bot) == ["ask:dl:20", "ask:video:20", "ask:no:20"]
+    await press(rt, bot, context, group, "ask:video:20")
+    assert queued(rt) == [("SoundCloud", "audio"), ("YouTube", "video")]
+
+    await handlers.links_message(Update(4, message=message(group, text=LINKS.split()[0], entities=ENTITIES[:1], message_id=30)), context)
+    assert "reply_markup" not in bot.calls[-1][2]  # "wait a bit": nothing with a video, nothing to ask
+    assert len(queued(rt)) == 3
+
+
+async def test_settings_mode_buttons(env):
+    rt, bot, context = env
+    chat = Chat(7, Chat.PRIVATE)
+    await handlers.settings_command(Update(1, message=message(chat, text="/settings", entities=[])), context)
+    assert "for <b>private chats</b> (like this one) and <b>Ask</b> for <b>group chats</b>." in bot.calls[-1][1][1]
+    prompt = message(chat, text="settings", entities=[], message_id=40)
+    prompt.set_bot(bot)
+    query = CallbackQuery("q2", USER, "chat", message=prompt, data="settings:dl")
+    query.set_bot(bot)
+    await handlers.settings_button(Update(2, callback_query=query), context)
+    assert (await rt.db.touch_chat(7, "private", default_captions=True)).mode == "dl"
+    keyboard = bot.calls[-1][2]["reply_markup"].inline_keyboard
+    assert [row[0].text for row in keyboard[:3]] == ["🟢 Auto", "🟡 Auto + ask about video", "🟡 Ask"]

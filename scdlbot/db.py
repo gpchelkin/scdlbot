@@ -18,7 +18,7 @@ MIGRATIONS = (
     CREATE TABLE chats (
         chat_id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
-        mode TEXT,                -- NULL: default ('dl' in private chats, 'ask' in groups)
+        mode TEXT,                -- NULL: default (see touch_chat)
         captions INTEGER,         -- NULL: default (off for NO_FLOOD_CHAT_IDS)
         unknown_sites INTEGER NOT NULL DEFAULT 0,
         first_seen INTEGER NOT NULL,
@@ -71,6 +71,12 @@ MIGRATIONS = (
     "ALTER TABLE chats ADD COLUMN imported INTEGER NOT NULL DEFAULT 0;",
     # The route (proxy or source IP, see routes.py) the job's download went through, the last one if it was tried again:
     "ALTER TABLE jobs ADD COLUMN route TEXT;",
+    # The chat's mode from before the bot changed it, so the change can be undone; NULL once the chat picks a mode in /settings.
+    # Chats on Auto (private chats by default, groups by choice) get Auto + ask about video, to discover video downloads.
+    # Channels keep Auto: questions would show up under their posts. To undo, for the chats that kept it:
+    #   UPDATE chats SET mode = previous_mode, previous_mode = NULL WHERE previous_mode IS NOT NULL;
+    "ALTER TABLE chats ADD COLUMN previous_mode TEXT; "
+    "UPDATE chats SET previous_mode = 'dl', mode = 'ask_video' WHERE (mode = 'dl' AND type != 'channel') OR (mode IS NULL AND type = 'private');",
 )
 
 ACTIVE = ("queued", "running")
@@ -130,7 +136,7 @@ JOB_COLUMNS = [f.name for f in fields(Job) if f.name != "id"]
 
 @dataclass(frozen=True)
 class ChatSettings:
-    mode: str  # "dl" | "ask"
+    mode: str  # "dl" (Auto) | "ask_video" (Auto, but ask whether to send YouTube links as audio or video) | "ask"
     captions: bool
     unknown_sites: bool
     mp3: bool = False
@@ -172,7 +178,7 @@ class DB:
             (chat_id, chat_type, now(), now()),
         )
         return ChatSettings(
-            mode=row["mode"] or ("dl" if chat_type == "private" else "ask"),
+            mode=row["mode"] or ("ask_video" if chat_type == "private" else "ask"),
             captions=default_captions if row["captions"] is None else bool(row["captions"]),
             unknown_sites=bool(row["unknown_sites"]),
             mp3=bool(row["mp3"]),
@@ -183,6 +189,8 @@ class DB:
         for column, value in values.items():
             if value is not None:
                 await self._run(f"UPDATE chats SET {column} = ? WHERE chat_id = ?", (value, chat_id))
+        if mode is not None:  # the chat's own choice now
+            await self._run("UPDATE chats SET previous_mode = NULL WHERE chat_id = ?", (chat_id,))
 
     async def chat_left(self, chat_id: int) -> None:
         await self._run("UPDATE chats SET left_at = ? WHERE chat_id = ?", (now(), chat_id))
@@ -208,6 +216,10 @@ class DB:
             (wait_message_id, chat_id, message_id),
         )
         return sorted((Job.from_row(r) for r in rows), key=lambda j: j.id)
+
+    async def set_kind(self, job: Job, kind: str) -> None:
+        job.kind = kind
+        await self._run("UPDATE jobs SET kind = ? WHERE id = ?", (kind, job.id))
 
     async def cancel_asked(self, chat_id: int, message_id: int) -> int:
         return await self._run(

@@ -120,6 +120,13 @@ def test_to_item_source_urls():
     assert to_item({"filepath": "/a.m4a"}, "audio", "SoundCloud").source_url is None
 
 
+def test_build_command_video_height():
+    long = build_command("https://youtu.be/x", "video", Path("/tmp/job"), Config(), [], height=480)
+    assert long[long.index("-S") + 1] == "vcodec:h264,res:480,acodec:aac,ext:mp4:m4a"
+    short = build_command("https://www.tiktok.com/@u/video/1", "video", Path("/tmp/job"), Config(), [])
+    assert short[short.index("-S") + 1] == "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a"
+
+
 def test_build_command_always_mp3():
     command = build_command("https://youtu.be/x", "audio", Path("/tmp/job"), Config(), [], mp3=True)
     assert command[command.index("--audio-format") + 1] == "mp3" and command[command.index("--audio-quality") + 1] == "2"

@@ -10,6 +10,7 @@ import time
 from collections import Counter
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager, aclosing, suppress
+from dataclasses import replace
 from pathlib import Path
 
 import httpx
@@ -20,11 +21,11 @@ from telegram.error import Forbidden, TelegramError
 from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
-from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, needs_login, site_by_name
+from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, classify, needs_login, site_by_name
 from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.routes import LOGIN_ERRORS, RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
-from scdlbot.ytdlp import DownloadError, download, to_item
+from scdlbot.ytdlp import SHORT_VIDEO_HEIGHT, DownloadError, download, to_item, video_height
 
 log = logging.getLogger(__name__)
 
@@ -212,7 +213,7 @@ class JobQueue:
                 self.routes.record(job.site, route.name, None)
                 return total
 
-    async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route) -> int | None:
+    async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route, height: int | None = None) -> int | None:
         """Download and send files one by one. Returns the playlist size, if it was a playlist."""
         if job.site == "Twitter":
             async with self.http_client(route) as client:
@@ -229,7 +230,9 @@ class JobQueue:
         total = None
         short = False
         url = twitter.for_ytdlp(job.url) if job.site == "Twitter" else job.url
-        async with aclosing(download(url, job.kind, job_dir, self.cfg, extra, photos, bool(job.mp3))) as infos:
+        if not height:  # lower for videos of links that are audio by default (YouTube), which can be long
+            height = video_height(link.kind if (link := classify(job.url, self.cfg, unknown_sites=True)) else AUDIO)
+        async with aclosing(download(url, job.kind, job_dir, self.cfg, extra, photos, bool(job.mp3), height=height)) as infos:
             async for info in infos:
                 self.last_progress = time.monotonic()
                 if job.kind == AUDIO and info.get("media_type") == "short" and info.get("playlist_index") is None:
@@ -238,6 +241,8 @@ class JobQueue:
                     short = True
                     break
                 item = to_item(info, job.kind, job.site)
+                if item.kind == VIDEO and item.vcodec == "none":  # asked for video, but the site only had audio
+                    item = replace(item, kind=AUDIO)
                 total = item.playlist_count
                 if item.kind == VIDEO:
                     item = await ensure_h264(item, self.cfg)
@@ -251,7 +256,7 @@ class JobQueue:
                     await sender.add(part)
         if short:
             job.kind = VIDEO  # counted as a video in stats too
-            return await self._download(job, job_dir, sender, route)
+            return await self._download(job, job_dir, sender, route, SHORT_VIDEO_HEIGHT)
         return total
 
     async def _report(self, job: Job, total: int | None) -> None:

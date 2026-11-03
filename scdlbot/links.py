@@ -40,6 +40,7 @@ class Site:
     clean_url: Callable[[str, str | None], str] | None = None
     # Links the site shows only to logged-in users: they go straight to the site's login routes ([login] in the routes file)
     login_only: Callable[[list[str]], bool] = lambda parts: False
+    video: bool = False  # audio by default, but there's a video too: the ask modes offer 🎬 Video (see /settings)
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -93,10 +94,10 @@ SITES = (
     Site("SoundCloud", ("api.soundcloud.com",)),
     Site("SoundCloud", ("soundcloud.com",), path_ok=_sc_path),
     Site("Bandcamp", ("bandcamp.com",), path_ok=lambda p: len(p) == 2),
-    Site("YouTube", ("youtu.be",), pool="youtube"),
+    Site("YouTube", ("youtu.be",), pool="youtube", video=True),
     # Shorts are videos, like reels (shorts behind other YouTube links are re-downloaded as videos, see jobs):
     Site("YouTube", ("youtube.com",), kind=VIDEO, path_ok=_yt_shorts_path, pool="youtube"),
-    Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube"),
+    Site("YouTube", ("youtube.com",), path_ok=_yt_path, pool="youtube", video=True),
     Site("Yandex Music", ("music.yandex.ru", "music.yandex.com")),
     Site("TikTok", ("tiktok.com",), kind=VIDEO, author=Author("channel", "uploader", "https://www.tiktok.com/@{}"), clean_url=_tiktok_url),
     Site(
@@ -149,6 +150,7 @@ class Link:
     site: str
     kind: str
     shortener: bool = False
+    video: bool = False  # see Site.video; unknown sites may have video too
 
 
 def _host_matches(host: str, domain: str) -> bool:
@@ -178,9 +180,9 @@ def classify(url: str, cfg: Config, unknown_sites: bool) -> Link | None:
     path_parts = [p for p in parts.path.split("/") if p]
     sites = [site for site in SITES if any(_host_matches(host, d) for d in site.domains)]
     if site := next((site for site in sites if site.path_ok(path_parts)), None):
-        return Link(url, site.name, site.kind, site.shortener)
+        return Link(url, site.name, site.kind, site.shortener, site.video)
     if unknown_sites and not sites:  # a known site's rules apply even when unknown sites are allowed
-        return Link(url, host, AUDIO)
+        return Link(url, host, AUDIO, video=True)
     return None
 
 

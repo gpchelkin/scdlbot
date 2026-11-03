@@ -7,7 +7,8 @@
 
 Telegram bot that downloads audio of tracks, sets, albums, videos and playlists from SoundCloud, Bandcamp, YouTube
 and [anything yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), with tags and artwork.
-Videos from TikTok, Instagram, Twitter and YouTube Shorts are sent as videos, Instagram and Twitter photos as photos and albums,
+Videos from TikTok, Instagram, Twitter and YouTube Shorts are sent as videos (other YouTube videos too, at 480p, with the 🎬 Video button or `/video`),
+Instagram and Twitter photos as photos and albums,
 text-only tweets as text,
 with the author (`Author: Name (@handle)`, linked to the profile) and the post's text in the caption.
 
@@ -31,6 +32,8 @@ update → handlers.py (parse links, save a job row, enqueue, reply "wait a bit"
   and the exact command is logged, so you can reproduce any failure in a shell.
 - SQLite ([`db.py`](scdlbot/db.py)) keeps chat settings, the job queue (jobs resume after a restart) and stats.
 - Audio stays in its original m4a or mp3 when possible (no re-encoding); anything else becomes mp3.
+- Video is h264 in mp4: up to 720p for short videos (TikTok, reels, Shorts), 480p for the rest (YouTube, ~4 MB a minute).
+  Videos without h264 are re-encoded up to 30 minutes long (`MAX_REENCODE_DURATION`); longer ones are sent as they are.
 - YouTube downloads have their own small worker pool (`YOUTUBE_WORKERS`): each runs deno (~250 MB) to solve
   YouTube's JS challenges, so their number is limited without making other sites wait behind them.
 

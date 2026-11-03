@@ -1,4 +1,5 @@
 dl - <links> or reply to a message with links: download now
+video - <links> or reply to a message with links: download YouTube as video
 settings - change mode and captions
 help - show the help message
 privacy - privacy policy and disclaimer

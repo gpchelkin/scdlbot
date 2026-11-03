@@ -51,14 +51,15 @@ class Config:
     dl_dir: Path = Path("/tmp/scdlbot")
     workers: int = 4
     youtube_workers: int = 2  # YouTube downloads run deno (~250 MB each) to solve JS challenges
-    dl_timeout: int = 300  # seconds per downloaded item
-    job_timeout: int = 1800  # seconds per whole job (e.g. an album)
+    dl_timeout: int = 2100  # seconds per downloaded item (a long video can take a while)
+    job_timeout: int = 2400  # seconds per whole job (e.g. an album)
     max_tg_file_size: int = 45_000_000
     max_convert_file_size: int = 350_000_000  # bigger downloads are skipped
     max_playlist_items: int = 50
     max_queue: int = 500
     max_user_jobs: int = 5
     ffmpeg_threads: int = 1
+    max_reencode_duration: int = 1800  # seconds; longer videos without h264 are sent as they are
     ytdlp_args: tuple[str, ...] = ()
     # Source links in captions: the post's own link without share tracking (?si=, ?igsh=, TikTok's u_code...),
     # short links expanded, each playlist item linked to itself:
@@ -121,8 +122,8 @@ class Config:
             dl_dir=Path(_str("DL_DIR", "/tmp/scdlbot")).expanduser(),
             workers=max(1, _int("WORKERS", 4)),
             youtube_workers=max(1, _int("YOUTUBE_WORKERS", 2)),
-            dl_timeout=_int("DL_TIMEOUT", 300),
-            job_timeout=_int("JOB_TIMEOUT", 1800),
+            dl_timeout=_int("DL_TIMEOUT", 2100),
+            job_timeout=_int("JOB_TIMEOUT", 2400),
             # Bot API limit is 50 MB; a local Bot API server allows 2000 MB:
             max_tg_file_size=_int("MAX_TG_FILE_SIZE", 1_900_000_000 if local_mode else 45_000_000),
             max_convert_file_size=_int("MAX_CONVERT_FILE_SIZE", 350_000_000),
@@ -130,6 +131,7 @@ class Config:
             max_queue=_int("MAX_QUEUE", 500),
             max_user_jobs=max(1, _int("MAX_USER_JOBS", 5)),
             ffmpeg_threads=_int("FFMPEG_THREADS", 1),
+            max_reencode_duration=_int("MAX_REENCODE_DURATION", 1800),
             ytdlp_args=tuple(shlex.split(_str("YTDLP_ARGS"))),
             normalize_urls=_bool("NORMALIZE_URLS", True),
             hidden_source_links=_bool("HIDDEN_SOURCE_LINKS", True),

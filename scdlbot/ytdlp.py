@@ -28,8 +28,20 @@ AUDIO_ARGS = ["-f", "ba[ext=m4a]/ba[ext=mp3]/ba/b", "-x", "--audio-format", "m4a
 # "Always MP3" setting, for players that don't know m4a: the best audio, converted to VBR V2 mp3 (~200 kbps on average).
 # LAME picks the bitrate per frame; the sources are 128-160 kbps AAC/Opus, so CBR 320 would only make files ~1.6x bigger.
 MP3_ARGS = ["-f", "ba/b", "-x", "--audio-format", "mp3", "--audio-quality", "2", "--embed-metadata", "--embed-thumbnail"]
-# Prefer h264 + AAC in mp4, which plays everywhere in Telegram:
-VIDEO_ARGS = ["-S", "vcodec:h264,res:720,acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
+# Prefer h264 + AAC in mp4, which plays everywhere in Telegram. Up to 720p for short videos (TikTok, reels, Shorts),
+# 480p for videos of sites that are audio by default (YouTube): they can be hours long, ~4 MB a minute at 480p.
+SHORT_VIDEO_HEIGHT, LONG_VIDEO_HEIGHT = 720, 480
+
+
+def video_args(height: int = SHORT_VIDEO_HEIGHT) -> list[str]:
+    return ["-S", f"vcodec:h264,res:{height},acodec:aac,ext:mp4:m4a", "--merge-output-format", "mp4"]
+
+
+def video_height(default_kind: str) -> int:
+    """Video quality for a link: short videos come from sites whose links are video by default."""
+    return SHORT_VIDEO_HEIGHT if default_kind == VIDEO else LONG_VIDEO_HEIGHT
+
+
 # Unknown sites behind Cloudflare's bot check: the generic extractor fetches the page like a browser (curl_cffi):
 GENERIC_ARGS = ["--extractor-args", "generic:impersonate"]
 # Info printed as one JSON line per finished file:
@@ -156,14 +168,14 @@ def command_for_logs(command: list[str]) -> str:
     return shlex.join(url_for_logs(arg) if previous == "--proxy" else arg for previous, arg in zip(["", *command[:-1]], command, strict=True))
 
 
-def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False, mp3: bool = False) -> list[str]:
+def build_command(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str], photos: bool = False, mp3: bool = False, height: int = SHORT_VIDEO_HEIGHT) -> list[str]:
     return [
         sys.executable, "-m", "yt_dlp", "--ignore-config", url,
         "-P", str(job_dir), "-o", "%(playlist_index|)03d%(playlist_index&_|)s%(title).80B [%(id)s].%(ext)s",
         "-O", f"after_move:%(.{{{FIELDS}}})j", "--no-quiet", "--no-progress", "--no-playlist",
         "-I", f"1:{cfg.max_playlist_items}", "--max-filesize", str(cfg.max_convert_file_size), "--cache-dir", str(cfg.cache_dir),
         "--ppa", f"ffmpeg:-threads {cfg.ffmpeg_threads}",
-        *(VIDEO_ARGS if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *GENERIC_ARGS,
+        *(video_args(height) if kind == VIDEO else MP3_ARGS if mp3 else AUDIO_ARGS), *(PHOTO_ARGS if photos else ()), *GENERIC_ARGS,
         *extra, *cfg.ytdlp_args,
     ]  # fmt: skip
 
@@ -180,13 +192,15 @@ async def _collect(stream: asyncio.StreamReader, tail: deque[str], errors: list[
         _remember(line.decode(errors="replace").rstrip(), tail, errors)
 
 
-async def download(url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = (), photos: bool = False, mp3: bool = False) -> AsyncIterator[dict]:
+async def download(
+    url: str, kind: str, job_dir: Path, cfg: Config, extra: list[str] = (), photos: bool = False, mp3: bool = False, height: int = SHORT_VIDEO_HEIGHT
+) -> AsyncIterator[dict]:
     """Yield yt-dlp info (with "filepath") for every finished file; raise DownloadError if nothing or not everything was downloaded.
 
     With photos=True, photos are yielded too, with "_photo": True.
     Use with contextlib.aclosing(), so the process is killed as soon as the caller stops iterating.
     """
-    command = build_command(url, kind, job_dir, cfg, list(extra), photos, mp3)
+    command = build_command(url, kind, job_dir, cfg, list(extra), photos, mp3, height)
     log.info("Running: %s", command_for_logs(command))
     process = await asyncio.create_subprocess_exec(
         *command, stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
