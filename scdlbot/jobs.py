@@ -23,7 +23,7 @@ from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, classify, needs_login, site_by_name
-from scdlbot.media import ensure_h264, ensure_jpeg, has_audio, split
+from scdlbot.media import ensure_h264, ensure_jpeg, fill_video_info, has_audio, split
 from scdlbot.routes import LOGIN_ERRORS, RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
 from scdlbot.ytdlp import SHORT_VIDEO_HEIGHT, DownloadError, download, to_item, video_height
@@ -266,7 +266,7 @@ class JobQueue:
                     item = replace(item, silent=True)
                 total = item.playlist_count
                 if item.kind == VIDEO:
-                    item = await ensure_h264(item, self.cfg)
+                    item = await ensure_h264(await fill_video_info(item), self.cfg)
                 elif item.kind == PHOTO:
                     item = await ensure_jpeg(item, self.cfg)
                 parts = await split(item, self.cfg)

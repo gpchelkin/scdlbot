@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from scdlbot.config import Config
-from scdlbot.media import Item, ensure_jpeg
+from scdlbot.media import Item, ensure_jpeg, fill_video_info
 
 
 def make_webp(path: Path) -> Path:
@@ -20,6 +20,25 @@ async def test_ensure_jpeg_converts_webp(tmp_path):
     assert item.path == tmp_path / "001_photo.jpg" and item.path.exists() and not webp.exists()
     jpeg = await ensure_jpeg(item, Config())
     assert jpeg is item  # already fine, untouched
+
+
+def make_videos(tmp_path: Path) -> tuple[Path, Path]:
+    """A 2-second 36x64 h264 video, and the same one turned sideways like a phone records it."""
+    plain, rotated = tmp_path / "reel.mp4", tmp_path / "phone.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=red:s=36x64:d=2", "-c:v", "libx264", str(plain)], check=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-display_rotation", "90", "-i", str(plain), "-c", "copy", str(rotated)], check=True)
+    return plain, rotated
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
+async def test_videos_without_size_get_it_from_the_file(tmp_path):
+    plain, rotated = make_videos(tmp_path)
+    item = await fill_video_info(Item(plain, "video"))  # Instagram's progressive formats come like this
+    assert (item.vcodec, item.width, item.height, item.duration) == ("h264", 36, 64, 2)
+    item = await fill_video_info(Item(rotated, "video", duration=5))
+    assert (item.width, item.height, item.duration) == (64, 36, 5)  # turned sideways; what yt-dlp knew stays
+    known = Item(plain, "video", duration=2, width=720, height=1280, vcodec="avc1")
+    assert await fill_video_info(known) is known
 
 
 async def test_sender_skips_files_that_disappeared(tmp_path):

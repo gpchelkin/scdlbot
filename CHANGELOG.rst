@@ -26,6 +26,8 @@ Rewritten from scratch.
 * MAX_CONVERT_FILE_SIZE is 1000 MB by default with a local Bot API server (still 350 MB without one)
 * videos that come without sound (sites mute licensed music in some countries) are tried through the site's other routes;
   if every route gets them silent, they go out with a note
+* videos get their size and duration from the file when the site doesn't say (Instagram),
+  so Telegram for iOS no longer squeezes them into a square
 * requires Python 3.14+
 
 0.15.0 (2023-02-20)

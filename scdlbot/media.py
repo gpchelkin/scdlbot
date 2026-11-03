@@ -83,6 +83,27 @@ async def has_audio(path: Path) -> bool:
     return streams is None or any(stream.get("codec_type") == "audio" for stream in streams)
 
 
+def display_size(stream: dict) -> tuple[int | None, int | None]:
+    """Width and height as players show the video: phones record sideways and store the rotation next to it."""
+    rotation = next((data["rotation"] for data in stream.get("side_data_list", []) if "rotation" in data), 0)
+    width, height = stream.get("width"), stream.get("height")
+    return (height, width) if abs(int(rotation)) % 180 == 90 else (width, height)
+
+
+async def fill_video_info(item: Item) -> Item:
+    """Some formats come without codec, size or duration (Instagram's progressive mp4s), so get them from the file.
+    Telegram takes the size from the request, and iOS squeezes a video without one into a square."""
+    if item.vcodec and item.width and item.height and item.duration:
+        return item
+    info = await probe(item.path)
+    video = next((s for s in info.get("streams", []) if s.get("codec_type") == "video"), None)
+    if not video:
+        return item
+    width, height = display_size(video)
+    duration = item.duration or round(float(info.get("format", {}).get("duration") or 0)) or None
+    return replace(item, vcodec=item.vcodec or video.get("codec_name"), width=item.width or width, height=item.height or height, duration=duration)
+
+
 async def ensure_jpeg(item: Item, cfg: Config) -> Item:
     """Telegram takes JPEG and PNG photos; Instagram also serves WebP and HEIC."""
     if item.path.suffix.lower() in (".jpg", ".jpeg", ".png"):
@@ -124,7 +145,8 @@ async def ensure_h264(item: Item, cfg: Config) -> Item:
     if result != "ok":
         return item  # send it as is, better than nothing
     item.path.unlink(missing_ok=True)
-    return replace(item, path=output, vcodec="h264", width=video.get("width"), height=video.get("height"))
+    width, height = display_size(video)  # ffmpeg applies the rotation while re-encoding
+    return replace(item, path=output, vcodec="h264", width=width, height=height)
 
 
 async def split(item: Item, cfg: Config) -> list[Item]:
