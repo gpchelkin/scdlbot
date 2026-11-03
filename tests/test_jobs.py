@@ -393,3 +393,54 @@ async def test_video_of_an_audio_only_site_goes_out_as_audio(setup):
     cfg, db, bot, queue, run = setup
     job = await run(recording_download(vcodec="none"), kind="video", site="mixcloud.com", url="https://www.mixcloud.com/dj/set/")
     assert job.status == "done" and bot.names()[0] == "send_audio"
+
+
+def muted_through(*silent_routes: str):
+    """A video that comes without sound through these routes (seen in yt-dlp's arguments), and with it through the others."""
+    calls = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
+        route = "fra1" if "--proxy" in extra else "fin1"
+        calls.append(route)
+        path = job_dir / f"reel.{'silent' if route in silent_routes else 'sound'}.mp4"
+        path.write_bytes(b"x" * 100)
+        yield {"filepath": str(path), "title": "Reel", "vcodec": "avc1", "acodec": "none" if route in silent_routes else "mp4a.40.5"}
+
+    download.calls = calls
+    return download
+
+
+@pytest.fixture
+def ffprobe_sound(monkeypatch):
+    async def has_audio(path: Path) -> bool:
+        return "silent" not in path.name
+
+    monkeypatch.setattr(jobs_module, "has_audio", has_audio)
+
+
+async def test_video_without_sound_is_tried_through_another_route(setup, ffprobe_sound):
+    cfg, db, bot, queue, run = setup
+    two_routes(queue)
+    queue.routes.turns["Instagram"] = 0  # fin1 first: Instagram muted the reel's music there
+    download = muted_through("fin1")
+    job = await run(download, site="Instagram", url="https://www.instagram.com/reel/x/", kind="video")
+    assert (job.status, job.route, download.calls) == ("done", "fra1", ["fin1", "fra1"])
+    assert "without sound" not in bot.calls[0][2]["caption"]
+
+
+async def test_video_without_sound_through_every_route_goes_out_with_a_note(setup, ffprobe_sound, monkeypatch):
+    cfg, db, bot, queue, run = setup
+    two_routes(queue)
+    download = muted_through("fin1", "fra1")
+    job = await run(download, site="Instagram", url="https://www.instagram.com/reel/x/", kind="video")
+    assert (job.status, len(download.calls)) == ("done", 2)  # the last route's video goes out, no third download
+    assert "🔇 Sorry, Instagram gave me this video without sound." in bot.calls[0][2]["caption"]
+
+    async def no_tweet(url, client):
+        return None  # not from Twitter's embed endpoint: a video tweet goes to yt-dlp
+
+    monkeypatch.setattr(jobs_module.twitter, "fetch", no_tweet)
+    download = muted_through("fin1", "fra1")  # Twitter GIFs have no sound by design: no retry, no note
+    job = await run(download, site="Twitter", url="https://twitter.com/u/status/1", kind="video")
+    assert (job.status, len(download.calls)) == ("done", 1)
+    assert "without sound" not in bot.calls[-2][2]["caption"]

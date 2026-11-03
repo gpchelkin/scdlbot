@@ -38,6 +38,7 @@ class Item:
     playlist_count: int | None = None
     part: tuple[int, int] | None = None  # (number, total) when split
     short: bool = False  # a YouTube Short (yt-dlp's media_type), for metrics
+    silent: bool = False  # a video that came without sound from every route (the site muted it)
 
     @property
     def size(self) -> int:
@@ -74,6 +75,12 @@ async def run(*cmd: str, timeout: float) -> tuple[int, str]:
 async def probe(path: Path) -> dict:
     code, out = await run("ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(path), timeout=60)
     return json.loads(out) if code == 0 and out else {}
+
+
+async def has_audio(path: Path) -> bool:
+    """True if the file has a sound track, or ffprobe can't tell."""
+    streams = (await probe(path)).get("streams")
+    return streams is None or any(stream.get("codec_type") == "audio" for stream in streams)
 
 
 async def ensure_jpeg(item: Item, cfg: Config) -> Item:

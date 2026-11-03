@@ -23,7 +23,7 @@ from scdlbot import observe, texts, twitter
 from scdlbot.config import Config
 from scdlbot.db import DB, Job
 from scdlbot.links import AUDIO, PHOTO, SITES, VIDEO, classify, needs_login, site_by_name
-from scdlbot.media import ensure_h264, ensure_jpeg, split
+from scdlbot.media import ensure_h264, ensure_jpeg, has_audio, split
 from scdlbot.routes import LOGIN_ERRORS, RETRY_ERRORS, Route, RoutePool, site_label
 from scdlbot.sender import Sender
 from scdlbot.ytdlp import SHORT_VIDEO_HEIGHT, DownloadError, download, to_item, video_height
@@ -187,11 +187,15 @@ class JobQueue:
         through another route of the site if the site blocked it or it couldn't connect,
         and through a login route of the site ([login] in the routes file) if the site wants a login,
         and through the same route without its cookies if the site gave the account nothing to download.
+        A video without sound is tried through every other route of the site, until one gets the sound.
         Links only for logged-in users (login_only) start on a login route and stay on login routes."""
         tried_other = tried_login = tried_anonymous = False
+        silent: set[str] = set()  # routes the video came without sound through
         while True:
             try:
-                total = await self._download(job, job_dir, sender, route)
+                # Through the last route left, a video without sound is sent as it is:
+                last_try = not self.routes.untried(job.site, silent | {route.name}, login_only or tried_login)
+                total = await self._download(job, job_dir, sender, route, allow_silent=last_try)
             except DownloadError as exc:
                 self.routes.record(job.site, route.name, exc.code, str(exc))
                 if sender.sent or sender.failed or sender.album:
@@ -209,6 +213,9 @@ class JobQueue:
                     # YouTube gives logged-in clients only DRM formats of some videos (2026-11), anonymous ones get them all
                     tried_anonymous = True
                     other = replace(route, cookies=None)
+                if exc.code == "no_audio":  # sites mute videos with licensed music in some countries: another route may get it
+                    silent.add(route.name)
+                    other = self.routes.untried(job.site, silent, login_only or tried_login)
                 if not other:
                     raise
                 log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.describe(), other.describe())
@@ -221,8 +228,9 @@ class JobQueue:
                 self.routes.record(job.site, route.name, None)
                 return total
 
-    async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route, height: int | None = None) -> int | None:
-        """Download and send files one by one. Returns the playlist size, if it was a playlist."""
+    async def _download(self, job: Job, job_dir: Path, sender: Sender, route: Route, height: int | None = None, allow_silent: bool = True) -> int | None:
+        """Download and send files one by one. Returns the playlist size, if it was a playlist.
+        Without allow_silent, a video without sound (not part of a playlist) raises "no_audio" instead of going out."""
         if job.site == "Twitter":
             async with self.http_client(route) as client:
                 if (tweet := await twitter.fetch(job.url, client)) and not tweet.has_video:
@@ -251,6 +259,11 @@ class JobQueue:
                 item = to_item(info, job.kind, job.site)
                 if item.kind == VIDEO and item.vcodec == "none":  # asked for video, but the site only had audio
                     item = replace(item, kind=AUDIO)
+                if item.kind == VIDEO and info.get("acodec") in ("none", None) and not (site and site.gifs) and not await has_audio(item.path):
+                    if not allow_silent and item.playlist_index is None:
+                        item.path.unlink(missing_ok=True)
+                        raise DownloadError("no_audio", "the video came without sound")
+                    item = replace(item, silent=True)
                 total = item.playlist_count
                 if item.kind == VIDEO:
                     item = await ensure_h264(item, self.cfg)
@@ -264,7 +277,7 @@ class JobQueue:
                     await sender.add(part)
         if short:
             job.kind = VIDEO  # counted as a video in stats too
-            return await self._download(job, job_dir, sender, route, SHORT_VIDEO_HEIGHT)
+            return await self._download(job, job_dir, sender, route, SHORT_VIDEO_HEIGHT, allow_silent)
         return total
 
     async def _report(self, job: Job, total: int | None) -> None:

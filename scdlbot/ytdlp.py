@@ -46,7 +46,7 @@ def video_height(default_kind: str) -> int:
 GENERIC_ARGS = ["--extractor-args", "generic:impersonate"]
 # Info printed as one JSON line per finished file:
 FIELDS = (
-    "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url,media_type"
+    "filepath,title,track,artist,uploader,uploader_id,channel,duration,width,height,vcodec,acodec,description,playlist_index,playlist_count,webpage_url,playlist_webpage_url,media_type"
 )
 # Posts with photos (Instagram): yt-dlp skips entries without video, but with these options it still saves
 # their image as the entry's thumbnail, and prints where (before giving up on the entry with "No video formats found").

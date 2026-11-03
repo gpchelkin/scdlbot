@@ -26,6 +26,7 @@ USER_LIMIT = "<b>Sorry</b>, you already have {count} downloads in progress, plea
 CAPPED = "I sent only the first {sent} of {total} items from this link."
 SETTINGS_CHANGED = "Settings changed"
 SETTINGS_NOT_CHANGED = "Settings not changed"
+SILENT = "🔇 Sorry, {site} gave me this video without sound."
 
 # By ytdlp.ERRORS codes, plus "timeout", "partial" and "failed":
 ERRORS = {

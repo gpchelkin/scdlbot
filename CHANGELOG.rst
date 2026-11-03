@@ -24,6 +24,8 @@ Rewritten from scratch.
   marked in chats.previous_mode)
 * longer timeouts by default, for long videos: DL_TIMEOUT 35 minutes per file, JOB_TIMEOUT 40 minutes per job
 * MAX_CONVERT_FILE_SIZE is 1000 MB by default with a local Bot API server (still 350 MB without one)
+* videos that come without sound (sites mute licensed music in some countries) are tried through the site's other routes;
+  if every route gets them silent, they go out with a note
 * requires Python 3.14+
 
 0.15.0 (2023-02-20)

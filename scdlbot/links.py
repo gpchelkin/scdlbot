@@ -41,6 +41,7 @@ class Site:
     # Links the site shows only to logged-in users: they go straight to the site's login routes ([login] in the routes file)
     login_only: Callable[[list[str]], bool] = lambda parts: False
     video: bool = False  # audio by default, but there's a video too: the ask modes offer 🎬 Video (see /settings)
+    gifs: bool = False  # posts may have GIFs: videos without sound by design, not muted (see jobs)
 
 
 def _sc_path(parts: list[str]) -> bool:
@@ -117,6 +118,7 @@ SITES = (
         path_ok=_twitter_path,
         author=Author("uploader", "uploader_id", "https://twitter.com/{}"),
         clean_url=_twitter_url,
+        gifs=True,
     ),
     Site("Twitter", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
 )

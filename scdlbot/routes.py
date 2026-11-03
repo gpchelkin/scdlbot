@@ -234,6 +234,11 @@ class RoutePool:
         self.turns[f"login {site}"] += 1
         return candidates[turn % len(candidates)]
 
+    def untried(self, site: str, tried: set[str], login: bool = False) -> Route | None:
+        """A route of the site (a login route with login) not in tried, if there is any."""
+        routes = [self.routes[name] for name in self.login.get(site, [])] if login else self.in_use(site)
+        return next((route for route in routes if route.name not in tried), None)
+
     def record(self, site: str, route: str, code: str | None, error: str = "") -> None:
         """How a download through a route went: None if it worked, else its error code."""
         now = time.time()

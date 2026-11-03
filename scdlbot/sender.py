@@ -9,7 +9,7 @@ from telegram import Bot, InputMediaAudio, InputMediaPhoto, InputMediaVideo, Lin
 from telegram.constants import ParseMode
 from telegram.error import BadRequest, Forbidden, NetworkError, TelegramError
 
-from scdlbot import observe
+from scdlbot import observe, texts
 from scdlbot.config import Config
 from scdlbot.db import Job
 from scdlbot.links import AUDIO, PHOTO, VIDEO, clean_url
@@ -134,6 +134,8 @@ class Sender:
         lines = []
         if item.part:
             lines.append(f"Part {item.part[0]} of {item.part[1]}")
+        if item.silent:  # even with captions off: it's not the bot's fault, but it should say so
+            lines.append(texts.SILENT.format(site=html.escape(self.job.site)))
         if first and self.job.captions and not self.sent:  # source info once per job
             lines.append(self._source(item))
             if item.kind != AUDIO:  # audio has performer and title tags instead
