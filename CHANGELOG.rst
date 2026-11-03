@@ -1,6 +1,35 @@
 Version history
 ===============
 
+1.0.0 (unreleased)
+-----------------------
+Rewritten from scratch.
+
+* one asyncio process: handlers never wait for downloads, so the bot no longer hangs under load
+* job queue with a fixed pool of workers, per-user and global limits, resumes jobs after a restart
+* yt-dlp (as a subprocess) and ffmpeg for everything; scdl and bandcamp-dl are gone
+* audio is sent as m4a or mp3 without re-encoding when possible, with tags and cover art
+* playlists and albums are streamed as Telegram albums of up to 10 tracks, capped at MAX_PLAYLIST_ITEMS
+* /dl as a reply to a message with links; t.co links; image links are ignored
+* SQLite database for chat settings, the queue and stats; owner-only /stats
+* Prometheus metrics, systemd watchdog tied to worker progress, owner alerts, optional Sentry
+* removed the /link mode, Heroku/Render files, Sphinx docs and old lint tooling; mise tasks, ruff and pytest instead
+* routes: proxies and source IPs with their own cookies, per-site route lists, round robin, retry through another route,
+  routes left out while a site blocks them, login routes for downloads that need an account (ROUTES_FILE, reloaded on SIGHUP);
+  no need for HOME anymore
+* modes Auto-download all (was Download), Auto-download + ask about video (the new default in private chats),
+  and Ask before downloading (was Ask): YouTube videos come as video (480p) on request, with the 🎵 Audio / 🎬 Video buttons
+  or the /video command
+  (chats on Auto-download all, private ones by default and groups by choice, are switched to Auto-download + ask about video once,
+  marked in chats.previous_mode)
+* longer timeouts by default, for long videos: DL_TIMEOUT 35 minutes per file, JOB_TIMEOUT 40 minutes per job
+* MAX_CONVERT_FILE_SIZE is 1000 MB by default with a local Bot API server (still 350 MB without one)
+* videos that come without sound (sites mute licensed music in some countries) are tried through the site's other routes;
+  if every route gets them silent, they go out with a note
+* videos get their size and duration from the file when the site doesn't say (Instagram),
+  so Telegram for iOS no longer squeezes them into a square
+* requires Python 3.14+
+
 0.15.0 (2023-02-20)
 -----------------------
 * refactor and fix many things

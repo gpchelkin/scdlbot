@@ -129,7 +129,7 @@ env/
 venv/
 ENV/
 .env-*
-.python-version
+# .python-version is tracked (pyenv)
 
 # Spyder project settings
 .spyderproject
@@ -154,3 +154,9 @@ ENV/
 *.webm
 notes.txt
 cookies.txt
+
+# scdlbot runtime data
+*.sqlite3
+*.sqlite3-*
+# server-specific deploy files
+deploy/*.prod-*

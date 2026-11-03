@@ -1,8 +1,8 @@
 Credits
 =======
 
-Development Lead
-----------------
+Creator
+-------
 
 * George Pchelkin @gpchelkin <george@pchelk.in>
 

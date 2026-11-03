@@ -1,2 +1,1 @@
-# TODO maybe move some importable code here
-# https://stackoverflow.com/a/70027834/2490759
+"""Telegram bot for downloading audio (and some videos) with yt-dlp."""

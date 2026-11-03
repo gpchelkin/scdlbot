@@ -1,0 +1,9 @@
+.git
+.venv
+.env*
+!.env.sample
+*.sqlite3*
+downloads
+**/__pycache__
+.ruff_cache
+.pytest_cache

@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.14', '3.15']
 
     steps:
     - uses: actions/checkout@v7.0.0
@@ -28,23 +28,22 @@ jobs:
       uses: actions/setup-python@v6.3.0
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Display Python version
-      run: python -c "import sys; print(sys.version)"
 
-    - name: Install Poetry
+    - name: Install Poetry and dependencies
       run: |
-        pip install --upgrade pip
-        pip install --upgrade setuptools wheel
-        export POETRY_VERSION=2.4.1
-        wget --output-document=install-poetry.py https://install.python-poetry.org
-        python "install-poetry.py"
-        rm -f "install-poetry.py"
-        echo "$HOME/.poetry/bin" >> $GITHUB_PATH
-        poetry config installer.parallel true
+        pipx install poetry
+        poetry env use python
+        poetry install
 
-    - name: Install tox
+    - name: Lint
       run: |
-        pip install --upgrade tox tox-gh-actions
+        poetry run ruff check .
+        poetry run ruff format --check .
 
-    - name: Test with tox
-      run: tox
+    - name: Test
+      run: poetry run pytest
+
+    - name: Check package
+      run: |
+        poetry check
+        poetry build
