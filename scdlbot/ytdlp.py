@@ -54,7 +54,7 @@ FIELDS = (
 # media.ensure_jpeg converts them instead.
 PHOTO_ARGS = ["--ignore-no-formats-error", "--write-thumbnail", "-O", f"before_dl:%(.{{format_id,__files_to_move,{FIELDS}}})j"]
 
-# Error codes by yt-dlp output patterns (lowercase), first match wins. Each code has a text in texts/error_<code>.html.
+# Error codes by yt-dlp output patterns (lowercase), first match wins. Each code has a text in texts.ERRORS.
 ERRORS = (
     ("too_large", ("larger than max-filesize",)),
     ("drm", ("drm protected",)),
@@ -87,10 +87,9 @@ ERRORS = (
     ),
     # "Unable to extract user id": Instagram stories without a login, with the stories fix of yt-dlp PR 17885
     ("login", ("sign in to", "login required", "--cookies", "requires authentication", "private video", "unable to extract user id")),
-    (
-        "unavailable",
-        ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats", "requested format is not available"),
-    ),
+    # Nothing to download but DRM formats or preview images: YouTube does this to logged-in clients for some videos (see jobs):
+    ("formats", ("requested format is not available",)),
+    ("unavailable", ("unavailable", "isn't available", "has been removed", "http error 404", "does not exist", "not found", "no video formats")),
     ("unsupported", ("unsupported url",)),
 )
 

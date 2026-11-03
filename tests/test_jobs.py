@@ -326,6 +326,39 @@ async def test_stories_go_straight_to_the_login_route(setup):
     assert (job.status, job.route, download.calls) == ("done", "fin1-login", ["login"])  # no anonymous try first
 
 
+def formats_only_without_cookies():
+    """YouTube with the account's cookies offers only DRM formats of the video; without them, the video."""
+    calls = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
+        calls.append("cookies" if "--cookies" in extra else "anonymous")
+        if "--cookies" in extra:
+            raise DownloadError("formats", "ERROR: [youtube] x: Requested format is not available.")
+        async for info in fake_download(1)(url, kind, job_dir, cfg, extra):
+            yield info
+
+    download.calls = calls
+    return download
+
+
+async def test_downloads_the_account_gets_no_formats_for_are_tried_again_without_cookies(setup):
+    from scdlbot.routes import Route
+    from scdlbot.ytdlp import Cookies
+
+    cfg, db, bot, queue, run = setup
+    cookies = cfg.dl_dir.parent / "youtube-cookies.txt"
+    cookies.write_text("# Netscape HTTP Cookie File\n")
+    queue.routes.update([Route("fra1", proxy="http://127.0.0.1:3187", cookies=Cookies(str(cookies), cookies))], {})
+    download = formats_only_without_cookies()
+    job = await run(download, kind="video")
+    assert (job.status, job.route, download.calls) == ("done", "fra1", ["cookies", "anonymous"])
+
+    two_routes(queue)  # no cookies: nothing else to try
+    job = await run(fake_download(0, error="formats"))
+    assert (job.status, job.error) == ("failed", "formats")
+    assert "any format" in bot.calls[-2][1][1]  # the reply before deleting "wait a bit"
+
+
 async def test_stories_without_login_routes_still_go_anonymous(setup):
     cfg, db, bot, queue, run = setup
     two_routes(queue)

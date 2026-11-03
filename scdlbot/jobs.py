@@ -185,9 +185,10 @@ class JobQueue:
     async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route, login_only: bool = False) -> int | None:
         """Download through the job's route. If it fails before anything was sent, try once more:
         through another route of the site if the site blocked it or it couldn't connect,
-        and through a login route of the site ([login] in the routes file) if the site wants a login.
+        and through a login route of the site ([login] in the routes file) if the site wants a login,
+        and through the same route without its cookies if the site gave the account nothing to download.
         Links only for logged-in users (login_only) start on a login route and stay on login routes."""
-        tried_other = tried_login = False
+        tried_other = tried_login = tried_anonymous = False
         while True:
             try:
                 total = await self._download(job, job_dir, sender, route)
@@ -202,9 +203,15 @@ class JobQueue:
                 elif exc.code in LOGIN_ERRORS and not tried_login:
                     tried_login = True
                     other = self.routes.pick_login(job.site, avoid=route.name)
-                if not other or other.name == route.name:
+                if other and other.name == route.name:
+                    other = None
+                if exc.code == "formats" and route.cookies and not tried_anonymous:
+                    # YouTube gives logged-in clients only DRM formats of some videos (2026-11), anonymous ones get them all
+                    tried_anonymous = True
+                    other = replace(route, cookies=None)
+                if not other:
                     raise
-                log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.name, other.name)
+                log.info("Job %s: %s via %s, trying again via %s", job.id, exc.code, route.describe(), other.describe())
                 observe.ROUTE_RETRIES.labels(site_label(job.site), route.name, exc.code).inc()
                 shutil.rmtree(job_dir, ignore_errors=True)
                 job_dir.mkdir(parents=True)

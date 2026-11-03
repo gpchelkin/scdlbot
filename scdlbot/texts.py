@@ -45,6 +45,7 @@ ERRORS = {
     "blocked": "<b>Sorry</b>, the website is limiting my downloads right now. Please try again later.",
     "network": "<b>Sorry</b>, I couldn't connect to the website. Please try again later.",
     "unavailable": "<b>Sorry</b>, this link is unavailable: it may be private, deleted or never existed.",
+    "formats": "<b>Sorry</b>, the website didn't offer this in any format I can download.",
     "unsupported": "<b>Sorry</b>, I can't download from this link, see /help for supported sites.",
 }
 
