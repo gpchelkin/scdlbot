@@ -2,6 +2,7 @@ import sqlite3
 
 from scdlbot import observe
 from scdlbot.db import DB, MIGRATIONS, Job
+from scdlbot.db import now as db_now
 
 
 def make_job(**kwargs) -> Job:
@@ -42,7 +43,7 @@ async def test_ask_flow_and_stats():
     assert await db.active_jobs_for_message(-1, 10) == 2
 
     await db.start_job(jobs[0])
-    jobs[0].status, jobs[0].items, jobs[0].bytes = "done", 1, 1000
+    jobs[0].status, jobs[0].items, jobs[0].bytes, jobs[0].kinds = "done", 3, 1000, '{"photo": 2, "video": 1}'
     await db.finish_job(jobs[0])
     assert await db.active_jobs_for_message(-1, 10) == 1
     await db.touch_user(7)
@@ -52,6 +53,9 @@ async def test_ask_flow_and_stats():
     assert await db.active_users() == {"day": 3, "week": 3, "month": 3}
     assert await db.languages() == [("", 1), ("en", 1), ("pt", 1)]
     assert await db.top_sites("2000-01-01") == [("YouTube", 1, 1)]
+    await db.add_job(make_job(user_id=8, status="done", kinds='{"photo": 1}'))
+    assert await db.recent(since=0) == (2, {"done": 2, "queued": 1}, {"photo": 3, "video": 1})
+    assert await db.recent(since=db_now() + 1) == (0, {}, {})
     await db.close()
 
 

@@ -54,7 +54,7 @@ class Config:
     dl_timeout: int = 2100  # seconds per downloaded item (a long video can take a while)
     job_timeout: int = 2400  # seconds per whole job (e.g. an album)
     max_tg_file_size: int = 45_000_000
-    max_convert_file_size: int = 350_000_000  # bigger downloads are skipped
+    max_convert_file_size: int = 350_000_000  # bigger downloads are skipped; checked for each format (a video's video and audio)
     max_playlist_items: int = 50
     max_queue: int = 500
     max_user_jobs: int = 5
@@ -126,7 +126,8 @@ class Config:
             job_timeout=_int("JOB_TIMEOUT", 2400),
             # Bot API limit is 50 MB; a local Bot API server allows 2000 MB:
             max_tg_file_size=_int("MAX_TG_FILE_SIZE", 1_900_000_000 if local_mode else 45_000_000),
-            max_convert_file_size=_int("MAX_CONVERT_FILE_SIZE", 350_000_000),
+            # With a local Bot API server big files go out whole: e.g. 6-14 hour YouTube mixes, 400-800 MB of audio
+            max_convert_file_size=_int("MAX_CONVERT_FILE_SIZE", 1_000_000_000 if local_mode else 350_000_000),
             max_playlist_items=max(1, _int("MAX_PLAYLIST_ITEMS", 50)),
             max_queue=_int("MAX_QUEUE", 500),
             max_user_jobs=max(1, _int("MAX_USER_JOBS", 5)),

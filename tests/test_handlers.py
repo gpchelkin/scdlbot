@@ -104,7 +104,8 @@ async def test_stats_for_owner_only(env):
     rt.cfg = Config(owner_id=7)
     await handlers.stats_command(Update(3, message=message(Chat(7, Chat.PRIVATE), text="/stats", entities=[])), context)
     text = bot.calls[-1][1][1]
-    assert "month 1" in text and "App languages 30 days</b>: ru 100%" in text
+    assert "30 days 1" in text and "App languages 30 days</b>: ru 100%" in text
+    assert "<b>Last 24 hours</b>: 2 links from 1 users\n  Jobs: queued 2\n  Files: none" in text
 
 
 async def test_mention_in_reply_downloads_now_even_in_ask_mode(env):
@@ -206,7 +207,7 @@ async def test_settings_mode_buttons(env):
     rt, bot, context = env
     chat = Chat(7, Chat.PRIVATE)
     await handlers.settings_command(Update(1, message=message(chat, text="/settings", entities=[])), context)
-    assert "for <b>private chats</b> (like this one) and <b>Ask</b> for <b>group chats</b>." in bot.calls[-1][1][1]
+    assert "for <b>private chats</b> (like this one) and <b>Ask before downloading</b> for <b>group chats</b>." in bot.calls[-1][1][1]
     prompt = message(chat, text="settings", entities=[], message_id=40)
     prompt.set_bot(bot)
     query = CallbackQuery("q2", USER, "chat", message=prompt, data="settings:dl")
@@ -214,4 +215,5 @@ async def test_settings_mode_buttons(env):
     await handlers.settings_button(Update(2, callback_query=query), context)
     assert (await rt.db.touch_chat(7, "private", default_captions=True)).mode == "dl"
     keyboard = bot.calls[-1][2]["reply_markup"].inline_keyboard
-    assert [row[0].text for row in keyboard[:3]] == ["🟢 Auto", "🟡 Auto + ask about video", "🟡 Ask"]
+    assert [row[0].text for row in keyboard[:3]] == ["🔘 Auto-download all", "⚪ Auto-download + ask about video", "⚪ Ask before downloading"]
+    assert keyboard[3][0].text == "⬜ Unknown sites"

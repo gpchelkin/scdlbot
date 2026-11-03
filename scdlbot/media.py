@@ -37,6 +37,7 @@ class Item:
     playlist_index: int | None = None
     playlist_count: int | None = None
     part: tuple[int, int] | None = None  # (number, total) when split
+    short: bool = False  # a YouTube Short (yt-dlp's media_type), for metrics
 
     @property
     def size(self) -> int:

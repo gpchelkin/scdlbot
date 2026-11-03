@@ -72,11 +72,13 @@ MIGRATIONS = (
     # The route (proxy or source IP, see routes.py) the job's download went through, the last one if it was tried again:
     "ALTER TABLE jobs ADD COLUMN route TEXT;",
     # The chat's mode from before the bot changed it, so the change can be undone; NULL once the chat picks a mode in /settings.
-    # Chats on Auto (private chats by default, groups by choice) get Auto + ask about video, to discover video downloads.
-    # Channels keep Auto: questions would show up under their posts. To undo, for the chats that kept it:
+    # Chats on Auto-download all (private chats by default, groups by choice) get Auto-download + ask about video, to discover
+    # video downloads. Channels keep auto-downloading: questions would show up under their posts. To undo, for the chats that kept it:
     #   UPDATE chats SET mode = previous_mode, previous_mode = NULL WHERE previous_mode IS NOT NULL;
     "ALTER TABLE chats ADD COLUMN previous_mode TEXT; "
     "UPDATE chats SET previous_mode = 'dl', mode = 'ask_video' WHERE (mode = 'dl' AND type != 'channel') OR (mode IS NULL AND type = 'private');",
+    # Files each job sent by kind (audio, video, short, photo, text) as JSON, e.g. {"photo": 2, "video": 1}; jobs by time for /stats:
+    "ALTER TABLE jobs ADD COLUMN kinds TEXT; CREATE INDEX jobs_by_time ON jobs (created_at);",
 )
 
 ACTIVE = ("queued", "running")
@@ -120,6 +122,7 @@ class Job:
     error: str | None = None
     items: int = 0
     bytes: int = 0
+    kinds: str | None = None  # files sent by kind, JSON: {"photo": 2, "video": 1}
 
     @classmethod
     def from_row(cls, row: aiosqlite.Row) -> Job:
@@ -136,7 +139,7 @@ JOB_COLUMNS = [f.name for f in fields(Job) if f.name != "id"]
 
 @dataclass(frozen=True)
 class ChatSettings:
-    mode: str  # "dl" (Auto) | "ask_video" (Auto, but ask whether to send YouTube links as audio or video) | "ask"
+    mode: str  # "dl" (Auto-download all) | "ask_video" (Auto-download + ask about video: audio or video for YouTube) | "ask" (Ask before downloading)
     captions: bool
     unknown_sites: bool
     mp3: bool = False
@@ -234,8 +237,8 @@ class DB:
     async def finish_job(self, job: Job) -> None:
         job.finished_at = now()
         await self._run(
-            "UPDATE jobs SET status = ?, error = ?, items = ?, bytes = ?, finished_at = ?, route = ? WHERE id = ?",
-            (job.status, job.error, job.items, job.bytes, job.finished_at, job.route, job.id),
+            "UPDATE jobs SET status = ?, error = ?, items = ?, bytes = ?, kinds = ?, finished_at = ?, route = ? WHERE id = ?",
+            (job.status, job.error, job.items, job.bytes, job.kinds, job.finished_at, job.route, job.id),
         )
         await self._run(
             "INSERT INTO daily (day, site, kind, status, chat_type, jobs, items, bytes) VALUES (?, ?, ?, ?, ?, 1, ?, ?) "
@@ -280,9 +283,12 @@ class DB:
         rows = await self._all("SELECT coalesce(lang, ''), count(DISTINCT user_id) FROM user_days WHERE day > ? GROUP BY 1 ORDER BY 2 DESC, 1", (today(days),))
         return [(r[0], r[1]) for r in rows]
 
-    async def jobs_by_status(self, since_day: str) -> dict[str, int]:
-        rows = await self._all("SELECT status, sum(jobs) FROM daily WHERE day >= ? GROUP BY status ORDER BY 2 DESC", (since_day,))
-        return {r[0]: r[1] for r in rows}
+    async def recent(self, since: int) -> tuple[int, dict[str, int], dict[str, int]]:
+        """For jobs created since then: (distinct users, jobs by status, files sent by kind), most first."""
+        (users,) = (await self._all("SELECT count(DISTINCT user_id) FROM jobs WHERE created_at > ?", (since,)))[0]
+        statuses = await self._all("SELECT status, count(*) FROM jobs WHERE created_at > ? GROUP BY 1 ORDER BY 2 DESC", (since,))
+        kinds = await self._all("SELECT kind.key, sum(kind.value) FROM jobs, json_each(jobs.kinds) AS kind WHERE jobs.created_at > ? GROUP BY 1 ORDER BY 2 DESC", (since,))
+        return users, {r[0]: r[1] for r in statuses}, {r[0]: r[1] for r in kinds}
 
     async def recent_results(self, since: int) -> list[tuple[str, str | None, int]]:
         """(site, error code, jobs) for jobs created since then and already finished."""

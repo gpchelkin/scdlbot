@@ -4,6 +4,7 @@ Pipeline: yt-dlp downloads -> ffmpeg fixes (h264, split) -> Telegram upload, fil
 """
 
 import asyncio
+import json
 import logging
 import shutil
 import time
@@ -169,7 +170,7 @@ class JobQueue:
         else:
             job.status = "timeout" if error == "timeout" else "failed"
         job.error = error or ("send" if sender.failed else None)
-        job.items, job.bytes = sender.sent, sender.bytes
+        job.items, job.bytes, job.kinds = sender.sent, sender.bytes, json.dumps(sender.kinds) if sender.kinds else None
         await self.db.finish_job(job)
 
         observe.JOBS.labels(site_label(job.site), job.kind, job.status, job.route).inc()

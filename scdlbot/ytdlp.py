@@ -214,6 +214,7 @@ async def download(
     errors: list[str] = []
     stderr = asyncio.create_task(_collect(process.stderr, tail, errors))
     count = photo_count = 0
+    expected = 1  # files: one, or one per playlist entry (up to MAX_PLAYLIST_ITEMS)
     try:
         while True:
             try:
@@ -233,6 +234,8 @@ async def download(
                     info["_photo"] = True
                     photo_count += 1
                 count += 1
+                if info.get("playlist_index") is not None:  # a playlist of unknown size can't be complete before the cap
+                    expected = max(expected, min(info.get("playlist_count") or cfg.max_playlist_items, cfg.max_playlist_items))
                 yield info
             else:
                 _remember(text, tail, errors)
@@ -243,7 +246,11 @@ async def download(
         stderr.cancel()
     if photo_count:  # every saved photo also counts as a failed entry for yt-dlp
         errors = [line for line in errors if "No video formats found" not in line]
-    if (errors if photo_count else code) or not count:
+    failed = errors if photo_count else code
+    if failed and count >= expected:
+        # yt-dlp reports some errors it then gets past, e.g. "Did not get any data blocks" for an HLS fragment it downloads again
+        log.info("yt-dlp reported errors, but every file arrived: %s", "; ".join(errors)[-500:])
+    elif failed or not count:
         raise DownloadError(classify_error(errors or list(tail)), "; ".join(errors)[-500:])
 
 
@@ -277,4 +284,5 @@ def to_item(info: dict, kind: str, site: str | None = None) -> Item:
         description=info.get("description"),
         playlist_index=info.get("playlist_index"),
         playlist_count=info.get("playlist_count"),
+        short=info.get("media_type") == "short",
     )

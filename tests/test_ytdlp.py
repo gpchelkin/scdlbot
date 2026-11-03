@@ -73,15 +73,15 @@ sys.exit(int(sys.argv[2]))
 """
 
 
-async def run_fake_ytdlp(monkeypatch, tmp_path, exit_code=1, extra_error=None):
+async def run_fake_ytdlp(monkeypatch, tmp_path, exit_code=1, extra_error=None, script=CAROUSEL_OUTPUT, url="https://www.instagram.com/p/x/"):
     import sys
 
     from scdlbot import ytdlp
 
-    script = CAROUSEL_OUTPUT + (f'print("{extra_error}", file=sys.stderr)\n' if extra_error else "")
+    script = script + (f'print("{extra_error}", file=sys.stderr)\n' if extra_error else "")
     script = script.replace("sys.exit(int(sys.argv[2]))\n", "") + "sys.exit(int(sys.argv[2]))\n"
     monkeypatch.setattr(ytdlp, "build_command", lambda *a, **k: [sys.executable, "-c", script, str(tmp_path), str(exit_code)])
-    return [info async for info in ytdlp.download("https://www.instagram.com/p/x/", "video", tmp_path, Config(), photos=True)]
+    return [info async for info in ytdlp.download(url, "video", tmp_path, Config(), photos=True)]
 
 
 async def test_download_yields_photos_and_videos_in_order(monkeypatch, tmp_path):
@@ -95,9 +95,29 @@ async def test_download_yields_photos_and_videos_in_order(monkeypatch, tmp_path)
 async def test_download_still_reports_real_errors_next_to_photos(monkeypatch, tmp_path):
     from scdlbot.ytdlp import DownloadError
 
-    with pytest.raises(DownloadError) as error:
-        await run_fake_ytdlp(monkeypatch, tmp_path, extra_error="ERROR: [Instagram] zzz: Video unavailable")
+    with pytest.raises(DownloadError) as error:  # the carousel has a fourth entry, which didn't come
+        await run_fake_ytdlp(monkeypatch, tmp_path, extra_error="ERROR: [Instagram] zzz: Video unavailable", script=CAROUSEL_OUTPUT.replace("playlist_count=3", "playlist_count=4"))
     assert error.value.code == "unavailable"
+
+
+# yt-dlp reports an empty HLS fragment, downloads it again and finishes the file, but still exits with 1:
+DATA_BLOCKS_OUTPUT = r"""
+import json, sys
+d = sys.argv[1]
+print("ERROR: Did not get any data blocks", file=sys.stderr)
+print(json.dumps({"filepath": f"{d}/1.m4a", "title": "Track"}), flush=True)
+sys.exit(int(sys.argv[2]))
+"""
+
+
+async def test_errors_yt_dlp_gets_past_dont_fail_a_complete_download(monkeypatch, tmp_path):
+    from scdlbot.ytdlp import DownloadError
+
+    infos = await run_fake_ytdlp(monkeypatch, tmp_path, script=DATA_BLOCKS_OUTPUT, url="https://soundcloud.com/a/b")
+    assert [Path(i["filepath"]).name for i in infos] == ["1.m4a"]
+    playlist = DATA_BLOCKS_OUTPUT.replace('"title": "Track"', '"title": "Track", "playlist_index": 1, "playlist_count": 2')
+    with pytest.raises(DownloadError):  # the second track didn't come
+        await run_fake_ytdlp(monkeypatch, tmp_path, script=playlist, url="https://soundcloud.com/a/sets/b")
 
 
 def test_to_item_authors_per_site():

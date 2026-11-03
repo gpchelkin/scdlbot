@@ -80,15 +80,25 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     if not update.effective_user or update.effective_user.id != rt.cfg.owner_id:
         return
     users = await rt.db.active_users()
-    today, week = await rt.db.jobs_by_status(db.today()), await rt.db.jobs_by_status(db.today(6))
     sites = await rt.db.top_sites(db.today(6))
     month = users["month"] or 1
     languages = ", ".join(f"{lang or '?'} {count * 100 // month}%" for lang, count in (await rt.db.languages())[:10])
+
+    def counts(values: dict[str, int]) -> str:
+        return ", ".join(f"{k} {v}" for k, v in values.items()) or "none"
+
     lines = [
-        f"<b>Active users</b>: day {users['day']}, week {users['week']}, month {users['month']}",
+        f"<b>Active users</b>: today {users['day']}, 7 days {users['week']}, 30 days {users['month']} (UTC days)",
         "<b>Queue</b>: " + ", ".join(f"{pool} {q.qsize()} waiting, {rt.queue.busy[pool]}/{rt.queue.pools[pool]} busy" for pool, q in rt.queue.queues.items()),
-        "<b>Jobs today</b>: " + (", ".join(f"{k} {v}" for k, v in today.items()) or "none"),
-        "<b>Jobs 7 days</b>: " + (", ".join(f"{k} {v}" for k, v in week.items()) or "none"),
+    ]
+    for period, seconds in (("24 hours", 24 * 3600), ("7 days", 7 * 24 * 3600)):
+        senders, statuses, kinds = await rt.db.recent(db.now() - seconds)
+        lines += [
+            f"<b>Last {period}</b>: {sum(statuses.values())} links from {senders} users",
+            f"  Jobs: {counts(statuses)}",
+            f"  Files: {counts(kinds)}",
+        ]
+    lines += [
         "<b>Top sites 7 days</b> (done / all):",
         *(f"  {site}: {done} / {count}" for site, count, done in sites),
         f"<b>App languages 30 days</b>: {languages or 'none'}",
@@ -101,16 +111,16 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def settings_keyboard(settings: ChatSettings) -> InlineKeyboardMarkup:
     def radio(mode: str, label: str) -> InlineKeyboardButton:
-        return InlineKeyboardButton(f"{'🟢' if settings.mode == mode else '🟡'} {label}", callback_data=f"settings:{mode}")
+        return InlineKeyboardButton(f"{'🔘' if settings.mode == mode else '⚪'} {label}", callback_data=f"settings:{mode}")
 
     def toggle(key: str, value: bool, label: str) -> InlineKeyboardButton:
-        return InlineKeyboardButton(f"{'✅' if value else '❌'} {label}", callback_data=f"settings:{key}")
+        return InlineKeyboardButton(f"{'✅' if value else '⬜'} {label}", callback_data=f"settings:{key}")
 
     return InlineKeyboardMarkup(
         [
-            [radio("dl", "Auto")],
-            [radio("ask_video", "Auto + ask about video")],
-            [radio("ask", "Ask")],
+            [radio("dl", "Auto-download all")],
+            [radio("ask_video", "Auto-download + ask about video")],
+            [radio("ask", "Ask before downloading")],
             [toggle("unknown_sites", settings.unknown_sites, "Unknown sites"), toggle("captions", settings.captions, "Captions")],
             [toggle("mp3", settings.mp3, "Always MP3")],
             [InlineKeyboardButton("❌ Close settings", callback_data="settings:close")],

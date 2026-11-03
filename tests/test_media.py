@@ -39,6 +39,25 @@ async def test_sender_skips_files_that_disappeared(tmp_path):
     assert bot.names() == ["send_photo"]
 
 
+async def test_sent_files_are_counted_by_site_and_kind(tmp_path):
+    from scdlbot import observe
+    from scdlbot.db import Job
+    from scdlbot.sender import Sender
+
+    from .test_jobs import FakeBot
+
+    def count(site: str, kind: str) -> float:
+        return observe.ITEMS_SENT.labels(site, kind)._value.get()
+
+    before = count("YouTube", "short"), count("YouTube", "video")
+    sender = Sender(FakeBot(), Config(), Job(5, "private", 7, 10, "https://youtu.be/x", "YouTube", "video", True, "running", id=1))
+    for name, short in (("short.mp4", True), ("long.mp4", False)):
+        (tmp_path / name).write_bytes(b"x")
+        await sender.add(Item(tmp_path / name, "video", short=short))
+    assert (count("YouTube", "short"), count("YouTube", "video")) == (before[0] + 1, before[1] + 1)
+    assert sender.kinds == {"short": 1, "video": 1}  # saved with the job, for /stats
+
+
 async def test_long_videos_are_not_re_encoded(tmp_path):
     from scdlbot.media import ensure_h264
 

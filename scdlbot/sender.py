@@ -3,6 +3,7 @@
 import asyncio
 import html
 import logging
+from collections import Counter
 
 from telegram import Bot, InputMediaAudio, InputMediaPhoto, InputMediaVideo, LinkPreviewOptions, ReplyParameters
 from telegram.constants import ParseMode
@@ -13,6 +14,7 @@ from scdlbot.config import Config
 from scdlbot.db import Job
 from scdlbot.links import AUDIO, PHOTO, VIDEO, clean_url
 from scdlbot.media import Item
+from scdlbot.routes import site_label
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class Sender:
         self.bot, self.cfg, self.job = bot, cfg, job
         self.album: list[Item] = []
         self.sent = self.failed = self.bytes = 0
+        self.kinds: Counter[str] = Counter()  # files sent by kind, as in metrics (short: YouTube Shorts)
         self.reply = ReplyParameters(job.message_id, allow_sending_without_reply=True) if job.captions else None
 
     async def add(self, item: Item) -> None:
@@ -82,9 +85,12 @@ class Sender:
         else:
             self.sent += len(items)
             self.bytes += size
+            site = site_label(self.job.site)
             for item, item_size in zip(items, sizes, strict=True):
-                observe.ITEMS_SENT.labels(item.kind).inc()
-                observe.BYTES_SENT.labels(item.kind).inc(item_size)
+                kind = "short" if item.short and item.kind == VIDEO else item.kind
+                self.kinds[kind] += 1
+                observe.ITEMS_SENT.labels(site, kind).inc()
+                observe.BYTES_SENT.labels(site, kind).inc(item_size)
         finally:
             for item in items:
                 item.path.unlink(missing_ok=True)
@@ -121,7 +127,8 @@ class Sender:
             self.failed += 1
         else:
             self.sent += 1
-            observe.ITEMS_SENT.labels("text").inc()
+            self.kinds["text"] += 1
+            observe.ITEMS_SENT.labels(site_label(self.job.site), "text").inc()
 
     def _caption(self, item: Item, first: bool = True) -> str | None:
         lines = []

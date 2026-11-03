@@ -21,8 +21,9 @@ JOB_SECONDS = Histogram("scdlbot_job_duration_seconds", "Time from job start to 
 QUEUE_WAIT_SECONDS = Histogram("scdlbot_queue_wait_seconds", "Time jobs wait in the queue", buckets=(1, 5, 10, 30, 60, 120, 300, 600, 1800))
 QUEUE_SIZE = Gauge("scdlbot_queue_size", "Jobs waiting in the queue", ["pool"])
 WORKERS_BUSY = Gauge("scdlbot_workers_busy", "Workers running a job", ["pool"])
-ITEMS_SENT = Counter("scdlbot_items_sent", "Files sent", ["kind"])
-BYTES_SENT = Counter("scdlbot_bytes_sent", "Bytes sent", ["kind"])
+# kind: audio, video, short (YouTube Shorts), photo or text
+ITEMS_SENT = Counter("scdlbot_items_sent", "Files sent", ["site", "kind"])
+BYTES_SENT = Counter("scdlbot_bytes_sent", "Bytes sent", ["site", "kind"])
 DOWNLOAD_ERRORS = Counter("scdlbot_download_errors", "Download errors of finished jobs", ["code", "site", "route"])
 # Every try of a download (a job tries again through another route if the first one is blocked), "ok" or the error code:
 ROUTE_ATTEMPTS = Counter("scdlbot_route_attempts", "Downloads tried through each route", ["site", "route", "result"])
