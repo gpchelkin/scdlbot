@@ -24,8 +24,8 @@ dependencies = [
   "yt-dlp-ejs (>=0.8.0)",
   "curl-cffi (>=0.16.1,<0.17)",  # for yt-dlp impersonation (Instagram); 0.15 segfaults on Python 3.15
   "aiosqlite (>=0.21)",
-  "prometheus-client (>=0.25)",
-  "sentry-sdk (>=2.0)",
+  "prometheus-client (>=0.26.0)",
+  "sentry-sdk (>=2.74.0)",
 ]
 
 [project.urls]
@@ -47,9 +47,9 @@ packages = [{ include = "scdlbot" }]
 yt-dlp = { version = ">=2026.10.26", allow-prereleases = true, extras = ["default", "curl-cffi"] }
 
 [tool.poetry.group.dev.dependencies]
-ruff = ">=0.14"
-pytest = ">=9.0"
-pytest-asyncio = ">=1.2"
+ruff = ">=0.17.3"
+pytest = ">=9.2.0"
+pytest-asyncio = ">=1.4.1.post1"
 
 [tool.ruff]
 line-length = 180
