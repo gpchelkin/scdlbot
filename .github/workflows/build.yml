@@ -1,49 +1,67 @@
 name: build
 
+# Tests every push and pull request. A pushed tag like v1.0.0 (the version in pyproject.toml) also publishes
+# that version to PyPI and creates its GitHub release with the notes from CHANGELOG.md.
+# Docs: Read the Docs builds them by itself on every push (.readthedocs.yaml).
+
 on:
   push:
-    branches:
-      - master
-      - release
+    branches: [master]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.14', '3.15']
-
+        python-version: ["3.14", "3.15"]
     steps:
-    - uses: actions/checkout@v7.0.0
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6.3.0
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v7.0.1
+      - name: Install ffmpeg and poetry
+        run: |
+          sudo apt-get update -q && sudo apt-get install -yq --no-install-recommends ffmpeg
+          pipx install poetry
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+      - run: poetry env use python && poetry install
+      - name: Lint
+        run: poetry run ruff check . && poetry run ruff format --check .
+      - name: Test
+        run: poetry run pytest
 
-    - name: Install Poetry and dependencies
-      run: |
-        pipx install poetry
-        poetry env use python
-        poetry install
-
-    - name: Lint
-      run: |
-        poetry run ruff check .
-        poetry run ruff format --check .
-
-    - name: Test
-      run: poetry run pytest
-
-    - name: Check package
-      run: |
-        poetry check
-        poetry build
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    # PyPI trusted publishing: no token, PyPI trusts this workflow in this environment (set up once on pypi.org)
+    environment: pypi
+    permissions:
+      contents: write  # GitHub release
+      id-token: write  # PyPI
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build
+        run: |
+          pipx install poetry
+          test "$GITHUB_REF_NAME" = "v$(poetry version --short)"  # the tag matches the version in pyproject.toml
+          poetry build
+      - uses: pypa/gh-action-pypi-publish@v1.14.3
+        with:
+          skip-existing: true  # so the job can be re-run
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v version="${GITHUB_REF_NAME#v}" '/^## / {found = $2 == version; next} found' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --notes-file notes.md

@@ -1,9 +1,10 @@
 # Music Downloader Telegram Bot aka scdlbot
 
 [![Telegram Bot](https://img.shields.io/badge/telegram-@scdlbot-blue.svg)](https://t.me/scdlbot)
-[![MIT License](https://img.shields.io/github/license/gpchelkin/scdlbot.svg)](LICENSE)
+[![MIT License](https://img.shields.io/github/license/gpchelkin/scdlbot.svg)](https://github.com/gpchelkin/scdlbot/blob/master/LICENSE)
 [![PyPI Version](https://img.shields.io/pypi/v/scdlbot.svg)](https://pypi.org/project/scdlbot)
 [![build](https://github.com/gpchelkin/scdlbot/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/gpchelkin/scdlbot/actions/workflows/build.yml)
+[![Docs](https://readthedocs.org/projects/scdlbot/badge/?version=latest)](https://scdlbot.readthedocs.io)
 
 Telegram bot that downloads audio of tracks, sets, albums, videos and playlists from SoundCloud, Bandcamp, YouTube
 and [anything yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), with tags and artwork.
@@ -12,7 +13,7 @@ Instagram and Twitter photos as photos and albums,
 text-only tweets as text,
 with the author (`Author: Name (@handle)`, linked to the profile) and the post's text in the caption.
 
-Send `/help` to [@scdlbot](https://t.me/scdlbot) to see how to use it, or read [the help text](scdlbot/texts/help.html).
+Send `/help` to [@scdlbot](https://t.me/scdlbot) to see how to use it, or read [the help text](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/texts/help.html).
 Please report bugs and ideas in [issues](https://github.com/gpchelkin/scdlbot/issues).
 
 ## How it works
@@ -30,7 +31,7 @@ update → handlers.py (parse links, save a job row, enqueue, reply "wait a bit"
 - Handlers never wait for downloads, so the bot stays responsive under any load.
 - Downloads run as `python -m yt_dlp …` processes: each gets killed with all its children on timeout,
   and the exact command is logged, so you can reproduce any failure in a shell.
-- SQLite ([`db.py`](scdlbot/db.py)) keeps chat settings, the job queue (jobs resume after a restart) and stats.
+- SQLite ([`db.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/db.py)) keeps chat settings, the job queue (jobs resume after a restart) and stats.
 - Audio stays in its original m4a or mp3 when possible (no re-encoding); anything else becomes mp3.
 - Video is h264 in mp4: up to 720p for short videos (TikTok, reels, Shorts), 480p for the rest (YouTube, ~4 MB a minute).
   Videos without h264 are re-encoded up to 30 minutes long (`MAX_REENCODE_DURATION`); longer ones are sent as they are.
@@ -39,16 +40,16 @@ update → handlers.py (parse links, save a job row, enqueue, reply "wait a bit"
 
 | Module | What it does |
 |---|---|
-| [`config.py`](scdlbot/config.py) | all settings, from environment variables |
-| [`links.py`](scdlbot/links.py) | finds links in messages; `SITES` table of known sites |
-| [`handlers.py`](scdlbot/handlers.py) | Telegram commands, messages and buttons |
-| [`jobs.py`](scdlbot/jobs.py) | job queue, workers and the download → send pipeline |
-| [`ytdlp.py`](scdlbot/ytdlp.py) | yt-dlp command line, output parsing, error codes, cookies |
-| [`routes.py`](scdlbot/routes.py) | routes (proxies, source IPs, cookies): which job goes where, retries, leaving out blocked routes |
-| [`media.py`](scdlbot/media.py) | ffmpeg / ffprobe |
-| [`sender.py`](scdlbot/sender.py) | uploads to Telegram, captions, albums |
-| [`db.py`](scdlbot/db.py) | SQLite schema and queries |
-| [`observe.py`](scdlbot/observe.py) | Prometheus metrics, systemd notify, owner alerts, Sentry |
+| [`config.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/config.py) | all settings, from environment variables |
+| [`links.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/links.py) | finds links in messages; `SITES` table of known sites |
+| [`handlers.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/handlers.py) | Telegram commands, messages and buttons |
+| [`jobs.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/jobs.py) | job queue, workers and the download → send pipeline |
+| [`ytdlp.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/ytdlp.py) | yt-dlp command line, output parsing, error codes, cookies |
+| [`routes.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/routes.py) | routes (proxies, source IPs, cookies): which job goes where, retries, leaving out blocked routes |
+| [`media.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/media.py) | ffmpeg / ffprobe |
+| [`sender.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/sender.py) | uploads to Telegram, captions, albums |
+| [`db.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/db.py) | SQLite schema and queries |
+| [`observe.py`](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/observe.py) | Prometheus metrics, systemd notify, owner alerts, Sentry |
 
 To support a new site, add a row to `links.SITES`; for a new command, add a handler in `handlers.py` and register it in `app.py`.
 
@@ -72,17 +73,17 @@ mise run fetch --route fin1 https://soundcloud.com/artist/track   # the same thr
 mise run test
 mise run lint
 mise run fmt
-mise run update        # update dependencies, including yt-dlp from its master branch
+mise run update        # update dependencies, including yt-dlp's nightly build
 ```
 
 ## Configuration
 
-Environment variables, all documented in [`.env.sample`](.env.sample). Only `TG_BOT_TOKEN` is required.
+Environment variables, all documented in [`.env.sample`](https://github.com/gpchelkin/scdlbot/blob/master/.env.sample). Only `TG_BOT_TOKEN` is required.
 
 ### Routes
 
 Downloads go out through *routes*: a proxy or a source IP address of the server, each with its own cookies.
-They are set in a TOML file (`ROUTES_FILE`, see [`deploy/routes.sample.toml`](deploy/routes.sample.toml)), which also says
+They are set in a TOML file (`ROUTES_FILE`, see [`deploy/routes.sample.toml`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/routes.sample.toml)), which also says
 which sites use which routes, e.g. YouTube only through the route with its logged-in account.
 `systemctl reload scdlbot` applies changes to the file without a restart.
 Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, like in earlier versions.
@@ -96,7 +97,7 @@ Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, li
   so the account only sees the few downloads that need it. Instagram stories, which Instagram never shows anonymously,
   go straight to the login routes. When the last 8 downloads through a login route all failed
   that way too, its account is probably logged out: the route is left out for a day (or until a reload) and the owner is told.
-  [`tools/instagram_cookies.py`](tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
+  [`tools/instagram_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
 - Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,
   and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`.
 - `scdlbot fetch --route NAME URL` downloads through one route, to check it.
@@ -107,27 +108,71 @@ in the format Telegram asked big downloader bots to use in February 2026
 ([leak](https://t.me/adurovleaks/990)). Links in captions are cleaned up (`NORMALIZE_URLS`): yt-dlp's canonical link
 of the post or track, without share tracking (`?si=`, `?igsh=`, TikTok's `u_code`…) and with short links expanded.
 
-In @BotFather: set the commands from [`telegram_settings/commands.txt`](telegram_settings/commands.txt),
+In @BotFather: set the commands from [`telegram_settings/commands.txt`](https://github.com/gpchelkin/scdlbot/blob/master/telegram_settings/commands.txt),
 and disable privacy mode if the bot should react to plain messages with links in groups (otherwise it only sees commands).
 
 ## Deploy
 
+### Server
+
+What [@scdlbot](https://t.me/scdlbot) runs on, as a reference (November 2026):
+
+| | |
+|---|---|
+| Load | ~16,000 downloads a day for ~49,000 monthly users; busiest in the evening (UTC) |
+| Server | Hetzner CPX22: 2 vCPU (AMD EPYC), 4 GB RAM, no swap, Ubuntu 22.04, plus a 50 GB volume for `DL_DIR` |
+| Settings | `WORKERS=8`, `YOUTUBE_WORKERS=4`, a local Bot API server, systemd limits of 1.8 CPU and 2.3 GB RAM |
+| CPU | ~3 CPU-seconds per download: 0.7 cores on average, up to 1.3 in the busiest hour. YouTube (deno) and video re-encodes cost the most |
+| RAM | the bot with its downloads: ~0.5 GB usually, up to 2.2 GB at peaks (each YouTube download runs deno, ~250 MB); the Bot API server: up to 0.4 GB |
+| Disk | the database: ~100 MB with 90 days of downloads. `DL_DIR` holds only files being downloaded and sent: usually a few GB, but leave room for `WORKERS` files of `MAX_CONVERT_FILE_SIZE` |
+| Traffic | every file is downloaded once and uploaded once: ~240 GB a day each way |
+
+For a personal bot or a few chats, 1 vCPU and 1 GB of RAM (2 GB with a local Bot API server) should do with `WORKERS=2` and `YOUTUBE_WORKERS=1`.
+
+The server needs:
+
+- Linux. With systemd, the bot uses its watchdog (see below); anywhere else, use Docker.
+- Python 3.14 or 3.15, e.g. from [pyenv](https://github.com/pyenv/pyenv) (that's what @scdlbot uses) or the
+  [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) on Ubuntu.
+- ffmpeg and ffprobe, and [deno](https://deno.com), the JS runtime yt-dlp needs for YouTube (or node with `YTDLP_ARGS="--js-runtimes node"`),
+  in the `PATH` of the service. To put the latest builds into `/usr/local/bin`:
+
+```bash
+# ffmpeg and ffprobe: yt-dlp's builds, with its patches (for ARM servers: linuxarm64 instead of linux64)
+curl -fsSL https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
+  | sudo tar -xJ -C /usr/local/bin --strip-components=2 --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
+# deno (for ARM servers: aarch64 instead of x86_64)
+curl -fsSLo /tmp/deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip \
+  && sudo unzip -o /tmp/deno.zip -d /usr/local/bin && rm /tmp/deno.zip
+ffmpeg -version | head -n 1 && ffprobe -version | head -n 1 && deno --version   # check
+```
+
+Your distribution's ffmpeg (`sudo apt install ffmpeg`) works too. Run the same commands again to update them.
+
 ### systemd
 
 ```bash
-sudo git clone https://github.com/gpchelkin/scdlbot /opt/scdlbot && cd /opt/scdlbot
-sudo poetry install --only main            # creates /opt/scdlbot/.venv
+sudo git clone https://github.com/gpchelkin/scdlbot /opt/scdlbot && cd /opt/scdlbot   # the service file and .env.sample
+sudo python3.15 -m venv .venv && sudo .venv/bin/pip install scdlbot   # the latest release from PyPI, or `pip install .` for this checkout
 sudo cp .env.sample /etc/default/scdlbot && sudo nano /etc/default/scdlbot
 sudo cp deploy/scdlbot.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now scdlbot
 ```
 
-ffmpeg and deno (or node with `YTDLP_ARGS="--js-runtimes node"`) must be in `PATH`.
 The service uses `Type=notify` with a watchdog: the bot pings it only while its workers make progress,
-so systemd restarts it if it ever gets stuck.
+so systemd restarts it if it ever gets stuck. Restarts are safe: unfinished downloads start again after them.
+Check its resource limits (`CPUQuota`, `MemoryMax`) against your server.
 
 For big files (up to 2000 MB) and faster uploads run a [local Bot API server](https://github.com/tdlib/telegram-bot-api)
-on the same machine ([`deploy/telegram-bot-api.service`](deploy/telegram-bot-api.service)) and set `TG_BOT_API="http://127.0.0.1:8081"`.
+on the same machine ([`deploy/telegram-bot-api.service`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/telegram-bot-api.service)) and set `TG_BOT_API="http://127.0.0.1:8081"`.
+
+Updates:
+
+```bash
+sudo /opt/scdlbot/.venv/bin/pip install -U scdlbot && sudo systemctl restart scdlbot
+# yt-dlp: sites change all the time, and fixes reach yt-dlp's nightly builds days or weeks before its releases
+sudo /opt/scdlbot/.venv/bin/pip install -U --pre "yt-dlp[default,curl-cffi]" && sudo systemctl restart scdlbot
+```
 
 ### Docker
 
@@ -135,6 +180,8 @@ on the same machine ([`deploy/telegram-bot-api.service`](deploy/telegram-bot-api
 docker build -t scdlbot .
 docker run -d --name scdlbot --restart unless-stopped --env-file .env -v scdlbot-data:/data -p 127.0.0.1:8000:8000 scdlbot
 ```
+
+The image has ffmpeg, deno and the yt-dlp nightly build from `poetry.lock`.
 
 ## Monitoring and stats
 
@@ -158,7 +205,7 @@ sqlite3 scdlbot.sqlite3 "SELECT error, count(*) FROM jobs WHERE created_at > str
 ```
 
 The database stores Telegram user and chat ids and downloaded URLs; per-download rows are deleted after `JOBS_RETENTION_DAYS`.
-[PRIVACY.md](PRIVACY.md) is the privacy policy of [@scdlbot](https://t.me/scdlbot) only. If you run your own bot, write your own
+[PRIVACY.md](https://github.com/gpchelkin/scdlbot/blob/master/PRIVACY.md) is the privacy policy of [@scdlbot](https://t.me/scdlbot) only. If you run your own bot, write your own
 (Telegram requires one, see [§4 of its terms for bot developers](https://telegram.org/tos/bot-developers)) and set its URL in
 `PRIVACY_POLICY_URL` (for `/privacy` and `/help`) and in @BotFather. Until you do, Telegram's
 [Standard Privacy Policy for bots](https://telegram.org/privacy-tpa) applies to your bot, and `/privacy` links to it.
@@ -176,7 +223,7 @@ Many thanks to the authors of scdl, bandcamp-dl, youtube-dl and yt-dlp: this bot
 
 ## Disclaimer
 
-**The software.** scdlbot is open-source software under the [MIT License](LICENSE), provided "as is", without warranty of any kind.
+**The software.** scdlbot is open-source software under the [MIT License](https://github.com/gpchelkin/scdlbot/blob/master/LICENSE), provided "as is", without warranty of any kind.
 Like [yt-dlp](https://github.com/yt-dlp/yt-dlp) that it's built on, it's a tool:
 
 - It only processes links that its users send it: it doesn't search, suggest or host anything.
@@ -190,7 +237,7 @@ and the terms of the sites it downloads from, and its privacy policy (see [Monit
 The creator of scdlbot doesn't run, control or answer for any bot other than @scdlbot.
 
 **@scdlbot.** [@scdlbot](https://t.me/scdlbot) is the bot run by its creator, George Pchelkin ([@gpchelkin](https://t.me/gpchelkin)),
-under its own [Privacy Policy](PRIVACY.md):
+under its own [Privacy Policy](https://github.com/gpchelkin/scdlbot/blob/master/PRIVACY.md):
 
 - It only downloads what anyone can stream for free on the site, in a web browser: no paid subscriptions, paywalls or premium content.
 - It's meant for personal use. Users are responsible for respecting the rights of creators and the terms of the sites they download from.

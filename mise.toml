@@ -35,5 +35,5 @@ description = "Run tests"
 run = "poetry run pytest"
 
 [tasks.update]
-description = "Update dependencies (yt-dlp from master too)"
+description = "Update dependencies (yt-dlp's nightly build too)"
 run = "poetry update"

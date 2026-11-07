@@ -14,11 +14,13 @@ classifiers = [
   "Topic :: Internet",
   "Operating System :: POSIX",
   "Natural Language :: English",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
 ]
 # These constraints go into the published package metadata (PyPI).
 dependencies = [
   "python-telegram-bot[webhooks,http2,rate-limiter] (>=22.8,<23)",
-  "yt-dlp[default,curl-cffi] (>=2026.7.4)",
+  "yt-dlp[default,curl-cffi] (>=2026.10.26)",
   "yt-dlp-ejs (>=0.8.0)",
   "curl-cffi (>=0.16.1,<0.17)",  # for yt-dlp impersonation (Instagram); 0.15 segfaults on Python 3.15
   "aiosqlite (>=0.21)",
@@ -39,9 +41,10 @@ scdlbot = "scdlbot.__main__:main"
 packages = [{ include = "scdlbot" }]
 
 [tool.poetry.dependencies]
-# Locally we track yt-dlp master: sites break often and fixes land there first.
-# This only affects the lock file; PyPI metadata uses the [project] constraint above.
-yt-dlp = { git = "https://github.com/yt-dlp/yt-dlp.git", branch = "master", extras = ["default", "curl-cffi"] }
+# The lock file (development, CI, Docker) takes yt-dlp's nightly builds: pre-releases on PyPI, built from its master
+# every day, since sites break often and fixes land there first. The published package requires a release (above);
+# a server gets the nightly with `pip install -U --pre "yt-dlp[default,curl-cffi]"`.
+yt-dlp = { version = ">=2026.10.26", allow-prereleases = true, extras = ["default", "curl-cffi"] }
 
 [tool.poetry.group.dev.dependencies]
 ruff = ">=0.14"

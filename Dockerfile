@@ -3,7 +3,7 @@
 
 FROM python:3.15-slim AS build
 # gcc: some dependencies (brotli) may not have wheels for the newest Python yet
-RUN apt-get update && apt-get install -y --no-install-recommends git gcc libc6-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir poetry
 WORKDIR /app
 COPY pyproject.toml poetry.lock poetry.toml README.md ./
