@@ -51,6 +51,9 @@ jobs:
       id-token: write  # PyPI
     steps:
       - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0  # poetry needs a Python the project supports
+        with:
+          python-version: "3.15"
       - name: Build
         run: |
           pipx install poetry
