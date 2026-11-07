@@ -1,74 +1,28 @@
 # How to contribute
 
-
-## Dependencies
-
-We use [poetry](https://github.com/python-poetry/poetry) to manage the dependencies.
-
-To install them you would need to run `install` command:
+See [Run locally](README.md#run-locally) to set up the environment, then:
 
 ```bash
-poetry install
+mise run fmt    # ruff: format and fix
+mise run lint   # ruff: check
+mise run test   # pytest
 ```
 
-To activate your `virtualenv` run `poetry shell`.
+The same checks run in CI for every pull request.
 
+Before submitting a pull request:
 
-## One magic command
+1. Add tests for new logic where it makes sense (see `tests/`).
+2. Update `README.md` and `.env.sample` if you change behavior or settings.
+3. Add a line to `CHANGELOG.md`, under the next version.
 
-Run `make test` to run everything we have!
+Keep it simple: the bot is meant to stay small and readable.
 
+## Releases
 
-## Tests
+1. Set the version in `pyproject.toml`, and give the version's section in `CHANGELOG.md` its date: `## 1.0.1 (2026-12-01)`.
+2. Commit and push to master, then push a tag: `git tag v1.0.1 && git push origin v1.0.1`.
 
-We use `flake8` for quality control.
-We also use [wemake_python_styleguide](https://github.com/wemake-services/wemake-python-styleguide) to enforce the code quality.
-
-To run linting:
-
-```bash
-flake8 .
-```
-Keep in mind: default virtual environment folder excluded by flake8 style checking is `.venv`.
-If you want to customize this parameter, you should do this in `setup.cfg`.
-These steps are mandatory during the CI.
-
-
-## Submitting your code
-
-We use [trunk based](https://trunkbaseddevelopment.com/)
-development (we also sometimes call it `wemake-git-flow`).
-
-What the point of this method?
-
-1. We use protected `master` branch,
-   so the only way to push your code is via pull request
-2. We use issue branches: to implement a new feature or to fix a bug
-   create a new branch named `issue-$TASKNUMBER`
-3. Then create a pull request to `master` branch
-4. We use `git tag`s to make releases, so we can track what has changed
-   since the latest release
-
-So, this way we achieve an easy and scalable development process
-which frees us from merging hell and long-living branches.
-
-In this method, the latest version of the app is always in the `master` branch.
-
-### Before submitting
-
-Before submitting your code please do the following steps:
-
-2. Add any changes you want
-3. Add tests for the new changes
-4. Edit documentation if you have changed something significant
-5. Update `CHANGELOG.md` with a quick summary of your changes
-8. Run `flake8` to ensure that style is correct
-9. Run `doc8` to ensure that docs are correct
-
-
-## Other help
-
-You can contribute by spreading a word about this library.
-It would also be a huge contribution to write
-a short article on how you are using this project.
-You can also share your best practices with us.
+CI tests the tag, publishes the package to [PyPI](https://pypi.org/project/scdlbot/) and creates
+[the GitHub release](https://github.com/gpchelkin/scdlbot/releases) with the version's section of the changelog.
+[Read the Docs](https://scdlbot.readthedocs.io) rebuilds the docs from master and from tags by itself.
