@@ -1,7 +1,5 @@
-# systemd service for scdlbot. Install:
-#   sudo cp deploy/scdlbot.service /etc/systemd/system/scdlbot.service
-#   sudo cp .env.sample /etc/default/scdlbot && sudo nano /etc/default/scdlbot
-#   sudo systemctl daemon-reload && sudo systemctl enable --now scdlbot
+# systemd service for scdlbot. deploy/upgrade.sh installs it to /usr/local/lib/systemd/system on every run (README: Deploy).
+# Change settings for your server with a drop-in instead of editing this file: systemctl edit scdlbot
 #   journalctl -u scdlbot -f
 
 [Unit]
@@ -14,7 +12,7 @@ After=network-online.target telegram-bot-api.service
 # so systemd restarts it if it ever gets stuck.
 Type=notify
 NotifyAccess=main
-WatchdogSec=120
+WatchdogSec=180
 Restart=always
 RestartSec=5
 # SIGTERM only the bot: it kills its own downloads and puts them back in the queue for after the restart.

@@ -125,6 +125,8 @@ celerybeat-schedule
 # Environments
 .env
 .venv
+.venv.new
+/venvs/
 env/
 venv/
 ENV/

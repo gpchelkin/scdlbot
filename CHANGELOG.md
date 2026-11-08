@@ -8,6 +8,11 @@
   for TikTok, koutube.com for YouTube, rxddit.com, vxreddit.com and redditez.com for Reddit, fxbsky.app, bskyx.app and
   bsyy.app for Bluesky (Reddit and Bluesky with Unknown sites enabled).
 - `scdlbot fetch` downloads the same link the bot would (the original site's for those links).
+- `deploy/upgrade.sh` installs or updates the bot on a systemd server: it pulls the checkout, builds a new venv with yt-dlp
+  from master while the bot keeps running, switches to it with one restart and keeps the last 3 venvs for going back.
+  With `--tools` it also updates ffmpeg, ffprobe and deno.
+- `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
+  drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
 
 ## 1.0.0 (2026-11-07)
 

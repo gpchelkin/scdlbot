@@ -134,10 +134,10 @@ For a personal bot or a few chats, 1 vCPU and 1 GB of RAM (2 GB with a local Bot
 The server needs:
 
 - Linux. With systemd, the bot uses its watchdog (see below); anywhere else, use Docker.
-- Python 3.14 or 3.15, e.g. from [pyenv](https://github.com/pyenv/pyenv) (that's what @scdlbot uses) or the
-  [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) on Ubuntu.
+- Python 3.14 or 3.15, e.g. from the [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) on Ubuntu
+  (that's what @scdlbot uses) or [pyenv](https://github.com/pyenv/pyenv).
 - ffmpeg and ffprobe, and [deno](https://deno.com), the JS runtime yt-dlp needs for YouTube (or node with `YTDLP_ARGS="--js-runtimes node"`),
-  in the `PATH` of the service. To put the latest builds into `/usr/local/bin`:
+  in the `PATH` of the service. `deploy/upgrade.sh --tools` (below) puts the latest builds into `/usr/local/bin`, like this:
 
 ```bash
 tmp=$(mktemp -d) && cd "$tmp"
@@ -159,16 +159,20 @@ to stop the bot: downloads already running keep the old files, and the next ones
 ### systemd
 
 ```bash
-sudo git clone https://github.com/gpchelkin/scdlbot /opt/scdlbot && cd /opt/scdlbot   # the service file and .env.sample
-sudo python3.15 -m venv .venv && sudo .venv/bin/pip install scdlbot   # the latest release from PyPI, or `pip install .` for this checkout
-sudo cp .env.sample /etc/default/scdlbot && sudo nano /etc/default/scdlbot
-sudo cp deploy/scdlbot.service /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now scdlbot
+sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt install python3.15-venv   # on Ubuntu; or PYTHON=/path/to/python3.14 below
+sudo git clone https://github.com/gpchelkin/scdlbot /opt/scdlbot
+sudo install -m 600 /opt/scdlbot/.env.sample /etc/default/scdlbot && sudo nano /etc/default/scdlbot
+sudo /opt/scdlbot/deploy/upgrade.sh --tools   # without --tools, it keeps the ffmpeg and deno you have
 ```
+
+[`deploy/upgrade.sh`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/upgrade.sh) installs the bot from the
+checkout (master) and yt-dlp from its master branch into a new venv in `/opt/scdlbot/venvs`, installs
+[`deploy/scdlbot.service`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/scdlbot.service) and starts the bot.
 
 The service uses `Type=notify` with a watchdog: the bot pings it only while its workers make progress,
 so systemd restarts it if it ever gets stuck. Restarts are safe: unfinished downloads start again after them.
-Check its resource limits (`CPUQuota`, `MemoryMax`) against your server.
+Its resource limits (`CPUQuota`, `MemoryMax`) are for 3 vCPUs and 4 GB of RAM. Change them for your server with
+`sudo systemctl edit scdlbot`: `upgrade.sh` replaces the service file every time, but not the drop-in this creates.
 
 For big files (up to 2000 MB) and faster uploads run a [local Bot API server](https://github.com/tdlib/telegram-bot-api)
 on the same machine ([`deploy/telegram-bot-api.service`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/telegram-bot-api.service)) and set `TG_BOT_API="http://127.0.0.1:8081"`.
@@ -176,10 +180,12 @@ on the same machine ([`deploy/telegram-bot-api.service`](https://github.com/gpch
 Updates:
 
 ```bash
-sudo /opt/scdlbot/.venv/bin/pip install -U scdlbot && sudo systemctl restart scdlbot
-# yt-dlp: sites change all the time, and fixes reach yt-dlp's nightly builds days or weeks before its releases
-sudo /opt/scdlbot/.venv/bin/pip install -U --pre "yt-dlp[default,curl-cffi]" && sudo systemctl restart scdlbot
+sudo /opt/scdlbot/deploy/upgrade.sh   # add --tools for new ffmpeg, ffprobe and deno builds too
 ```
+
+It pulls, builds a new venv while the bot keeps running and switches to it with one restart. If anything fails before
+that, the bot stays as it was, and the last 3 venvs stay for going back (the script says how). yt-dlp comes from its
+master branch because sites change all the time, and fixes land there days or weeks before a release.
 
 ### Docker
 
