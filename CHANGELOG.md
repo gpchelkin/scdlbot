@@ -455,3 +455,14 @@ The configuration is mostly compatible, but read [`.env.sample`](https://github.
 ## 0.1.0 (2017-06-04)
 
 - First usable and stable version.
+
+## The beginning (2016-01-09)
+
+The first commit: one 69-line `scdlbot.py` on Heroku that polled the Bot API with `requests`, downloaded SoundCloud
+tracks with [scdl](https://github.com/flyingrub/scdl) (MP3 rips only), set their tags and artwork and sent them as
+Telegram audio, with /start, /help and /dl.
+
+- 2016-01-09: mobile links (`m.soundcloud.com`)
+- 2016-01-15: the bot token moved from the code to an environment variable
+- 2016-02-26: Python 3.5.1, `http://` links too
+- 2016-05-14: Russian file names transliterated to Latin

@@ -139,11 +139,13 @@ The server needs:
 
 ```bash
 tmp=$(mktemp -d) && cd "$tmp"
-# ffmpeg and ffprobe: yt-dlp's builds, with its patches (for ARM servers: linuxarm64 instead of linux64)
-curl -fsSL https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
+arch=$(uname -m)   # x86_64, or aarch64 on ARM servers
+# ffmpeg and ffprobe: yt-dlp's builds, with its patches
+[ "$arch" = aarch64 ] && ff=linuxarm64 || ff=linux64
+curl -fsSL "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-$ff-gpl.tar.xz" \
   | tar -xJ --strip-components=2 --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
-# deno (for ARM servers: aarch64 instead of x86_64)
-curl -fsSLo deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip && unzip -q deno.zip
+# deno
+curl -fsSLo deno.zip "https://github.com/denoland/deno/releases/latest/download/deno-$arch-unknown-linux-gnu.zip" && unzip -q deno.zip
 sudo install -m 755 ffmpeg ffprobe deno /usr/local/bin/   # owned by root, replacing the old files
 cd && rm -r "$tmp"
 ffmpeg -version | head -n 1 && ffprobe -version | head -n 1 && deno --version   # check

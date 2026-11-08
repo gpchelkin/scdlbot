@@ -1,12 +1,19 @@
-# One pull request a week for Python packages (poetry.lock) and one for GitHub Actions
+# One pull request a week for Python packages (poetry.lock), one for GitHub Actions and one for the deno image in the
+# Dockerfile. Security fixes come right away, all of them in one pull request.
 version: 2
 updates:
   - package-ecosystem: pip
     directory: /
     schedule:
       interval: weekly
+    # Only the lock file changes, as long as pyproject.toml allows the new version (all its minimums stay).
+    # A version outside an upper bound (python-telegram-bot 23, curl-cffi 0.17) widens it, so CI tries it first.
+    versioning-strategy: increase-if-necessary
     groups:
       python:
+        patterns: ["*"]
+      python-security:
+        applies-to: security-updates
         patterns: ["*"]
 
   - package-ecosystem: github-actions
@@ -16,3 +23,10 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: python  # python:3.15-slim gets patch releases on every build; the minor follows pyproject.toml
