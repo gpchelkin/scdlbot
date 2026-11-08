@@ -13,6 +13,7 @@
   With `--tools` it also updates ffmpeg, ffprobe and deno.
 - `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
   drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
+- A Grafana dashboard, `deploy/grafana-dashboard.json`: downloads, sites, errors, queue, routes, users and resources.
 
 ## 1.0.0 (2026-11-07)
 

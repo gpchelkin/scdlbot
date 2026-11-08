@@ -202,6 +202,9 @@ The image has ffmpeg, deno and the yt-dlp nightly build from `poetry.lock`.
   `scdlbot_job_duration_seconds`, `scdlbot_queue_size`, `scdlbot_workers_busy`, `scdlbot_download_errors_total{code}`,
   `scdlbot_rejected_total{reason}`, `scdlbot_active_users{period}`, `scdlbot_active_users_by_language{lang}` and more,
   plus CPU/memory of the bot's main process.
+- A Grafana dashboard for them: [`deploy/grafana-dashboard.json`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/grafana-dashboard.json)
+  (Dashboards → New → Import, then pick your Prometheus). Its last row also needs cAdvisor and node_exporter on the bot's host,
+  with the same `instance` label.
 - `/stats` in Telegram (owner only): active users, jobs by status, top sites, app languages.
   Telegram doesn't tell bots users' countries; the language of their Telegram app is the closest thing.
 - Errors (unexpected exceptions only) go to `TG_BOT_OWNER_CHAT_ID`, at most one message per minute, and to `SENTRY_DSN` if set.
