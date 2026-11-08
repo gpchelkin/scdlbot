@@ -138,16 +138,19 @@ The server needs:
   in the `PATH` of the service. To put the latest builds into `/usr/local/bin`:
 
 ```bash
+tmp=$(mktemp -d) && cd "$tmp"
 # ffmpeg and ffprobe: yt-dlp's builds, with its patches (for ARM servers: linuxarm64 instead of linux64)
 curl -fsSL https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz \
-  | sudo tar -xJ -C /usr/local/bin --strip-components=2 --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
+  | tar -xJ --strip-components=2 --wildcards '*/bin/ffmpeg' '*/bin/ffprobe'
 # deno (for ARM servers: aarch64 instead of x86_64)
-curl -fsSLo /tmp/deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip \
-  && sudo unzip -o /tmp/deno.zip -d /usr/local/bin && rm /tmp/deno.zip
+curl -fsSLo deno.zip https://github.com/denoland/deno/releases/latest/download/deno-x86_64-unknown-linux-gnu.zip && unzip -q deno.zip
+sudo install -m 755 ffmpeg ffprobe deno /usr/local/bin/   # owned by root, replacing the old files
+cd && rm -r "$tmp"
 ffmpeg -version | head -n 1 && ffprobe -version | head -n 1 && deno --version   # check
 ```
 
-Your distribution's ffmpeg (`sudo apt install ffmpeg`) works too. Run the same commands again to update them.
+Your distribution's ffmpeg (`sudo apt install ffmpeg`) works too. Run the same commands again to update them, with no need
+to stop the bot: downloads already running keep the old files, and the next ones use the new ones.
 
 ### systemd
 
