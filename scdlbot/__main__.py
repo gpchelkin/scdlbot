@@ -19,6 +19,7 @@ from scdlbot.ytdlp import DownloadError, download, to_item, video_height
 
 async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, route_name: str | None = None) -> None:
     link = classify(url, cfg, unknown_sites=True)
+    url = link.url if link else url  # the original site's link for the preview-fixing sites (links.ALIASES), like the bot
     kind = kind or (link.kind if link else AUDIO)
     site = link.site if link else ""
     try:

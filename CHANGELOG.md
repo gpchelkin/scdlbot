@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+- Links to sites that fix link previews in Telegram work as links to the original site: fxtwitter.com, fixupx.com,
+  twittpr.com, vxtwitter.com and fixvx.com for Twitter, oginstagram.com, uuinstagram.com, kkinstagram.com and
+  ddinstagram.com for Instagram, tnktok.com, tiktxk.com, tfxktok.com, kktiktok.com, tiktokez.com and vxtiktok.com
+  for TikTok, koutube.com for YouTube, rxddit.com, vxreddit.com and redditez.com for Reddit, fxbsky.app, bskyx.app and
+  bsyy.app for Bluesky (Reddit and Bluesky with Unknown sites enabled).
+- `scdlbot fetch` downloads the same link the bot would (the original site's for those links).
+
 ## 1.0.0 (2026-11-07)
 
 scdlbot is rewritten from scratch. The new bot is one asyncio process with a download queue, yt-dlp downloads from every site, and SQLite keeps settings, the queue and stats.

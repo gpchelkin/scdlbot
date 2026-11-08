@@ -81,6 +81,33 @@ def test_fragment_dropped_and_host_lowercased():
     assert link is not None and link.url == "https://soundcloud.com/a/b"
 
 
+@pytest.mark.parametrize(
+    ("url", "original", "site"),
+    [
+        ("https://fxtwitter.com/user/status/123", "https://x.com/user/status/123", "Twitter"),
+        ("https://d.fxtwitter.com/user/status/123", "https://x.com/user/status/123", "Twitter"),
+        ("fixvx.com/user/status/123?s=20", "https://x.com/user/status/123?s=20", "Twitter"),
+        ("https://www.oginstagram.com/reel/CtZbNhtrJv3/", "https://www.instagram.com/reel/CtZbNhtrJv3/", "Instagram"),
+        ("https://kkinstagram.com/p/CtZbNhtrJv3/?igsh=abc", "https://www.instagram.com/p/CtZbNhtrJv3/?igsh=abc", "Instagram"),
+        ("https://tnktok.com/@user/video/123", "https://www.tiktok.com/@user/video/123", "TikTok"),
+        ("http://koutube.com/watch?v=abc", "https://www.youtube.com/watch?v=abc", "YouTube"),
+    ],
+)
+def test_preview_fixing_sites_are_the_original_sites(url, original, site):
+    link = classify(url, CFG, unknown_sites=False)
+    assert link is not None and (link.url, link.site) == (original, site)
+
+
+def test_preview_fixing_sites_follow_the_original_sites_rules():
+    assert classify("https://fxtwitter.com/user", CFG, unknown_sites=True) is None  # a profile, like x.com/user
+    assert classify("https://rxddit.com/r/videos/comments/abc/title/", CFG, unknown_sites=False) is None  # Reddit is an unknown site
+    link = classify("https://rxddit.com/r/videos/comments/abc/title/", CFG, unknown_sites=True)
+    assert link is not None and (link.url, link.site) == ("https://www.reddit.com/r/videos/comments/abc/title/", "reddit.com")
+    assert classify("https://fxtwitter.com/user/status/123", Config(blacklist_domains=frozenset({"x.com"})), unknown_sites=True) is None
+    link = classify("https://notfxtwitter.com/user/status/123", CFG, unknown_sites=True)  # not an alias, just a similar name
+    assert link is not None and link.site == "notfxtwitter.com"
+
+
 def test_find_links_from_text_and_caption():
     text = "hey 🎶 https://soundcloud.com/a/b and youtu.be/x and again https://soundcloud.com/a/b and a text link"
     entities = [

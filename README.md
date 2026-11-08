@@ -12,6 +12,8 @@ Videos from TikTok, Instagram, Twitter and YouTube Shorts are sent as videos (ot
 Instagram and Twitter photos as photos and albums,
 text-only tweets as text,
 with the author (`Author: Name (@handle)`, linked to the profile) and the post's text in the caption.
+Links to sites that fix their previews in Telegram (fxtwitter.com, fixvx.com, oginstagram.com, kkinstagram.com, tnktok.com
+and [others](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/links.py)) work as links to the original site.
 
 Send `/help` to [@scdlbot](https://t.me/scdlbot) to see how to use it, or read [the help text](https://github.com/gpchelkin/scdlbot/blob/master/scdlbot/texts/help.html).
 Please report bugs and ideas in [issues](https://github.com/gpchelkin/scdlbot/issues).

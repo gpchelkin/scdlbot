@@ -123,6 +123,18 @@ SITES = (
     Site("Twitter", ("t.co",), kind=VIDEO, shortener=True),  # video if it can't be resolved: that's what t.co links in posts mostly are
 )
 
+# Sites that fix link previews of social networks: people share their links so that Telegram shows the video or the text.
+# They keep the original site's paths (subdomains too, like d.fxtwitter.com), so the bot downloads from the original site,
+# as if it got that site's link. The host each one becomes is the one yt-dlp expects (TikTok's needs www.).
+ALIASES = {
+    "x.com": ("fxtwitter.com", "fixupx.com", "twittpr.com", "vxtwitter.com", "fixvx.com"),
+    "www.instagram.com": ("oginstagram.com", "uuinstagram.com", "kkinstagram.com", "ddinstagram.com"),
+    "www.tiktok.com": ("tnktok.com", "tiktxk.com", "tfxktok.com", "kktiktok.com", "tiktokez.com", "vxtiktok.com"),
+    "www.youtube.com": ("koutube.com",),
+    "www.reddit.com": ("rxddit.com", "vxreddit.com", "redditez.com"),  # Reddit and Bluesky are unknown sites
+    "bsky.app": ("fxbsky.app", "bskyx.app", "bsyy.app"),
+}
+
 TELEGRAM_DOMAINS = frozenset(
     ["telegram.org", "telegram.me", "t.me", "telegram.dog", "telegra.ph", "te.legra.ph", "graph.org", "tdesktop.com", "telesco.pe", "contest.com", "contest.dev"]
 )
@@ -170,6 +182,9 @@ def classify(url: str, cfg: Config, unknown_sites: bool) -> Link | None:
     host = (parts.hostname or "").lower().removeprefix("www.")
     if parts.scheme not in ("http", "https") or not host or "." not in host:
         return None
+    if original := next((o for o, aliases in ALIASES.items() if any(_host_matches(host, a) for a in aliases)), None):
+        parts = parts._replace(scheme="https", netloc=original)
+        host = original.removeprefix("www.")
     if any(_host_matches(host, d) for d in TELEGRAM_DOMAINS):
         return None
     if cfg.whitelist_domains and host not in cfg.whitelist_domains:
