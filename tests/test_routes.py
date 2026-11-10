@@ -173,6 +173,18 @@ def test_sample_login_route_when_uncommented():
     assert [route.name for route in no_lists.allowed("TikTok")] == ["fin1", "fra1", "fin1-v6"]  # never for anonymous downloads
 
 
+def test_sites_with_login_routes_log_in_only_through_them():
+    # One Firefox profile for the YouTube account (fra1) and the TikTok account (tt1, TikTok's login route)
+    profile = Cookies("firefox:/var/lib/scdlbot/firefox/abcd1234.default-release", Path("/nonexistent"))
+    found = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187", cookies=profile), Route("tt1", proxy="http://127.0.0.1:3187", cookies=profile)]
+    pool = RoutePool(found, {"default": ["fin1", "fra1"]}, {"TikTok": ["tt1"]})
+    assert {(route.name, route.cookies) for route in (pool.pick("TikTok") for _ in range(2))} == {("fin1", None), ("fra1", None)}
+    assert pool.untried("TikTok", {"fin1"}).describe() == "fra1 (proxy http://127.0.0.1:3187)"
+    assert pool.pick_login("TikTok").cookies is profile
+    assert pool.pick("YouTube", avoid="fin1").cookies is profile  # no login routes: the route as it is
+    assert pool.routes["fra1"].cookies is profile
+
+
 @pytest.mark.parametrize(
     ("text", "error"),
     [

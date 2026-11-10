@@ -14,6 +14,10 @@
 - `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
   drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
 - A Grafana dashboard, `deploy/grafana-dashboard.json`: downloads, sites, errors, queue, routes, users and resources.
+- A site with login routes (`[login]`) logs in only through them: its other routes go to it without their cookies.
+  A Firefox profile's cookies hold every site it logged in to, so a profile for the YouTube account that also logged in
+  to TikTok no longer logs in to TikTok on every download through that route; TikTok's posts for logged-in users ("may not
+  be comfortable for some audiences") go through TikTok's login route.
 - `tools/instagram_cookies.py` also reads accounts sold with the website's cookies as base64-encoded JSON, and with
   `--first N` it numbers the files from N, so new accounts don't replace the files of older ones.
 

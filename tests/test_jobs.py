@@ -318,6 +318,31 @@ async def test_sites_without_login_routes_are_not_tried_again(setup):
     assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")
 
 
+async def test_tiktok_logs_in_only_through_its_login_route(setup):
+    """fra1's cookies (a browser profile with the YouTube account) also have the TikTok account, which is for tt1 only."""
+    from scdlbot.routes import Route
+    from scdlbot.ytdlp import Cookies
+
+    cfg, db, bot, queue, run = setup
+    profile = cfg.dl_dir.parent / "profile-cookies.txt"
+    profile.write_text("# Netscape HTTP Cookie File\n")
+    cookies = Cookies(str(profile), profile)
+    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187", cookies=cookies), Route("tt1", proxy="http://127.0.0.1:3187", cookies=cookies)]
+    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, {"TikTok": ["tt1"]})
+    queue.routes.turns["TikTok"] = 1  # fra1 is next
+    calls = []
+
+    async def download(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
+        calls.append("with cookies" if "--cookies" in extra else "without")
+        if "--cookies" not in extra:
+            raise DownloadError("login", "ERROR: [TikTok] 1: This post may not be comfortable for some audiences. Log in for access.")
+        async for info in fake_download(1)(url, kind, job_dir, cfg, extra):
+            yield info
+
+    job = await run(download, site="TikTok", url="https://www.tiktok.com/@u/video/1", kind="video")
+    assert (job.status, job.route, calls) == ("done", "tt1", ["without", "with cookies"])
+
+
 async def test_stories_go_straight_to_the_login_route(setup):
     cfg, db, bot, queue, run = setup
     with_login_route(queue, cfg.dl_dir.parent / "instagram-cookies.txt")

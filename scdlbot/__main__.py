@@ -28,7 +28,7 @@ async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, rout
         raise SystemExit(f"Routes: {exc}") from None
     if route_name and route_name not in pool.routes:
         raise SystemExit(f"No route {route_name!r}; routes: {', '.join(pool.routes)}")
-    route = pool.routes[route_name] if route_name else pool.pick(site)
+    route = pool.for_site(site, pool.routes[route_name]) if route_name else pool.pick(site)
     print(f"Route: {route.describe()}")
     out = Path("downloads").absolute()
     out.mkdir(exist_ok=True)

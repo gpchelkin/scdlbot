@@ -94,9 +94,11 @@ Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, li
 - If a site blocks a download (bot check, HTTP 403/429) or the route can't connect, it's tried once more through another route.
 - A route that a site keeps blocking is left out for that site for `ROUTE_EXCLUSION` seconds (2 hours), and the owner is told;
   if all routes of a site are left out, all of them are used anyway.
-- Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories) go once more through
-  the site's login routes (`[login]` in the routes file): routes with an account's cookies that anonymous downloads never use,
-  so the account only sees the few downloads that need it. Instagram stories, which Instagram never shows anonymously,
+- Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories, TikTok's posts that
+  "may not be comfortable for some audiences") go once more through the site's login routes (`[login]` in the routes file):
+  routes with an account's cookies that anonymous downloads never use, so the account only sees the few downloads that need it.
+  A site with login routes gets no cookies through its other routes, so a browser profile logged in to several sites
+  (YouTube's route) logs in to such a site only on its login routes. Instagram stories, which Instagram never shows anonymously,
   go straight to the login routes. When the last 8 downloads through a login route all failed
   that way too, its account is probably logged out: the route is left out for a day (or until a reload) and the owner is told.
   [`tools/instagram_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.

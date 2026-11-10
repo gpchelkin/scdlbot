@@ -15,7 +15,7 @@ import re
 import time
 import tomllib
 from collections import Counter, defaultdict, deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -215,14 +215,23 @@ class RoutePool:
         allowed = self.allowed(site)
         return [route for route in allowed if not self.excluded(site, route.name, now)] or allowed  # fail-open
 
+    def for_site(self, site: str, route: Route) -> Route:
+        """The route as the site's downloads use it. A site with login routes ([login]) logs in only through those, so its
+        other routes go to it without their cookies: a browser profile's cookies hold every site the browser logged in to,
+        e.g. the YouTube route's profile also logged in to TikTok, which would then see its account in every download."""
+        login = self.login.get(site)
+        if login and route.cookies and route.name not in login:
+            return replace(route, cookies=None)
+        return route
+
     def pick(self, site: str, avoid: str | None = None) -> Route:
         """The next route for a site, in turn. With avoid: another route than that one, if there is any."""
         candidates = [route for route in self.in_use(site) if route.name != avoid] or [route for route in self.allowed(site) if route.name != avoid]
         if not candidates:
-            return self.routes.get(avoid or "") or self.allowed(site)[0]
+            return self.for_site(site, self.routes.get(avoid or "") or self.allowed(site)[0])
         turn = self.turns[site]
         self.turns[site] += 1
-        return candidates[turn % len(candidates)]
+        return self.for_site(site, candidates[turn % len(candidates)])
 
     def pick_login(self, site: str, avoid: str | None = None) -> Route | None:
         """The next login route of a site ([login]), for downloads it gives only to logged-in users; None if it has none."""
@@ -237,7 +246,8 @@ class RoutePool:
     def untried(self, site: str, tried: set[str], login: bool = False) -> Route | None:
         """A route of the site (a login route with login) not in tried, if there is any."""
         routes = [self.routes[name] for name in self.login.get(site, [])] if login else self.in_use(site)
-        return next((route for route in routes if route.name not in tried), None)
+        route = next((route for route in routes if route.name not in tried), None)
+        return route and self.for_site(site, route)
 
     def record(self, site: str, route: str, code: str | None, error: str = "") -> None:
         """How a download through a route went: None if it worked, else its error code."""
