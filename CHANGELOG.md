@@ -14,6 +14,8 @@
 - `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
   drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
 - A Grafana dashboard, `deploy/grafana-dashboard.json`: downloads, sites, errors, queue, routes, users and resources.
+- `tools/instagram_cookies.py` also reads accounts sold with the website's cookies as base64-encoded JSON, and with
+  `--first N` it numbers the files from N, so new accounts don't replace the files of older ones.
 
 ## 1.0.0 (2026-11-07)
 

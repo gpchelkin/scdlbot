@@ -1,4 +1,6 @@
+import base64
 import importlib.util
+import json
 import stat
 import sys
 from pathlib import Path
@@ -11,6 +13,20 @@ LINE = (
     "android-0;1;2;3:mid=aAAAAAABAAAAAAAAAAAAAAAA;rur=NHA,123456789,1824531819:01ff;sessionid=123456789%3AabcDEF%3A11%3AAYxyz;"
     "Authorization=Bearer IGT:2:eyJzZXNzaW9uaWQiOiJ4In0=;X-IG-WWW-Claim=hmac.x;IG-U-DS-USER-ID=123456789;X-MID=aAAAAAABAAAAAAAAAAAAAAAA;::"
 )
+# And in the other format: login:password:2FA:the website's cookies as base64-encoded JSON
+WEB_COOKIES = {
+    "csrftoken": "abcCSRF",
+    "ds_user_id": "987654321",
+    "ig_did": "0A1B2C3D-4E5F",
+    "mid": "bBBBBBBBBBBB",
+    "rur": '"CLN\\054987654321\\0541824531819:01fe"',
+    "sessionid": "987654321%3AxyzXYZ%3A9%3AAYabc",
+}
+LINE_JSON = "john.roe7:hunter3:ABCDEFGHIJKLMNOP:" + base64.b64encode(json.dumps(WEB_COOKIES).encode()).decode().rstrip("=")
+
+
+def b64json(data) -> str:
+    return base64.b64encode(json.dumps(data).encode()).decode()
 
 
 def load_tool(name: str):
@@ -44,6 +60,31 @@ def test_instagram_cookies_keeps_only_the_session(tmp_path, monkeypatch, capsys)
     monkeypatch.setattr(sys, "argv", ["instagram_cookies.py", str(accounts), str(tmp_path / "numbered"), "--prefix", "ig"])
     tool.main()
     assert (tmp_path / "numbered" / "ig1.cookies.txt").read_text() == text  # named for the routes file, not by login
+
+
+def test_instagram_cookies_reads_base64_json_website_cookies(tmp_path, monkeypatch, capsys):
+    tool = load_tool("instagram_cookies")
+    assert tool.cookies_of(LINE_JSON) == ("john.roe7", WEB_COOKIES)
+    # a browser extension's export, without ds_user_id (it comes from the session) and with a cookie a cookies.txt can't hold
+    export = [{"name": "sessionid", "value": "11%3Ax"}, {"name": "mid", "value": "m"}, {"name": "odd", "value": "a b"}]
+    assert tool.cookies_of("a:b:c:" + b64json(export)) == ("a", {"sessionid": "11%3Ax", "mid": "m", "ds_user_id": "11"})
+    assert tool.cookies_of("a:b:c:" + b64json({"csrftoken": "x"})) is None  # no session
+    assert tool.cookies_of("a:b:c:eyJnot-base64-json") is None
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "ig1.cookies.txt").write_text("an older account\n")
+    accounts = tmp_path / "accounts.txt"
+    accounts.write_text(f"{LINE_JSON}\n{LINE}\n")
+    monkeypatch.setattr(sys, "argv", ["instagram_cookies.py", str(accounts), str(out_dir), "--prefix", "ig", "--first", "4"])
+    tool.main()
+    assert (out_dir / "ig1.cookies.txt").read_text() == "an older account\n"  # --first 4 left it alone
+    text = (out_dir / "ig4.cookies.txt").read_text()
+    assert "\tcsrftoken\tabcCSRF\n" in text and "\tsessionid\t987654321%3AxyzXYZ%3A9%3AAYabc\n" in text
+    assert "hunter3" not in text and "ABCDEFGHIJKLMNOP" not in text
+    assert "\tsessionid\t123456789%3AabcDEF%3A11%3AAYxyz\n" in (out_dir / "ig5.cookies.txt").read_text()
+    out = capsys.readouterr().out
+    assert 'name = "ig4"' in out and 'name = "ig5"' in out and 'Instagram = ["ig4", "ig5"]' in out and "hunter3" not in out
 
 
 def test_converted_cookies_load_in_a_login_route(tmp_path, monkeypatch):
