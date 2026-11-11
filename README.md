@@ -114,8 +114,11 @@ in the format Telegram asked big downloader bots to use in February 2026
 ([leak](https://t.me/adurovleaks/990)). Links in captions are cleaned up (`NORMALIZE_URLS`): yt-dlp's canonical link
 of the post or track, without share tracking (`?si=`, `?igsh=`, TikTok's `u_code`…) and with short links expanded.
 
-In @BotFather: set the commands from [`telegram_settings/commands.txt`](https://github.com/gpchelkin/scdlbot/blob/master/telegram_settings/commands.txt),
-and disable privacy mode if the bot should react to plain messages with links in groups (otherwise it only sees commands).
+The bot's Telegram profile is kept in [`telegram_settings/`](https://github.com/gpchelkin/scdlbot/tree/master/telegram_settings):
+name, about, description and commands. `scdlbot profile` shows what differs on Telegram, `scdlbot profile --apply` sets
+it, and `--apply --userpic userpic.jpg` also uploads that file as the userpic (on a server: `deploy/cli.sh profile`, below).
+In @BotFather: disable privacy mode if the bot should react to plain messages with links in groups (otherwise it only sees
+commands); the inline placeholder and whether it may join groups are set there too.
 
 ## Deploy
 
@@ -190,6 +193,15 @@ sudo /opt/scdlbot/deploy/upgrade.sh   # add --tools for new ffmpeg, ffprobe and 
 It pulls, builds a new venv while the bot keeps running and switches to it with one restart. If anything fails before
 that, the bot stays as it was, and the last 3 venvs stay for going back (the script says how). yt-dlp comes from its
 master branch because sites change all the time, and fixes land there days or weeks before a release.
+
+The command line tools run on the server the way the service does (its user, settings and state), with
+[`deploy/cli.sh`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/cli.sh):
+
+```bash
+sudo /opt/scdlbot/deploy/cli.sh profile           # the bot's Telegram profile compared with telegram_settings/
+sudo /opt/scdlbot/deploy/cli.sh profile --apply   # set what differs; add --userpic userpic.jpg for the userpic
+sudo /opt/scdlbot/deploy/cli.sh fetch --route fin1 URL   # one download like the bot's, into /var/lib/scdlbot/downloads
+```
 
 ### Docker
 

@@ -1,9 +1,11 @@
-"""scdlbot: run the bot, or `scdlbot fetch URL` to download one link like the bot does, without Telegram."""
+"""scdlbot: run the bot, `scdlbot fetch URL` to download one link like the bot does, without Telegram, or
+`scdlbot profile` to compare (and with --apply, set) the bot's Telegram profile with telegram_settings/."""
 
 import argparse
 import asyncio
 import json
 import logging
+import os
 from contextlib import aclosing
 from dataclasses import asdict
 from pathlib import Path
@@ -61,6 +63,10 @@ def main() -> None:
     fetch_parser.add_argument("--kind", choices=[AUDIO, VIDEO], help="override audio/video detection")
     fetch_parser.add_argument("--mp3", action="store_true", help="convert audio to mp3, like the Always MP3 setting")
     fetch_parser.add_argument("--route", help="download through this route (see ROUTES_FILE); default: the site's first route")
+    profile_parser = commands.add_parser("profile", help="compare the bot's Telegram profile with telegram_settings/; --apply sets what differs")
+    profile_parser.add_argument("--dir", type=Path, default=Path(os.getenv("TELEGRAM_SETTINGS") or "telegram_settings"), help="default: TELEGRAM_SETTINGS or ./telegram_settings")
+    profile_parser.add_argument("--apply", action="store_true", help="set the name, about, description and commands that differ")
+    profile_parser.add_argument("--userpic", type=Path, help="with --apply, also upload this JPEG (in --dir) as the bot's userpic")
     args = parser.parse_args()
 
     cfg = Config.from_env()
@@ -70,6 +76,10 @@ def main() -> None:
 
     if args.command == "fetch":
         asyncio.run(fetch(args.url, args.kind, cfg, args.mp3, args.route))
+    elif args.command == "profile":
+        from scdlbot.profile import profile
+
+        asyncio.run(profile(cfg, args.dir, args.apply, args.userpic))
     else:
         from scdlbot.app import run
 
