@@ -96,3 +96,23 @@ def test_converted_cookies_load_in_a_login_route(tmp_path, monkeypatch):
     routes, _, login = parse({"routes": [{"name": "ig1", "source_address": "0.0.0.0", "cookies": str(path)}], "login": {"Instagram": ["ig1"]}}, tmp_path)
     args = routes[0].ytdlp_args(tmp_path)
     assert args[-2] == "--cookies" and Path(args[-1]).read_text() == path.read_text() and login == {"Instagram": ["ig1"]}
+
+
+def test_firefox_cookies_copy_is_the_database_file(tmp_path):
+    import sqlite3
+
+    tool = load_tool("serve_firefox_cookies")
+    firefox = sqlite3.connect(tmp_path / "cookies.sqlite")  # like Firefox: WAL, locked
+    firefox.execute("PRAGMA journal_mode=WAL")
+    firefox.execute("PRAGMA locking_mode=EXCLUSIVE")
+    firefox.execute("CREATE TABLE moz_cookies (host TEXT, name TEXT, value TEXT)")
+    firefox.executemany("INSERT INTO moz_cookies VALUES (?, ?, ?)", [(".youtube.com", f"c{i}", "v") for i in range(300)])
+    firefox.commit()
+    firefox.execute("PRAGMA wal_checkpoint")  # in the database file now
+    firefox.execute("PRAGMA wal_autocheckpoint=0")
+    firefox.execute("INSERT INTO moz_cookies VALUES ('.tiktok.com', 'x', 'only in the log')")
+    firefox.commit()
+    (tmp_path / "copy.sqlite").write_bytes(tool.snapshot(tmp_path))
+    copy = sqlite3.connect(f"file:{tmp_path / 'copy.sqlite'}?immutable=1", uri=True)
+    assert copy.execute("SELECT count(*) FROM moz_cookies").fetchone() == (300,) and copy.execute("PRAGMA quick_check").fetchone() == ("ok",)
+    firefox.close()

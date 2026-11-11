@@ -22,6 +22,9 @@
   for the owner at start and on every reload.
 - Apple Music and Spotify's tracks, albums, playlists and artists aren't tried with "Unknown sites" on: they come only
   with DRM. Their podcasts still are (podcasts.apple.com, open.spotify.com/episode).
+- Cookies downloaded from a URL are readable only by the bot (600, in a 700 directory): they are an account's session.
+- `tools/serve_firefox_cookies.py` serves a Firefox profile's cookies (a consistent copy, with what's still in Firefox's
+  write-ahead log) to the bot on another server, for routes with `cookies = "firefox:PROFILE_DIR:URL"`.
 - `tools/instagram_cookies.py` also reads accounts sold with the website's cookies as base64-encoded JSON, and with
   `--first N` it numbers the files from N, so new accounts don't replace the files of older ones.
 

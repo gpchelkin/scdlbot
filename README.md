@@ -102,6 +102,8 @@ Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, li
   go straight to the login routes. When the last 8 downloads through a login route all failed
   that way too, its account is probably logged out: the route is left out for a day (or until a reload) and the owner is told.
   [`tools/instagram_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
+  [`tools/serve_firefox_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/serve_firefox_cookies.py) serves the cookies of a Firefox
+  that runs on another server, for `cookies = "firefox:PROFILE_DIR:URL"`.
 - Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,
   and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`.
 - `scdlbot fetch --route NAME URL` downloads through one route, to check it.

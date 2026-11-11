@@ -140,8 +140,10 @@ class Cookies:
         except httpx.HTTPError as exc:
             log.warning("Could not refresh cookies: %s", exc)
             return
-        self.file.parent.mkdir(parents=True, exist_ok=True)
+        self.file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         temp = self.file.with_suffix(".tmp")
+        temp.touch(mode=0o600)  # an account's session: only the bot may read it
+        temp.chmod(0o600)
         temp.write_bytes(response.content)
         temp.replace(self.file)
         log.info("Cookies refreshed: %s", self.file)

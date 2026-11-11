@@ -13,7 +13,9 @@
 #                   that connects to the proxy, and it must be of the proxy's IP version.
 #                   Without it the system picks: often IPv6 for sites that have it, IPv4 for the rest.
 #   cookies         for sites that need a login: a cookies.txt path, a URL to download it from (every COOKIES_REFRESH
-#                   seconds), or firefox:PROFILE_DIR[:URL_OF_COOKIES_SQLITE] with the full path of a Firefox profile.
+#                   seconds), or firefox:PROFILE_DIR[:URL_OF_COOKIES_SQLITE] with the full path of a Firefox profile
+#                   (with a URL, its cookies.sqlite is downloaded there: tools/serve_firefox_cookies.py serves it
+#                   from the server where Firefox runs, e.g. over Tailscale).
 #                   Keep a logged-in account on one route: a session jumping between IPs looks hijacked.
 #
 # Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories, posts it answers with

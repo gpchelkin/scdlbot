@@ -159,3 +159,19 @@ def test_logged_command_leaves_out_proxy_passwords():
     line = command_for_logs(command)
     assert "--proxy http://10.0.0.1:3128" in line and "secret" not in line
     assert command_for_logs(["yt-dlp", "--proxy", "socks5://u:p@[2a01::1]:1080", "u"]) == "yt-dlp --proxy 'socks5://[2a01::1]:1080' u"
+
+
+async def test_downloaded_cookies_are_only_for_the_bot(tmp_path):
+    import stat
+
+    import httpx
+
+    from scdlbot.ytdlp import Cookies
+
+    cookies = Cookies("firefox:" + str(tmp_path / "firefox" / "profile") + ":http://cookies.test/cookies.sqlite", tmp_path / "unused")
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=b"SQLite format 3\0"))
+    async with httpx.AsyncClient(transport=transport) as client:
+        await cookies.refresh(client)
+    assert cookies.file.read_bytes() == b"SQLite format 3\0"
+    assert stat.S_IMODE(cookies.file.stat().st_mode) == 0o600 and stat.S_IMODE(cookies.file.parent.stat().st_mode) == 0o700
+    assert cookies.args(tmp_path) == ["--cookies-from-browser", f"firefox:{tmp_path / 'firefox' / 'profile'}"]
