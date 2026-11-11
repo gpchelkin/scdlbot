@@ -156,6 +156,23 @@ async def test_reload_applies_a_good_file_and_keeps_routes_on_a_broken_one(tmp_p
     assert "Routes not reloaded, still using the old ones: [sites]: unknown site 'Youtube', did you mean 'YouTube'?" in caplog.text
 
 
+async def test_reload_tells_the_owner_about_a_missing_cookies_file(tmp_path, caplog):
+    from types import SimpleNamespace
+
+    from scdlbot.app import reload_routes
+
+    (tmp_path / "ig1.cookies.txt").write_text("# Netscape HTTP Cookie File\n")
+    path = tmp_path / "routes.toml"
+    path.write_text(
+        f'[[routes]]\nname = "ig1"\ncookies = "{tmp_path}/ig1.cookies.txt"\n[[routes]]\nname = "ig2"\ncookies = "{tmp_path}/ig2.cookies.txt"\n[login]\nInstagram = ["ig1", "ig2"]\n'
+    )
+    cfg = Config(routes_file=path, db_path=tmp_path / "db.sqlite3")
+    rt = SimpleNamespace(cfg=cfg, queue=SimpleNamespace(routes=RoutePool(*routes.load(cfg))), http=None)
+    await reload_routes(rt)
+    errors = [record.getMessage() for record in caplog.records if record.levelname == "ERROR"]
+    assert errors == [f"Route ig2 goes without cookies: {tmp_path}/ig2.cookies.txt doesn't exist"]  # an alert for the owner
+
+
 LOGIN = (
     SAMPLE.read_text().replace("# [[routes]]", "[[routes]]").replace('# name = "fin1-login"', 'name = "fin1-login"')
     .replace("# source_address", "source_address").replace("# cookies = ", "cookies = ").replace("# [login]", "[login]")

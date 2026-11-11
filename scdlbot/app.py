@@ -111,6 +111,7 @@ async def post_init(app: Application) -> None:
     observe.sd_notify("READY=1")
     log.info("@%s is running with %d+%d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.youtube_workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
     log.info("Routes: %s", describe_routes(pool))
+    warn_missing_cookies(pool)
 
 
 async def post_stop(app: Application) -> None:
@@ -183,6 +184,13 @@ async def refresh_cookies(rt: Runtime) -> None:
             await cookies.refresh(rt.http)
 
 
+def warn_missing_cookies(pool: RoutePool) -> None:
+    """A route whose cookies file isn't there downloads without cookies, so a login route can't log in: tell the owner."""
+    for route in pool.routes.values():
+        if route.cookies and route.cookies.file and not route.cookies.file.exists():
+            log.error("Route %s goes without cookies: %s doesn't exist", route.name, route.cookies.file)
+
+
 def describe_routes(pool: RoutePool) -> str:
     sites = "; ".join(f"{site}: {', '.join(names)}" for site, names in pool.sites.items())
     login = "; ".join(f"{site} login: {', '.join(names)}" for site, names in pool.login.items())
@@ -203,6 +211,7 @@ async def reload_routes(rt: Runtime) -> None:
     for cookies in rt.queue.routes.cookies():
         await cookies.refresh(rt.http)
     log.info("Routes reloaded: %s", describe_routes(rt.queue.routes))
+    warn_missing_cookies(rt.queue.routes)
 
 
 def run(cfg: Config) -> None:

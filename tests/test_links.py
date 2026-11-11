@@ -68,6 +68,25 @@ def test_unknown_sites():
     assert classify("https://s.chollo.to/pLmcOG.png", CFG, unknown_sites=True) is None
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://music.apple.com/ru/album/and-in-that-dirt-we-glow-forever-green-ep/6821385280",
+        "https://music.apple.com/us/song/x/123",
+        "https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy?si=x",
+        "https://open.spotify.com/intl-de/track/6rqhFgbbKwnb9MLmUQDhG6",
+        "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+    ],
+)
+def test_drm_only_music_is_not_tried(url):
+    assert classify(url, CFG, unknown_sites=True) is None
+
+
+def test_podcasts_of_drm_only_services_are_tried():
+    for url in ("https://podcasts.apple.com/ru/podcast/x/id123?i=456", "https://open.spotify.com/episode/0Q86acNRm6V9GYx55SXKwf"):
+        assert classify(url, CFG, unknown_sites=True) is not None, url
+
+
 def test_domain_lists():
     cfg = Config(blacklist_domains=frozenset({"soundcloud.com"}))
     assert classify("https://soundcloud.com/a/b", cfg, unknown_sites=True) is None

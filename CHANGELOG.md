@@ -18,6 +18,10 @@
   A Firefox profile's cookies hold every site it logged in to, so a profile for the YouTube account that also logged in
   to TikTok no longer logs in to TikTok on every download through that route; TikTok's posts for logged-in users ("may not
   be comfortable for some audiences") go through TikTok's login route.
+- A route whose cookies file doesn't exist (it downloads without cookies, so a login route can't log in) is an error
+  for the owner at start and on every reload.
+- Apple Music and Spotify's tracks, albums, playlists and artists aren't tried with "Unknown sites" on: they come only
+  with DRM. Their podcasts still are (podcasts.apple.com, open.spotify.com/episode).
 - `tools/instagram_cookies.py` also reads accounts sold with the website's cookies as base64-encoded JSON, and with
   `--first N` it numbers the files from N, so new accounts don't replace the files of older ones.
 

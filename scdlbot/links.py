@@ -139,6 +139,18 @@ TELEGRAM_DOMAINS = frozenset(
     ["telegram.org", "telegram.me", "t.me", "telegram.dog", "telegra.ph", "te.legra.ph", "graph.org", "tdesktop.com", "telesco.pe", "contest.com", "contest.dev"]
 )
 IGNORED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".bmp", ".pdf", ".txt", ".html")
+# Music streaming that comes only with DRM, which yt-dlp won't download: such links aren't tried even with "Unknown
+# sites" on. {host: the path's first parts, or () for the whole site}. Their podcasts do work (podcasts.apple.com,
+# open.spotify.com/episode/...).
+DRM_ONLY = {"music.apple.com": (), "open.spotify.com": ("track", "album", "playlist", "artist")}
+
+
+def _drm_only(host: str, path_parts: list[str]) -> bool:
+    if host not in DRM_ONLY:
+        return False
+    if path_parts and path_parts[0].startswith("intl-"):  # open.spotify.com/intl-de/track/...
+        path_parts = path_parts[1:]
+    return not DRM_ONLY[host] or bool(path_parts and path_parts[0] in DRM_ONLY[host])
 
 
 def site_by_name(name: str) -> Site | None:
@@ -195,6 +207,8 @@ def classify(url: str, cfg: Config, unknown_sites: bool) -> Link | None:
         return None
     url = urlunsplit((parts.scheme, parts.netloc.lower(), parts.path, parts.query, ""))  # drop #fragment
     path_parts = [p for p in parts.path.split("/") if p]
+    if _drm_only(host, path_parts):
+        return None
     sites = [site for site in SITES if any(_host_matches(host, d) for d in site.domains)]
     if site := next((site for site in sites if site.path_ok(path_parts)), None):
         return Link(url, site.name, site.kind, site.shortener, site.video)
