@@ -28,6 +28,9 @@
   `/var/lib/scdlbot`. `deploy/telegram-bot-api.service` runs the local Bot API server as its own user too, with its
   credentials in `/etc/default/telegram-bot-api` (`deploy/telegram-bot-api.env.sample`); it reads the uploads from
   `DL_DIR` through its group (README: local Bot API server). The cookies copied for a download are 600.
+- `deploy/upgrade-telegram-bot-api.sh` builds the local Bot API server from source (its master, or a given commit) into
+  `/usr/local/lib/telegram-bot-api/VERSION-COMMIT`, points `/usr/local/bin/telegram-bot-api` at it and restarts it,
+  with the bot stopped meanwhile; it goes back by itself if the new one doesn't answer, and keeps the last 3 builds.
 - `scdlbot profile` compares the bot's Telegram profile (name, about, description, commands) with `telegram_settings/`,
   and with `--apply` sets what differs (`--userpic FILE` uploads the userpic too). `deploy/cli.sh` runs it and
   `scdlbot fetch` on a server the way the service runs.

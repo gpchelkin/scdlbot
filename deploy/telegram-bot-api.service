@@ -1,5 +1,6 @@
-# A local Bot API server (https://github.com/tdlib/telegram-bot-api, built as in https://tdlib.github.io/telegram-bot-api/build.html)
-# for files up to 2000 MB and faster uploads; set TG_BOT_API="http://127.0.0.1:8081" for the bot. Install it like this:
+# A local Bot API server (https://github.com/tdlib/telegram-bot-api) for files up to 2000 MB and faster uploads; set
+# TG_BOT_API="http://127.0.0.1:8081" for the bot. deploy/upgrade-telegram-bot-api.sh builds it (and later updates it):
+# run it after these steps, which install the service:
 #   sudo useradd --system --user-group --home-dir /var/lib/telegram-bot-api --no-create-home --shell /usr/sbin/nologin telegram-bot-api
 #   sudo install -m 600 deploy/telegram-bot-api.env.sample /etc/default/telegram-bot-api && sudo nano /etc/default/telegram-bot-api
 #   sudo install -m 644 deploy/telegram-bot-api.service /etc/systemd/system/ && sudo systemctl enable --now telegram-bot-api

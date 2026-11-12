@@ -183,6 +183,9 @@ Its resource limits (`CPUQuota`, `MemoryMax`) are for 3 vCPUs and 4 GB of RAM. C
 
 For big files (up to 2000 MB) and faster uploads run a [local Bot API server](https://github.com/tdlib/telegram-bot-api)
 on the same machine ([`deploy/telegram-bot-api.service`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/telegram-bot-api.service) says how) and set `TG_BOT_API="http://127.0.0.1:8081"`.
+[`deploy/upgrade-telegram-bot-api.sh`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/upgrade-telegram-bot-api.sh) builds it from source
+and switches to the new build (`sudo /opt/scdlbot/deploy/upgrade-telegram-bot-api.sh`; with a commit, that one, e.g. to go back);
+the last 3 builds stay in `/usr/local/lib/telegram-bot-api`.
 In local mode it reads the files the bot uploads straight from `DL_DIR`, so `DL_DIR` gets the server's group, with setgid so
 that new files and folders keep it: `sudo chown scdlbot:telegram-bot-api "$DL_DIR" && sudo chmod 2750 "$DL_DIR"`.
 The bot's own files stay private: the service's `UMask=0027` lets its group read, and the cookies it copies for a download are 600.
