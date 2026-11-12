@@ -21,11 +21,15 @@ TimeoutStopSec=30
 # If the kernel kills a download for memory, keep the service running (the default stops the whole unit):
 OOMPolicy=continue
 
-User=www-data
-Group=www-data
+# Its own user, which upgrade.sh creates. What it writes is private (UMask), except to its group: give DL_DIR the group
+# of a local Bot API server, which reads the files it uploads (README: local Bot API server).
+User=scdlbot
+Group=scdlbot
+UMask=0027
 EnvironmentFile=/etc/default/scdlbot
 # DB_PATH is relative to this directory unless set to an absolute path:
 StateDirectory=scdlbot
+StateDirectoryMode=0750
 WorkingDirectory=/var/lib/scdlbot
 # ffmpeg, ffprobe and deno must be in PATH:
 Environment=PATH=/usr/local/bin:/usr/bin:/bin

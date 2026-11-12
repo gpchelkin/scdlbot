@@ -96,6 +96,7 @@ def test_converted_cookies_load_in_a_login_route(tmp_path, monkeypatch):
     routes, _, login = parse({"routes": [{"name": "ig1", "source_address": "0.0.0.0", "cookies": str(path)}], "login": {"Instagram": ["ig1"]}}, tmp_path)
     args = routes[0].ytdlp_args(tmp_path)
     assert args[-2] == "--cookies" and Path(args[-1]).read_text() == path.read_text() and login == {"Instagram": ["ig1"]}
+    assert stat.S_IMODE(Path(args[-1]).stat().st_mode) == 0o600  # a session: not for the job dir's group
 
 
 def test_firefox_cookies_copy_is_the_database_file(tmp_path):

@@ -22,6 +22,9 @@ if [ -z "${UPGRADE_PULLED-}" ]; then
   UPGRADE_PULLED=1 exec deploy/upgrade.sh "$@"  # go on with the script as the pull left it
 fi
 
+# The service's user (until 1.1.0 it was www-data: chown -R scdlbot: what the bot wrote outside /var/lib/scdlbot, e.g. DL_DIR)
+id scdlbot >/dev/null 2>&1 || useradd --system --user-group --home-dir /var/lib/scdlbot --no-create-home --shell /usr/sbin/nologin --comment "scdlbot service" scdlbot
+
 python=${PYTHON:-python3.15}
 ytdlp=${YTDLP:-"yt-dlp[default,curl-cffi] @ git+https://github.com/yt-dlp/yt-dlp@master"}
 unit=/usr/local/lib/systemd/system/scdlbot.service

@@ -7,8 +7,9 @@ set -euo pipefail
 
 [ "$(id -u)" = 0 ] || { echo "Run it as root: sudo $0 $*" >&2; exit 1; }
 checkout=$(dirname "$(dirname "$(readlink -f "$0")")")
+user=$(systemctl show -p User --value scdlbot); group=$(systemctl show -p Group --value scdlbot)  # as the service, drop-ins included
 exec systemd-run --quiet --pipe --wait --collect \
-  -p User=www-data -p Group=www-data -p EnvironmentFile=/etc/default/scdlbot \
+  -p "User=${user:-scdlbot}" -p "Group=${group:-scdlbot}" -p UMask=0027 -p EnvironmentFile=/etc/default/scdlbot \
   -p Environment=PATH=/usr/local/bin:/usr/bin:/bin -p "Environment=TELEGRAM_SETTINGS=$checkout/telegram_settings" \
   -p StateDirectory=scdlbot -p WorkingDirectory=/var/lib/scdlbot \
   "$checkout/.venv/bin/scdlbot" "$@"

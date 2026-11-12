@@ -155,6 +155,7 @@ class Cookies:
             return ["--cookies-from-browser", self.browser]
         # yt-dlp writes cookies back on exit, so each run gets its own copy:
         shutil.copyfile(self.file, job_dir / "cookies.txt")
+        (job_dir / "cookies.txt").chmod(0o600)  # the job dir is readable by a local Bot API server
         return ["--cookies", str(job_dir / "cookies.txt")]
 
 

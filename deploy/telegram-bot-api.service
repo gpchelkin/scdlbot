@@ -1,23 +1,38 @@
-# https://github.com/tdlib/telegram-bot-api
-# https://tdlib.github.io/telegram-bot-api/build.html
-
+# A local Bot API server (https://github.com/tdlib/telegram-bot-api, built as in https://tdlib.github.io/telegram-bot-api/build.html)
+# for files up to 2000 MB and faster uploads; set TG_BOT_API="http://127.0.0.1:8081" for the bot. Install it like this:
+#   sudo useradd --system --user-group --home-dir /var/lib/telegram-bot-api --no-create-home --shell /usr/sbin/nologin telegram-bot-api
+#   sudo install -m 600 deploy/telegram-bot-api.env.sample /etc/default/telegram-bot-api && sudo nano /etc/default/telegram-bot-api
+#   sudo install -m 644 deploy/telegram-bot-api.service /etc/systemd/system/ && sudo systemctl enable --now telegram-bot-api
+# In local mode it reads the files the bot uploads straight from DL_DIR: give DL_DIR its group, with setgid so new files
+# and folders keep it (the bot's service has UMask=0027, so its group may read them):
+#   sudo chown scdlbot:telegram-bot-api "$DL_DIR" && sudo chmod 2750 "$DL_DIR"
 [Unit]
-Description=telegram-bot-api
-After=network.target
+Description=telegram-bot-api (local Bot API server)
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/telegram-bot-api --api-id=changeme --api-hash=changeme --local --http-ip-address=127.0.0.1 --http-port=8081 --http-stat-ip-address=127.0.0.1 --http-stat-port=8082 --dir=/root/telegram-bot-api/work --temp-dir=/root/telegram-bot-api/temp --log=/root/telegram-bot-api/log
+User=telegram-bot-api
+Group=telegram-bot-api
+# TELEGRAM_API_ID and TELEGRAM_API_HASH, from https://my.telegram.org: not on the command line, where every user sees them
+EnvironmentFile=/etc/default/telegram-bot-api
+StateDirectory=telegram-bot-api
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/telegram-bot-api
+# Its log goes to the journal: journalctl -u telegram-bot-api
+ExecStart=/usr/local/bin/telegram-bot-api --local --http-ip-address=127.0.0.1 --http-port=8081 --http-stat-ip-address=127.0.0.1 --http-stat-port=8082 --dir=/var/lib/telegram-bot-api/work --temp-dir=/var/lib/telegram-bot-api/temp
 Restart=always
 # https://github.com/tdlib/telegram-bot-api/issues/131
 RuntimeMaxSec=48h
 RestartSec=5
 MemoryHigh=700M
 MemoryMax=900M
-TasksMax=infinity
-LimitAS=infinity
-LimitRSS=infinity
 LimitNOFILE=1048576
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
 
 [Install]
 WantedBy=multi-user.target

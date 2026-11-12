@@ -8,10 +8,10 @@ Sellers give one account per line, fields separated by ":", in one of two format
 yt-dlp downloads Instagram through the website, so of an app session it needs only the cookies sessionid, ds_user_id
 and mid; website cookies are kept as they are. The password and 2FA secret are not written anywhere.
 
-    python3 tools/instagram_cookies.py ACCOUNTS_FILE /etc/scdlbot/instagram --group www-data --prefix ig [--first 4]
+    python3 tools/instagram_cookies.py ACCOUNTS_FILE /etc/scdlbot/instagram --group scdlbot --prefix ig [--first 4]
 
 writes /etc/scdlbot/instagram/ig1.cookies.txt, ig2... (from igN with --first N, so that new accounts don't replace
-the files of older ones) for the accounts in order (without --prefix: LOGIN.cookies.txt), mode 640, group www-data
+the files of older ones) for the accounts in order (without --prefix: LOGIN.cookies.txt), mode 640, group scdlbot
 (readable by the bot), and prints a [[routes]] block for each one for the routes file.
 """
 
@@ -80,7 +80,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("accounts", type=Path, help="the seller's file, one account per line")
     parser.add_argument("out", type=Path, help="directory for the cookies.txt files")
-    parser.add_argument("--group", help="group that may read the files (the bot's, e.g. www-data)")
+    parser.add_argument("--group", help="group that may read the files (the bot's, e.g. scdlbot)")
     parser.add_argument("--prefix", help="name the files PREFIX1.cookies.txt, PREFIX2... instead of by login")
     parser.add_argument("--first", type=int, default=1, help="number of the first account (default 1): PREFIXFIRST.cookies.txt")
     args = parser.parse_args()

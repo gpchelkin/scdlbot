@@ -23,6 +23,11 @@
 - Apple Music and Spotify's tracks, albums, playlists and artists aren't tried with "Unknown sites" on: they come only
   with DRM. Their podcasts still are (podcasts.apple.com, open.spotify.com/episode).
 - Cookies downloaded from a URL are readable only by the bot (600, in a 700 directory): they are an account's session.
+- The service runs as its own user, `scdlbot` (`deploy/upgrade.sh` creates it), instead of `www-data`, with `UMask=0027`.
+  Coming from `www-data`: `sudo chown -R scdlbot: "$DL_DIR"`, and the database's files if `DB_PATH` is outside
+  `/var/lib/scdlbot`. `deploy/telegram-bot-api.service` runs the local Bot API server as its own user too, with its
+  credentials in `/etc/default/telegram-bot-api` (`deploy/telegram-bot-api.env.sample`); it reads the uploads from
+  `DL_DIR` through its group (README: local Bot API server). The cookies copied for a download are 600.
 - `scdlbot profile` compares the bot's Telegram profile (name, about, description, commands) with `telegram_settings/`,
   and with `--apply` sets what differs (`--userpic FILE` uploads the userpic too). `deploy/cli.sh` runs it and
   `scdlbot fetch` on a server the way the service runs.
