@@ -84,29 +84,41 @@ Environment variables, all documented in [`.env.sample`](https://github.com/gpch
 
 ### Routes
 
-Downloads go out through *routes*: a proxy or a source IP address of the server, each with its own cookies.
-They are set in a TOML file (`ROUTES_FILE`, see [`deploy/routes.sample.toml`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/routes.sample.toml)), which also says
-which sites use which routes, e.g. YouTube only through the route with its logged-in account.
-`systemctl reload scdlbot` applies changes to the file without a restart.
-Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, like in earlier versions.
+Downloads go out through *routes* (a proxy, or a source IP address of the server), and log in with *accounts* (cookies)
+only where you say. Both are set in a TOML file (`ROUTES_FILE`, see [`deploy/routes.sample.toml`](https://github.com/gpchelkin/scdlbot/blob/master/deploy/routes.sample.toml)), with which sites
+use which routes. `systemctl reload scdlbot` applies changes without a restart; a broken file keeps the old ones and tells
+the owner. Without the file, `PROXIES`, `SOURCE_IPS` and `COOKIES_FILE` make the routes, like in earlier versions
+(`COOKIES_FILE` then logs in to every site).
 
-- Each site takes its routes in turn, and one download makes all its requests through one route.
-- If a site blocks a download (bot check, HTTP 403/429) or the route can't connect, it's tried once more through another route.
-- A route that a site keeps blocking is left out for that site for `ROUTE_EXCLUSION` seconds (2 hours), and the owner is told;
-  if all routes of a site are left out, all of them are used anyway.
-- Downloads that a site gives only to logged-in users (Instagram's age-restricted reels, stories, TikTok's posts that
-  "may not be comfortable for some audiences") go once more through the site's login routes (`[login]` in the routes file):
-  routes with an account's cookies that anonymous downloads never use, so the account only sees the few downloads that need it.
-  A site with login routes gets no cookies through its other routes, so a browser profile logged in to several sites
-  (YouTube's route) logs in to such a site only on its login routes. Instagram stories, which Instagram never shows anonymously,
-  go straight to the login routes. When the last 8 downloads through a login route all failed
-  that way too, its account is probably logged out: the route is left out for a day (or until a reload) and the owner is told.
-  [`tools/instagram_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
+How a download goes, in the order the bot decides:
+
+1. **Route:** the site's routes from `[sites]` (else `default`, else all routes) take turns, skipping the ones left out for
+   the site (if all are, all are used anyway). All requests of one download go through one route.
+2. **Cookies:** a download is anonymous, unless an account on that route has the site in its `always` list (e.g. YouTube's
+   account on its route). An account's cookies never go to other sites, so one Firefox profile can be logged in to several.
+3. **Links only for logged-in users** (Instagram stories) start on one of the site's `when_needed` accounts instead, which take turns.
+4. **Trying again**, once each, and only if nothing was sent yet:
+
+   | What happened | Next try |
+   |---|---|
+   | The site blocked the route (bot check, HTTP 403/429), or it couldn't connect | another route of the site |
+   | The site wants a login, or the post is age- or audience-restricted | one of the site's `when_needed` accounts |
+   | An `always` account got only DRM formats (YouTube does this for some videos) | the same route, anonymous |
+   | The video came without sound (music muted in that country) | the site's other routes, until one has the sound (else it goes out with a note) |
+
+5. **Leaving out:** a route that a site keeps blocking is left out for that site for `ROUTE_EXCLUSION` seconds (2 hours);
+   one that can't connect at all, for every site. An account whose last 8 downloads that needed a login all failed is
+   probably logged out: it's left out for a day, or until a reload (with new cookies). The owner is told each time, and
+   also about an account whose cookies file doesn't exist.
+
+- `scdlbot fetch --route NAME URL` downloads through one route (with the site's `always` account there, if any), and
+  `--account NAME` through an account, as a download that needs a login does.
+- [`tools/instagram_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/instagram_cookies.py) turns Instagram accounts bought "with cookies" into cookies.txt files.
   [`tools/serve_firefox_cookies.py`](https://github.com/gpchelkin/scdlbot/blob/master/tools/serve_firefox_cookies.py) serves the cookies of a Firefox
   that runs on another server, for `cookies = "firefox:PROFILE_DIR:URL"`.
 - Metrics: `scdlbot_route_attempts_total{site,route,result}`, `scdlbot_route_retries_total`, `scdlbot_route_up{site,route}`,
-  and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`.
-- `scdlbot fetch --route NAME URL` downloads through one route, to check it.
+  and a `route` label on `scdlbot_jobs_total` and `scdlbot_download_errors_total`. An account's own downloads (those
+  that need a login) have the account's name as `route`.
 
 Source links: every sent file's caption starts with an invisible link to where it came from (`HIDDEN_SOURCE_LINKS`),
 in the format Telegram asked big downloader bots to use in February 2026

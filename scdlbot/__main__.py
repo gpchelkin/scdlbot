@@ -19,7 +19,7 @@ from scdlbot.media import ensure_h264, ensure_jpeg, split
 from scdlbot.ytdlp import DownloadError, download, to_item, video_height
 
 
-async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, route_name: str | None = None) -> None:
+async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, route_name: str | None = None, account_name: str | None = None) -> None:
     link = classify(url, cfg, unknown_sites=True)
     url = link.url if link else url  # the original site's link for the preview-fixing sites (links.ALIASES), like the bot
     kind = kind or (link.kind if link else AUDIO)
@@ -29,8 +29,13 @@ async def fetch(url: str, kind: str | None, cfg: Config, mp3: bool = False, rout
     except routes.RoutesError as exc:
         raise SystemExit(f"Routes: {exc}") from None
     if route_name and route_name not in pool.routes:
-        raise SystemExit(f"No route {route_name!r}; routes: {', '.join(pool.routes)}")
-    route = pool.for_site(site, pool.routes[route_name]) if route_name else pool.pick(site)
+        raise SystemExit(f"No route {route_name!r}; routes: {', '.join(pool.routes)}" + (" (accounts go with --account)" if route_name in pool.accounts else ""))
+    if account_name and account_name not in pool.accounts:
+        raise SystemExit(f"No account {account_name!r}; accounts: {', '.join(pool.accounts) or 'none'}")
+    if account_name:
+        route = pool.way(account_name)  # as for a download that needs a login
+    else:
+        route = pool.for_site(site, pool.routes[route_name]) if route_name else pool.pick(site)
     print(f"Route: {route.describe()}")
     out = Path("downloads").absolute()
     out.mkdir(exist_ok=True)
@@ -63,6 +68,7 @@ def main() -> None:
     fetch_parser.add_argument("--kind", choices=[AUDIO, VIDEO], help="override audio/video detection")
     fetch_parser.add_argument("--mp3", action="store_true", help="convert audio to mp3, like the Always MP3 setting")
     fetch_parser.add_argument("--route", help="download through this route (see ROUTES_FILE); default: the site's first route")
+    fetch_parser.add_argument("--account", help="download through this account, as a download that needs a login does")
     profile_parser = commands.add_parser("profile", help="compare the bot's Telegram profile with telegram_settings/; --apply sets what differs")
     profile_parser.add_argument("--dir", type=Path, default=Path(os.getenv("TELEGRAM_SETTINGS") or "telegram_settings"), help="default: TELEGRAM_SETTINGS or ./telegram_settings")
     profile_parser.add_argument("--apply", action="store_true", help="set the name, about, description and commands that differ")
@@ -75,7 +81,7 @@ def main() -> None:
         logging.getLogger(noisy).setLevel(max(logging.WARNING, logging.getLogger().level))
 
     if args.command == "fetch":
-        asyncio.run(fetch(args.url, args.kind, cfg, args.mp3, args.route))
+        asyncio.run(fetch(args.url, args.kind, cfg, args.mp3, args.route, args.account))
     elif args.command == "profile":
         from scdlbot.profile import profile
 

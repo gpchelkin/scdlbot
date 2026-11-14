@@ -38,7 +38,7 @@ class Site:
     # The post's link without share tracking, from yt-dlp's webpage_url and the author's @handle (NORMALIZE_URLS).
     # None: yt-dlp's webpage_url is clean already (YouTube, SoundCloud) or we can't tell what's junk (unknown sites).
     clean_url: Callable[[str, str | None], str] | None = None
-    # Links the site shows only to logged-in users: they go straight to the site's login routes ([login] in the routes file)
+    # Links the site shows only to logged-in users: they go straight to the site's when_needed accounts (routes file)
     login_only: Callable[[list[str]], bool] = lambda parts: False
     video: bool = False  # audio by default, but there's a video too: the ask modes offer 🎬 Video (see /settings)
     gifs: bool = False  # posts may have GIFs: videos without sound by design, not muted (see jobs)

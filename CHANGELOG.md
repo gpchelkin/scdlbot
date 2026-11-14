@@ -14,12 +14,19 @@
 - `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
   drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
 - A Grafana dashboard, `deploy/grafana-dashboard.json`: downloads, sites, errors, queue, routes, users and resources.
-- A site with login routes (`[login]`) logs in only through them: its other routes go to it without their cookies.
-  A Firefox profile's cookies hold every site it logged in to, so a profile for the YouTube account that also logged in
-  to TikTok no longer logs in to TikTok on every download through that route; TikTok's posts for logged-in users ("may not
-  be comfortable for some audiences") go through TikTok's login route.
-- A route whose cookies file doesn't exist (it downloads without cookies, so a login route can't log in) is an error
-  for the owner at start and on every reload.
+- **The routes file has accounts now (breaking).** `[[routes]]` are only ways out, a proxy or a source address, and no
+  longer take `cookies`. A logged-in session is an `[[accounts]]` entry: its cookies, the one route it goes out through,
+  and the sites it logs in to: `always` (every download of those sites through that route, e.g. YouTube's account) or
+  `when_needed` (only downloads the site gives only to logged-in users, and Instagram stories; this replaces `[login]`).
+  Every other download is anonymous, so one Firefox profile logged in to YouTube and TikTok logs in to each only where
+  its account says. README: Routes lists the rules in order. A 1.0 file with `cookies` on a route or a `[login]` section
+  is refused with a hint. To convert one: a route's `cookies` become an account on that route, with `always` = the
+  sites that use the route and need its login; each `[login]` route becomes an account (named like it) on a route with
+  the same proxy or source address, with `when_needed` = its sites. `scdlbot fetch --account NAME` tries an account,
+  and the owner's alerts say "account".
+- An account whose cookies file doesn't exist (it would download anonymously), or that always logs in to a site that
+  doesn't use its route, is an error for the owner at start and on every reload; the same cookies going out through
+  two routes is a warning.
 - Apple Music and Spotify's tracks, albums, playlists and artists aren't tried with "Unknown sites" on: they come only
   with DRM. Their podcasts still are (podcasts.apple.com, open.spotify.com/episode).
 - Cookies downloaded from a URL are readable only by the bot (600, in a 700 directory): they are an account's session.
@@ -34,8 +41,8 @@
 - `scdlbot profile` compares the bot's Telegram profile (name, about, description, commands) with `telegram_settings/`,
   and with `--apply` sets what differs (`--userpic FILE` uploads the userpic too). `deploy/cli.sh` runs it and
   `scdlbot fetch` on a server the way the service runs.
-- `tools/serve_firefox_cookies.py` serves a Firefox profile's cookies (a consistent copy, with what's still in Firefox's
-  write-ahead log) to the bot on another server, for routes with `cookies = "firefox:PROFILE_DIR:URL"`.
+- `tools/serve_firefox_cookies.py` serves a Firefox profile's cookies (a consistent copy of its cookies.sqlite) to the bot
+  on another server, for accounts with `cookies = "firefox:PROFILE_DIR:URL"`.
 - `tools/instagram_cookies.py` also reads accounts sold with the website's cookies as base64-encoded JSON, and with
   `--first N` it numbers the files from N, so new accounts don't replace the files of older ones.
 

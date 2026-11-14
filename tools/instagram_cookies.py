@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn Instagram accounts bought "with cookies" into cookies.txt files for login routes (see deploy/routes.sample.toml).
+"""Turn Instagram accounts bought "with cookies" into cookies.txt files for [[accounts]] (see deploy/routes.sample.toml).
 
 Sellers give one account per line, fields separated by ":", in one of two formats:
 - login, password, 2FA secret, the app's user agent, device IDs, then the app session's cookies and headers
@@ -12,7 +12,7 @@ and mid; website cookies are kept as they are. The password and 2FA secret are n
 
 writes /etc/scdlbot/instagram/ig1.cookies.txt, ig2... (from igN with --first N, so that new accounts don't replace
 the files of older ones) for the accounts in order (without --prefix: LOGIN.cookies.txt), mode 640, group scdlbot
-(readable by the bot), and prints a [[routes]] block for each one for the routes file.
+(readable by the bot), and prints an [[accounts]] block for each one for the routes file.
 """
 
 import argparse
@@ -106,10 +106,9 @@ def main() -> None:
         written.append((route, path))
         print(f"{login}: user ID {cookies.get('ds_user_id', '?')}, {', '.join(cookies)} -> {path}{replaced}")
     if written:
-        print("\n# For the routes file, one account per IP (e.g. fin1 = 0.0.0.0, fin1-v6 = ::, fra1 = the proxy):")
-        for route, path in written:
-            print(f'[[routes]]\nname = "{route}"\nsource_address = "0.0.0.0"\ncookies = "{path}"\n')
-        print("[login]\nInstagram = [" + ", ".join(f'"{route}"' for route, _ in written) + "]")
+        print("\n# For the routes file: give each account a route of its own (one IP per account) in route =")
+        for name, path in written:
+            print(f'[[accounts]]\nname = "{name}"\nroute = "fin1"\ncookies = "{path}"\nwhen_needed = ["Instagram"]\n')
 
 
 if __name__ == "__main__":

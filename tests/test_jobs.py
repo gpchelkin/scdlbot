@@ -274,13 +274,14 @@ async def test_other_errors_and_partly_sent_jobs_are_not_tried_again(setup):
 
 
 def with_login_route(queue: JobQueue, cookies_file: Path) -> None:
-    from scdlbot.routes import Route
+    """An Instagram account on fin1, for the downloads that need a login."""
+    from scdlbot.routes import Account, Route
     from scdlbot.ytdlp import Cookies
 
     cookies_file.write_text("# Netscape HTTP Cookie File\n")
-    login = Route("fin1-login", source_address="0.0.0.0", cookies=Cookies(str(cookies_file), cookies_file))
-    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187"), login]
-    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, {"Instagram": ["fin1-login"]})
+    account = Account("fin1-login", "fin1", Cookies(str(cookies_file), cookies_file), when_needed=("Instagram",))
+    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187")]
+    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, [account])
 
 
 def needs_login():
@@ -318,17 +319,17 @@ async def test_sites_without_login_routes_are_not_tried_again(setup):
     assert (job.status, job.error, job.route) == ("failed", "restricted", "fin1")
 
 
-async def test_tiktok_logs_in_only_through_its_login_route(setup):
-    """fra1's cookies (a browser profile with the YouTube account) also have the TikTok account, which is for tt1 only."""
-    from scdlbot.routes import Route
+async def test_an_account_logs_in_to_a_when_needed_site_only_when_needed(setup):
+    """A browser profile on fra1: always for YouTube, only when needed for TikTok, whose downloads through fra1 are anonymous."""
+    from scdlbot.routes import Account, Route
     from scdlbot.ytdlp import Cookies
 
     cfg, db, bot, queue, run = setup
     profile = cfg.dl_dir.parent / "profile-cookies.txt"
     profile.write_text("# Netscape HTTP Cookie File\n")
-    cookies = Cookies(str(profile), profile)
-    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187", cookies=cookies), Route("tt1", proxy="http://127.0.0.1:3187", cookies=cookies)]
-    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, {"TikTok": ["tt1"]})
+    account = Account("firefox", "fra1", Cookies(str(profile), profile), always=("YouTube",), when_needed=("TikTok",))
+    routes = [Route("fin1", source_address="0.0.0.0"), Route("fra1", proxy="http://127.0.0.1:3187")]
+    queue.routes.update(routes, {"default": ["fin1", "fra1"]}, [account])
     queue.routes.turns["TikTok"] = 1  # fra1 is next
     calls = []
 
@@ -340,7 +341,7 @@ async def test_tiktok_logs_in_only_through_its_login_route(setup):
             yield info
 
     job = await run(download, site="TikTok", url="https://www.tiktok.com/@u/video/1", kind="video")
-    assert (job.status, job.route, calls) == ("done", "tt1", ["without", "with cookies"])
+    assert (job.status, job.route, calls) == ("done", "firefox", ["without", "with cookies"])
 
 
 async def test_stories_go_straight_to_the_login_route(setup):
@@ -367,13 +368,14 @@ def formats_only_without_cookies():
 
 
 async def test_downloads_the_account_gets_no_formats_for_are_tried_again_without_cookies(setup):
-    from scdlbot.routes import Route
+    from scdlbot.routes import Account, Route
     from scdlbot.ytdlp import Cookies
 
     cfg, db, bot, queue, run = setup
     cookies = cfg.dl_dir.parent / "youtube-cookies.txt"
     cookies.write_text("# Netscape HTTP Cookie File\n")
-    queue.routes.update([Route("fra1", proxy="http://127.0.0.1:3187", cookies=Cookies(str(cookies), cookies))], {})
+    account = Account("youtube", "fra1", Cookies(str(cookies), cookies), always=("YouTube",))
+    queue.routes.update([Route("fra1", proxy="http://127.0.0.1:3187")], {}, [account])
     download = formats_only_without_cookies()
     job = await run(download, kind="video")
     assert (job.status, job.route, download.calls) == ("done", "fra1", ["cookies", "anonymous"])

@@ -1,10 +1,12 @@
-"""Routes: the ways downloads go out to the internet, each through a proxy or from a source IP address, with its own cookies.
+"""Routes and accounts. A route is a way out to the internet: a proxy, or a source address of the server. An account
+is a logged-in session (its cookies) that always goes out through one route, and logs in to some sites on every
+download (always) and to others only for the downloads that need a login (when_needed). README: Routes has the rules.
 
 They come from ROUTES_FILE (TOML, see deploy/routes.sample.toml; `systemctl reload scdlbot` re-reads it),
 or without it, from PROXIES, SOURCE_IPS and COOKIES_FILE. Each site takes its routes in turn (round robin),
 and a job makes all its requests through one route. RouteWatch leaves a route out for a site while that site
-keeps blocking it; when all routes of a site are left out, all of them are used anyway (fail-open).
-Downloads that a site gives only to logged-in users go once more through its login routes ([login]), if it has any.
+keeps blocking it; when all routes of a site are left out, all of them are used anyway (fail-open). An account
+whose downloads keep failing is left out for a day.
 """
 
 import html
@@ -32,14 +34,15 @@ log = logging.getLogger(__name__)
 BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
 SITE_NAMES = frozenset(site.name for site in SITES)
 DEFAULT = "default"  # [sites] entry for every site not listed
+EVERY_SITE = "*"  # an account's always for COOKIES_FILE without a routes file
 # Errors that say more about the route than about the link: such a download is tried once more through another route,
 # and they count against the route (with timeouts) when RouteWatch decides to leave it out:
 RETRY_ERRORS = frozenset({"blocked", "network"})
 ROUTE_ERRORS = RETRY_ERRORS | {"timeout"}
 # Errors that a logged-in account may not get (Instagram's "empty media response", age and audience limits, stories):
 LOGIN_ERRORS = frozenset({"login", "restricted"})
-# A login route whose last this many downloads all failed is probably logged out, blocked or under a security check:
-# it's left out for its site for a day, or until the routes file is reloaded with new cookies. Not just a few in a row:
+# An account whose last this many downloads that needed a login all failed is probably logged out, blocked or under a
+# security check: it's left out for its site for a day, or until the routes file is reloaded with new cookies. Not just a few in a row:
 # even a logged-in account can't see private posts of accounts it doesn't follow.
 # Besides login errors, a blocked session may look like anything: Instagram's "Please wait a few minutes before you
 # try again" (HTTP 401) comes out of yt-dlp as "Failed to parse JSON", code "failed".
@@ -61,10 +64,15 @@ def site_label(site: str) -> str:
 
 @dataclass(frozen=True)
 class Route:
+    """A way out: a proxy or a source address. As a job's route, it may carry an account's cookies (account); an
+    account's own route, for the downloads that need a login, has the account's name and goes out through `via`."""
+
     name: str
     proxy: str | None = None
     source_address: str | None = None  # 0.0.0.0: any IPv4 address (IPv4 only), "::": IPv6 only, or one exact address
     cookies: Cookies | None = field(default=None, compare=False)
+    account: str | None = None  # whose cookies these are
+    via: str | None = None  # an account's own route: the route it goes out through
 
     def ytdlp_args(self, job_dir: Path) -> list[str]:
         args = ["--proxy", self.proxy] if self.proxy else []
@@ -81,12 +89,31 @@ class Route:
         how = [f"proxy {url_for_logs(self.proxy)}" if self.proxy else "direct"]
         if self.source_address:
             how.append(f"from {self.source_address}")
-        if self.cookies:
-            how.append("with cookies")
+        if self.via:
+            return f"{self.name} (account, via {self.via}: {', '.join(how)})"
+        if self.account:
+            how.append(f"as {self.account}")
         return f"{self.name} ({', '.join(how)})"
 
 
-def make_route(name: str, proxy: str | None, source_address: str | None, cookies: str, cookies_dir: Path) -> Route:
+@dataclass(frozen=True)
+class Account:
+    """A logged-in session: its cookies, the one route it goes out through, and the sites it logs in to: on every
+    download through that route (always), or only for the downloads that need a login (when_needed)."""
+
+    name: str
+    route: str
+    cookies: Cookies = field(compare=False)
+    always: tuple[str, ...] = ()
+    when_needed: tuple[str, ...] = ()
+
+    def describe(self) -> str:
+        uses = [f"always {', '.join('every site' if site == EVERY_SITE else site for site in self.always)}" if self.always else ""]
+        uses.append(f"when needed {', '.join(self.when_needed)}" if self.when_needed else "")
+        return f"{self.name} via {self.route} ({'; '.join(use for use in uses if use)})"
+
+
+def make_route(name: str, proxy: str | None, source_address: str | None) -> Route:
     if proxy and (urlsplit(proxy).scheme not in PROXY_SCHEMES or not urlsplit(proxy).hostname):
         raise RoutesError(f"route {name}: proxy must look like http://host:port or socks5://host:port")
     if source_address:
@@ -100,66 +127,98 @@ def make_route(name: str, proxy: str | None, source_address: str | None, cookies
             proxy_ip = None  # a host name
         if proxy_ip and proxy_ip.version != source.version:
             raise RoutesError(f"route {name}: an IPv{source.version} source_address can't reach the IPv{proxy_ip.version} proxy")
-    return Route(name, proxy or None, source_address or None, Cookies(cookies, cookies_dir / f"cookies.{name}.txt") if cookies else None)
+    return Route(name, proxy or None, source_address or None)
 
 
-def parse(data: dict, cookies_dir: Path) -> tuple[list[Route], dict[str, list[str]], dict[str, list[str]]]:
-    """Routes, the routes of each site, and the login routes of each site, from a parsed routes file."""
-    if unknown := set(data) - {"routes", "sites", "login"}:
-        raise RoutesError(f"unknown sections: {', '.join(sorted(unknown))} (only [[routes]], [sites] and [login])")
+def parse(data: dict, cookies_dir: Path) -> tuple[list[Route], dict[str, list[str]], list[Account]]:
+    """Routes, the routes of each site, and the accounts, from a parsed routes file."""
+    if "login" in data:
+        raise RoutesError("[login] is gone (1.1.0): give each login route's cookies an [[accounts]] entry with when_needed, see deploy/routes.sample.toml")
+    if unknown := set(data) - {"routes", "sites", "accounts"}:
+        raise RoutesError(f"unknown sections: {', '.join(sorted(unknown))} (only [[routes]], [sites] and [[accounts]])")
     routes: list[Route] = []
     for number, entry in enumerate(data.get("routes") or [], start=1):
         if not isinstance(entry, dict):
             raise RoutesError(f"route #{number} must be a [[routes]] table")
-        if unknown := set(entry) - {"name", "proxy", "source_address", "cookies"}:
-            raise RoutesError(f"route #{number}: unknown keys {', '.join(sorted(unknown))} (only name, proxy, source_address, cookies)")
-        name = str(entry.get("name") or "")
-        if not NAME.fullmatch(name):
-            raise RoutesError(f"route #{number}: name {name!r} must be up to 32 letters, digits, '-', '_' or '.'")
-        if any(route.name == name for route in routes):
-            raise RoutesError(f"route {name}: this name is used twice")
-        routes.append(make_route(name, entry.get("proxy"), entry.get("source_address"), str(entry.get("cookies") or ""), cookies_dir))
+        name = _name(entry, f"route #{number}", {route.name for route in routes})
+        if "cookies" in entry:
+            raise RoutesError(f'route {name}: cookies belong to an [[accounts]] entry now (1.1.0), with route = "{name}" and always = [its sites]')
+        if unknown := set(entry) - {"name", "proxy", "source_address"}:
+            raise RoutesError(f"route {name}: unknown keys {', '.join(sorted(unknown))} (only name, proxy, source_address)")
+        routes.append(make_route(name, entry.get("proxy"), entry.get("source_address")))
     if not routes:
         raise RoutesError("no [[routes]]")
     by_name = {route.name: route for route in routes}
-    sites = _site_lists("sites", data.get("sites") or {}, by_name)
-    login = _site_lists("login", data.get("login") or {}, by_name)
-    for site, names in login.items():
-        if without := [name for name in names if not by_name[name].cookies]:
-            raise RoutesError(f"[login] {site}: route {', '.join(without)} has no cookies, so it can't log in")
-    return routes, sites, login
-
-
-def _site_lists(section: str, table: dict, routes: dict[str, Route]) -> dict[str, list[str]]:
-    """{site: route names} of [sites] or [login], checked."""
-    keys = (*SITE_NAMES, DEFAULT) if section == "sites" else tuple(SITE_NAMES)
-    result = {}
-    for site, value in table.items():
-        if site not in keys and "." not in site:
-            hint = next((known for known in keys if known.lower() == site.lower()), None)
-            raise RoutesError(
-                f"[{section}]: unknown site {site!r}, " + (f"did you mean {hint!r}?" if hint else f"use one of {', '.join(sorted(keys))} or a domain like 'mixcloud.com'")
-            )
+    sites = {}
+    for site, value in (data.get("sites") or {}).items():
+        _check_site("[sites]", site, with_default=True)
         if not isinstance(value, list) or not value or not all(isinstance(item, str) for item in value):
-            raise RoutesError(f"[{section}] {site}: must be a list of route names")
-        if missing := [item for item in value if item not in routes]:
-            raise RoutesError(f"[{section}] {site}: no such route {', '.join(missing)}")
-        result[site] = list(dict.fromkeys(value))
-    return result
+            raise RoutesError(f"[sites] {site}: must be a list of route names")
+        if missing := [item for item in value if item not in by_name]:
+            raise RoutesError(f"[sites] {site}: no such route {', '.join(missing)}")
+        sites[site] = list(dict.fromkeys(value))
+    accounts: list[Account] = []
+    for number, entry in enumerate(data.get("accounts") or [], start=1):
+        if not isinstance(entry, dict):
+            raise RoutesError(f"account #{number} must be an [[accounts]] table")
+        name = _name(entry, f"account #{number}", set(by_name) | {account.name for account in accounts})
+        if unknown := set(entry) - {"name", "route", "cookies", "always", "when_needed"}:
+            raise RoutesError(f"account {name}: unknown keys {', '.join(sorted(unknown))} (only name, route, cookies, always, when_needed)")
+        if (route := str(entry.get("route") or "")) not in by_name:
+            raise RoutesError(f"account {name}: route = {route!r} isn't one of the [[routes]] ({', '.join(by_name)})")
+        if not (cookies := str(entry.get("cookies") or "")):
+            raise RoutesError(f"account {name}: no cookies")
+        always, when_needed = (_account_sites(entry, key, name) for key in ("always", "when_needed"))
+        if not always and not when_needed:
+            raise RoutesError(f"account {name}: give it always = [sites], when_needed = [sites], or both")
+        if both := sorted(set(always) & set(when_needed)):
+            raise RoutesError(f"account {name}: {', '.join(both)} can't be in both always and when_needed")
+        for site in always:
+            if other := next((account.name for account in accounts if account.route == route and site in account.always), None):
+                raise RoutesError(f"accounts {other} and {name} both always log in to {site} through {route}: keep one")
+        accounts.append(Account(name, route, Cookies(cookies, cookies_dir / f"cookies.{name}.txt"), always, when_needed))
+    return routes, sites, accounts
 
 
-def from_env(cfg: Config) -> tuple[list[Route], dict[str, list[str]], dict[str, list[str]]]:
+def _name(entry: dict, what: str, taken: set[str]) -> str:
+    name = str(entry.get("name") or "")
+    if not NAME.fullmatch(name):
+        raise RoutesError(f"{what}: name {name!r} must be up to 32 letters, digits, '-', '_' or '.'")
+    if name in taken:
+        raise RoutesError(f"{name}: this name is used twice (routes and accounts share names)")
+    return name
+
+
+def _check_site(section: str, site: str, with_default: bool = False) -> None:
+    keys = (*SITE_NAMES, DEFAULT) if with_default else tuple(SITE_NAMES)
+    if site not in keys and "." not in site:
+        hint = next((known for known in keys if known.lower() == site.lower()), None)
+        raise RoutesError(f"{section}: unknown site {site!r}, " + (f"did you mean {hint!r}?" if hint else f"use one of {', '.join(sorted(keys))} or a domain like 'mixcloud.com'"))
+
+
+def _account_sites(entry: dict, key: str, name: str) -> tuple[str, ...]:
+    value = entry.get(key, [])
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise RoutesError(f"account {name}: {key} must be a list of sites")
+    for site in value:
+        _check_site(f"account {name} {key}", site)
+    return tuple(dict.fromkeys(value))
+
+
+def from_env(cfg: Config) -> tuple[list[Route], dict[str, list[str]], list[Account]]:
     """Without ROUTES_FILE: a route for each proxy and source address (PROXIES, SOURCE_IPS), all with COOKIES_FILE."""
-    cookies = Cookies(cfg.cookies_file, cfg.db_path.parent / "cookies.txt") if cfg.cookies_file else None
     sources = cfg.source_ips or (None,)
     routes = []
     for proxy, source in itertools.product(cfg.proxies or (None,), sources):
         name = (f"{urlsplit(proxy).hostname}:{urlsplit(proxy).port}" if proxy else "direct") + (f"@{source}" if len(sources) > 1 else "")
-        routes.append(Route(name, proxy, source, cookies))
-    return routes, {}, {}
+        routes.append(Route(name, proxy, source))
+    if not cfg.cookies_file:
+        return routes, {}, []
+    cookies = Cookies(cfg.cookies_file, cfg.db_path.parent / "cookies.txt")
+    return routes, {}, [Account(f"COOKIES_FILE@{route.name}", route.name, cookies, always=(EVERY_SITE,)) for route in routes]
 
 
-def load(cfg: Config) -> tuple[list[Route], dict[str, list[str]], dict[str, list[str]]]:
+def load(cfg: Config) -> tuple[list[Route], dict[str, list[str]], list[Account]]:
     if not cfg.routes_file:
         return from_env(cfg)
     try:
@@ -172,40 +231,44 @@ def load(cfg: Config) -> tuple[list[Route], dict[str, list[str]], dict[str, list
 
 
 class RoutePool:
-    """Picks the route for each job, remembers how downloads went through each route, and which routes are left out."""
+    """Picks the route for each job, remembers how downloads went through each route and account, and which are left out."""
 
-    def __init__(self, routes: list[Route], sites: dict[str, list[str]], login: dict[str, list[str]] | None = None, window: int = 1800):
+    def __init__(self, routes: list[Route], sites: dict[str, list[str]], accounts: list[Account] | None = None, window: int = 1800):
         self.window = window
         self.routes: dict[str, Route] = {}
         self.sites: dict[str, list[str]] = {}
-        self.login: dict[str, list[str]] = {}
-        self.exclusions: dict[tuple[str | None, str], float] = {}  # (site, or None for all sites; route): until (unix time)
+        self.accounts: dict[str, Account] = {}
+        self.login: dict[str, list[str]] = {}  # site: its when_needed accounts
+        self.always: dict[tuple[str, str], Account] = {}  # (site, route): the account that always logs in to it there
+        self.exclusions: dict[tuple[str | None, str], float] = {}  # (site, or None for all sites; route or account): until (unix time)
         self.turns: Counter[str] = Counter()  # round robin position of each site
-        self.attempts: deque[tuple[float, str, str, str | None]] = deque()  # (time, site, route, error code or None)
+        self.attempts: deque[tuple[float, str, str, str | None]] = deque()  # (time, site, route or account, error code or None)
         self.last_errors: dict[tuple[str, str], str] = {}
-        self.login_failures: Counter[tuple[str, str]] = Counter()  # (site, login route): failures in a row
-        self.update(routes, sites, login or {})
+        self.login_failures: Counter[tuple[str, str]] = Counter()  # (site, account): failures in a row
+        self.update(routes, sites, accounts or [])
 
-    def update(self, routes: list[Route], sites: dict[str, list[str]], login: dict[str, list[str]] | None = None) -> None:
-        """New routes (on reload). Exclusions of routes that still exist are kept."""
+    def update(self, routes: list[Route], sites: dict[str, list[str]], accounts: list[Account] | None = None) -> None:
+        """New routes and accounts (on reload). Exclusions of routes that still exist are kept."""
         self.routes = {route.name: route for route in routes}
         self.sites = sites
-        self.login = login or {}
-        # A reload is how new cookies come in, so login routes get another chance:
-        login_routes = {name for names in self.login.values() for name in names}
-        self.exclusions = {key: until for key, until in self.exclusions.items() if key[1] in self.routes and key[1] not in login_routes}
+        self.accounts = {account.name: account for account in accounts or []}
+        self.login, self.always = {}, {}
+        for account in self.accounts.values():
+            for site in account.when_needed:
+                self.login.setdefault(site, []).append(account.name)
+            for site in account.always:
+                self.always[(site, account.route)] = account
+        # A reload is how new cookies come in, so accounts get another chance:
+        self.exclusions = {key: until for key, until in self.exclusions.items() if key[1] in self.routes}
         self.login_failures.clear()
         self.set_gauges()
 
     def cookies(self) -> list[Cookies]:
-        return list({id(route.cookies): route.cookies for route in self.routes.values() if route.cookies}.values())
+        return list({id(account.cookies): account.cookies for account in self.accounts.values()}.values())
 
     def allowed(self, site: str) -> list[Route]:
-        if names := self.sites.get(site) or self.sites.get(DEFAULT):
-            return [self.routes[name] for name in names]
-        # Every route, except those meant only for logging in: in [login] but in no [sites] list
-        login_only = {name for names in self.login.values() for name in names} - {name for names in self.sites.values() for name in names}
-        return [route for route in self.routes.values() if route.name not in login_only] or list(self.routes.values())
+        names = self.sites.get(site) or self.sites.get(DEFAULT)
+        return [self.routes[name] for name in names] if names else list(self.routes.values())
 
     def excluded(self, site: str, name: str, now: float | None = None) -> bool:
         now = time.time() if now is None else now
@@ -216,13 +279,17 @@ class RoutePool:
         return [route for route in allowed if not self.excluded(site, route.name, now)] or allowed  # fail-open
 
     def for_site(self, site: str, route: Route) -> Route:
-        """The route as the site's downloads use it. A site with login routes ([login]) logs in only through those, so its
-        other routes go to it without their cookies: a browser profile's cookies hold every site the browser logged in to,
-        e.g. the YouTube route's profile also logged in to TikTok, which would then see its account in every download."""
-        login = self.login.get(site)
-        if login and route.cookies and route.name not in login:
-            return replace(route, cookies=None)
+        """The route as the site's downloads use it: with the cookies of the account that always logs in to the site
+        through it, if there is one, else without cookies."""
+        if account := self.always.get((site, route.name)) or self.always.get((EVERY_SITE, route.name)):
+            return replace(route, cookies=account.cookies, account=account.name)
         return route
+
+    def way(self, name: str) -> Route:
+        """An account's own route, for the downloads that need a login: its route with its cookies, under its name."""
+        account = self.accounts[name]
+        route = self.routes[account.route]
+        return replace(route, name=account.name, cookies=account.cookies, account=account.name, via=route.name)
 
     def pick(self, site: str, avoid: str | None = None) -> Route:
         """The next route for a site, in turn. With avoid: another route than that one, if there is any."""
@@ -234,23 +301,24 @@ class RoutePool:
         return self.for_site(site, candidates[turn % len(candidates)])
 
     def pick_login(self, site: str, avoid: str | None = None) -> Route | None:
-        """The next login route of a site ([login]), for downloads it gives only to logged-in users; None if it has none."""
+        """The next when_needed account of a site, for downloads it gives only to logged-in users; None if it has none."""
         names = [name for name in self.login.get(site, []) if name != avoid]
-        candidates = [self.routes[name] for name in names if not self.excluded(site, name)] or [self.routes[name] for name in names]
+        candidates = [name for name in names if not self.excluded(site, name)] or names
         if not candidates:
             return None
         turn = self.turns[f"login {site}"]
         self.turns[f"login {site}"] += 1
-        return candidates[turn % len(candidates)]
+        return self.way(candidates[turn % len(candidates)])
 
     def untried(self, site: str, tried: set[str], login: bool = False) -> Route | None:
-        """A route of the site (a login route with login) not in tried, if there is any."""
-        routes = [self.routes[name] for name in self.login.get(site, [])] if login else self.in_use(site)
-        route = next((route for route in routes if route.name not in tried), None)
+        """A route of the site (with login, a when_needed account) not in tried, if there is any."""
+        if login:
+            return next((self.way(name) for name in self.login.get(site, []) if name not in tried), None)
+        route = next((route for route in self.in_use(site) if route.name not in tried), None)
         return route and self.for_site(site, route)
 
     def record(self, site: str, route: str, code: str | None, error: str = "") -> None:
-        """How a download through a route went: None if it worked, else its error code."""
+        """How a download through a route (or an account's own route, by its name) went: None if it worked, else its error code."""
         now = time.time()
         self.attempts.append((now, site, route, code))
         while self.attempts and self.attempts[0][0] < now - self.window:
@@ -340,8 +408,8 @@ class RouteWatch:
     def _login_message(self, site: str, name: str, failures: int, now: float) -> str:
         until = datetime.fromtimestamp(now + LOGIN_EXCLUSION, UTC).strftime("%Y-%m-%d %H:%M UTC")
         text = (
-            f"🔑 <b>{html.escape(site)}</b> login route <b>{html.escape(name)}</b>: the last {failures} downloads that needed a login "
-            f"failed through it too. Its account is probably logged out, blocked or under a security check: log in again, export new cookies "
+            f"🔑 <b>{html.escape(site)}</b> account <b>{html.escape(name)}</b>: the last {failures} downloads that needed a login "
+            f"failed through it too. It's probably logged out, blocked or under a security check: log in again, export new cookies "
             f"and reload (systemctl reload scdlbot). Until then it's left out, at most until {until}."
         )
         if last := self.pool.last_errors.get((site, name)):

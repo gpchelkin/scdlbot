@@ -185,10 +185,10 @@ class JobQueue:
     async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route, login_only: bool = False) -> int | None:
         """Download through the job's route. If it fails before anything was sent, try once more:
         through another route of the site if the site blocked it or it couldn't connect,
-        and through a login route of the site ([login] in the routes file) if the site wants a login,
-        and through the same route without its cookies if the site gave the account nothing to download.
+        and through one of the site's when_needed accounts if the site wants a login,
+        and through the same route without its account's cookies if the site gave the account nothing to download.
         A video without sound is tried through every other route of the site, until one gets the sound.
-        Links only for logged-in users (login_only) start on a login route and stay on login routes."""
+        Links only for logged-in users (login_only) start on a when_needed account and stay on those."""
         tried_other = tried_login = tried_anonymous = False
         silent: set[str] = set()  # routes the video came without sound through
         while True:
@@ -212,7 +212,7 @@ class JobQueue:
                 if exc.code == "formats" and route.cookies and not tried_anonymous:
                     # YouTube gives logged-in clients only DRM formats of some videos (2026-11), anonymous ones get them all
                     tried_anonymous = True
-                    other = replace(route, cookies=None)
+                    other = replace(route, cookies=None, account=None)
                 if exc.code == "no_audio":  # sites mute videos with licensed music in some countries: another route may get it
                     silent.add(route.name)
                     other = self.routes.untried(job.site, silent, login_only or tried_login)

@@ -55,7 +55,7 @@ def test_instagram_cookies_keeps_only_the_session(tmp_path, monkeypatch, capsys)
     assert stat.S_IMODE(path.stat().st_mode) == 0o640
     out = capsys.readouterr()
     assert "hunter2" not in out.out and "line 3: no sessionid" in out.err
-    assert 'name = "ig1"' in out.out and 'Instagram = ["ig1"]' in out.out
+    assert '[[accounts]]\nname = "ig1"\nroute = "fin1"\n' in out.out and 'when_needed = ["Instagram"]' in out.out
 
     monkeypatch.setattr(sys, "argv", ["instagram_cookies.py", str(accounts), str(tmp_path / "numbered"), "--prefix", "ig"])
     tool.main()
@@ -84,18 +84,19 @@ def test_instagram_cookies_reads_base64_json_website_cookies(tmp_path, monkeypat
     assert "hunter3" not in text and "ABCDEFGHIJKLMNOP" not in text
     assert "\tsessionid\t123456789%3AabcDEF%3A11%3AAYxyz\n" in (out_dir / "ig5.cookies.txt").read_text()
     out = capsys.readouterr().out
-    assert 'name = "ig4"' in out and 'name = "ig5"' in out and 'Instagram = ["ig4", "ig5"]' in out and "hunter3" not in out
+    assert 'name = "ig4"' in out and 'name = "ig5"' in out and out.count('when_needed = ["Instagram"]') == 2 and "hunter3" not in out
 
 
-def test_converted_cookies_load_in_a_login_route(tmp_path, monkeypatch):
-    from scdlbot.routes import parse
+def test_converted_cookies_load_in_an_account(tmp_path, monkeypatch):
+    from scdlbot.routes import RoutePool, parse
 
     tool = load_tool("instagram_cookies")
     path = tmp_path / "ig1.cookies.txt"
     path.write_text(tool.netscape(tool.cookies_of(LINE)[1], 2_000_000_000))
-    routes, _, login = parse({"routes": [{"name": "ig1", "source_address": "0.0.0.0", "cookies": str(path)}], "login": {"Instagram": ["ig1"]}}, tmp_path)
-    args = routes[0].ytdlp_args(tmp_path)
-    assert args[-2] == "--cookies" and Path(args[-1]).read_text() == path.read_text() and login == {"Instagram": ["ig1"]}
+    data = {"routes": [{"name": "fin1", "source_address": "0.0.0.0"}], "accounts": [{"name": "ig1", "route": "fin1", "cookies": str(path), "when_needed": ["Instagram"]}]}
+    pool = RoutePool(*parse(data, tmp_path))
+    args = pool.pick_login("Instagram").ytdlp_args(tmp_path)
+    assert args[-2] == "--cookies" and Path(args[-1]).read_text() == path.read_text() and pool.login == {"Instagram": ["ig1"]}
     assert stat.S_IMODE(Path(args[-1]).stat().st_mode) == 0o600  # a session: not for the job dir's group
 
 

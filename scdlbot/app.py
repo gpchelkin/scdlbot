@@ -6,6 +6,7 @@ import logging
 import shutil
 import signal
 import time
+from collections import defaultdict
 from urllib.parse import urljoin
 
 import httpx
@@ -111,7 +112,7 @@ async def post_init(app: Application) -> None:
     observe.sd_notify("READY=1")
     log.info("@%s is running with %d+%d workers, Bot API %s%s", app.bot.username, cfg.workers, cfg.youtube_workers, cfg.tg_api, " (local mode)" if cfg.local_mode else "")
     log.info("Routes: %s", describe_routes(pool))
-    warn_missing_cookies(pool)
+    check_routes(pool)
 
 
 async def post_stop(app: Application) -> None:
@@ -184,17 +185,29 @@ async def refresh_cookies(rt: Runtime) -> None:
             await cookies.refresh(rt.http)
 
 
-def warn_missing_cookies(pool: RoutePool) -> None:
-    """A route whose cookies file isn't there downloads without cookies, so a login route can't log in: tell the owner."""
-    for route in pool.routes.values():
-        if route.cookies and route.cookies.file and not route.cookies.file.exists():
-            log.error("Route %s goes without cookies: %s doesn't exist", route.name, route.cookies.file)
+def check_routes(pool: RoutePool) -> None:
+    """Tell the owner about accounts that can't work: without their cookies file (they'd download anonymously),
+    or always logging in to a site that never goes through their route. Two accounts with the same cookies on two
+    routes are a warning: a session that jumps between IPs looks hijacked."""
+    routes_of_cookies: dict[tuple, set[str]] = defaultdict(set)
+    for account in pool.accounts.values():
+        cookies = account.cookies
+        if cookies.file and not cookies.file.exists():
+            log.error("Account %s goes without cookies: %s doesn't exist", account.name, cookies.file)
+        for site in account.always:
+            if site != routes.EVERY_SITE and account.route not in {route.name for route in pool.allowed(site)}:
+                log.error("Account %s always logs in to %s through %s, but %s doesn't use %s ([sites])", account.name, site, account.route, site, account.route)
+        if routes.EVERY_SITE not in account.always:
+            routes_of_cookies[(cookies.browser, cookies.url, None if cookies.url else cookies.file)].add(account.route)
+    for key, names in routes_of_cookies.items():
+        if len(names) > 1:
+            log.warning("The same cookies (%s) go out through routes %s: a session that jumps between IPs looks hijacked", key[0] or key[1] or key[2], ", ".join(sorted(names)))
 
 
 def describe_routes(pool: RoutePool) -> str:
     sites = "; ".join(f"{site}: {', '.join(names)}" for site, names in pool.sites.items())
-    login = "; ".join(f"{site} login: {', '.join(names)}" for site, names in pool.login.items())
-    return "; ".join(part for part in (", ".join(route.describe() for route in pool.routes.values()), sites, login) if part)
+    accounts = "accounts: " + ", ".join(account.describe() for account in pool.accounts.values()) if pool.accounts else ""
+    return "; ".join(part for part in (", ".join(route.describe() for route in pool.routes.values()), sites, accounts) if part)
 
 
 async def reload_routes(rt: Runtime) -> None:
@@ -203,15 +216,15 @@ async def reload_routes(rt: Runtime) -> None:
         log.info("SIGHUP: no ROUTES_FILE to reload")
         return
     try:
-        new_routes, sites, login = routes.load(rt.cfg)
+        new_routes, sites, accounts = routes.load(rt.cfg)
     except routes.RoutesError as exc:
         log.error("Routes not reloaded, still using the old ones: %s", exc)  # an error, so the owner hears about it
         return
-    rt.queue.routes.update(new_routes, sites, login)
+    rt.queue.routes.update(new_routes, sites, accounts)
     for cookies in rt.queue.routes.cookies():
         await cookies.refresh(rt.http)
     log.info("Routes reloaded: %s", describe_routes(rt.queue.routes))
-    warn_missing_cookies(rt.queue.routes)
+    check_routes(rt.queue.routes)
 
 
 def run(cfg: Config) -> None:
