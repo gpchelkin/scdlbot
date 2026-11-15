@@ -2,6 +2,7 @@
 # Install or update scdlbot on a systemd server from this checkout (README: Deploy), as root:
 #   /opt/scdlbot/deploy/upgrade.sh          the newest commit of the checkout's branch, with yt-dlp from its master
 #   /opt/scdlbot/deploy/upgrade.sh --tools  the same, plus the newest ffmpeg, ffprobe and deno in /usr/local/bin
+#   /opt/scdlbot/deploy/upgrade.sh --no-start  install or update, but don't start the bot (a server to move it to)
 # It pulls, builds a new venv in venvs/ while the bot keeps running, points .venv at it and restarts the bot, which
 # puts unfinished downloads back in the queue. If anything fails before that, the bot is left as it was.
 # The last 3 venvs stay, for going back: ln -sfn /opt/scdlbot/venvs/<older> /opt/scdlbot/.venv && systemctl restart scdlbot
@@ -11,10 +12,18 @@
 #   YTDLP="yt-dlp[default,curl-cffi] @ git+https://github.com/someone/yt-dlp@some-fix" /opt/scdlbot/deploy/upgrade.sh
 set -Eeuo pipefail
 
-case "${1-}" in
-  "" | --tools) ;;
-  *) sed -n '2,4s/^# //p' "$0" >&2; exit 2 ;;
-esac
+tools= start=1
+for arg in "$@"; do
+  case "$arg" in
+    --tools) tools=1 ;;
+    --no-start) start= ;;
+    *) sed -n '2,5s/^# //p' "$0" >&2; exit 2 ;;
+  esac
+done
+if [ -z "$start" ] && systemctl is-active -q scdlbot; then
+  echo "The bot runs here: --no-start is for a server where it doesn't (e.g. one to move it to)" >&2
+  exit 2
+fi
 [ "$(id -u)" = 0 ] || { echo "Run it as root: sudo $0 $*" >&2; exit 1; }
 cd "$(dirname "$(readlink -f "$0")")/.."
 if [ -z "${UPGRADE_PULLED-}" ]; then
@@ -38,7 +47,7 @@ echo "Building $venv with $("$python" --version)"
 "$venv/bin/python" -I -c "import scdlbot.app"  # everything imports (-I: not from the checkout's own scdlbot/)
 echo "yt-dlp $("$venv/bin/python" -I -m yt_dlp --version)"
 
-if [ "${1-}" = --tools ]; then
+if [ -n "$tools" ]; then
   tmp=$(mktemp -d)
   arch=$(uname -m)  # x86_64, or aarch64 on ARM servers
   if [ "$arch" = aarch64 ]; then ff=linuxarm64; else ff=linux64; fi
@@ -58,13 +67,18 @@ if [ -e /etc/systemd/system/scdlbot.service ]; then
   echo "Warning: /etc/systemd/system/scdlbot.service is used instead of $unit; move your changes to a drop-in (systemctl edit scdlbot) and delete it" >&2
 fi
 systemctl daemon-reload
-systemctl enable -q scdlbot
+[ -z "$start" ] || systemctl enable -q scdlbot
 
 prev=$(readlink .venv || true)  # what the bot runs now
 if [ -d .venv ] && [ ! -L .venv ]; then mv .venv venvs/0-made-by-hand; fi  # a venv from before this script
 ln -sfn "$venv" .venv.new
 mv -T .venv.new .venv
 trap - ERR
+if [ -z "$start" ]; then
+  echo "Installed $venv, not started (--no-start): systemctl enable --now scdlbot starts the bot"
+  ls -1d "$PWD"/venvs/*/ | head -n -3 | xargs -r rm -r  # keep the last 3
+  exit 0
+fi
 if ! systemctl restart scdlbot; then
   journalctl -u scdlbot -n 20 --no-pager
   [ -z "$prev" ] || echo "The new version didn't start. To go back: ln -sfn $prev $PWD/.venv && systemctl restart scdlbot" >&2

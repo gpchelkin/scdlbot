@@ -3,8 +3,8 @@
 # (README: local Bot API server; first install deploy/telegram-bot-api.service as it says):
 #   /opt/scdlbot/deploy/upgrade-telegram-bot-api.sh          the newest commit of its master branch
 #   /opt/scdlbot/deploy/upgrade-telegram-bot-api.sh COMMIT   that commit instead, e.g. an older one to go back
-# On Ubuntu or Debian, with clang and libc++ as https://tdlib.github.io/telegram-bot-api/build.html says (CLANG=14 is
-# Ubuntu 22.04's). The source and the build tree stay in /usr/local/src/telegram-bot-api, so later builds compile only
+# On Ubuntu or Debian, with clang and libc++ as https://tdlib.github.io/telegram-bot-api/build.html says: the
+# distribution's default version (Ubuntu 22.04's 14, 26.04's 21), or CLANG=NN. The source and the build tree stay in /usr/local/src/telegram-bot-api, so later builds compile only
 # what changed (the first one takes an hour or so on 2 cores). Each build goes to /usr/local/lib/telegram-bot-api/
 # VERSION-COMMIT, /usr/local/bin/telegram-bot-api points at the one in use, and the last 3 stay, for going back:
 #   ln -sfn /usr/local/lib/telegram-bot-api/<older>/bin/telegram-bot-api /usr/local/bin/telegram-bot-api && systemctl restart telegram-bot-api
@@ -16,7 +16,9 @@ set -Eeuo pipefail
 
 [ "$(id -u)" = 0 ] || { echo "Run it as root: sudo $0 $*" >&2; exit 1; }
 ref=${1:-origin/master}
-clang=${CLANG:-14}
+# the distribution's default clang: what its "clang" package depends on (clang-14 on Ubuntu 22.04, clang-21 on 26.04)
+clang=${CLANG:-$(apt-cache depends clang 2>/dev/null | sed -n 's/^ *Depends: clang-\([0-9][0-9]*\)$/\1/p' | head -1)}
+[ -n "$clang" ] || { echo "No clang package found: set CLANG, e.g. CLANG=14" >&2; exit 1; }
 src=/usr/local/src/telegram-bot-api
 builds=/usr/local/lib/telegram-bot-api
 bin=/usr/local/bin/telegram-bot-api

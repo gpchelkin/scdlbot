@@ -208,6 +208,11 @@ Updates:
 sudo /opt/scdlbot/deploy/upgrade.sh   # add --tools for new ffmpeg, ffprobe and deno builds too
 ```
 
+To move the bot to another server, set that one up the same way with `upgrade.sh --tools --no-start`: it installs
+everything but doesn't start the bot (two bots with one token would take each other's updates). Then stop the bot on the
+old server, move it off its local Bot API server (`deleteWebhook`, then
+[`close`](https://core.telegram.org/bots/api#close)), copy `DB_PATH` over, and start both services on the new one.
+
 It pulls, builds a new venv while the bot keeps running and switches to it with one restart. If anything fails before
 that, the bot stays as it was, and the last 3 venvs stay for going back (the script says how). yt-dlp comes from its
 master branch because sites change all the time, and fixes land there days or weeks before a release.

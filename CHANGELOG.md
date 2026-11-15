@@ -10,6 +10,9 @@
 - `scdlbot fetch` downloads the same link the bot would (the original site's for those links).
 - `deploy/upgrade.sh` installs or updates the bot on a systemd server: it pulls the checkout, builds a new venv with yt-dlp
   from master while the bot keeps running, switches to it with one restart and keeps the last 3 venvs for going back.
+  With `--no-start` it installs without starting the bot: a server to move it to (README: Deploy).
+- `deploy/upgrade-telegram-bot-api.sh` builds with the distribution's default clang (Ubuntu 22.04's 14, 26.04's 21)
+  instead of always clang 14; `CLANG` still picks one.
   With `--tools` it also updates ffmpeg, ffprobe and deno.
 - `deploy/scdlbot.service` is installed to `/usr/local/lib/systemd/system` by that script, so your own settings go in a
   drop-in (`systemctl edit scdlbot`). Its watchdog timeout is 180 seconds (was 120), as on @scdlbot's server.
