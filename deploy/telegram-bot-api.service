@@ -18,7 +18,8 @@ User=telegram-bot-api
 Group=telegram-bot-api
 # TELEGRAM_API_ID and TELEGRAM_API_HASH, from https://my.telegram.org: not on the command line, where every user sees them
 EnvironmentFile=/etc/default/telegram-bot-api
-StateDirectory=telegram-bot-api
+# --dir and --temp-dir below must exist: systemd makes them (owned by the user, mode below) at every start
+StateDirectory=telegram-bot-api telegram-bot-api/work telegram-bot-api/temp
 StateDirectoryMode=0700
 WorkingDirectory=/var/lib/telegram-bot-api
 # Its log goes to the journal: journalctl -u telegram-bot-api

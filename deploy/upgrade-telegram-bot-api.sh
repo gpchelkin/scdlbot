@@ -53,7 +53,7 @@ if [ -f "$bin" ] && [ ! -L "$bin" ]; then
   install -D -m 755 "$bin" "$old/bin/telegram-bot-api"
   ln -sfn "$old/bin/telegram-bot-api" "$bin.new" && mv -T "$bin.new" "$bin"
 fi
-prev=$(readlink -f "$bin" 2>/dev/null || true)
+prev=$([ -e "$bin" ] && readlink -f "$bin" || true)  # the build in use, if any (none on a first install)
 trap - ERR
 if [ "$prev" = "$dest/bin/telegram-bot-api" ]; then
   echo "That's the build in use already"
