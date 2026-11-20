@@ -471,3 +471,30 @@ async def test_video_without_sound_through_every_route_goes_out_with_a_note(setu
     job = await run(download, site="Twitter", url="https://twitter.com/u/status/1", kind="video")
     assert (job.status, len(download.calls)) == ("done", 1)
     assert "without sound" not in bot.calls[-2][2]["caption"]
+
+
+async def test_the_owner_gets_the_error_of_their_own_links_in_private(setup):
+    cfg, db, bot, queue, run = setup
+    queue.cfg = cfg = Config(**(vars(cfg) | {"owner_id": 7}))
+    two_routes(queue)
+    queue.routes.turns["SoundCloud"] = 1  # fra1 first, then fin1
+    download = blocked_through("http://127.0.0.1:3187")
+    await run(download, site="SoundCloud", url="https://soundcloud.com/a/b")  # the second try worked: nothing for the owner
+    assert "send_message" not in bot.names()
+
+    async def blocked_everywhere(url, kind, job_dir: Path, cfg, extra=(), photos=False, mp3=False, **options):
+        raise DownloadError("blocked", "ERROR: [soundcloud] x: HTTP Error 403: <Forbidden>")
+        yield
+
+    bot.calls.clear()
+    job = await run(blocked_everywhere, site="SoundCloud", url="https://soundcloud.com/a/c", chat_id=-100, chat_type="supergroup")
+    assert bot.names() == ["send_message", "delete_message", "send_message"]  # the usual reply in the chat, then the owner's
+    (chat_id, text), kwargs = bot.calls[2][1], bot.calls[2][2]
+    assert chat_id == 7 and kwargs["parse_mode"] == "HTML"
+    assert f"<b>SoundCloud</b>: your download failed (blocked), job {job.id}\nhttps://soundcloud.com/a/c" in text
+    assert "<code>fra1 (proxy http://127.0.0.1:3187): blocked: ERROR: [soundcloud] x: HTTP Error 403: &lt;Forbidden&gt;</code>" in text
+    assert "<code>fin1 (direct, from 0.0.0.0): blocked:" in text
+
+    bot.calls.clear()
+    await run(blocked_everywhere, site="SoundCloud", url="https://soundcloud.com/a/d", user_id=8)  # someone else's link
+    assert bot.names() == ["send_message", "delete_message"]

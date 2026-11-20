@@ -249,6 +249,8 @@ The image has ffmpeg, deno and the yt-dlp nightly build from `poetry.lock`.
 - Errors (unexpected exceptions only) go to `TG_BOT_OWNER_CHAT_ID`, at most one message per minute, and to `SENTRY_DSN` if set.
 - When a site starts failing (e.g. YouTube logged out, SoundCloud blocked the IP), `TG_BOT_OWNER_CHAT_ID` gets a message,
   and another one when it recovers (`ALERT_*` settings in `.env.sample`).
+- When a link the owner sent (in any chat) fails, the owner also gets its error in a private chat: each try's route and
+  yt-dlp's error, after the usual reply.
 - Logs go to stdout (`journalctl -u scdlbot`). Use `LOGLEVEL=DEBUG` to see yt-dlp output.
 - Or just ask SQLite:
 

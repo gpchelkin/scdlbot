@@ -2,6 +2,8 @@
 
 ## 1.1.0
 
+- When a link the owner (`TG_BOT_OWNER_CHAT_ID`) sent fails, the owner also gets its error in a private chat, formatted
+  like the site alerts: each try's route and yt-dlp's error. Everyone gets the usual reply too.
 - Links to sites that fix link previews in Telegram work as links to the original site: fxtwitter.com, fixupx.com,
   twittpr.com, vxtwitter.com and fixvx.com for Twitter, oginstagram.com, uuinstagram.com, kkinstagram.com and
   ddinstagram.com for Instagram, tnktok.com, tiktxk.com, tfxktok.com, kktiktok.com, tiktokez.com and vxtiktok.com

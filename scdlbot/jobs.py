@@ -4,6 +4,7 @@ Pipeline: yt-dlp downloads -> ffmpeg fixes (h264, split) -> Telegram upload, fil
 """
 
 import asyncio
+import html
 import json
 import logging
 import shutil
@@ -15,7 +16,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import httpx
-from telegram import Bot, ReplyParameters
+from telegram import Bot, LinkPreviewOptions, ReplyParameters
 from telegram.constants import ParseMode
 from telegram.error import Forbidden, TelegramError
 
@@ -31,6 +32,7 @@ from scdlbot.ytdlp import SHORT_VIDEO_HEIGHT, DownloadError, download, to_item, 
 log = logging.getLogger(__name__)
 
 POOLS = {site.name: site.pool for site in SITES}
+NO_PREVIEW = LinkPreviewOptions(is_disabled=True)
 RESUME_MAX_AGE = 3600  # after a restart, re-run queued jobs younger than this
 
 
@@ -144,10 +146,11 @@ class JobQueue:
         job_dir.mkdir(parents=True, exist_ok=True)
         sender = Sender(self.bot, self.cfg, job)
         error, total = None, None
+        tries: list[str] = []  # each failed try: its route and error, for the owner's own jobs
         try:
             try:
                 async with asyncio.timeout(self.cfg.job_timeout):
-                    total = await self._download_through(job, job_dir, sender, route, login_only)
+                    total = await self._download_through(job, job_dir, sender, route, login_only, tries)
             except DownloadError as exc:
                 error = exc.code
                 self.last_errors[job.site] = str(exc)
@@ -155,6 +158,7 @@ class JobQueue:
             except TimeoutError:
                 error = "timeout"
                 self.routes.record(job.site, job.route or "", "timeout")
+                tries.append(f"{job.route}: timeout: the job took over {self.cfg.job_timeout}s")
             await sender.flush()  # send what we've got, even after an error
         except Forbidden as exc:
             log.info("Job %s: bot can't write to chat %s: %s", job.id, job.chat_id, exc)
@@ -181,14 +185,19 @@ class JobQueue:
         if job.status != "cancelled":
             await self._report(job, total)
             await self._delete_wait_message(job)
+            if job.error and self.cfg.owner_id and job.user_id == self.cfg.owner_id:
+                await self._report_to_owner(job, tries, sender.failed)
 
-    async def _download_through(self, job: Job, job_dir: Path, sender: Sender, route: Route, login_only: bool = False) -> int | None:
+    async def _download_through(
+        self, job: Job, job_dir: Path, sender: Sender, route: Route, login_only: bool = False, tries: list[str] | None = None,
+    ) -> int | None:  # fmt: skip
         """Download through the job's route. If it fails before anything was sent, try once more:
         through another route of the site if the site blocked it or it couldn't connect,
         and through one of the site's when_needed accounts if the site wants a login,
         and through the same route without its account's cookies if the site gave the account nothing to download.
         A video without sound is tried through every other route of the site, until one gets the sound.
-        Links only for logged-in users (login_only) start on a when_needed account and stay on those."""
+        Links only for logged-in users (login_only) start on a when_needed account and stay on those.
+        Every failed try is added to tries, as its route and error."""
         tried_other = tried_login = tried_anonymous = False
         silent: set[str] = set()  # routes the video came without sound through
         while True:
@@ -198,6 +207,8 @@ class JobQueue:
                 total = await self._download(job, job_dir, sender, route, allow_silent=last_try)
             except DownloadError as exc:
                 self.routes.record(job.site, route.name, exc.code, str(exc))
+                if tries is not None:
+                    tries.append(f"{route.describe()}: {exc}")
                 if sender.sent or sender.failed or sender.album:
                     raise
                 other = None
@@ -296,6 +307,18 @@ class JobQueue:
             await self.bot.send_message(job.chat_id, text, parse_mode=ParseMode.HTML, reply_parameters=reply)
         except TelegramError as exc:
             log.info("Job %s: could not report: %s", job.id, exc)
+
+    async def _report_to_owner(self, job: Job, tries: list[str], unsent: int) -> None:
+        """The owner's own failed links: what went wrong, in a private chat, like the site alerts (in addition to the usual reply)."""
+        text = f"⚠️ <b>{html.escape(job.site)}</b>: your download {job.status} ({html.escape(job.error or '')}), job {job.id}\n{html.escape(job.url)}"
+        for line in tries[-5:]:  # each is at most ~520 characters: the message stays under Telegram's 4096
+            text += f"\n<code>{html.escape(line[-600:])}</code>"
+        if unsent:
+            text += f"\n{unsent} files could not be sent (see the log)"
+        try:
+            await self.bot.send_message(self.cfg.owner_id, text, parse_mode=ParseMode.HTML, link_preview_options=NO_PREVIEW)
+        except TelegramError as exc:
+            log.info("Job %s: could not report to the owner: %s", job.id, exc)
 
     async def _delete_wait_message(self, job: Job) -> None:
         if job.wait_message_id and not await self.db.active_jobs_for_message(job.chat_id, job.message_id):
